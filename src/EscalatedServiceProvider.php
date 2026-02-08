@@ -10,7 +10,9 @@ use Escalated\Laravel\Console\Commands\PurgeActivitiesCommand;
 use Escalated\Laravel\Events;
 use Escalated\Laravel\Listeners;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Inertia\Inertia;
 
 class EscalatedServiceProvider extends ServiceProvider
 {
@@ -29,6 +31,7 @@ class EscalatedServiceProvider extends ServiceProvider
         $this->registerRoutes();
         $this->registerCommands();
         $this->registerEvents();
+        $this->shareInertiaData();
     }
 
     protected function registerPublishing(): void
@@ -78,6 +81,23 @@ class EscalatedServiceProvider extends ServiceProvider
             CloseResolvedCommand::class,
             PurgeActivitiesCommand::class,
         ]);
+    }
+
+    protected function shareInertiaData(): void
+    {
+        if (! class_exists(Inertia::class)) {
+            return;
+        }
+
+        Inertia::share('escalated', function () {
+            $user = $this->app['auth']->user();
+
+            return [
+                'prefix' => config('escalated.routes.prefix', 'support'),
+                'is_agent' => $user ? Gate::allows('escalated-agent', $user) : false,
+                'is_admin' => $user ? Gate::allows('escalated-admin', $user) : false,
+            ];
+        });
     }
 
     protected function registerEvents(): void

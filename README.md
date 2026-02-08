@@ -28,7 +28,7 @@ A full-featured, embeddable support ticket system for Laravel. Drop it into any 
 ## Quick Start
 
 ```bash
-composer require escalated/escalated-laravel
+composer require escalated-dev/escalated-laravel
 npm install @escalated-dev/escalated
 php artisan escalated:install
 php artisan migrate
@@ -56,6 +56,90 @@ Gate::define('escalated-agent', fn ($user) => $user->is_agent || $user->is_admin
 ```
 
 Visit `/support` — you're live.
+
+## Frontend Integration
+
+Escalated ships a Vue component library (`@escalated-dev/escalated`) and default page templates. You have two options:
+
+### Option A: Use Default Pages (Quick Start)
+
+Resolve Escalated pages from the npm package in your `app.ts`:
+
+```ts
+import { createInertiaApp } from '@inertiajs/vue3';
+import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
+
+const escalatedPages = import.meta.glob(
+    '../../node_modules/@escalated-dev/escalated/src/pages/**/*.vue',
+);
+
+createInertiaApp({
+    resolve: (name) => {
+        if (name.startsWith('Escalated/')) {
+            const path = name.replace('Escalated/', '');
+            return resolvePageComponent(
+                `../../node_modules/@escalated-dev/escalated/src/pages/${path}.vue`,
+                escalatedPages,
+            );
+        }
+        return resolvePageComponent(`./Pages/${name}.vue`,
+            import.meta.glob('./Pages/**/*.vue'));
+    },
+    // ...
+});
+```
+
+### Option B: Custom Pages (Recommended)
+
+Create your own page files in `resources/js/Pages/Escalated/` that use your app's layout. Import individual components from `@escalated-dev/escalated`:
+
+```vue
+<script setup>
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { TicketList, TicketFilters, StatusBadge } from '@escalated-dev/escalated';
+</script>
+
+<template>
+    <AuthenticatedLayout>
+        <TicketList :tickets="tickets" />
+    </AuthenticatedLayout>
+</template>
+```
+
+Since local pages in `Pages/Escalated/` match the component names the controllers render, Inertia's standard glob resolver picks them up automatically — no special resolver logic needed.
+
+### Available Components
+
+| Component | Description |
+|-----------|-------------|
+| `ActivityTimeline` | Full audit log of ticket events |
+| `AssigneeSelect` | Agent assignment dropdown |
+| `AttachmentList` | File attachment display |
+| `FileDropzone` | Drag-and-drop file upload |
+| `PriorityBadge` | Priority level indicator |
+| `ReplyComposer` | Rich text reply editor |
+| `ReplyThread` | Chronological message thread |
+| `SlaTimer` | SLA countdown display |
+| `StatsCard` | Metric card for dashboards |
+| `StatusBadge` | Ticket status indicator |
+| `TagSelect` | Tag picker with colors |
+| `TicketFilters` | Search and filter controls |
+| `TicketList` | Paginated ticket table |
+| `TicketSidebar` | Ticket metadata sidebar |
+
+### Shared Inertia Props
+
+Escalated automatically shares data to all Inertia pages via `page.props.escalated`:
+
+```js
+page.props.escalated = {
+    prefix: 'support',     // Route prefix from config
+    is_agent: true,        // Current user can access agent views
+    is_admin: false,       // Current user can access admin views
+}
+```
+
+Use these to conditionally show nav links or restrict UI elements.
 
 ## Hosting Modes
 
@@ -93,17 +177,14 @@ All three modes share the same controllers, UI, and business logic. The driver p
 ## Publishing Assets
 
 ```bash
-# Customer-facing pages only
-php artisan vendor:publish --tag=escalated-client-assets
-
-# Agent + admin pages
-php artisan vendor:publish --tag=escalated-admin-assets
-
 # Email templates
 php artisan vendor:publish --tag=escalated-views
 
 # Config file
 php artisan vendor:publish --tag=escalated-config
+
+# Database migrations
+php artisan vendor:publish --tag=escalated-migrations
 ```
 
 ## Scheduling
@@ -191,6 +272,9 @@ Event::listen(TicketCreated::class, function ($event) {
 | `/support/admin/reports` | GET | Admin reports |
 | `/support/admin/departments` | GET | Department management |
 | `/support/admin/sla-policies` | GET | SLA policy management |
+| `/support/admin/escalation-rules` | GET | Escalation rule management |
+| `/support/admin/tags` | GET | Tag management |
+| `/support/admin/canned-responses` | GET | Canned response management |
 
 All routes use the configurable prefix (default: `support`).
 
@@ -207,17 +291,9 @@ All routes use the configurable prefix (default: `support`).
 ## Testing
 
 ```bash
-cd packages/escalated-laravel
 composer install
 vendor/bin/pest
 ```
-
-## Also Available For
-
-- **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** — Ruby on Rails engine
-- **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** — Django reusable app
-
-Same architecture, same Vue UI, same three hosting modes — for every major backend framework.
 
 ## License
 

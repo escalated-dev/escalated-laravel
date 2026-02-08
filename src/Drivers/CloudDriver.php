@@ -2,7 +2,7 @@
 
 namespace Escalated\Laravel\Drivers;
 
-use Illuminate\Database\Eloquent\Model;
+use Escalated\Laravel\Contracts\Ticketable;
 use Escalated\Laravel\Contracts\TicketDriver;
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
@@ -15,7 +15,7 @@ class CloudDriver implements TicketDriver
 {
     public function __construct(protected HostedApiClient $apiClient) {}
 
-    public function createTicket(Model $requester, array $data): Ticket
+    public function createTicket(Ticketable $requester, array $data): Ticket
     {
         $response = $this->apiClient->sendCommand('tickets.create', array_merge($data, [
             'requester_name' => $requester->getTicketableNameAttribute(),
@@ -35,7 +35,7 @@ class CloudDriver implements TicketDriver
         return $this->hydrateTicket($response);
     }
 
-    public function transitionStatus(Ticket $ticket, TicketStatus $status, ?Model $causer = null): Ticket
+    public function transitionStatus(Ticket $ticket, TicketStatus $status, ?Ticketable $causer = null): Ticket
     {
         $response = $this->apiClient->sendCommand('tickets.transition', [
             'reference' => $ticket->reference,
@@ -45,7 +45,7 @@ class CloudDriver implements TicketDriver
         return $this->hydrateTicket($response);
     }
 
-    public function assignTicket(Ticket $ticket, int $agentId, ?Model $causer = null): Ticket
+    public function assignTicket(Ticket $ticket, int $agentId, ?Ticketable $causer = null): Ticket
     {
         $response = $this->apiClient->sendCommand('tickets.assign', [
             'reference' => $ticket->reference,
@@ -55,7 +55,7 @@ class CloudDriver implements TicketDriver
         return $this->hydrateTicket($response);
     }
 
-    public function unassignTicket(Ticket $ticket, ?Model $causer = null): Ticket
+    public function unassignTicket(Ticket $ticket, ?Ticketable $causer = null): Ticket
     {
         $response = $this->apiClient->sendCommand('tickets.unassign', [
             'reference' => $ticket->reference,
@@ -64,7 +64,7 @@ class CloudDriver implements TicketDriver
         return $this->hydrateTicket($response);
     }
 
-    public function addReply(Ticket $ticket, Model $author, string $body, bool $isNote = false, array $attachments = []): Reply
+    public function addReply(Ticket $ticket, Ticketable $author, string $body, bool $isNote = false, array $attachments = []): Reply
     {
         $response = $this->apiClient->sendCommand('tickets.reply', [
             'reference' => $ticket->reference,
@@ -85,7 +85,7 @@ class CloudDriver implements TicketDriver
         return $this->hydrateTicket($response);
     }
 
-    public function listTickets(array $filters = [], ?Model $for = null): LengthAwarePaginator
+    public function listTickets(array $filters = [], ?Ticketable $for = null): LengthAwarePaginator
     {
         if ($for) {
             $filters['requester_id'] = $for->getKey();
@@ -102,7 +102,7 @@ class CloudDriver implements TicketDriver
         );
     }
 
-    public function addTags(Ticket $ticket, array $tagIds, ?Model $causer = null): Ticket
+    public function addTags(Ticket $ticket, array $tagIds, ?Ticketable $causer = null): Ticket
     {
         $response = $this->apiClient->sendCommand('tickets.add_tags', [
             'reference' => $ticket->reference, 'tag_ids' => $tagIds,
@@ -111,7 +111,7 @@ class CloudDriver implements TicketDriver
         return $this->hydrateTicket($response);
     }
 
-    public function removeTags(Ticket $ticket, array $tagIds, ?Model $causer = null): Ticket
+    public function removeTags(Ticket $ticket, array $tagIds, ?Ticketable $causer = null): Ticket
     {
         $response = $this->apiClient->sendCommand('tickets.remove_tags', [
             'reference' => $ticket->reference, 'tag_ids' => $tagIds,
@@ -120,7 +120,7 @@ class CloudDriver implements TicketDriver
         return $this->hydrateTicket($response);
     }
 
-    public function changeDepartment(Ticket $ticket, int $departmentId, ?Model $causer = null): Ticket
+    public function changeDepartment(Ticket $ticket, int $departmentId, ?Ticketable $causer = null): Ticket
     {
         $response = $this->apiClient->sendCommand('tickets.change_department', [
             'reference' => $ticket->reference, 'department_id' => $departmentId,
@@ -129,7 +129,7 @@ class CloudDriver implements TicketDriver
         return $this->hydrateTicket($response);
     }
 
-    public function changePriority(Ticket $ticket, TicketPriority $priority, ?Model $causer = null): Ticket
+    public function changePriority(Ticket $ticket, TicketPriority $priority, ?Ticketable $causer = null): Ticket
     {
         $response = $this->apiClient->sendCommand('tickets.change_priority', [
             'reference' => $ticket->reference, 'priority' => $priority->value,

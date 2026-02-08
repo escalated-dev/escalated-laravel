@@ -2,7 +2,7 @@
 
 namespace Escalated\Laravel\Drivers;
 
-use Illuminate\Database\Eloquent\Model;
+use Escalated\Laravel\Contracts\Ticketable;
 use Escalated\Laravel\Contracts\TicketDriver;
 use Escalated\Laravel\Enums\ActivityType;
 use Escalated\Laravel\Enums\TicketPriority;
@@ -18,7 +18,7 @@ class LocalDriver implements TicketDriver
 {
     public function __construct(protected AttachmentService $attachmentService) {}
 
-    public function createTicket(Model $requester, array $data): Ticket
+    public function createTicket(Ticketable $requester, array $data): Ticket
     {
         $ticket = new Ticket();
         $ticket->reference = Ticket::generateReference();
@@ -59,7 +59,7 @@ class LocalDriver implements TicketDriver
         return $ticket->fresh();
     }
 
-    public function transitionStatus(Ticket $ticket, TicketStatus $status, ?Model $causer = null): Ticket
+    public function transitionStatus(Ticket $ticket, TicketStatus $status, ?Ticketable $causer = null): Ticket
     {
         $oldStatus = $ticket->status;
 
@@ -100,7 +100,7 @@ class LocalDriver implements TicketDriver
         return $ticket->fresh();
     }
 
-    public function assignTicket(Ticket $ticket, int $agentId, ?Model $causer = null): Ticket
+    public function assignTicket(Ticket $ticket, int $agentId, ?Ticketable $causer = null): Ticket
     {
         $ticket->update(['assigned_to' => $agentId]);
 
@@ -111,7 +111,7 @@ class LocalDriver implements TicketDriver
         return $ticket->fresh();
     }
 
-    public function unassignTicket(Ticket $ticket, ?Model $causer = null): Ticket
+    public function unassignTicket(Ticket $ticket, ?Ticketable $causer = null): Ticket
     {
         $previousAgentId = $ticket->assigned_to;
         $ticket->update(['assigned_to' => null]);
@@ -123,7 +123,7 @@ class LocalDriver implements TicketDriver
         return $ticket->fresh();
     }
 
-    public function addReply(Ticket $ticket, Model $author, string $body, bool $isNote = false, array $attachments = []): Reply
+    public function addReply(Ticket $ticket, Ticketable $author, string $body, bool $isNote = false, array $attachments = []): Reply
     {
         $reply = new Reply();
         $reply->ticket_id = $ticket->id;
@@ -159,7 +159,7 @@ class LocalDriver implements TicketDriver
         return Ticket::findOrFail($id);
     }
 
-    public function listTickets(array $filters = [], ?Model $for = null): LengthAwarePaginator
+    public function listTickets(array $filters = [], ?Ticketable $for = null): LengthAwarePaginator
     {
         $query = Ticket::query()->with(['requester', 'assignee', 'department', 'tags']);
 
@@ -207,7 +207,7 @@ class LocalDriver implements TicketDriver
         return $query->paginate($filters['per_page'] ?? 15);
     }
 
-    public function addTags(Ticket $ticket, array $tagIds, ?Model $causer = null): Ticket
+    public function addTags(Ticket $ticket, array $tagIds, ?Ticketable $causer = null): Ticket
     {
         $ticket->tags()->syncWithoutDetaching($tagIds);
 
@@ -218,7 +218,7 @@ class LocalDriver implements TicketDriver
         return $ticket->fresh();
     }
 
-    public function removeTags(Ticket $ticket, array $tagIds, ?Model $causer = null): Ticket
+    public function removeTags(Ticket $ticket, array $tagIds, ?Ticketable $causer = null): Ticket
     {
         $ticket->tags()->detach($tagIds);
 
@@ -229,7 +229,7 @@ class LocalDriver implements TicketDriver
         return $ticket->fresh();
     }
 
-    public function changeDepartment(Ticket $ticket, int $departmentId, ?Model $causer = null): Ticket
+    public function changeDepartment(Ticket $ticket, int $departmentId, ?Ticketable $causer = null): Ticket
     {
         $oldDepartmentId = $ticket->department_id;
         $ticket->update(['department_id' => $departmentId]);
@@ -244,7 +244,7 @@ class LocalDriver implements TicketDriver
         return $ticket->fresh();
     }
 
-    public function changePriority(Ticket $ticket, TicketPriority $priority, ?Model $causer = null): Ticket
+    public function changePriority(Ticket $ticket, TicketPriority $priority, ?Ticketable $causer = null): Ticket
     {
         $oldPriority = $ticket->priority;
         $ticket->update(['priority' => $priority]);
@@ -259,7 +259,7 @@ class LocalDriver implements TicketDriver
         return $ticket->fresh();
     }
 
-    protected function logActivity(Ticket $ticket, ActivityType $type, ?Model $causer = null, array $properties = []): void
+    protected function logActivity(Ticket $ticket, ActivityType $type, ?Ticketable $causer = null, array $properties = []): void
     {
         $activity = new TicketActivity();
         $activity->ticket_id = $ticket->id;
