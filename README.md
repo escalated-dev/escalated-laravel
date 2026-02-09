@@ -17,6 +17,8 @@ A full-featured, embeddable support ticket system for Laravel. Drop it into any 
 - **Email notifications** — Configurable per-event notifications with webhook support
 - **Department routing** — Organize agents into departments with auto-assignment (round-robin)
 - **Tagging system** — Categorize tickets with colored tags
+- **Guest tickets** — Anonymous ticket submission with magic-link access via guest token
+- **Inbound email** — Create and reply to tickets via email (Mailgun, Postmark, AWS SES, IMAP)
 - **Inertia.js + Vue 3 UI** — Shared frontend via [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated)
 
 ## Requirements
@@ -236,6 +238,7 @@ Schedule::command('escalated:check-sla')->everyMinute();
 Schedule::command('escalated:evaluate-escalations')->everyFiveMinutes();
 Schedule::command('escalated:close-resolved')->daily();
 Schedule::command('escalated:purge-activities')->weekly();
+Schedule::command('escalated:poll-imap')->everyMinute(); // Only if using IMAP adapter
 ```
 
 ## Configuration
@@ -298,6 +301,164 @@ Event::listen(TicketCreated::class, function ($event) {
 
 [Full events documentation →](docs/events.md)
 
+## Inbound Email
+
+Escalated can create and reply to tickets from incoming emails. Supports **Mailgun**, **Postmark**, **AWS SES** webhooks, and **IMAP** polling as a fallback.
+
+### How It Works
+
+1. An external email service receives an email at your support address (e.g., `support@yourapp.com`)
+2. The service forwards the email to your application via webhook (or IMAP polling fetches it)
+3. Escalated normalizes the payload into an `InboundMessage` DTO via the adapter
+4. The `InboundEmailService` processes the message:
+   - **Thread matching**: checks the subject for a ticket reference (e.g., `[ESC-00001]`), then checks `In-Reply-To` / `References` headers against stored message IDs
+   - **Match found**: adds a reply to the existing ticket; reopens the ticket if it was resolved or closed
+   - **No match**: creates a new ticket — if the sender is a registered user they become the requester, otherwise a guest ticket is created
+5. Every inbound email is logged to `escalated_inbound_emails` for audit
+
+### Enable Inbound Email
+
+```env
+ESCALATED_INBOUND_EMAIL=true
+ESCALATED_INBOUND_ADDRESS=support@yourapp.com
+```
+
+### Adapter Setup
+
+#### Mailgun
+
+```env
+ESCALATED_INBOUND_ADAPTER=mailgun
+ESCALATED_MAILGUN_SIGNING_KEY=your-mailgun-signing-key
+```
+
+Configure a Mailgun Route to forward inbound emails to:
+
+```
+POST https://yourapp.com/support/inbound/mailgun
+```
+
+The signing key is in your Mailgun dashboard under **Settings > API Keys > HTTP Webhook Signing Key**. Requests are verified via HMAC-SHA256 signature.
+
+#### Postmark
+
+```env
+ESCALATED_INBOUND_ADAPTER=postmark
+ESCALATED_POSTMARK_INBOUND_TOKEN=your-postmark-inbound-token
+```
+
+Configure an Inbound Webhook in your Postmark server settings pointing to:
+
+```
+POST https://yourapp.com/support/inbound/postmark
+```
+
+The token is sent in the `X-Postmark-Token` header and verified on each request.
+
+#### AWS SES
+
+```env
+ESCALATED_INBOUND_ADAPTER=ses
+ESCALATED_SES_REGION=us-east-1
+ESCALATED_SES_TOPIC_ARN=arn:aws:sns:us-east-1:123456789:your-topic
+```
+
+1. Configure SES to receive emails and publish to an SNS topic
+2. Create an HTTPS subscription on the SNS topic pointing to:
+   ```
+   POST https://yourapp.com/support/inbound/ses
+   ```
+3. Escalated auto-confirms the SNS subscription and verifies message signatures using Amazon's certificate
+
+#### IMAP (Fallback)
+
+For providers without webhook support, poll via IMAP:
+
+```env
+ESCALATED_INBOUND_ADAPTER=imap
+ESCALATED_IMAP_HOST=imap.gmail.com
+ESCALATED_IMAP_PORT=993
+ESCALATED_IMAP_ENCRYPTION=ssl
+ESCALATED_IMAP_USERNAME=support@yourapp.com
+ESCALATED_IMAP_PASSWORD=your-app-password
+ESCALATED_IMAP_MAILBOX=INBOX
+```
+
+Schedule the poll command:
+
+```php
+Schedule::command('escalated:poll-imap')->everyMinute();
+```
+
+### Webhook URL
+
+```
+POST /{prefix}/inbound/{adapter}
+```
+
+Where `{prefix}` is your configured route prefix (default: `support`) and `{adapter}` is `mailgun`, `postmark`, or `ses`. These routes use the `api` middleware (no CSRF, no auth).
+
+### Processing Features
+
+- **Thread detection** via subject reference pattern (`[ESC-00001]`) and `In-Reply-To` / `References` headers
+- **Guest tickets** for unknown senders — display name derived from email (e.g., `john.doe@example.com` → `John Doe`)
+- **Subject sanitization** — strips `RE:`, `FW:`, `FWD:` prefixes (including stacked)
+- **HTML fallback** — uses stripped HTML body when plain text is empty
+- **Duplicate detection** — skips messages with duplicate `Message-ID` headers
+- **Attachment handling** — stores attachments respecting `max_attachment_size_kb` and `max_attachments_per_reply`
+- **Auto-reopen** — reopens resolved/closed tickets when a reply arrives via email
+- **Audit logging** — every inbound email recorded in `escalated_inbound_emails` with status tracking
+
+### Custom Adapter
+
+Implement the `InboundAdapter` interface:
+
+```php
+use Escalated\Laravel\Mail\Adapters\InboundAdapter;
+use Escalated\Laravel\Mail\InboundMessage;
+use Illuminate\Http\Request;
+
+class MyAdapter implements InboundAdapter
+{
+    public function parseRequest(Request $request): InboundMessage
+    {
+        return new InboundMessage(
+            fromEmail: $request->input('from'),
+            fromName: $request->input('name'),
+            toEmail: $request->input('to'),
+            subject: $request->input('subject'),
+            bodyText: $request->input('text'),
+            bodyHtml: $request->input('html'),
+            messageId: $request->input('message_id'),
+            inReplyTo: $request->input('in_reply_to'),
+        );
+    }
+
+    public function verifyRequest(Request $request): bool
+    {
+        return $request->header('X-Secret') === config('services.my_adapter.secret');
+    }
+}
+```
+
+### Inbound Email Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ESCALATED_INBOUND_EMAIL` | `false` | Enable inbound email |
+| `ESCALATED_INBOUND_ADAPTER` | `mailgun` | Default adapter |
+| `ESCALATED_INBOUND_ADDRESS` | `support@example.com` | Support email address |
+| `ESCALATED_MAILGUN_SIGNING_KEY` | — | Mailgun webhook signing key |
+| `ESCALATED_POSTMARK_INBOUND_TOKEN` | — | Postmark inbound token |
+| `ESCALATED_SES_REGION` | `us-east-1` | AWS SES region |
+| `ESCALATED_SES_TOPIC_ARN` | — | AWS SNS topic ARN |
+| `ESCALATED_IMAP_HOST` | — | IMAP server hostname |
+| `ESCALATED_IMAP_PORT` | `993` | IMAP server port |
+| `ESCALATED_IMAP_ENCRYPTION` | `ssl` | IMAP encryption |
+| `ESCALATED_IMAP_USERNAME` | — | IMAP username |
+| `ESCALATED_IMAP_PASSWORD` | — | IMAP password |
+| `ESCALATED_IMAP_MAILBOX` | `INBOX` | IMAP mailbox to poll |
+
 ## Routes
 
 | Route | Method | Description |
@@ -305,6 +466,8 @@ Event::listen(TicketCreated::class, function ($event) {
 | `/support` | GET | Customer ticket list |
 | `/support/create` | GET | New ticket form |
 | `/support/{ticket}` | GET | Ticket detail |
+| `/support/guest/create` | GET | Guest ticket form |
+| `/support/guest/{token}` | GET | Guest ticket view (magic link) |
 | `/support/agent` | GET | Agent dashboard |
 | `/support/agent/tickets` | GET | Agent ticket queue |
 | `/support/agent/tickets/{ticket}` | GET | Agent ticket view |
@@ -314,8 +477,11 @@ Event::listen(TicketCreated::class, function ($event) {
 | `/support/admin/escalation-rules` | GET | Escalation rule management |
 | `/support/admin/tags` | GET | Tag management |
 | `/support/admin/canned-responses` | GET | Canned response management |
+| `/support/inbound/mailgun` | POST | Mailgun inbound webhook |
+| `/support/inbound/postmark` | POST | Postmark inbound webhook |
+| `/support/inbound/ses` | POST | SES/SNS inbound webhook |
 
-All routes use the configurable prefix (default: `support`).
+All routes use the configurable prefix (default: `support`). Inbound webhook routes use the `api` middleware (no auth, no CSRF).
 
 ## Documentation
 
