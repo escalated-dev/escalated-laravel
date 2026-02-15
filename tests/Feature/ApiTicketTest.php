@@ -32,6 +32,25 @@ function apiAgent(array $attrs = []): array
     ];
 }
 
+function apiAdmin(array $attrs = []): array
+{
+    $user = TestUser::create(array_merge([
+        'name' => 'API Admin',
+        'email' => 'api-admin-'.uniqid().'@example.com',
+        'password' => bcrypt('password'),
+        'is_agent' => true,
+        'is_admin' => true,
+    ], $attrs));
+
+    $result = ApiToken::createToken($user, 'Admin Token', ['agent', 'admin']);
+
+    return [
+        'user' => $user,
+        'token' => $result['plainTextToken'],
+        'headers' => ['Authorization' => 'Bearer '.$result['plainTextToken']],
+    ];
+}
+
 function createTicket(TestUser $requester, array $overrides = []): Ticket
 {
     return Ticket::create(array_merge([
@@ -114,6 +133,16 @@ it('changes ticket status', function () {
         ->assertJsonPath('status', 'in_progress');
 });
 
+it('rejects invalid status values', function () {
+    $agent = apiAgent();
+    createTicket($agent['user'], ['reference' => 'ESC-00301']);
+
+    $this->patchJson('/support/api/v1/tickets/ESC-00301/status', [
+        'status' => 'nonexistent_status',
+    ], $agent['headers'])
+        ->assertStatus(422);
+});
+
 it('changes ticket priority', function () {
     $agent = apiAgent();
     $ticket = createTicket($agent['user'], ['reference' => 'ESC-00400']);
@@ -155,16 +184,24 @@ it('toggles follow on ticket', function () {
         ->assertJsonPath('following', false);
 });
 
-it('soft deletes a ticket', function () {
-    $agent = apiAgent();
-    $ticket = createTicket($agent['user'], ['reference' => 'ESC-00700']);
+it('admin can soft delete a ticket', function () {
+    $admin = apiAdmin();
+    $ticket = createTicket($admin['user'], ['reference' => 'ESC-00700']);
 
-    $this->deleteJson('/support/api/v1/tickets/ESC-00700', [], $agent['headers'])
+    $this->deleteJson('/support/api/v1/tickets/ESC-00700', [], $admin['headers'])
         ->assertOk()
         ->assertJsonPath('message', 'Ticket deleted.');
 
     expect(Ticket::where('reference', 'ESC-00700')->first())->toBeNull();
     expect(Ticket::withTrashed()->where('reference', 'ESC-00700')->first())->not->toBeNull();
+});
+
+it('agent-only token cannot delete tickets', function () {
+    $agent = apiAgent();
+    createTicket($agent['user'], ['reference' => 'ESC-00701']);
+
+    $this->deleteJson('/support/api/v1/tickets/ESC-00701', [], $agent['headers'])
+        ->assertStatus(403);
 });
 
 it('gets dashboard stats', function () {
@@ -210,4 +247,25 @@ it('returns realtime config', function () {
 
     $this->getJson('/support/api/v1/realtime/config', $agent['headers'])
         ->assertOk();
+});
+
+it('denies access when user loses agent role', function () {
+    $user = TestUser::create([
+        'name' => 'Former Agent',
+        'email' => 'former-'.uniqid().'@example.com',
+        'password' => bcrypt('password'),
+        'is_agent' => true,
+    ]);
+
+    $result = ApiToken::createToken($user, 'Token', ['agent']);
+    $headers = ['Authorization' => 'Bearer '.$result['plainTextToken']];
+
+    // Works while user is agent
+    $this->getJson('/support/api/v1/tickets', $headers)->assertOk();
+
+    // Revoke agent role
+    $user->update(['is_agent' => false]);
+
+    // Now denied
+    $this->getJson('/support/api/v1/tickets', $headers)->assertStatus(403);
 });

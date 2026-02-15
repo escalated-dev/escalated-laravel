@@ -25,20 +25,20 @@ class AdminCannedResponseController extends Controller
             'created_by' => $request->user()->getKey(),
         ]));
 
-        return back()->with('success', 'Canned response created.');
+        return back()->with('success', __('escalated::messages.canned_response.created'));
     }
 
     public function update(CannedResponse $cannedResponse, StoreCannedResponseRequest $request): RedirectResponse
     {
         $cannedResponse->update($request->validated());
 
-        return back()->with('success', 'Canned response updated.');
+        return back()->with('success', __('escalated::messages.canned_response.updated'));
     }
 
     public function destroy(CannedResponse $cannedResponse): RedirectResponse
     {
         $cannedResponse->delete();
 
-        return back()->with('success', 'Canned response deleted.');
+        return back()->with('success', __('escalated::messages.canned_response.deleted'));
     }
 }

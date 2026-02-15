@@ -1,17 +1,17 @@
 @component('mail::message')
-# Ticket Resolved
+# {{ __('escalated::emails.resolved.heading') }}
 
-Your support ticket has been resolved.
+{{ __('escalated::emails.resolved.intro') }}
 
-**Reference:** {{ ->reference }}
-**Subject:** {{ ->subject }}
+**{{ __('escalated::emails.resolved.reference_label') }}:** {{ $ticket->reference }}
+**{{ __('escalated::emails.resolved.subject_label') }}:** {{ $ticket->subject }}
 
-If you need further assistance, you can reopen this ticket.
+{{ __('escalated::emails.resolved.reopen_note') }}
 
-@component('mail::button', ['url' => ])
-View Ticket
+@component('mail::button', ['url' => $url])
+{{ __('escalated::emails.resolved.button') }}
 @endcomponent
 
-Thank you,<br>
+{{ __('escalated::emails.resolved.thanks') }},<br>
 {{ config('app.name') }}
 @endcomponent

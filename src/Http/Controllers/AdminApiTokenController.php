@@ -31,9 +31,17 @@ class AdminApiTokenController extends Controller
         $userModel = Escalated::newUserModel();
         $agentGate = config('escalated.authorization.agent_gate', 'escalated-agent');
 
-        $users = $userModel->newQuery()->get()->filter(function ($user) use ($agentGate) {
-            return Gate::forUser($user)->allows($agentGate);
-        })->map(fn ($u) => ['id' => $u->getKey(), 'name' => $u->name, 'email' => $u->email])->values();
+        $query = $userModel->newQuery();
+        $agentScope = config('escalated.authorization.agent_scope');
+        if ($agentScope && is_callable($agentScope)) {
+            $agentUsers = $agentScope($query)->get();
+        } else {
+            $agentUsers = $query->limit(500)->get()->filter(function ($user) use ($agentGate) {
+                return Gate::forUser($user)->allows($agentGate);
+            });
+        }
+
+        $users = $agentUsers->map(fn ($u) => ['id' => $u->getKey(), 'name' => $u->name, 'email' => $u->email])->values();
 
         return Inertia::render('Escalated/Admin/ApiTokens/Index', [
             'tokens' => $tokens,

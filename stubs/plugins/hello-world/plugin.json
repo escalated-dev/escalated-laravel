@@ -1,0 +1,14 @@
+{
+    "name": "Hello World",
+    "slug": "hello-world",
+    "description": "A simple example plugin that demonstrates the Escalated plugin system.",
+    "version": "1.0.0",
+    "author": "Escalated",
+    "author_url": "https://escalated.dev",
+    "requires": "0.4.0",
+    "main_file": "Plugin.php",
+    "hooks": [
+        "escalated_ticket_created",
+        "escalated_dashboard_stats_data"
+    ]
+}

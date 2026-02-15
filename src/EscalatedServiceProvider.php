@@ -11,6 +11,9 @@ use Escalated\Laravel\Console\Commands\PurgeActivitiesCommand;
 use Escalated\Laravel\Events;
 use Escalated\Laravel\Listeners;
 use Escalated\Laravel\Models\EscalatedSettings;
+use Escalated\Laravel\Services\PluginService;
+use Escalated\Laravel\Services\PluginUIService;
+use Escalated\Laravel\Support\HookManager;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
@@ -26,14 +29,27 @@ class EscalatedServiceProvider extends ServiceProvider
         $this->app->singleton(EscalatedManager::class, function ($app) {
             return new EscalatedManager();
         });
+
+        // Register hook manager singleton
+        $this->app->singleton('escalated.hooks', function ($app) {
+            return new HookManager();
+        });
+
+        // Register plugin UI service singleton
+        $this->app->singleton(PluginUIService::class, function ($app) {
+            return new PluginUIService();
+        });
     }
 
     public function boot(): void
     {
+        $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'escalated');
+
         $this->registerPublishing();
         $this->registerRoutes();
         $this->registerCommands();
         $this->registerEvents();
+        $this->loadPlugins();
         $this->shareInertiaData();
     }
 
@@ -58,6 +74,10 @@ class EscalatedServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../resources/views' => resource_path('views/vendor/escalated'),
         ], 'escalated-views');
+
+        $this->publishes([
+            __DIR__.'/../resources/lang' => $this->app->langPath('vendor/escalated'),
+        ], 'escalated-lang');
     }
 
     protected function registerRoutes(): void
@@ -75,6 +95,11 @@ class EscalatedServiceProvider extends ServiceProvider
         if (config('escalated.api.enabled', false)) {
             $this->loadRoutesFrom(__DIR__.'/../routes/api.php');
             $this->registerApiTokenRoutes();
+        }
+
+        // Plugin admin routes
+        if (config('escalated.plugins.enabled', true)) {
+            $this->loadRoutesFrom(__DIR__.'/../routes/plugins.php');
         }
 
         // Inbound email webhook routes (no auth required)
@@ -116,6 +141,23 @@ class EscalatedServiceProvider extends ServiceProvider
         ]);
     }
 
+    protected function loadPlugins(): void
+    {
+        if (! config('escalated.plugins.enabled', true)) {
+            return;
+        }
+
+        try {
+            $pluginService = $this->app->make(PluginService::class);
+            $pluginService->loadActivePlugins();
+        } catch (\Throwable $e) {
+            // Plugins table may not exist yet or directory issues
+            \Illuminate\Support\Facades\Log::debug('Escalated: Could not load plugins', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
     protected function shareInertiaData(): void
     {
         if (! class_exists(Inertia::class)) {
@@ -138,6 +180,18 @@ class EscalatedServiceProvider extends ServiceProvider
                 }
             } catch (\Throwable) {
                 // Settings table may not exist yet
+            }
+
+            // Share plugin UI extensions if plugins are enabled
+            if (config('escalated.plugins.enabled', true)) {
+                try {
+                    $pluginUI = $this->app->make(PluginUIService::class);
+                    $data['plugin_menu_items'] = $pluginUI->getMenuItems();
+                    $data['plugin_dashboard_widgets'] = $pluginUI->getDashboardWidgets();
+                    $data['plugin_pages'] = $pluginUI->getCustomPages();
+                } catch (\Throwable) {
+                    // Plugin UI service may not be available
+                }
             }
 
             return $data;

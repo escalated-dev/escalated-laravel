@@ -44,7 +44,7 @@ class CustomerTicketController extends Controller
 
         return redirect()
             ->route('escalated.customer.tickets.show', $ticket->reference)
-            ->with('success', 'Ticket created successfully.');
+            ->with('success', __('escalated::messages.ticket.created'));
     }
 
     public function show(Ticket $ticket, Request $request): Response
@@ -71,7 +71,7 @@ class CustomerTicketController extends Controller
             $request->file('attachments', [])
         );
 
-        return back()->with('success', 'Reply sent.');
+        return back()->with('success', __('escalated::messages.ticket.reply_sent'));
     }
 
     public function close(Ticket $ticket, Request $request): RedirectResponse
@@ -79,12 +79,12 @@ class CustomerTicketController extends Controller
         $this->authorizeCustomer($ticket, $request);
 
         if (! config('escalated.tickets.allow_customer_close')) {
-            abort(403, 'Customers cannot close tickets.');
+            abort(403, __('escalated::messages.ticket.customers_cannot_close'));
         }
 
         $this->ticketService->close($ticket, $request->user());
 
-        return back()->with('success', 'Ticket closed.');
+        return back()->with('success', __('escalated::messages.ticket.closed'));
     }
 
     public function reopen(Ticket $ticket, Request $request): RedirectResponse
@@ -93,7 +93,7 @@ class CustomerTicketController extends Controller
 
         $this->ticketService->reopen($ticket, $request->user());
 
-        return back()->with('success', 'Ticket reopened.');
+        return back()->with('success', __('escalated::messages.ticket.reopened'));
     }
 
     protected function authorizeCustomer(Ticket $ticket, Request $request): void

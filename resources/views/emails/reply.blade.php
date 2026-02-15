@@ -1,20 +1,20 @@
 @component('mail::message')
-# New Reply on {{ ->reference }}
+# {{ __('escalated::emails.reply.heading', ['reference' => $ticket->reference]) }}
 
-A new reply has been added to your support ticket.
+{{ __('escalated::emails.reply.intro') }}
 
-**Subject:** {{ ->subject }}
-
----
-
-{{ ->body }}
+**{{ __('escalated::emails.reply.subject_label') }}:** {{ $ticket->subject }}
 
 ---
 
-@component('mail::button', ['url' => ])
-View Ticket
+{{ $reply->body }}
+
+---
+
+@component('mail::button', ['url' => $url])
+{{ __('escalated::emails.reply.button') }}
 @endcomponent
 
-Thank you,<br>
+{{ __('escalated::emails.reply.thanks') }},<br>
 {{ config('app.name') }}
 @endcomponent

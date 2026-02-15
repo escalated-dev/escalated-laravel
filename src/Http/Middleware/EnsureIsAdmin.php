@@ -14,7 +14,7 @@ class EnsureIsAdmin
         $gate = config('escalated.authorization.admin_gate', 'escalated-admin');
 
         if (! Gate::check($gate)) {
-            abort(403, 'You are not authorized as a support administrator.');
+            abort(403, __('escalated::messages.middleware.not_admin'));
         }
 
         return $next($request);

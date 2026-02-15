@@ -20,20 +20,20 @@ class AdminTagController extends Controller
     {
         Tag::create($request->validated());
 
-        return back()->with('success', 'Tag created.');
+        return back()->with('success', __('escalated::messages.tag.created'));
     }
 
     public function update(Tag $tag, StoreTagRequest $request): RedirectResponse
     {
         $tag->update($request->validated());
 
-        return back()->with('success', 'Tag updated.');
+        return back()->with('success', __('escalated::messages.tag.updated'));
     }
 
     public function destroy(Tag $tag): RedirectResponse
     {
         $tag->delete();
 
-        return back()->with('success', 'Tag deleted.');
+        return back()->with('success', __('escalated::messages.tag.deleted'));
     }
 }

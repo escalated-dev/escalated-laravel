@@ -26,20 +26,20 @@ class AdminMacroController extends Controller
             'created_by' => $request->user()->getKey(),
         ]);
 
-        return back()->with('success', 'Macro created.');
+        return back()->with('success', __('escalated::messages.macro.created'));
     }
 
     public function update(Macro $macro, StoreMacroRequest $request): RedirectResponse
     {
         $macro->update($request->validated());
 
-        return back()->with('success', 'Macro updated.');
+        return back()->with('success', __('escalated::messages.macro.updated'));
     }
 
     public function destroy(Macro $macro): RedirectResponse
     {
         $macro->delete();
 
-        return back()->with('success', 'Macro deleted.');
+        return back()->with('success', __('escalated::messages.macro.deleted'));
     }
 }

@@ -22,12 +22,15 @@ class NewTicketNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject("[{$this->ticket->reference}] New Ticket: {$this->ticket->subject}")
-            ->line("A new support ticket has been created.")
-            ->line("**Subject:** {$this->ticket->subject}")
-            ->line("**Priority:** {$this->ticket->priority->label()}")
-            ->action('View Ticket', url(config('escalated.routes.prefix').'/'.$this->ticket->reference))
-            ->line('Thank you for using our support system.');
+            ->subject(__('escalated::notifications.new_ticket.subject', [
+                'reference' => $this->ticket->reference,
+                'subject' => $this->ticket->subject,
+            ]))
+            ->line(__('escalated::notifications.new_ticket.line1'))
+            ->line(__('escalated::notifications.new_ticket.subject_line', ['subject' => $this->ticket->subject]))
+            ->line(__('escalated::notifications.new_ticket.priority_line', ['priority' => $this->ticket->priority->label()]))
+            ->action(__('escalated::notifications.new_ticket.action'), url(config('escalated.routes.prefix').'/'.$this->ticket->reference))
+            ->line(__('escalated::notifications.new_ticket.closing'));
     }
 
     public function toArray(object $notifiable): array

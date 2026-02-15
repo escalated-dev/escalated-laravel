@@ -27,7 +27,7 @@ class AdminEscalationRuleController extends Controller
     {
         EscalationRule::create($request->validated());
 
-        return redirect()->route('escalated.admin.escalation-rules.index')->with('success', 'Rule created.');
+        return redirect()->route('escalated.admin.escalation-rules.index')->with('success', __('escalated::messages.escalation_rule.created'));
     }
 
     public function edit(EscalationRule $escalationRule): Response
@@ -39,13 +39,13 @@ class AdminEscalationRuleController extends Controller
     {
         $escalationRule->update($request->validated());
 
-        return redirect()->route('escalated.admin.escalation-rules.index')->with('success', 'Rule updated.');
+        return redirect()->route('escalated.admin.escalation-rules.index')->with('success', __('escalated::messages.escalation_rule.updated'));
     }
 
     public function destroy(EscalationRule $escalationRule): RedirectResponse
     {
         $escalationRule->delete();
 
-        return redirect()->route('escalated.admin.escalation-rules.index')->with('success', 'Rule deleted.');
+        return redirect()->route('escalated.admin.escalation-rules.index')->with('success', __('escalated::messages.escalation_rule.deleted'));
     }
 }

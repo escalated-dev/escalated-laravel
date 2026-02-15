@@ -27,12 +27,15 @@ class TicketStatusChangedNotification extends Notification implements ShouldQueu
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject("[{$this->ticket->reference}] Status Updated: {$this->newStatus->label()}")
-            ->line("The status of your ticket has been updated.")
-            ->line("**From:** {$this->oldStatus->label()}")
-            ->line("**To:** {$this->newStatus->label()}")
-            ->action('View Ticket', url(config('escalated.routes.prefix').'/'.$this->ticket->reference))
-            ->line('Thank you for using our support system.');
+            ->subject(__('escalated::notifications.ticket_status_changed.subject', [
+                'reference' => $this->ticket->reference,
+                'status' => $this->newStatus->label(),
+            ]))
+            ->line(__('escalated::notifications.ticket_status_changed.line1'))
+            ->line(__('escalated::notifications.ticket_status_changed.from_line', ['status' => $this->oldStatus->label()]))
+            ->line(__('escalated::notifications.ticket_status_changed.to_line', ['status' => $this->newStatus->label()]))
+            ->action(__('escalated::notifications.ticket_status_changed.action'), url(config('escalated.routes.prefix').'/'.$this->ticket->reference))
+            ->line(__('escalated::notifications.ticket_status_changed.closing'));
     }
 
     public function toArray(object $notifiable): array

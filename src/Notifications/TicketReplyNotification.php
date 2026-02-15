@@ -24,11 +24,14 @@ class TicketReplyNotification extends Notification implements ShouldQueue
         $ticket = $this->reply->ticket;
 
         return (new MailMessage)
-            ->subject("Re: [{$ticket->reference}] {$ticket->subject}")
-            ->line("A new reply has been added to your ticket.")
+            ->subject(__('escalated::notifications.ticket_reply.subject', [
+                'reference' => $ticket->reference,
+                'subject' => $ticket->subject,
+            ]))
+            ->line(__('escalated::notifications.ticket_reply.line1'))
             ->line($this->reply->body)
-            ->action('View Ticket', url(config('escalated.routes.prefix').'/'.$ticket->reference))
-            ->line('Thank you for using our support system.');
+            ->action(__('escalated::notifications.ticket_reply.action'), url(config('escalated.routes.prefix').'/'.$ticket->reference))
+            ->line(__('escalated::notifications.ticket_reply.closing'));
     }
 
     public function toArray(object $notifiable): array

@@ -2,6 +2,20 @@
 
 All notable changes to Escalated will be documented in this file.
 
+## [0.5.0] - 2026-02-11
+
+### Added
+- Plugin storage moved to `app/Plugins/Escalated`
+- Composer plugin auto-discovery via `vendor/*/*/plugin.json`
+- Dual-source plugin loading (local + Composer) with `source` field
+- Admin Plugins page with upload, activate/deactivate, and delete controls
+- Plugins sidebar link with puzzle-piece icon
+- Source badges (local/composer) on plugin list
+- Composer plugin deletion guard (controller + service layer)
+- Plugin authoring documentation (`docs/plugins.md`)
+- PluginService unit tests (15 tests)
+- AdminPluginController feature tests (8 tests)
+
 ## [0.1.0] - 2026-02-07
 
 ### Added

@@ -18,11 +18,11 @@ class SatisfactionRatingController extends Controller
         ]);
 
         if (! in_array($ticket->status->value, ['resolved', 'closed'])) {
-            return back()->with('error', 'You can only rate resolved or closed tickets.');
+            return back()->with('error', __('escalated::messages.rating.only_resolved_closed'));
         }
 
         if ($ticket->satisfactionRating()->exists()) {
-            return back()->with('error', 'This ticket has already been rated.');
+            return back()->with('error', __('escalated::messages.rating.already_rated'));
         }
 
         SatisfactionRating::create([
@@ -33,7 +33,7 @@ class SatisfactionRatingController extends Controller
             'rated_by_id' => $request->user()?->getKey(),
         ]);
 
-        return back()->with('success', 'Thank you for your feedback!');
+        return back()->with('success', __('escalated::messages.rating.thanks'));
     }
 
     public function storeGuest(string $token, Request $request): RedirectResponse
@@ -46,11 +46,11 @@ class SatisfactionRatingController extends Controller
         $ticket = Ticket::where('guest_token', $token)->firstOrFail();
 
         if (! in_array($ticket->status->value, ['resolved', 'closed'])) {
-            return back()->with('error', 'You can only rate resolved or closed tickets.');
+            return back()->with('error', __('escalated::messages.rating.only_resolved_closed'));
         }
 
         if ($ticket->satisfactionRating()->exists()) {
-            return back()->with('error', 'This ticket has already been rated.');
+            return back()->with('error', __('escalated::messages.rating.already_rated'));
         }
 
         SatisfactionRating::create([
@@ -59,6 +59,6 @@ class SatisfactionRatingController extends Controller
             'comment' => $request->input('comment'),
         ]);
 
-        return back()->with('success', 'Thank you for your feedback!');
+        return back()->with('success', __('escalated::messages.rating.thanks'));
     }
 }

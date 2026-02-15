@@ -26,14 +26,14 @@ class InboundEmailController extends Controller
     {
         // Verify inbound email is enabled
         if (! EscalatedSettings::getBool('inbound_email_enabled', (bool) config('escalated.inbound_email.enabled', false))) {
-            return response()->json(['error' => 'Inbound email is disabled.'], 404);
+            return response()->json(['error' => __('escalated::messages.inbound_email.disabled')], 404);
         }
 
         // Resolve the adapter
         $adapterInstance = $this->resolveAdapter($adapter);
 
         if (! $adapterInstance) {
-            return response()->json(['error' => 'Unknown adapter.'], 400);
+            return response()->json(['error' => __('escalated::messages.inbound_email.unknown_adapter')], 400);
         }
 
         // Verify the request authenticity
@@ -43,7 +43,7 @@ class InboundEmailController extends Controller
                 'ip' => $request->ip(),
             ]);
 
-            return response()->json(['error' => 'Invalid signature.'], 403);
+            return response()->json(['error' => __('escalated::messages.inbound_email.invalid_signature')], 403);
         }
 
         try {
@@ -60,7 +60,7 @@ class InboundEmailController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            return response()->json(['error' => 'Processing failed.'], 500);
+            return response()->json(['error' => __('escalated::messages.inbound_email.processing_failed')], 500);
         }
     }
 

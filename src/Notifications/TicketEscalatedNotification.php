@@ -25,18 +25,21 @@ class TicketEscalatedNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         $mail = (new MailMessage)
-            ->subject("[Escalated] [{$this->ticket->reference}] {$this->ticket->subject}")
-            ->line("A ticket has been escalated.")
-            ->line("**Subject:** {$this->ticket->subject}")
-            ->line("**Priority:** {$this->ticket->priority->label()}");
+            ->subject(__('escalated::notifications.ticket_escalated.subject', [
+                'reference' => $this->ticket->reference,
+                'subject' => $this->ticket->subject,
+            ]))
+            ->line(__('escalated::notifications.ticket_escalated.line1'))
+            ->line(__('escalated::notifications.ticket_escalated.subject_line', ['subject' => $this->ticket->subject]))
+            ->line(__('escalated::notifications.ticket_escalated.priority_line', ['priority' => $this->ticket->priority->label()]));
 
         if ($this->reason) {
-            $mail->line("**Reason:** {$this->reason}");
+            $mail->line(__('escalated::notifications.ticket_escalated.reason_line', ['reason' => $this->reason]));
         }
 
         return $mail
-            ->action('View Ticket', url(config('escalated.routes.prefix').'/agent/tickets/'.$this->ticket->reference))
-            ->line('Immediate attention is required.');
+            ->action(__('escalated::notifications.ticket_escalated.action'), url(config('escalated.routes.prefix').'/agent/tickets/'.$this->ticket->reference))
+            ->line(__('escalated::notifications.ticket_escalated.closing'));
     }
 
     public function toArray(object $notifiable): array

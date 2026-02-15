@@ -22,12 +22,14 @@ class TicketAssignedNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject("[{$this->ticket->reference}] Ticket Assigned to You")
-            ->line("A ticket has been assigned to you.")
-            ->line("**Subject:** {$this->ticket->subject}")
-            ->line("**Priority:** {$this->ticket->priority->label()}")
-            ->action('View Ticket', url(config('escalated.routes.prefix').'/agent/tickets/'.$this->ticket->reference))
-            ->line('Please review and respond at your earliest convenience.');
+            ->subject(__('escalated::notifications.ticket_assigned.subject', [
+                'reference' => $this->ticket->reference,
+            ]))
+            ->line(__('escalated::notifications.ticket_assigned.line1'))
+            ->line(__('escalated::notifications.ticket_assigned.subject_line', ['subject' => $this->ticket->subject]))
+            ->line(__('escalated::notifications.ticket_assigned.priority_line', ['priority' => $this->ticket->priority->label()]))
+            ->action(__('escalated::notifications.ticket_assigned.action'), url(config('escalated.routes.prefix').'/agent/tickets/'.$this->ticket->reference))
+            ->line(__('escalated::notifications.ticket_assigned.closing'));
     }
 
     public function toArray(object $notifiable): array

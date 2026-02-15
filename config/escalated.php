@@ -158,6 +158,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Plugins
+    |--------------------------------------------------------------------------
+    |
+    | Configure the WordPress-style plugin/extension system. Plugins allow
+    | third-party developers to extend Escalated with custom functionality.
+    |
+    */
+    'plugins' => [
+        'enabled' => env('ESCALATED_PLUGINS_ENABLED', true),
+        'path' => app_path('Plugins/Escalated'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Inbound Email
     |--------------------------------------------------------------------------
     |

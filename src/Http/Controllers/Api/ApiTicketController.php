@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Http\Controllers\Api;
 
+use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Http\Resources\TicketCollectionResource;
@@ -14,6 +15,7 @@ use Escalated\Laravel\Services\TicketService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Validation\Rule;
 
 class ApiTicketController extends Controller
 {
@@ -56,11 +58,11 @@ class ApiTicketController extends Controller
     {
         $validated = $request->validate([
             'subject' => 'required|string|max:255',
-            'description' => 'required|string',
+            'description' => 'required|string|max:65535',
             'priority' => 'sometimes|string|in:low,medium,high,urgent,critical',
-            'department_id' => 'sometimes|nullable|integer',
+            'department_id' => ['sometimes', 'nullable', 'integer', Rule::exists(Escalated::table('departments'), 'id')],
             'tags' => 'sometimes|array',
-            'tags.*' => 'integer',
+            'tags.*' => ['integer', Rule::exists(Escalated::table('tags'), 'id')],
         ]);
 
         $ticket = $this->ticketService->create($request->user(), $validated);
@@ -74,7 +76,7 @@ class ApiTicketController extends Controller
     public function reply(Ticket $ticket, Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'body' => 'required|string',
+            'body' => 'required|string|max:65535',
             'is_internal_note' => 'sometimes|boolean',
         ]);
 
@@ -100,8 +102,10 @@ class ApiTicketController extends Controller
 
     public function status(Ticket $ticket, Request $request): JsonResponse
     {
+        $validStatuses = array_column(TicketStatus::cases(), 'value');
+
         $validated = $request->validate([
-            'status' => 'required|string',
+            'status' => 'required|string|in:'.implode(',', $validStatuses),
         ]);
 
         $this->ticketService->changeStatus($ticket, TicketStatus::from($validated['status']), $request->user());
@@ -123,7 +127,7 @@ class ApiTicketController extends Controller
     public function assign(Ticket $ticket, Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'agent_id' => 'required|integer',
+            'agent_id' => 'required|integer|exists:users,id',
         ]);
 
         $this->assignmentService->assign($ticket, $validated['agent_id'], $request->user());
@@ -149,7 +153,7 @@ class ApiTicketController extends Controller
     public function applyMacro(Ticket $ticket, Request $request, MacroService $macroService): JsonResponse
     {
         $validated = $request->validate([
-            'macro_id' => 'required|integer',
+            'macro_id' => ['required', 'integer', Rule::exists(Escalated::table('macros'), 'id')],
         ]);
 
         $macro = Macro::forAgent($request->user()->getKey())->findOrFail($validated['macro_id']);
@@ -162,7 +166,7 @@ class ApiTicketController extends Controller
     {
         $validated = $request->validate([
             'tag_ids' => 'required|array',
-            'tag_ids.*' => 'integer',
+            'tag_ids.*' => ['integer', Rule::exists(Escalated::table('tags'), 'id')],
         ]);
 
         $newTagIds = collect($validated['tag_ids'])->map(fn ($id) => (int) $id);

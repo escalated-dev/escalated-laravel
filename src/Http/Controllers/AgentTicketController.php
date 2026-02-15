@@ -72,42 +72,42 @@ class AgentTicketController extends Controller
     {
         $this->ticketService->update($ticket, $request->validated());
 
-        return back()->with('success', 'Ticket updated.');
+        return back()->with('success', __('escalated::messages.ticket.updated'));
     }
 
     public function reply(Ticket $ticket, ReplyToTicketRequest $request): RedirectResponse
     {
         $this->ticketService->reply($ticket, $request->user(), $request->validated('body'), $request->file('attachments', []));
 
-        return back()->with('success', 'Reply sent.');
+        return back()->with('success', __('escalated::messages.ticket.reply_sent'));
     }
 
     public function note(Ticket $ticket, ReplyToTicketRequest $request): RedirectResponse
     {
         $this->ticketService->addNote($ticket, $request->user(), $request->validated('body'), $request->file('attachments', []));
 
-        return back()->with('success', 'Note added.');
+        return back()->with('success', __('escalated::messages.ticket.note_added'));
     }
 
     public function assign(Ticket $ticket, AssignTicketRequest $request): RedirectResponse
     {
         $this->assignmentService->assign($ticket, $request->validated('agent_id'), $request->user());
 
-        return back()->with('success', 'Ticket assigned.');
+        return back()->with('success', __('escalated::messages.ticket.assigned'));
     }
 
     public function status(Ticket $ticket, ChangeStatusRequest $request): RedirectResponse
     {
         $this->ticketService->changeStatus($ticket, TicketStatus::from($request->validated('status')), $request->user());
 
-        return back()->with('success', 'Status updated.');
+        return back()->with('success', __('escalated::messages.ticket.status_updated'));
     }
 
     public function priority(Ticket $ticket, ChangePriorityRequest $request): RedirectResponse
     {
         $this->ticketService->changePriority($ticket, TicketPriority::from($request->validated('priority')), $request->user());
 
-        return back()->with('success', 'Priority updated.');
+        return back()->with('success', __('escalated::messages.ticket.priority_updated'));
     }
 
     public function tags(Ticket $ticket, UpdateTagsRequest $request): RedirectResponse
@@ -125,7 +125,7 @@ class AgentTicketController extends Controller
             $this->ticketService->removeTags($ticket, $toRemove, $request->user());
         }
 
-        return back()->with('success', 'Tags updated.');
+        return back()->with('success', __('escalated::messages.ticket.tags_updated'));
     }
 
     public function department(Ticket $ticket, Request $request): RedirectResponse
@@ -134,7 +134,7 @@ class AgentTicketController extends Controller
 
         $this->ticketService->changeDepartment($ticket, $request->integer('department_id'), $request->user());
 
-        return back()->with('success', 'Department updated.');
+        return back()->with('success', __('escalated::messages.ticket.department_updated'));
     }
 
     public function applyMacro(Ticket $ticket, Request $request, MacroService $macroService): RedirectResponse
@@ -144,7 +144,7 @@ class AgentTicketController extends Controller
         $macro = Macro::forAgent($request->user()->getKey())->findOrFail($request->integer('macro_id'));
         $macroService->apply($macro, $ticket, $request->user());
 
-        return back()->with('success', "Macro \"{$macro->name}\" applied.");
+        return back()->with('success', __('escalated::messages.ticket.macro_applied', ['name' => $macro->name]));
     }
 
     public function follow(Ticket $ticket, Request $request): RedirectResponse
@@ -154,12 +154,12 @@ class AgentTicketController extends Controller
         if ($ticket->isFollowedBy($userId)) {
             $ticket->unfollow($userId);
 
-            return back()->with('success', 'Unfollowed ticket.');
+            return back()->with('success', __('escalated::messages.ticket.unfollowed'));
         }
 
         $ticket->follow($userId);
 
-        return back()->with('success', 'Following ticket.');
+        return back()->with('success', __('escalated::messages.ticket.following'));
     }
 
     public function presence(Ticket $ticket, Request $request): \Illuminate\Http\JsonResponse
@@ -193,7 +193,7 @@ class AgentTicketController extends Controller
     public function pin(Ticket $ticket, Reply $reply, Request $request): RedirectResponse
     {
         if (! $reply->is_internal_note) {
-            return back()->with('error', 'Only internal notes can be pinned.');
+            return back()->with('error', __('escalated::messages.ticket.only_internal_notes_pinned'));
         }
 
         $reply->update(['is_pinned' => ! $reply->is_pinned]);

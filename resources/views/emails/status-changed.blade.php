@@ -1,17 +1,17 @@
 @component('mail::message')
-# Ticket Status Updated
+# {{ __('escalated::emails.status_changed.heading') }}
 
-The status of your support ticket has been updated.
+{{ __('escalated::emails.status_changed.intro') }}
 
-**Reference:** {{ ->reference }}
-**Subject:** {{ ->subject }}
-**Previous Status:** {{ ->label() }}
-**New Status:** {{ ->label() }}
+**{{ __('escalated::emails.status_changed.reference_label') }}:** {{ $ticket->reference }}
+**{{ __('escalated::emails.status_changed.subject_label') }}:** {{ $ticket->subject }}
+**{{ __('escalated::emails.status_changed.previous_status_label') }}:** {{ $oldStatus->label() }}
+**{{ __('escalated::emails.status_changed.new_status_label') }}:** {{ $newStatus->label() }}
 
-@component('mail::button', ['url' => ])
-View Ticket
+@component('mail::button', ['url' => $url])
+{{ __('escalated::emails.status_changed.button') }}
 @endcomponent
 
-Thank you,<br>
+{{ __('escalated::emails.status_changed.thanks') }},<br>
 {{ config('app.name') }}
 @endcomponent

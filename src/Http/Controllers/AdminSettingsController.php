@@ -51,7 +51,7 @@ class AdminSettingsController extends Controller
             EscalatedSettings::set($key, is_bool($value) ? ($value ? '1' : '0') : (string) $value);
         }
 
-        return redirect()->back()->with('success', 'Settings updated.');
+        return redirect()->back()->with('success', __('escalated::messages.settings.updated'));
     }
 
     protected function getSettings(): array

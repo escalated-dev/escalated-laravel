@@ -1,19 +1,19 @@
 @component('mail::message')
-# Ticket Assigned to You
+# {{ __('escalated::emails.assigned.heading') }}
 
-A support ticket has been assigned to you.
+{{ __('escalated::emails.assigned.intro') }}
 
-**Reference:** {{ ->reference }}
-**Subject:** {{ ->subject }}
-**Priority:** {{ ->priority->label() }}
-**Status:** {{ ->status->label() }}
+**{{ __('escalated::emails.assigned.reference_label') }}:** {{ $ticket->reference }}
+**{{ __('escalated::emails.assigned.subject_label') }}:** {{ $ticket->subject }}
+**{{ __('escalated::emails.assigned.priority_label') }}:** {{ $ticket->priority->label() }}
+**{{ __('escalated::emails.assigned.status_label') }}:** {{ $ticket->status->label() }}
 
-@component('mail::button', ['url' => ])
-View Ticket
+@component('mail::button', ['url' => $url])
+{{ __('escalated::emails.assigned.button') }}
 @endcomponent
 
-Please review and respond at your earliest convenience.
+{{ __('escalated::emails.assigned.closing') }}
 
-Thank you,<br>
+{{ __('escalated::emails.assigned.thanks') }},<br>
 {{ config('app.name') }}
 @endcomponent

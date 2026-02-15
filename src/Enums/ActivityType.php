@@ -21,6 +21,6 @@ enum ActivityType: string
 
     public function label(): string
     {
-        return str_replace('_', ' ', ucfirst($this->value));
+        return __('escalated::enums.activity_type.'.$this->value);
     }
 }

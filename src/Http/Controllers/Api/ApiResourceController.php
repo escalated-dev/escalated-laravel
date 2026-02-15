@@ -24,9 +24,17 @@ class ApiResourceController extends Controller
         $userModel = Escalated::newUserModel();
         $agentGate = config('escalated.authorization.agent_gate', 'escalated-agent');
 
-        $agents = $userModel->newQuery()->get()->filter(function ($user) use ($agentGate) {
-            return Gate::forUser($user)->allows($agentGate);
-        })->values();
+        $query = $userModel->newQuery();
+
+        // Use escalated.authorization.agent_scope if defined, otherwise fall back to Gate filter with a limit
+        $agentScope = config('escalated.authorization.agent_scope');
+        if ($agentScope && is_callable($agentScope)) {
+            $agents = $agentScope($query)->get();
+        } else {
+            $agents = $query->limit(500)->get()->filter(function ($user) use ($agentGate) {
+                return Gate::forUser($user)->allows($agentGate);
+            })->values();
+        }
 
         return response()->json(['data' => AgentResource::collection($agents)]);
     }

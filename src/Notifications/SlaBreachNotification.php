@@ -24,16 +24,21 @@ class SlaBreachNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $typeLabel = $this->breachType === 'first_response' ? 'First Response' : 'Resolution';
+        $typeLabel = $this->breachType === 'first_response'
+            ? __('escalated::notifications.sla_breach.type_first_response')
+            : __('escalated::notifications.sla_breach.type_resolution');
 
         return (new MailMessage)
-            ->subject("[SLA Breach] [{$this->ticket->reference}] {$typeLabel} SLA Breached")
-            ->line("An SLA has been breached on ticket {$this->ticket->reference}.")
-            ->line("**Type:** {$typeLabel} SLA")
-            ->line("**Subject:** {$this->ticket->subject}")
-            ->line("**Priority:** {$this->ticket->priority->label()}")
-            ->action('View Ticket', url(config('escalated.routes.prefix').'/agent/tickets/'.$this->ticket->reference))
-            ->line('Immediate attention is required.');
+            ->subject(__('escalated::notifications.sla_breach.subject', [
+                'reference' => $this->ticket->reference,
+                'type' => $typeLabel,
+            ]))
+            ->line(__('escalated::notifications.sla_breach.line1', ['reference' => $this->ticket->reference]))
+            ->line(__('escalated::notifications.sla_breach.type_line', ['type' => $typeLabel]))
+            ->line(__('escalated::notifications.sla_breach.subject_line', ['subject' => $this->ticket->subject]))
+            ->line(__('escalated::notifications.sla_breach.priority_line', ['priority' => $this->ticket->priority->label()]))
+            ->action(__('escalated::notifications.sla_breach.action'), url(config('escalated.routes.prefix').'/agent/tickets/'.$this->ticket->reference))
+            ->line(__('escalated::notifications.sla_breach.closing'));
     }
 
     public function toArray(object $notifiable): array

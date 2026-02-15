@@ -12,13 +12,7 @@ enum TicketPriority: string
 
     public function label(): string
     {
-        return match ($this) {
-            self::Low => 'Low',
-            self::Medium => 'Medium',
-            self::High => 'High',
-            self::Urgent => 'Urgent',
-            self::Critical => 'Critical',
-        };
+        return __('escalated::enums.priority.'.$this->value);
     }
 
     public function color(): string

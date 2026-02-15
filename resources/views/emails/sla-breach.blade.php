@@ -1,19 +1,19 @@
 @component('mail::message')
-# SLA Breach Alert
+# {{ __('escalated::emails.sla_breach.heading') }}
 
-An SLA has been breached on a support ticket.
+{{ __('escalated::emails.sla_breach.intro') }}
 
-**Reference:** {{ ->reference }}
-**Subject:** {{ ->subject }}
-**Priority:** {{ ->priority->label() }}
-**Breach Type:** {{  === 'first_response' ? 'First Response' : 'Resolution' }}
+**{{ __('escalated::emails.sla_breach.reference_label') }}:** {{ $ticket->reference }}
+**{{ __('escalated::emails.sla_breach.subject_label') }}:** {{ $ticket->subject }}
+**{{ __('escalated::emails.sla_breach.priority_label') }}:** {{ $ticket->priority->label() }}
+**{{ __('escalated::emails.sla_breach.breach_type_label') }}:** {{ $breachType === 'first_response' ? __('escalated::emails.sla_breach.first_response') : __('escalated::emails.sla_breach.resolution') }}
 
-Immediate attention is required.
+{{ __('escalated::emails.sla_breach.attention_note') }}
 
-@component('mail::button', ['url' => ])
-View Ticket
+@component('mail::button', ['url' => $url])
+{{ __('escalated::emails.sla_breach.button') }}
 @endcomponent
 
-Thank you,<br>
+{{ __('escalated::emails.sla_breach.thanks') }},<br>
 {{ config('app.name') }}
 @endcomponent

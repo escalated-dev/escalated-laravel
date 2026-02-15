@@ -14,7 +14,7 @@ class EnsureIsAgent
         $gate = config('escalated.authorization.agent_gate', 'escalated-agent');
 
         if (! Gate::check($gate)) {
-            abort(403, 'You are not authorized as a support agent.');
+            abort(403, __('escalated::messages.middleware.not_agent'));
         }
 
         return $next($request);

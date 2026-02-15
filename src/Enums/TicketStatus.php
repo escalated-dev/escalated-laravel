@@ -15,16 +15,7 @@ enum TicketStatus: string
 
     public function label(): string
     {
-        return match ($this) {
-            self::Open => 'Open',
-            self::InProgress => 'In Progress',
-            self::WaitingOnCustomer => 'Waiting on Customer',
-            self::WaitingOnAgent => 'Waiting on Agent',
-            self::Escalated => 'Escalated',
-            self::Resolved => 'Resolved',
-            self::Closed => 'Closed',
-            self::Reopened => 'Reopened',
-        };
+        return __('escalated::enums.status.'.$this->value);
     }
 
     public function color(): string

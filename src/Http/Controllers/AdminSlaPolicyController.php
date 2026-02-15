@@ -27,7 +27,7 @@ class AdminSlaPolicyController extends Controller
     {
         SlaPolicy::create($request->validated());
 
-        return redirect()->route('escalated.admin.sla-policies.index')->with('success', 'SLA Policy created.');
+        return redirect()->route('escalated.admin.sla-policies.index')->with('success', __('escalated::messages.sla_policy.created'));
     }
 
     public function edit(SlaPolicy $slaPolicy): Response
@@ -41,13 +41,13 @@ class AdminSlaPolicyController extends Controller
     {
         $slaPolicy->update($request->validated());
 
-        return redirect()->route('escalated.admin.sla-policies.index')->with('success', 'SLA Policy updated.');
+        return redirect()->route('escalated.admin.sla-policies.index')->with('success', __('escalated::messages.sla_policy.updated'));
     }
 
     public function destroy(SlaPolicy $slaPolicy): RedirectResponse
     {
         $slaPolicy->delete();
 
-        return redirect()->route('escalated.admin.sla-policies.index')->with('success', 'SLA Policy deleted.');
+        return redirect()->route('escalated.admin.sla-policies.index')->with('success', __('escalated::messages.sla_policy.deleted'));
     }
 }

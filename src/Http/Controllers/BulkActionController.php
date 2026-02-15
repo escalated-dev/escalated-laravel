@@ -44,6 +44,6 @@ class BulkActionController extends Controller
             }
         }
 
-        return back()->with('success', "{$successCount} ticket(s) updated.");
+        return back()->with('success', __('escalated::messages.bulk.updated', ['count' => $successCount]));
     }
 }

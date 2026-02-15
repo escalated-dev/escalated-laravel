@@ -22,12 +22,14 @@ class TicketResolvedNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject("[{$this->ticket->reference}] Ticket Resolved")
-            ->line("Your support ticket has been resolved.")
-            ->line("**Subject:** {$this->ticket->subject}")
-            ->line("If you need further assistance, you can reopen this ticket.")
-            ->action('View Ticket', url(config('escalated.routes.prefix').'/'.$this->ticket->reference))
-            ->line('Thank you for using our support system.');
+            ->subject(__('escalated::notifications.ticket_resolved.subject', [
+                'reference' => $this->ticket->reference,
+            ]))
+            ->line(__('escalated::notifications.ticket_resolved.line1'))
+            ->line(__('escalated::notifications.ticket_resolved.subject_line', ['subject' => $this->ticket->subject]))
+            ->line(__('escalated::notifications.ticket_resolved.reopen_line'))
+            ->action(__('escalated::notifications.ticket_resolved.action'), url(config('escalated.routes.prefix').'/'.$this->ticket->reference))
+            ->line(__('escalated::notifications.ticket_resolved.closing'));
     }
 
     public function toArray(object $notifiable): array

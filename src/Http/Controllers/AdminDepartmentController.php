@@ -27,7 +27,7 @@ class AdminDepartmentController extends Controller
     {
         Department::create($request->validated());
 
-        return redirect()->route('escalated.admin.departments.index')->with('success', 'Department created.');
+        return redirect()->route('escalated.admin.departments.index')->with('success', __('escalated::messages.department.created'));
     }
 
     public function edit(Department $department): Response
@@ -41,13 +41,13 @@ class AdminDepartmentController extends Controller
     {
         $department->update($request->validated());
 
-        return redirect()->route('escalated.admin.departments.index')->with('success', 'Department updated.');
+        return redirect()->route('escalated.admin.departments.index')->with('success', __('escalated::messages.department.updated'));
     }
 
     public function destroy(Department $department): RedirectResponse
     {
         $department->delete();
 
-        return redirect()->route('escalated.admin.departments.index')->with('success', 'Department deleted.');
+        return redirect()->route('escalated.admin.departments.index')->with('success', __('escalated::messages.department.deleted'));
     }
 }

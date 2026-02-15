@@ -16,7 +16,7 @@ class InstallCommand extends Command
 
     public function handle(): int
     {
-        $this->info('Installing Escalated...');
+        $this->info(__('escalated::commands.install.installing'));
         $this->newLine();
 
         $force = $this->option('force');
@@ -45,7 +45,7 @@ class InstallCommand extends Command
 
     protected function publishConfig(bool $force): void
     {
-        $this->components->task('Publishing configuration', function () use ($force) {
+        $this->components->task(__('escalated::commands.install.publishing_config'), function () use ($force) {
             $this->callSilently('vendor:publish', [
                 '--tag' => 'escalated-config',
                 '--force' => $force,
@@ -55,7 +55,7 @@ class InstallCommand extends Command
 
     protected function publishMigrations(bool $force): void
     {
-        $this->components->task('Publishing migrations', function () use ($force) {
+        $this->components->task(__('escalated::commands.install.publishing_migrations'), function () use ($force) {
             $this->callSilently('vendor:publish', [
                 '--tag' => 'escalated-migrations',
                 '--force' => $force,
@@ -65,7 +65,7 @@ class InstallCommand extends Command
 
     protected function publishEmailViews(bool $force): void
     {
-        $this->components->task('Publishing email views', function () use ($force) {
+        $this->components->task(__('escalated::commands.install.publishing_views'), function () use ($force) {
             $this->callSilently('vendor:publish', [
                 '--tag' => 'escalated-views',
                 '--force' => $force,
@@ -75,11 +75,11 @@ class InstallCommand extends Command
 
     protected function installNpmPackage(): void
     {
-        $this->components->task('Installing npm package', function () {
+        $this->components->task(__('escalated::commands.install.installing_npm'), function () {
             $result = Process::run('npm install @escalated-dev/escalated');
 
             if (! $result->successful()) {
-                $this->components->warn('Could not install npm package automatically. Run manually:');
+                $this->components->warn(__('escalated::commands.install.npm_manual'));
                 $this->line('  npm install @escalated-dev/escalated');
 
                 return false;
@@ -89,12 +89,12 @@ class InstallCommand extends Command
 
     protected function outputSetupInstructions(): void
     {
-        $this->components->info('Escalated installed successfully!');
+        $this->components->info(__('escalated::commands.install.success'));
         $this->newLine();
 
-        $this->line('  Next steps:');
+        $this->line('  '.__('escalated::commands.install.next_steps'));
         $this->newLine();
-        $this->line('  1. Implement the Ticketable interface on your User model:');
+        $this->line('  '.__('escalated::commands.install.step1'));
         $this->newLine();
         $this->line('     use Escalated\Laravel\Contracts\HasTickets;');
         $this->line('     use Escalated\Laravel\Contracts\Ticketable;');
@@ -104,16 +104,16 @@ class InstallCommand extends Command
         $this->line('         use HasTickets;');
         $this->line('     }');
         $this->newLine();
-        $this->line('  2. Define authorization gates in your AuthServiceProvider:');
+        $this->line('  '.__('escalated::commands.install.step2'));
         $this->newLine();
         $this->line('     Gate::define(\'escalated-admin\', fn ($user) => $user->is_admin);');
         $this->line('     Gate::define(\'escalated-agent\', fn ($user) => $user->is_agent);');
         $this->newLine();
-        $this->line('  3. Run migrations:');
+        $this->line('  '.__('escalated::commands.install.step3'));
         $this->newLine();
         $this->line('     php artisan migrate');
         $this->newLine();
-        $this->line('  4. Add Escalated pages to your Tailwind content config:');
+        $this->line('  '.__('escalated::commands.install.step4'));
         $this->newLine();
         $this->line('     // tailwind.config.js');
         $this->line('     content: [');
@@ -121,7 +121,7 @@ class InstallCommand extends Command
         $this->line('         \'./node_modules/@escalated-dev/escalated/src/**/*.vue\',');
         $this->line('     ]');
         $this->newLine();
-        $this->line('  5. Add the Inertia page resolver and plugin in your app.ts:');
+        $this->line('  '.__('escalated::commands.install.step5'));
         $this->newLine();
         $this->line('     import { EscalatedPlugin } from \'@escalated-dev/escalated\';');
         $this->newLine();
@@ -143,7 +143,7 @@ class InstallCommand extends Command
         $this->line('     // In setup:');
         $this->line('     app.use(EscalatedPlugin, { layout: YourAppLayout })');
         $this->newLine();
-        $this->line('  6. Visit /support to see the customer portal');
+        $this->line('  '.__('escalated::commands.install.step6'));
         $this->newLine();
     }
 }

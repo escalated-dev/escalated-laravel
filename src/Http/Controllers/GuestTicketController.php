@@ -75,7 +75,7 @@ class GuestTicketController extends Controller
 
         return redirect()
             ->route('escalated.guest.tickets.show', $ticket->guest_token)
-            ->with('success', 'Ticket created. Save this link to check your ticket status.');
+            ->with('success', __('escalated::messages.guest.created'));
     }
 
     public function show(string $token): Response
@@ -97,7 +97,7 @@ class GuestTicketController extends Controller
         $ticket = Ticket::where('guest_token', $token)->firstOrFail();
 
         if ($ticket->status === TicketStatus::Closed) {
-            return back()->with('error', 'This ticket is closed.');
+            return back()->with('error', __('escalated::messages.guest.ticket_closed'));
         }
 
         $validated = $request->validate([
@@ -121,6 +121,6 @@ class GuestTicketController extends Controller
 
         Events\ReplyCreated::dispatch($reply);
 
-        return back()->with('success', 'Reply sent.');
+        return back()->with('success', __('escalated::messages.ticket.reply_sent'));
     }
 }
