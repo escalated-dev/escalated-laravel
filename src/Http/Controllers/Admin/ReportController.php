@@ -1,6 +1,6 @@
 <?php
 
-namespace Escalated\Laravel\Http\Controllers;
+namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Escalated\Laravel\Models\SatisfactionRating;
 use Escalated\Laravel\Models\Ticket;
@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class AdminReportController extends Controller
+class ReportController extends Controller
 {
     public function __invoke(Request $request): Response
     {

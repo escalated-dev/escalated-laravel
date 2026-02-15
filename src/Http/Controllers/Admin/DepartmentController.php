@@ -1,6 +1,6 @@
 <?php
 
-namespace Escalated\Laravel\Http\Controllers;
+namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Escalated\Laravel\Http\Requests\StoreDepartmentRequest;
 use Escalated\Laravel\Models\Department;
@@ -9,7 +9,7 @@ use Illuminate\Routing\Controller;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class AdminDepartmentController extends Controller
+class DepartmentController extends Controller
 {
     public function index(): Response
     {

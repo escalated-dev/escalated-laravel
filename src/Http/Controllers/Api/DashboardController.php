@@ -7,7 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 
-class ApiDashboardController extends Controller
+class DashboardController extends Controller
 {
     public function __invoke(Request $request): JsonResponse
     {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Escalated\Laravel\Http\Controllers;
+namespace Escalated\Laravel\Http\Controllers\Guest;
 
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
@@ -17,7 +17,7 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class GuestTicketController extends Controller
+class TicketController extends Controller
 {
     public function __construct(protected AttachmentService $attachmentService) {}
 

@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
 
-class ApiAuthController extends Controller
+class AuthController extends Controller
 {
     public function validate(Request $request): JsonResponse
     {

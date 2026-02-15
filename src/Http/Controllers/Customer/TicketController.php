@@ -1,6 +1,6 @@
 <?php
 
-namespace Escalated\Laravel\Http\Controllers;
+namespace Escalated\Laravel\Http\Controllers\Customer;
 
 use Escalated\Laravel\Http\Requests\CreateTicketRequest;
 use Escalated\Laravel\Http\Requests\ReplyToTicketRequest;
@@ -13,7 +13,7 @@ use Illuminate\Routing\Controller;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class CustomerTicketController extends Controller
+class TicketController extends Controller
 {
     public function __construct(protected TicketService $ticketService) {}
 

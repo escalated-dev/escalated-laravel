@@ -1,6 +1,6 @@
 <?php
 
-namespace Escalated\Laravel\Http\Controllers;
+namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Escalated\Laravel\Http\Requests\StoreEscalationRuleRequest;
 use Escalated\Laravel\Models\EscalationRule;
@@ -9,7 +9,7 @@ use Illuminate\Routing\Controller;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class AdminEscalationRuleController extends Controller
+class EscalationRuleController extends Controller
 {
     public function index(): Response
     {

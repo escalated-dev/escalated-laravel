@@ -1,6 +1,6 @@
 <?php
 
-namespace Escalated\Laravel\Http\Controllers;
+namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Escalated\Laravel\Services\PluginService;
 use Illuminate\Http\Request;
@@ -8,7 +8,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
-class AdminPluginController extends Controller
+class PluginController extends Controller
 {
     protected PluginService $pluginService;
 

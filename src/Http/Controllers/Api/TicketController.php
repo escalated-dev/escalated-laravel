@@ -17,7 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Validation\Rule;
 
-class ApiTicketController extends Controller
+class TicketController extends Controller
 {
     public function __construct(
         protected TicketService $ticketService,

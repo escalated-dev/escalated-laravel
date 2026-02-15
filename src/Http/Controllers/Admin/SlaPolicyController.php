@@ -1,6 +1,6 @@
 <?php
 
-namespace Escalated\Laravel\Http\Controllers;
+namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Escalated\Laravel\Http\Requests\StoreSlaPolicyRequest;
 use Escalated\Laravel\Models\SlaPolicy;
@@ -9,7 +9,7 @@ use Illuminate\Routing\Controller;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class AdminSlaPolicyController extends Controller
+class SlaPolicyController extends Controller
 {
     public function index(): Response
     {

@@ -1,15 +1,15 @@
 <?php
 
-namespace Escalated\Laravel\Http\Controllers;
+namespace Escalated\Laravel\Http\Controllers\Agent;
 
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
-use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Http\Requests\AssignTicketRequest;
 use Escalated\Laravel\Http\Requests\ChangePriorityRequest;
 use Escalated\Laravel\Http\Requests\ChangeStatusRequest;
 use Escalated\Laravel\Http\Requests\ReplyToTicketRequest;
 use Escalated\Laravel\Http\Requests\UpdateTagsRequest;
+use Escalated\Laravel\Http\Requests\UpdateTicketRequest;
 use Escalated\Laravel\Models\CannedResponse;
 use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\Macro;
@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class AdminTicketController extends Controller
+class TicketController extends Controller
 {
     public function __construct(
         protected TicketService $ticketService,
@@ -40,12 +40,11 @@ class AdminTicketController extends Controller
             $request->has('following') ? $request->user() : null,
         );
 
-        return Inertia::render('Escalated/Admin/Tickets/Index', [
+        return Inertia::render('Escalated/Agent/TicketIndex', [
             'tickets' => $tickets,
             'filters' => $request->all(),
             'departments' => Department::active()->get(['id', 'name']),
             'tags' => Tag::all(['id', 'name', 'color']),
-            'agents' => $this->getAgents(),
         ]);
     }
 
@@ -58,16 +57,22 @@ class AdminTicketController extends Controller
             'satisfactionRating', 'pinnedNotes.author',
         ]);
 
-        return Inertia::render('Escalated/Admin/Tickets/Show', [
+        return Inertia::render('Escalated/Agent/TicketShow', [
             'ticket' => $ticket,
             'departments' => Department::active()->get(['id', 'name']),
             'tags' => Tag::all(['id', 'name', 'color']),
             'cannedResponses' => CannedResponse::forAgent($request->user()->getKey())->get(),
-            'agents' => $this->getAgents(),
             'macros' => Macro::forAgent($request->user()->getKey())->orderBy('order')->get(),
             'is_following' => $ticket->isFollowedBy($request->user()->getKey()),
             'followers_count' => $ticket->followers()->count(),
         ]);
+    }
+
+    public function update(Ticket $ticket, UpdateTicketRequest $request): RedirectResponse
+    {
+        $this->ticketService->update($ticket, $request->validated());
+
+        return back()->with('success', __('escalated::messages.ticket.updated'));
     }
 
     public function reply(Ticket $ticket, ReplyToTicketRequest $request): RedirectResponse
@@ -166,13 +171,16 @@ class AdminTicketController extends Controller
         Cache::put($cacheKey, ['id' => $userId, 'name' => $userName], 60);
 
         $viewers = [];
+        $prefix = "escalated.presence.{$ticket->id}.";
 
+        // Collect all viewers from cache
         foreach (Cache::get("escalated.presence_list.{$ticket->id}", []) as $uid) {
             if ($uid !== $userId && Cache::has("escalated.presence.{$ticket->id}.{$uid}")) {
                 $viewers[] = Cache::get("escalated.presence.{$ticket->id}.{$uid}");
             }
         }
 
+        // Track active user IDs
         $activeIds = Cache::get("escalated.presence_list.{$ticket->id}", []);
         if (! in_array($userId, $activeIds)) {
             $activeIds[] = $userId;
@@ -191,20 +199,5 @@ class AdminTicketController extends Controller
         $reply->update(['is_pinned' => ! $reply->is_pinned]);
 
         return back()->with('success', $reply->is_pinned ? 'Note pinned.' : 'Note unpinned.');
-    }
-
-    protected function getAgents(): array
-    {
-        $userModel = Escalated::userModel();
-        $users = $userModel::all();
-
-        return $users->filter(function ($user) {
-            return (method_exists($user, 'escalated_agent') && $user->escalated_agent())
-                || (method_exists($user, 'escalated_admin') && $user->escalated_admin());
-        })->map(fn ($user) => [
-            'id' => $user->getKey(),
-            'name' => $user->name,
-            'email' => $user->email,
-        ])->values()->all();
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Escalated\Laravel\Http\Controllers;
+namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Escalated\Laravel\Http\Requests\StoreTagRequest;
 use Escalated\Laravel\Models\Tag;
@@ -9,7 +9,7 @@ use Illuminate\Routing\Controller;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class AdminTagController extends Controller
+class TagController extends Controller
 {
     public function index(): Response
     {

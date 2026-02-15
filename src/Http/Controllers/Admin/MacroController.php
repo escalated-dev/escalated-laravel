@@ -1,6 +1,6 @@
 <?php
 
-namespace Escalated\Laravel\Http\Controllers;
+namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Escalated\Laravel\Http\Requests\StoreMacroRequest;
 use Escalated\Laravel\Models\Macro;
@@ -10,7 +10,7 @@ use Illuminate\Routing\Controller;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class AdminMacroController extends Controller
+class MacroController extends Controller
 {
     public function index(Request $request): Response
     {

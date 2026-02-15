@@ -1,6 +1,6 @@
 <?php
 
-namespace Escalated\Laravel\Http\Controllers;
+namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Models\ApiToken;
@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class AdminApiTokenController extends Controller
+class ApiTokenController extends Controller
 {
     public function index(): Response
     {

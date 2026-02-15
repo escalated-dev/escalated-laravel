@@ -1,6 +1,6 @@
 <?php
 
-namespace Escalated\Laravel\Http\Controllers;
+namespace Escalated\Laravel\Http\Controllers\Agent;
 
 use Escalated\Laravel\Models\Ticket;
 use Illuminate\Http\Request;
@@ -8,7 +8,7 @@ use Illuminate\Routing\Controller;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class AgentDashboardController extends Controller
+class DashboardController extends Controller
 {
     public function __invoke(Request $request): Response
     {

@@ -17,7 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
 
-class ApiResourceController extends Controller
+class ResourceController extends Controller
 {
     public function agents(): JsonResponse
     {

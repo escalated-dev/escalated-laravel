@@ -118,10 +118,10 @@ class EscalatedServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\Route::middleware($middleware)
             ->prefix(config('escalated.routes.prefix', 'support').'/admin')
             ->group(function () {
-                \Illuminate\Support\Facades\Route::get('/api-tokens', [\Escalated\Laravel\Http\Controllers\AdminApiTokenController::class, 'index'])->name('escalated.admin.api-tokens.index');
-                \Illuminate\Support\Facades\Route::post('/api-tokens', [\Escalated\Laravel\Http\Controllers\AdminApiTokenController::class, 'store'])->name('escalated.admin.api-tokens.store');
-                \Illuminate\Support\Facades\Route::patch('/api-tokens/{id}', [\Escalated\Laravel\Http\Controllers\AdminApiTokenController::class, 'update'])->name('escalated.admin.api-tokens.update');
-                \Illuminate\Support\Facades\Route::delete('/api-tokens/{id}', [\Escalated\Laravel\Http\Controllers\AdminApiTokenController::class, 'destroy'])->name('escalated.admin.api-tokens.destroy');
+                \Illuminate\Support\Facades\Route::get('/api-tokens', [\Escalated\Laravel\Http\Controllers\Admin\ApiTokenController::class, 'index'])->name('escalated.admin.api-tokens.index');
+                \Illuminate\Support\Facades\Route::post('/api-tokens', [\Escalated\Laravel\Http\Controllers\Admin\ApiTokenController::class, 'store'])->name('escalated.admin.api-tokens.store');
+                \Illuminate\Support\Facades\Route::patch('/api-tokens/{id}', [\Escalated\Laravel\Http\Controllers\Admin\ApiTokenController::class, 'update'])->name('escalated.admin.api-tokens.update');
+                \Illuminate\Support\Facades\Route::delete('/api-tokens/{id}', [\Escalated\Laravel\Http\Controllers\Admin\ApiTokenController::class, 'destroy'])->name('escalated.admin.api-tokens.destroy');
             });
     }
 
