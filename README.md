@@ -48,7 +48,7 @@ php artisan escalated:install
 php artisan migrate
 ```
 
-Add the `Ticketable` interface to your User model:
+The install command will offer to automatically configure your User model with the `Ticketable` interface and `HasTickets` trait. If you prefer to do this manually, or if you use a custom user model, add the following:
 
 ```php
 use Escalated\Laravel\Contracts\HasTickets;

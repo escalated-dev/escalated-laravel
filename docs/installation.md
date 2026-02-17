@@ -41,7 +41,7 @@ php artisan migrate
 
 ## Implement the Ticketable Interface
 
-Add the `HasTickets` trait and `Ticketable` interface to your User model:
+The install command will offer to automatically add the `Ticketable` interface and `HasTickets` trait to your User model. If you skipped this step or use a custom user model, add them manually:
 
 ```php
 use Escalated\Laravel\Contracts\HasTickets;
