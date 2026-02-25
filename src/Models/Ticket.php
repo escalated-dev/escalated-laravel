@@ -112,6 +112,11 @@ class Ticket extends Model
         return $this->hasOne(SatisfactionRating::class, 'ticket_id');
     }
 
+    public function mergedInto(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'merged_into_id');
+    }
+
     public function pinnedNotes(): HasMany
     {
         return $this->hasMany(Reply::class, 'ticket_id')->where('is_internal_note', true)->where('is_pinned', true);

@@ -14,6 +14,7 @@ use Escalated\Laravel\Http\Controllers\Admin\SlaPolicyController;
 use Escalated\Laravel\Http\Controllers\Admin\StatusController;
 use Escalated\Laravel\Http\Controllers\Admin\TagController;
 use Escalated\Laravel\Http\Controllers\Admin\TicketController;
+use Escalated\Laravel\Http\Controllers\Admin\TicketMergeController;
 use Escalated\Laravel\Http\Controllers\BulkActionController;
 use Escalated\Laravel\Http\Controllers\SatisfactionRatingController;
 use Escalated\Laravel\Http\Middleware\EnsureIsAdmin;
@@ -27,6 +28,7 @@ Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web'
 
         Route::get('/tickets', [TicketController::class, 'index'])->name('escalated.admin.tickets.index');
         Route::post('/tickets/bulk', BulkActionController::class)->name('escalated.admin.tickets.bulk');
+        Route::get('/tickets/merge-search', [TicketMergeController::class, 'search'])->name('escalated.admin.tickets.merge-search');
 
         Route::middleware(ResolveTicketByReference::class)->group(function () {
             Route::get('/tickets/{ticket}', [TicketController::class, 'show'])->name('escalated.admin.tickets.show');
@@ -41,6 +43,7 @@ Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web'
             Route::post('/tickets/{ticket}/follow', [TicketController::class, 'follow'])->name('escalated.admin.tickets.follow');
             Route::post('/tickets/{ticket}/presence', [TicketController::class, 'presence'])->name('escalated.admin.tickets.presence');
             Route::post('/tickets/{ticket}/replies/{reply}/pin', [TicketController::class, 'pin'])->name('escalated.admin.tickets.pin');
+            Route::post('/tickets/{ticket}/merge', [TicketMergeController::class, 'merge'])->name('escalated.admin.tickets.merge');
         });
 
         Route::get('/settings', [SettingsController::class, 'index'])->name('escalated.admin.settings');
