@@ -6,6 +6,7 @@ use Escalated\Laravel\Console\Commands\CheckSlaCommand;
 use Escalated\Laravel\Console\Commands\CloseResolvedCommand;
 use Escalated\Laravel\Console\Commands\EvaluateEscalationsCommand;
 use Escalated\Laravel\Console\Commands\InstallCommand;
+use Escalated\Laravel\Console\Commands\PluginCommand;
 use Escalated\Laravel\Console\Commands\PollImapCommand;
 use Escalated\Laravel\Console\Commands\PurgeActivitiesCommand;
 use Escalated\Laravel\Events;
@@ -133,6 +134,7 @@ class EscalatedServiceProvider extends ServiceProvider
 
         $this->commands([
             InstallCommand::class,
+            PluginCommand::class,
             CheckSlaCommand::class,
             EvaluateEscalationsCommand::class,
             CloseResolvedCommand::class,
