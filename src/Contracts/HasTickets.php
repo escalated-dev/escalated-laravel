@@ -20,7 +20,11 @@ trait HasTickets
 
     public function getTicketableNameAttribute(): string
     {
-        return $this->name ?? $this->email ?? 'Unknown';
+        $column = config('escalated-laravel.user_name_column', 'name');
+
+        return $this->getAttribute($column)
+            ?? $this->getAttribute('email')
+            ?? 'Unknown';
     }
 
     public function getTicketableEmailAttribute(): string
