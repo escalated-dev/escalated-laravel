@@ -1,6 +1,7 @@
 <?php
 
 use Escalated\Laravel\Http\Controllers\Admin\ArticleCategoryController;
+use Escalated\Laravel\Http\Controllers\Admin\ImportController;
 use Escalated\Laravel\Http\Controllers\Admin\ArticleController;
 use Escalated\Laravel\Http\Controllers\Admin\AuditLogController;
 use Escalated\Laravel\Http\Controllers\Admin\AutomationController;
@@ -196,4 +197,19 @@ Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web'
         Route::post('/custom-objects/{customObject}/records', [CustomObjectController::class, 'storeRecord'])->name('escalated.admin.custom-objects.records.store');
         Route::put('/custom-objects/{customObject}/records/{record}', [CustomObjectController::class, 'updateRecord'])->name('escalated.admin.custom-objects.records.update');
         Route::delete('/custom-objects/{customObject}/records/{record}', [CustomObjectController::class, 'destroyRecord'])->name('escalated.admin.custom-objects.records.destroy');
+
+        // Import (admin-only — inherits EnsureIsAdmin middleware from parent group)
+        Route::prefix('import')->name('escalated.admin.import.')->group(function () {
+            Route::get('/', [ImportController::class, 'index'])->name('index');
+            Route::get('/{platform}/connect', [ImportController::class, 'connect'])->name('connect');
+            Route::post('/{platform}/test-connection', [ImportController::class, 'testConnection'])->name('test-connection');
+            Route::get('/{platform}/mapping', [ImportController::class, 'mapping'])->name('mapping');
+            Route::post('/{platform}/review', [ImportController::class, 'review'])->name('review');
+            Route::post('/{platform}/start', [ImportController::class, 'start'])->name('start');
+            Route::get('/progress/{jobId}', [ImportController::class, 'progress'])->name('progress');
+            Route::get('/status/{jobId}', [ImportController::class, 'status'])->name('status');
+            Route::post('/pause/{jobId}', [ImportController::class, 'pause'])->name('pause');
+            Route::post('/resume/{jobId}', [ImportController::class, 'resume'])->name('resume');
+            Route::post('/cancel/{jobId}', [ImportController::class, 'cancel'])->name('cancel');
+        });
     });

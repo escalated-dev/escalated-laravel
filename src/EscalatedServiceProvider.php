@@ -43,6 +43,8 @@ class EscalatedServiceProvider extends ServiceProvider
         $this->app->singleton(PluginUIService::class, function ($app) {
             return new PluginUIService();
         });
+
+        $this->app->singleton(\Escalated\Laravel\Services\ImportService::class);
     }
 
     public function boot(): void
@@ -145,6 +147,7 @@ class EscalatedServiceProvider extends ServiceProvider
             PollImapCommand::class,
             RunAutomationsCommand::class,
             PurgeExpiredDataCommand::class,
+            \Escalated\Laravel\Console\Commands\ImportCommand::class,
         ]);
     }
 
