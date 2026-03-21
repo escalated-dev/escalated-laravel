@@ -34,6 +34,7 @@ class LocalDriver implements TicketDriver
         $ticket->description = $data['description'];
         $ticket->status = TicketStatus::Open;
         $ticket->priority = TicketPriority::tryFrom($data['priority'] ?? '') ?? TicketPriority::from(config('escalated.default_priority', 'medium'));
+        $ticket->ticket_type = in_array($data['ticket_type'] ?? '', Ticket::TYPES, true) ? $data['ticket_type'] : 'question';
         $ticket->channel = $data['channel'] ?? 'web';
         $ticket->department_id = $data['department_id'] ?? null;
         $ticket->metadata = $data['metadata'] ?? null;
@@ -58,7 +59,13 @@ class LocalDriver implements TicketDriver
 
     public function updateTicket(Ticket $ticket, array $data): Ticket
     {
-        $ticket->update(collect($data)->only(['subject', 'description', 'metadata'])->toArray());
+        $updateData = collect($data)->only(['subject', 'description', 'metadata', 'ticket_type'])->toArray();
+
+        if (isset($updateData['ticket_type']) && ! in_array($updateData['ticket_type'], Ticket::TYPES, true)) {
+            unset($updateData['ticket_type']);
+        }
+
+        $ticket->update($updateData);
 
         Events\TicketUpdated::dispatch($ticket);
 
@@ -180,6 +187,10 @@ class LocalDriver implements TicketDriver
 
         if (! empty($filters['priority'])) {
             $query->where('priority', $filters['priority']);
+        }
+
+        if (! empty($filters['ticket_type'])) {
+            $query->where('ticket_type', $filters['ticket_type']);
         }
 
         if (! empty($filters['assigned_to'])) {

@@ -19,6 +19,8 @@ class Ticket extends Model
 {
     use HasFactory, SoftDeletes;
 
+    public const TYPES = ['question', 'problem', 'incident', 'task'];
+
     protected $guarded = ['id'];
 
     public function getRouteKeyName(): string
@@ -182,6 +184,11 @@ class Ticket extends Model
     public function scopeInDepartment($query, int $departmentId)
     {
         return $query->where('department_id', $departmentId);
+    }
+
+    public function scopeWithTicketType($query, string $ticketType)
+    {
+        return $query->where('ticket_type', $ticketType);
     }
 
     public function scopeBreachedSla($query)

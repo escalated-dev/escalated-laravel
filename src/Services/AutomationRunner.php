@@ -77,6 +77,14 @@ class AutomationRunner
                         $query->whereNotNull('assigned_to');
                     }
                     break;
+
+                case 'ticket_type':
+                    $query->where('ticket_type', $value);
+                    break;
+
+                case 'subject_contains':
+                    $query->where('subject', 'like', "%{$value}%");
+                    break;
             }
         }
 
@@ -120,6 +128,12 @@ class AutomationRunner
                             'is_pinned' => false,
                             'metadata' => ['system_note' => true, 'automation_id' => $automation->id],
                         ]);
+                        break;
+
+                    case 'set_ticket_type':
+                        if (in_array($value, Ticket::TYPES, true)) {
+                            $ticket->update(['ticket_type' => $value]);
+                        }
                         break;
                 }
             } catch (\Throwable $e) {
