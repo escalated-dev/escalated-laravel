@@ -10,7 +10,7 @@ return new class extends Migration
     {
         $prefix = config('escalated.table_prefix', 'escalated_');
 
-        Schema::create($prefix . 'import_source_maps', function (Blueprint $table) {
+        Schema::create($prefix . 'import_source_maps', function (Blueprint $table) use ($prefix) {
             $table->id();
             $table->uuid('import_job_id');
             $table->string('entity_type', 50);
