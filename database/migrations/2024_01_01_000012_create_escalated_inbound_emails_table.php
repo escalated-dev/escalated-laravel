@@ -8,9 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        $table = config('escalated.table_prefix', 'escalated_').'inbound_emails';
+        $prefix = config('escalated.table_prefix', 'escalated_');
 
-        Schema::create($table, function (Blueprint $table) {
+        Schema::create($prefix.'inbound_emails', function (Blueprint $table) use ($prefix) {
             $table->id();
             $table->string('message_id')->nullable()->unique();
             $table->string('from_email');
@@ -28,17 +28,14 @@ return new class extends Migration
             $table->timestamp('processed_at')->nullable();
             $table->timestamps();
 
-            $ticketsTable = config('escalated.table_prefix', 'escalated_').'tickets';
-            $repliesTable = config('escalated.table_prefix', 'escalated_').'replies';
-
             $table->foreign('ticket_id')
                 ->references('id')
-                ->on($ticketsTable)
+                ->on($prefix.'tickets')
                 ->nullOnDelete();
 
             $table->foreign('reply_id')
                 ->references('id')
-                ->on($repliesTable)
+                ->on($prefix.'replies')
                 ->nullOnDelete();
 
             $table->index('from_email');
@@ -49,8 +46,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        $table = config('escalated.table_prefix', 'escalated_').'inbound_emails';
-
-        Schema::dropIfExists($table);
+        $prefix = config('escalated.table_prefix', 'escalated_');
+        Schema::dropIfExists($prefix.'inbound_emails');
     }
 };

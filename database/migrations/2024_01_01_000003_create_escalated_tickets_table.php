@@ -8,7 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create(config('escalated.table_prefix', 'escalated_').'tickets', function (Blueprint $table) {
+        $prefix = config('escalated.table_prefix', 'escalated_');
+
+        Schema::create($prefix.'tickets', function (Blueprint $table) {
             $table->id();
             $table->string('reference')->unique();
             $table->morphs('requester');
@@ -35,6 +37,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists(config('escalated.table_prefix', 'escalated_').'tickets');
+        $prefix = config('escalated.table_prefix', 'escalated_');
+        Schema::dropIfExists($prefix.'tickets');
     }
 };

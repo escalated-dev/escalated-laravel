@@ -8,9 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create(config('escalated.table_prefix', 'escalated_').'ticket_activities', function (Blueprint $table) {
+        $prefix = config('escalated.table_prefix', 'escalated_');
+
+        Schema::create($prefix.'ticket_activities', function (Blueprint $table) use ($prefix) {
             $table->id();
-            $table->foreignId('ticket_id')->constrained(config('escalated.table_prefix', 'escalated_').'tickets')->cascadeOnDelete();
+            $table->foreignId('ticket_id')->constrained($prefix.'tickets')->cascadeOnDelete();
             $table->nullableMorphs('causer');
             $table->string('type');
             $table->json('properties')->nullable();
@@ -20,6 +22,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists(config('escalated.table_prefix', 'escalated_').'ticket_activities');
+        $prefix = config('escalated.table_prefix', 'escalated_');
+        Schema::dropIfExists($prefix.'ticket_activities');
     }
 };

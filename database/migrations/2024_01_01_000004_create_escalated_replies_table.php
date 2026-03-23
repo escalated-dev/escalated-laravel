@@ -25,6 +25,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists(config('escalated.table_prefix', 'escalated_').'replies');
+        $prefix = config('escalated.table_prefix', 'escalated_');
+        Schema::dropIfExists($prefix.'replies');
     }
 };

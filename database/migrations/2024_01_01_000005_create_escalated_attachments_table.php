@@ -8,7 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create(config('escalated.table_prefix', 'escalated_').'attachments', function (Blueprint $table) {
+        $prefix = config('escalated.table_prefix', 'escalated_');
+
+        Schema::create($prefix.'attachments', function (Blueprint $table) {
             $table->id();
             $table->morphs('attachable');
             $table->string('filename');
@@ -23,6 +25,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists(config('escalated.table_prefix', 'escalated_').'attachments');
+        $prefix = config('escalated.table_prefix', 'escalated_');
+        Schema::dropIfExists($prefix.'attachments');
     }
 };

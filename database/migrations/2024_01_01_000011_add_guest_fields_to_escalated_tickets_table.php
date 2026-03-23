@@ -8,9 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        $table = config('escalated.table_prefix', 'escalated_').'tickets';
+        $prefix = config('escalated.table_prefix', 'escalated_');
 
-        Schema::table($table, function (Blueprint $table) {
+        Schema::table($prefix.'tickets', function (Blueprint $table) {
             // Make requester nullable for guest tickets
             $table->string('requester_type')->nullable()->change();
             $table->unsignedBigInteger('requester_id')->nullable()->change();
@@ -24,9 +24,9 @@ return new class extends Migration
 
     public function down(): void
     {
-        $table = config('escalated.table_prefix', 'escalated_').'tickets';
+        $prefix = config('escalated.table_prefix', 'escalated_');
 
-        Schema::table($table, function (Blueprint $table) {
+        Schema::table($prefix.'tickets', function (Blueprint $table) {
             $table->dropColumn(['guest_name', 'guest_email', 'guest_token']);
             $table->string('requester_type')->nullable(false)->change();
             $table->unsignedBigInteger('requester_id')->nullable(false)->change();

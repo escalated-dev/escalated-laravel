@@ -8,14 +8,18 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('escalated_replies', function (Blueprint $table) {
+        $prefix = config('escalated.table_prefix', 'escalated_');
+
+        Schema::table($prefix.'replies', function (Blueprint $table) {
             $table->boolean('is_pinned')->default(false)->after('is_internal_note');
         });
     }
 
     public function down(): void
     {
-        Schema::table('escalated_replies', function (Blueprint $table) {
+        $prefix = config('escalated.table_prefix', 'escalated_');
+
+        Schema::table($prefix.'replies', function (Blueprint $table) {
             $table->dropColumn('is_pinned');
         });
     }

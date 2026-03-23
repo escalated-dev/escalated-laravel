@@ -8,8 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('escalated_ticket_followers', function (Blueprint $table) {
-            $table->foreignId('ticket_id')->constrained('escalated_tickets')->cascadeOnDelete();
+        $prefix = config('escalated.table_prefix', 'escalated_');
+
+        Schema::create($prefix.'ticket_followers', function (Blueprint $table) use ($prefix) {
+            $table->foreignId('ticket_id')->constrained($prefix.'tickets')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->timestamps();
             $table->unique(['ticket_id', 'user_id']);
@@ -18,6 +20,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('escalated_ticket_followers');
+        $prefix = config('escalated.table_prefix', 'escalated_');
+        Schema::dropIfExists($prefix.'ticket_followers');
     }
 };

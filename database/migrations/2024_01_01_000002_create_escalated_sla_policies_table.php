@@ -8,7 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create(config('escalated.table_prefix', 'escalated_').'sla_policies', function (Blueprint $table) {
+        $prefix = config('escalated.table_prefix', 'escalated_');
+
+        Schema::create($prefix.'sla_policies', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->text('description')->nullable();
@@ -23,6 +25,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists(config('escalated.table_prefix', 'escalated_').'sla_policies');
+        $prefix = config('escalated.table_prefix', 'escalated_');
+        Schema::dropIfExists($prefix.'sla_policies');
     }
 };

@@ -8,7 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create(config('escalated.table_prefix', 'escalated_').'canned_responses', function (Blueprint $table) {
+        $prefix = config('escalated.table_prefix', 'escalated_');
+
+        Schema::create($prefix.'canned_responses', function (Blueprint $table) {
             $table->id();
             $table->string('title');
             $table->text('body');
@@ -21,6 +23,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists(config('escalated.table_prefix', 'escalated_').'canned_responses');
+        $prefix = config('escalated.table_prefix', 'escalated_');
+        Schema::dropIfExists($prefix.'canned_responses');
     }
 };

@@ -8,7 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('escalated_plugins', function (Blueprint $table) {
+        $prefix = config('escalated.table_prefix', 'escalated_');
+
+        Schema::create($prefix.'plugins', function (Blueprint $table) {
             $table->id();
             $table->string('slug')->unique();
             $table->boolean('is_active')->default(false);
@@ -23,6 +25,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('escalated_plugins');
+        $prefix = config('escalated.table_prefix', 'escalated_');
+        Schema::dropIfExists($prefix.'plugins');
     }
 };

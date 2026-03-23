@@ -8,7 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create(config('escalated.table_prefix', 'escalated_').'settings', function (Blueprint $table) {
+        $prefix = config('escalated.table_prefix', 'escalated_');
+
+        Schema::create($prefix.'settings', function (Blueprint $table) {
             $table->id();
             $table->string('key')->unique();
             $table->text('value')->nullable();
@@ -16,7 +18,6 @@ return new class extends Migration
         });
 
         // Seed default settings
-        $prefix = config('escalated.table_prefix', 'escalated_');
         $now = now();
 
         \Illuminate\Support\Facades\DB::table($prefix.'settings')->insert([
@@ -30,6 +31,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists(config('escalated.table_prefix', 'escalated_').'settings');
+        $prefix = config('escalated.table_prefix', 'escalated_');
+        Schema::dropIfExists($prefix.'settings');
     }
 };
