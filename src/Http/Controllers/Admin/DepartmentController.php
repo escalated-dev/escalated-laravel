@@ -6,21 +6,24 @@ use Escalated\Laravel\Http\Requests\StoreDepartmentRequest;
 use Escalated\Laravel\Models\Department;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
-use Inertia\Inertia;
-use Inertia\Response;
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 class DepartmentController extends Controller
 {
-    public function index(): Response
+    public function __construct(
+        protected EscalatedUiRenderer $renderer,
+    ) {}
+
+    public function index(): mixed
     {
-        return Inertia::render('Escalated/Admin/Departments/Index', [
+        return $this->renderer->render('Escalated/Admin/Departments/Index', [
             'departments' => Department::withCount('tickets', 'agents')->get(),
         ]);
     }
 
-    public function create(): Response
+    public function create(): mixed
     {
-        return Inertia::render('Escalated/Admin/Departments/Form');
+        return $this->renderer->render('Escalated/Admin/Departments/Form');
     }
 
     public function store(StoreDepartmentRequest $request): RedirectResponse
@@ -30,11 +33,11 @@ class DepartmentController extends Controller
         return redirect()->route('escalated.admin.departments.index')->with('success', __('escalated::messages.department.created'));
     }
 
-    public function edit(Department $department): Response
+    public function edit(Department $department): mixed
     {
         $department->load('agents');
 
-        return Inertia::render('Escalated/Admin/Departments/Form', ['department' => $department]);
+        return $this->renderer->render('Escalated/Admin/Departments/Form', ['department' => $department]);
     }
 
     public function update(Department $department, StoreDepartmentRequest $request): RedirectResponse

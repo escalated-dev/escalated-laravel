@@ -6,24 +6,27 @@ use Escalated\Laravel\Models\CustomObject;
 use Escalated\Laravel\Models\CustomObjectRecord;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Inertia\Inertia;
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 class CustomObjectController extends Controller
 {
+    public function __construct(
+        protected EscalatedUiRenderer $renderer,
+    ) {}
     public function index()
     {
         $objects = CustomObject::withCount('records')
             ->orderBy('name')
             ->get();
 
-        return Inertia::render('Escalated/Admin/CustomObjects/Index', [
+        return $this->renderer->render('Escalated/Admin/CustomObjects/Index', [
             'objects' => $objects,
         ]);
     }
 
     public function create()
     {
-        return Inertia::render('Escalated/Admin/CustomObjects/Form');
+        return $this->renderer->render('Escalated/Admin/CustomObjects/Form');
     }
 
     public function store(Request $request)
@@ -46,7 +49,7 @@ class CustomObjectController extends Controller
 
     public function edit(CustomObject $customObject)
     {
-        return Inertia::render('Escalated/Admin/CustomObjects/Form', [
+        return $this->renderer->render('Escalated/Admin/CustomObjects/Form', [
             'object' => $customObject,
         ]);
     }
@@ -81,7 +84,7 @@ class CustomObjectController extends Controller
     {
         $records = $customObject->records()->orderByDesc('id')->get();
 
-        return Inertia::render('Escalated/Admin/CustomObjects/Records', [
+        return $this->renderer->render('Escalated/Admin/CustomObjects/Records', [
             'object' => $customObject,
             'records' => $records,
         ]);

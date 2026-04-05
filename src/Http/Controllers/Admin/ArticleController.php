@@ -8,12 +8,15 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Str;
-use Inertia\Inertia;
-use Inertia\Response;
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 class ArticleController extends Controller
 {
-    public function index(Request $request): Response
+    public function __construct(
+        protected EscalatedUiRenderer $renderer,
+    ) {}
+
+    public function index(Request $request): mixed
     {
         $query = Article::with('category', 'author');
 
@@ -29,16 +32,16 @@ class ArticleController extends Controller
             $query->where('category_id', $request->input('category_id'));
         }
 
-        return Inertia::render('Escalated/Admin/KnowledgeBase/Articles/Index', [
+        return $this->renderer->render('Escalated/Admin/KnowledgeBase/Articles/Index', [
             'articles' => $query->latest()->paginate(20)->withQueryString(),
             'categories' => ArticleCategory::ordered()->get(['id', 'name']),
             'filters' => $request->only(['search', 'status', 'category_id']),
         ]);
     }
 
-    public function create(): Response
+    public function create(): mixed
     {
-        return Inertia::render('Escalated/Admin/KnowledgeBase/Articles/Form', [
+        return $this->renderer->render('Escalated/Admin/KnowledgeBase/Articles/Form', [
             'categories' => ArticleCategory::ordered()->get(['id', 'name']),
         ]);
     }
@@ -66,9 +69,9 @@ class ArticleController extends Controller
             ->with('success', 'Article created.');
     }
 
-    public function edit(Article $kbArticle): Response
+    public function edit(Article $kbArticle): mixed
     {
-        return Inertia::render('Escalated/Admin/KnowledgeBase/Articles/Form', [
+        return $this->renderer->render('Escalated/Admin/KnowledgeBase/Articles/Form', [
             'article' => $kbArticle,
             'categories' => ArticleCategory::ordered()->get(['id', 'name']),
         ]);

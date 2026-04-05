@@ -6,21 +6,24 @@ use Escalated\Laravel\Models\CustomField;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Inertia\Inertia;
-use Inertia\Response;
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 class CustomFieldController extends Controller
 {
-    public function index(): Response
+    public function __construct(
+        protected EscalatedUiRenderer $renderer,
+    ) {}
+
+    public function index(): mixed
     {
-        return Inertia::render('Escalated/Admin/CustomFields/Index', [
+        return $this->renderer->render('Escalated/Admin/CustomFields/Index', [
             'fields' => CustomField::orderBy('position')->get(),
         ]);
     }
 
-    public function create(): Response
+    public function create(): mixed
     {
-        return Inertia::render('Escalated/Admin/CustomFields/Form', [
+        return $this->renderer->render('Escalated/Admin/CustomFields/Form', [
             'contexts' => ['ticket', 'user', 'organization'],
         ]);
     }
@@ -46,9 +49,9 @@ class CustomFieldController extends Controller
             ->with('success', 'Custom field created.');
     }
 
-    public function edit(CustomField $customField): Response
+    public function edit(CustomField $customField): mixed
     {
-        return Inertia::render('Escalated/Admin/CustomFields/Form', [
+        return $this->renderer->render('Escalated/Admin/CustomFields/Form', [
             'field' => $customField,
             'contexts' => ['ticket', 'user', 'organization'],
         ]);

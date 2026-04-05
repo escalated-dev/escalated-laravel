@@ -10,29 +10,31 @@ use Escalated\Laravel\Services\TicketService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Inertia\Inertia;
-use Inertia\Response;
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 class TicketController extends Controller
 {
-    public function __construct(protected TicketService $ticketService) {}
+    public function __construct(
+        protected TicketService $ticketService,
+        protected EscalatedUiRenderer $renderer,
+    ) {}
 
-    public function index(Request $request): Response
+    public function index(Request $request): mixed
     {
         $tickets = $this->ticketService->list(
             $request->only(['status', 'search', 'sort_by', 'sort_dir']),
             $request->user()
         );
 
-        return Inertia::render('Escalated/Customer/Index', [
+        return $this->renderer->render('Escalated/Customer/Index', [
             'tickets' => $tickets,
             'filters' => $request->only(['status', 'search']),
         ]);
     }
 
-    public function create(): Response
+    public function create(): mixed
     {
-        return Inertia::render('Escalated/Customer/Create', [
+        return $this->renderer->render('Escalated/Customer/Create', [
             'departments' => Department::active()->get(['id', 'name']),
             'priorities' => config('escalated.priorities'),
         ]);
@@ -47,7 +49,7 @@ class TicketController extends Controller
             ->with('success', __('escalated::messages.ticket.created'));
     }
 
-    public function show(Ticket $ticket, Request $request): Response
+    public function show(Ticket $ticket, Request $request): mixed
     {
         $this->authorizeCustomer($ticket, $request);
 
@@ -55,7 +57,7 @@ class TicketController extends Controller
             $q->where('is_internal_note', false)->with('author', 'attachments')->latest();
         }, 'attachments', 'tags', 'department']);
 
-        return Inertia::render('Escalated/Customer/Show', [
+        return $this->renderer->render('Escalated/Customer/Show', [
             'ticket' => $ticket,
         ]);
     }

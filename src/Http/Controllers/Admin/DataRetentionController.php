@@ -9,10 +9,13 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Inertia\Inertia;
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 class DataRetentionController extends Controller
 {
+    public function __construct(
+        protected EscalatedUiRenderer $renderer,
+    ) {}
     protected array $retentionDaysMap = [
         'never' => null,
         '90_days' => 90,
@@ -26,7 +29,7 @@ class DataRetentionController extends Controller
 
     public function index()
     {
-        return Inertia::render('Escalated/Admin/Settings/DataRetention', [
+        return $this->renderer->render('Escalated/Admin/Settings/DataRetention', [
             'settings' => [
                 'retention_closed_tickets' => EscalatedSettings::get('retention_closed_tickets', 'never'),
                 'retention_attachments' => EscalatedSettings::get('retention_attachments', 'never'),

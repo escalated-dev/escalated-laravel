@@ -2,18 +2,21 @@
 
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Http\Requests\StoreTagRequest;
 use Escalated\Laravel\Models\Tag;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class TagController extends Controller
 {
-    public function index(): Response
+    public function __construct(
+        protected EscalatedUiRenderer $renderer,
+    ) {}
+
+    public function index(): mixed
     {
-        return Inertia::render('Escalated/Admin/Tags/Index', ['tags' => Tag::withCount('tickets')->get()]);
+        return $this->renderer->render('Escalated/Admin/Tags/Index', ['tags' => Tag::withCount('tickets')->get()]);
     }
 
     public function store(StoreTagRequest $request): RedirectResponse

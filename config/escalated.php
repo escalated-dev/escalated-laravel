@@ -47,6 +47,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | UI Layer
+    |--------------------------------------------------------------------------
+    |
+    | Controls whether the built-in Inertia UI is enabled. When disabled,
+    | only core functionality is available: API routes, commands, events,
+    | migrations, and the plugin runtime. This lets teams use a custom
+    | frontend (Blade, Livewire, etc.) while keeping the ticketing backend.
+    |
+    */
+    'ui' => [
+        'enabled' => env('ESCALATED_UI_ENABLED', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Table Prefix
     |--------------------------------------------------------------------------
     */

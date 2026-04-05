@@ -2,27 +2,30 @@
 
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Models\Skill;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class SkillController extends Controller
 {
-    public function index(): Response
+    public function __construct(
+        protected EscalatedUiRenderer $renderer,
+    ) {}
+
+    public function index(): mixed
     {
         $skills = Skill::withCount('agents')->orderBy('name')->get();
 
-        return Inertia::render('Escalated/Admin/Skills/Index', [
+        return $this->renderer->render('Escalated/Admin/Skills/Index', [
             'skills' => $skills,
         ]);
     }
 
-    public function create(): Response
+    public function create(): mixed
     {
-        return Inertia::render('Escalated/Admin/Skills/Form');
+        return $this->renderer->render('Escalated/Admin/Skills/Form');
     }
 
     public function store(Request $request): RedirectResponse
@@ -39,9 +42,9 @@ class SkillController extends Controller
             ->with('success', 'Skill created.');
     }
 
-    public function edit(Skill $skill): Response
+    public function edit(Skill $skill): mixed
     {
-        return Inertia::render('Escalated/Admin/Skills/Form', [
+        return $this->renderer->render('Escalated/Admin/Skills/Form', [
             'skill' => $skill,
         ]);
     }

@@ -7,27 +7,30 @@ use Escalated\Laravel\Models\WebhookDelivery;
 use Escalated\Laravel\Services\WebhookDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Illuminate\Routing\Controller;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class WebhookController extends Controller
 {
-    public function index(): Response
+    public function __construct(
+        protected EscalatedUiRenderer $renderer,
+    ) {}
+
+    public function index(): mixed
     {
         $webhooks = Webhook::withCount('deliveries')
             ->with(['deliveries' => fn ($q) => $q->latest()->limit(1)])
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return Inertia::render('Escalated/Admin/Webhooks/Index', [
+        return $this->renderer->render('Escalated/Admin/Webhooks/Index', [
             'webhooks' => $webhooks,
         ]);
     }
 
-    public function create(): Response
+    public function create(): mixed
     {
-        return Inertia::render('Escalated/Admin/Webhooks/Form', [
+        return $this->renderer->render('Escalated/Admin/Webhooks/Form', [
             'availableEvents' => $this->availableEvents(),
         ]);
     }
@@ -48,9 +51,9 @@ class WebhookController extends Controller
             ->with('success', 'Webhook created.');
     }
 
-    public function edit(Webhook $webhook): Response
+    public function edit(Webhook $webhook): mixed
     {
-        return Inertia::render('Escalated/Admin/Webhooks/Form', [
+        return $this->renderer->render('Escalated/Admin/Webhooks/Form', [
             'webhook' => $webhook,
             'availableEvents' => $this->availableEvents(),
         ]);
@@ -80,13 +83,13 @@ class WebhookController extends Controller
             ->with('success', 'Webhook deleted.');
     }
 
-    public function deliveries(Webhook $webhook): Response
+    public function deliveries(Webhook $webhook): mixed
     {
         $deliveries = $webhook->deliveries()
             ->latest()
             ->paginate(25);
 
-        return Inertia::render('Escalated/Admin/Webhooks/DeliveryLog', [
+        return $this->renderer->render('Escalated/Admin/Webhooks/DeliveryLog', [
             'webhook' => $webhook,
             'deliveries' => $deliveries,
         ]);

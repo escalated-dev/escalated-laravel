@@ -2,25 +2,27 @@
 
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Models\SatisfactionRating;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\ReportingService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class ReportController extends Controller
 {
-    public function __construct(protected ReportingService $reporting) {}
+    public function __construct(
+        protected ReportingService $reporting,
+        protected EscalatedUiRenderer $renderer,
+    ) {}
 
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request): mixed
     {
         $days = $request->integer('days', 30);
         $since = now()->subDays($days);
 
-        return Inertia::render('Escalated/Admin/Reports', [
+        return $this->renderer->render('Escalated/Admin/Reports', [
             'period_days' => $days,
             'total_tickets' => Ticket::where('created_at', '>=', $since)->count(),
             'resolved_tickets' => Ticket::whereNotNull('resolved_at')->where('resolved_at', '>=', $since)->count(),
@@ -41,13 +43,13 @@ class ReportController extends Controller
     /**
      * Dashboard with tabs: Overview, Agents, SLA, CSAT.
      */
-    public function dashboard(Request $request): Response
+    public function dashboard(Request $request): mixed
     {
         $days = $request->integer('days', 30);
         $start = now()->subDays($days);
         $end = now();
 
-        return Inertia::render('Escalated/Admin/Reports/Dashboard', [
+        return $this->renderer->render('Escalated/Admin/Reports/Dashboard', [
             'period_days' => $days,
             'volume' => $this->reporting->getTicketVolumeByDate($start, $end),
             'by_status' => $this->reporting->getTicketsByStatus(),
@@ -63,13 +65,13 @@ class ReportController extends Controller
     /**
      * Agent performance sub-report.
      */
-    public function agents(Request $request): Response
+    public function agents(Request $request): mixed
     {
         $days = $request->integer('days', 30);
         $start = now()->subDays($days);
         $end = now();
 
-        return Inertia::render('Escalated/Admin/Reports/AgentMetrics', [
+        return $this->renderer->render('Escalated/Admin/Reports/AgentMetrics', [
             'period_days' => $days,
             'agents' => $this->reporting->getAgentPerformance($start, $end),
         ]);
@@ -78,13 +80,13 @@ class ReportController extends Controller
     /**
      * SLA compliance sub-report.
      */
-    public function sla(Request $request): Response
+    public function sla(Request $request): mixed
     {
         $days = $request->integer('days', 30);
         $start = now()->subDays($days);
         $end = now();
 
-        return Inertia::render('Escalated/Admin/Reports/SlaReport', [
+        return $this->renderer->render('Escalated/Admin/Reports/SlaReport', [
             'period_days' => $days,
             'compliance_rate' => $this->reporting->getSlaComplianceRate($start, $end),
             'compliance_by_policy' => $this->reporting->getSlaComplianceByPolicy($start, $end),
@@ -95,7 +97,7 @@ class ReportController extends Controller
     /**
      * CSAT analytics sub-report.
      */
-    public function csat(Request $request): Response
+    public function csat(Request $request): mixed
     {
         $days = $request->integer('days', 30);
         $start = now()->subDays($days);
@@ -104,7 +106,7 @@ class ReportController extends Controller
         $totalTickets = Ticket::whereBetween('created_at', [$start, $end])->count();
         $totalRatings = SatisfactionRating::whereBetween('created_at', [$start, $end])->count();
 
-        return Inertia::render('Escalated/Admin/Reports/CsatReport', [
+        return $this->renderer->render('Escalated/Admin/Reports/CsatReport', [
             'period_days' => $days,
             'csat_average' => $this->reporting->getCsatAverage($start, $end),
             'response_rate' => $totalTickets > 0 ? round(($totalRatings / $totalTickets) * 100, 1) : 0,

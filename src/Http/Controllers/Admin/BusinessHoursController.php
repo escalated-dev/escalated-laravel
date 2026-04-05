@@ -7,21 +7,24 @@ use Escalated\Laravel\Models\Holiday;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Inertia\Inertia;
-use Inertia\Response;
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 class BusinessHoursController extends Controller
 {
-    public function index(): Response
+    public function __construct(
+        protected EscalatedUiRenderer $renderer,
+    ) {}
+
+    public function index(): mixed
     {
-        return Inertia::render('Escalated/Admin/BusinessHours/Index', [
+        return $this->renderer->render('Escalated/Admin/BusinessHours/Index', [
             'schedules' => BusinessSchedule::with('holidays')->get(),
         ]);
     }
 
-    public function create(): Response
+    public function create(): mixed
     {
-        return Inertia::render('Escalated/Admin/BusinessHours/Form', [
+        return $this->renderer->render('Escalated/Admin/BusinessHours/Form', [
             'timezones' => timezone_identifiers_list(),
         ]);
     }
@@ -60,11 +63,11 @@ class BusinessHoursController extends Controller
             ->with('success', 'Business schedule created.');
     }
 
-    public function edit(BusinessSchedule $businessHour): Response
+    public function edit(BusinessSchedule $businessHour): mixed
     {
         $businessHour->load('holidays');
 
-        return Inertia::render('Escalated/Admin/BusinessHours/Form', [
+        return $this->renderer->render('Escalated/Admin/BusinessHours/Form', [
             'schedule' => $businessHour,
             'timezones' => timezone_identifiers_list(),
         ]);

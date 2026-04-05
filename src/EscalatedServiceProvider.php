@@ -53,6 +53,20 @@ class EscalatedServiceProvider extends ServiceProvider
         $this->app->singleton(PluginBridge::class, function ($app) {
             return new PluginBridge();
         });
+
+        // Register UI renderer — Inertia by default, swappable by the host app
+        $this->app->singleton(
+            \Escalated\Laravel\Contracts\EscalatedUiRenderer::class,
+            function () {
+                if ($this->uiEnabled()) {
+                    return new \Escalated\Laravel\UI\InertiaUiRenderer();
+                }
+
+                throw new \RuntimeException(
+                    'Escalated UI is disabled. Set escalated.ui.enabled=true or provide a custom EscalatedUiRenderer binding.'
+                );
+            }
+        );
     }
 
     public function boot(): void
@@ -60,12 +74,25 @@ class EscalatedServiceProvider extends ServiceProvider
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'escalated');
 
         $this->registerPublishing();
-        $this->registerRoutes();
+        $this->registerCoreRoutes();
         $this->registerCommands();
         $this->registerEvents();
         $this->loadPlugins();
         $this->bootPluginBridge();
-        $this->shareInertiaData();
+
+        if ($this->uiEnabled()) {
+            $this->registerUiRoutes();
+            $this->shareInertiaData();
+        }
+    }
+
+    /**
+     * Whether the built-in UI layer is active.
+     */
+    protected function uiEnabled(): bool
+    {
+        return config('escalated.ui.enabled', true)
+            && class_exists(\Inertia\Inertia::class);
     }
 
     protected function registerPublishing(): void
@@ -95,16 +122,14 @@ class EscalatedServiceProvider extends ServiceProvider
         ], 'escalated-lang');
     }
 
-    protected function registerRoutes(): void
+    /**
+     * Register routes that work without a UI: API, inbound email, plugin endpoints/webhooks.
+     */
+    protected function registerCoreRoutes(): void
     {
         if (! config('escalated.routes.enabled', true)) {
             return;
         }
-
-        $this->loadRoutesFrom(__DIR__.'/../routes/agent.php');
-        $this->loadRoutesFrom(__DIR__.'/../routes/admin.php');
-        $this->loadRoutesFrom(__DIR__.'/../routes/customer.php');
-        $this->loadRoutesFrom(__DIR__.'/../routes/guest.php');
 
         // REST API routes (token auth, no session)
         if (config('escalated.api.enabled', false)) {
@@ -121,6 +146,21 @@ class EscalatedServiceProvider extends ServiceProvider
         if (config('escalated.inbound_email.enabled', false)) {
             $this->loadRoutesFrom(__DIR__.'/../routes/inbound.php');
         }
+    }
+
+    /**
+     * Register Inertia-backed web routes (agent, admin, customer, guest).
+     */
+    protected function registerUiRoutes(): void
+    {
+        if (! config('escalated.routes.enabled', true)) {
+            return;
+        }
+
+        $this->loadRoutesFrom(__DIR__.'/../routes/agent.php');
+        $this->loadRoutesFrom(__DIR__.'/../routes/admin.php');
+        $this->loadRoutesFrom(__DIR__.'/../routes/customer.php');
+        $this->loadRoutesFrom(__DIR__.'/../routes/guest.php');
     }
 
     protected function registerApiTokenRoutes(): void

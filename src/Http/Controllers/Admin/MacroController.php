@@ -2,19 +2,22 @@
 
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Http\Requests\StoreMacroRequest;
 use Escalated\Laravel\Models\Macro;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class MacroController extends Controller
 {
-    public function index(Request $request): Response
+    public function __construct(
+        protected EscalatedUiRenderer $renderer,
+    ) {}
+
+    public function index(Request $request): mixed
     {
-        return Inertia::render('Escalated/Admin/Macros/Index', [
+        return $this->renderer->render('Escalated/Admin/Macros/Index', [
             'macros' => Macro::orderBy('order')->get(),
         ]);
     }

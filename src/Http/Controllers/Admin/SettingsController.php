@@ -2,16 +2,20 @@
 
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Models\EscalatedSettings;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Inertia\Inertia;
 
 class SettingsController extends Controller
 {
-    public function index()
+    public function __construct(
+        protected EscalatedUiRenderer $renderer,
+    ) {}
+
+    public function index(): mixed
     {
-        return Inertia::render('Escalated/Admin/Settings', [
+        return $this->renderer->render('Escalated/Admin/Settings', [
             'settings' => $this->getSettings(),
         ]);
     }

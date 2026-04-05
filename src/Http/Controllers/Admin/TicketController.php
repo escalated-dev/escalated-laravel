@@ -21,26 +21,26 @@ use Escalated\Laravel\Services\MacroService;
 use Escalated\Laravel\Services\TicketService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class TicketController extends Controller
 {
     public function __construct(
         protected TicketService $ticketService,
         protected AssignmentService $assignmentService,
+        protected EscalatedUiRenderer $renderer,
     ) {}
 
-    public function index(Request $request): Response
+    public function index(Request $request): mixed
     {
         $tickets = $this->ticketService->list(
             $request->only(['status', 'priority', 'ticket_type', 'assigned_to', 'unassigned', 'department_id', 'search', 'sla_breached', 'tag_ids', 'sort_by', 'sort_dir', 'per_page', 'following']),
             $request->has('following') ? $request->user() : null,
         );
 
-        return Inertia::render('Escalated/Admin/Tickets/Index', [
+        return $this->renderer->render('Escalated/Admin/Tickets/Index', [
             'tickets' => $tickets,
             'filters' => $request->all(),
             'departments' => Department::active()->get(['id', 'name']),
@@ -49,7 +49,7 @@ class TicketController extends Controller
         ]);
     }
 
-    public function show(Ticket $ticket, Request $request): Response
+    public function show(Ticket $ticket, Request $request): mixed
     {
         $ticket->load([
             'replies' => fn ($q) => $q->with('author', 'attachments')->latest(),
@@ -58,7 +58,7 @@ class TicketController extends Controller
             'satisfactionRating', 'pinnedNotes.author',
         ]);
 
-        return Inertia::render('Escalated/Admin/Tickets/Show', [
+        return $this->renderer->render('Escalated/Admin/Tickets/Show', [
             'ticket' => $ticket,
             'departments' => Department::active()->get(['id', 'name']),
             'tags' => Tag::all(['id', 'name', 'color']),

@@ -4,17 +4,20 @@ namespace Escalated\Laravel\Http\Controllers\Agent;
 
 use Escalated\Laravel\Models\Ticket;
 use Illuminate\Http\Request;
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Illuminate\Routing\Controller;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request): Response
+    public function __construct(
+        protected EscalatedUiRenderer $renderer,
+    ) {}
+
+    public function __invoke(Request $request): mixed
     {
         $userId = $request->user()->getKey();
 
-        return Inertia::render('Escalated/Agent/Dashboard', [
+        return $this->renderer->render('Escalated/Agent/Dashboard', [
             'stats' => [
                 'open' => Ticket::open()->count(),
                 'my_assigned' => Ticket::assignedTo($userId)->open()->count(),

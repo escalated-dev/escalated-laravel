@@ -2,25 +2,28 @@
 
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Http\Requests\StoreSlaPolicyRequest;
 use Escalated\Laravel\Models\SlaPolicy;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class SlaPolicyController extends Controller
 {
-    public function index(): Response
+    public function __construct(
+        protected EscalatedUiRenderer $renderer,
+    ) {}
+
+    public function index(): mixed
     {
-        return Inertia::render('Escalated/Admin/SlaPolicies/Index', [
+        return $this->renderer->render('Escalated/Admin/SlaPolicies/Index', [
             'policies' => SlaPolicy::withCount('tickets')->get(),
         ]);
     }
 
-    public function create(): Response
+    public function create(): mixed
     {
-        return Inertia::render('Escalated/Admin/SlaPolicies/Form', ['priorities' => config('escalated.priorities')]);
+        return $this->renderer->render('Escalated/Admin/SlaPolicies/Form', ['priorities' => config('escalated.priorities')]);
     }
 
     public function store(StoreSlaPolicyRequest $request): RedirectResponse
@@ -30,9 +33,9 @@ class SlaPolicyController extends Controller
         return redirect()->route('escalated.admin.sla-policies.index')->with('success', __('escalated::messages.sla_policy.created'));
     }
 
-    public function edit(SlaPolicy $slaPolicy): Response
+    public function edit(SlaPolicy $slaPolicy): mixed
     {
-        return Inertia::render('Escalated/Admin/SlaPolicies/Form', [
+        return $this->renderer->render('Escalated/Admin/SlaPolicies/Form', [
             'policy' => $slaPolicy, 'priorities' => config('escalated.priorities'),
         ]);
     }
