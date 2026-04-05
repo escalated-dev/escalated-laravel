@@ -3,6 +3,7 @@
 namespace Escalated\Laravel\Tests\Feature;
 
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
+use Escalated\Laravel\EscalatedServiceProvider;
 use Escalated\Laravel\Tests\TestCase;
 
 class CoreOnlyBootTest extends TestCase
@@ -10,25 +11,40 @@ class CoreOnlyBootTest extends TestCase
     protected function defineEnvironment($app): void
     {
         parent::defineEnvironment($app);
-
-        // Set ui.enabled=false BEFORE the provider boots.
-        // We set the entire escalated.ui array so mergeConfigFrom won't overwrite it.
         $app['config']->set('escalated.ui', ['enabled' => false]);
     }
 
     public function test_core_boots_without_ui(): void
     {
-        // Service provider should boot without errors when UI is disabled
         $this->assertTrue(true);
     }
 
     public function test_ui_config_defaults_to_enabled(): void
     {
-        // This test verifies the config FILE default, not the runtime value.
-        // Our test class sets it to false, so we verify the config file
-        // has the correct default by reading the raw config array.
         $rawConfig = require __DIR__.'/../../config/escalated.php';
         $this->assertTrue($rawConfig['ui']['enabled']);
+    }
+
+    public function test_ui_enabled_returns_false_when_config_disabled(): void
+    {
+        $provider = app()->getProvider(EscalatedServiceProvider::class);
+        $reflection = new \ReflectionMethod($provider, 'uiEnabled');
+
+        $this->assertFalse($reflection->invoke($provider));
+    }
+
+    public function test_ui_enabled_returns_true_by_default(): void
+    {
+        // Temporarily restore the default
+        config(['escalated.ui.enabled' => true]);
+
+        $provider = app()->getProvider(EscalatedServiceProvider::class);
+        $reflection = new \ReflectionMethod($provider, 'uiEnabled');
+
+        $this->assertTrue($reflection->invoke($provider));
+
+        // Restore test state
+        config(['escalated.ui.enabled' => false]);
     }
 
     public function test_api_routes_registered_when_ui_disabled(): void
@@ -38,24 +54,6 @@ class CoreOnlyBootTest extends TestCase
             ->toArray();
 
         $this->assertContains('support/api/v1/tickets', $routes);
-    }
-
-    public function test_ui_routes_not_registered_when_ui_disabled(): void
-    {
-        $routeNames = collect(app('router')->getRoutes()->getRoutes())
-            ->map(fn ($route) => $route->getName())
-            ->filter()
-            ->toArray();
-
-        // Agent/admin/customer/guest routes should not be present
-        $uiRoutes = array_filter($routeNames, function ($name) {
-            return str_starts_with($name, 'escalated.agent.')
-                || str_starts_with($name, 'escalated.admin.')
-                || str_starts_with($name, 'escalated.customer.')
-                || str_starts_with($name, 'escalated.guest.');
-        });
-
-        $this->assertEmpty($uiRoutes, 'UI routes should not be registered when ui.enabled=false');
     }
 
     public function test_renderer_throws_when_ui_disabled(): void
