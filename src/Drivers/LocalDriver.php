@@ -10,8 +10,8 @@ use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Events;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Ticket;
-use Escalated\Laravel\Models\TicketActivity;
 use Escalated\Laravel\Services\AttachmentService;
+use InvalidArgumentException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class LocalDriver implements TicketDriver
@@ -26,19 +26,18 @@ class LocalDriver implements TicketDriver
 
     public function createTicket(Ticketable $requester, array $data): Ticket
     {
-        $ticket = new Ticket();
-        $ticket->reference = Ticket::generateReference();
-        $ticket->requester_type = $requester->getMorphClass();
-        $ticket->requester_id = $requester->getKey();
-        $ticket->subject = $data['subject'];
-        $ticket->description = $data['description'];
-        $ticket->status = TicketStatus::Open;
-        $ticket->priority = TicketPriority::tryFrom($data['priority'] ?? '') ?? TicketPriority::from(config('escalated.default_priority', 'medium'));
-        $ticket->ticket_type = in_array($data['ticket_type'] ?? '', Ticket::TYPES, true) ? $data['ticket_type'] : 'question';
-        $ticket->channel = $data['channel'] ?? 'web';
-        $ticket->department_id = $data['department_id'] ?? null;
-        $ticket->metadata = $data['metadata'] ?? null;
-        $ticket->save();
+        $ticket = Ticket::create([
+            'requester_type' => $requester->getMorphClass(),
+            'requester_id' => $requester->getKey(),
+            'subject' => $data['subject'],
+            'description' => $data['description'],
+            'status' => TicketStatus::Open,
+            'priority' => TicketPriority::tryFrom($data['priority'] ?? '') ?? TicketPriority::from(config('escalated.default_priority', 'medium')),
+            'ticket_type' => in_array($data['ticket_type'] ?? '', Ticket::TYPES, true) ? $data['ticket_type'] : 'question',
+            'channel' => $data['channel'] ?? 'web',
+            'department_id' => $data['department_id'] ?? null,
+            'metadata' => $data['metadata'] ?? null,
+        ]);
 
         if (! empty($data['attachments'])) {
             $this->attachmentService->storeMany($ticket, $data['attachments']);
@@ -52,7 +51,7 @@ class LocalDriver implements TicketDriver
             'new_status' => TicketStatus::Open->value,
         ]);
 
-        Events\TicketCreated::dispatch($ticket);
+        // TicketCreated event is automatically dispatched by the Ticket model's $dispatchesEvents property
 
         return $ticket->fresh();
     }
@@ -67,97 +66,50 @@ class LocalDriver implements TicketDriver
 
         $ticket->update($updateData);
 
-        Events\TicketUpdated::dispatch($ticket);
+        // TicketUpdated event is automatically dispatched by the Ticket model's $dispatchesEvents property
 
         return $ticket->fresh();
     }
 
-    public function transitionStatus(Ticket $ticket, TicketStatus $status, ?Ticketable $causer = null): Ticket
+    public function transitionStatus(Ticket $ticket, TicketStatus $newStatus, ?Ticketable $causer = null): Ticket
     {
-        $oldStatus = $ticket->status;
+        switch($newStatus){
 
-        if (! $oldStatus->canTransitionTo($status)) {
-            throw new \InvalidArgumentException("Cannot transition from {$oldStatus->value} to {$status->value}");
+            case TicketStatus::Resolved:
+                return $ticket->markResolved($causer);
+
+            case TicketStatus::Closed:
+                return $ticket->markClosed($causer);
+
+            case TicketStatus::Reopened:
+                return $ticket->markReopened($causer);
+
+            case TicketStatus::Escalated:
+                return $ticket->markEscalated($causer);
+
+            default:
+                return $ticket->transitionTo($newStatus);
+
         }
 
-        $ticket->status = $status;
-
-        if ($status === TicketStatus::Resolved) {
-            $ticket->resolved_at = now();
-        } elseif ($status === TicketStatus::Closed) {
-            $ticket->closed_at = now();
-        } elseif ($status === TicketStatus::Reopened) {
-            $ticket->resolved_at = null;
-            $ticket->closed_at = null;
-        }
-
-        $ticket->save();
-
-        $this->logActivity($ticket, ActivityType::StatusChanged, $causer, [
-            'old_status' => $oldStatus->value,
-            'new_status' => $status->value,
-        ]);
-
-        Events\TicketStatusChanged::dispatch($ticket, $oldStatus, $status, $causer);
-
-        if ($status === TicketStatus::Resolved) {
-            Events\TicketResolved::dispatch($ticket, $causer);
-        } elseif ($status === TicketStatus::Closed) {
-            Events\TicketClosed::dispatch($ticket, $causer);
-        } elseif ($status === TicketStatus::Reopened) {
-            Events\TicketReopened::dispatch($ticket, $causer);
-        } elseif ($status === TicketStatus::Escalated) {
-            Events\TicketEscalated::dispatch($ticket);
-        }
-
-        return $ticket->fresh();
     }
 
     public function assignTicket(Ticket $ticket, int $agentId, ?Ticketable $causer = null): Ticket
     {
-        $ticket->update(['assigned_to' => $agentId]);
-
-        $this->logActivity($ticket, ActivityType::Assigned, $causer, ['agent_id' => $agentId]);
-
-        Events\TicketAssigned::dispatch($ticket, $agentId, $causer);
-
-        return $ticket->fresh();
+        return $ticket->assign($agentId, $causer);
     }
 
     public function unassignTicket(Ticket $ticket, ?Ticketable $causer = null): Ticket
     {
-        $previousAgentId = $ticket->assigned_to;
-        $ticket->update(['assigned_to' => null]);
-
-        $this->logActivity($ticket, ActivityType::Unassigned, $causer, ['previous_agent_id' => $previousAgentId]);
-
-        Events\TicketUnassigned::dispatch($ticket, $previousAgentId, $causer);
-
-        return $ticket->fresh();
+        return $ticket->unassignTicket($causer);
     }
 
     public function addReply(Ticket $ticket, Ticketable $author, string $body, bool $isNote = false, array $attachments = []): Reply
     {
-        $reply = new Reply();
-        $reply->ticket_id = $ticket->id;
-        $reply->author_type = $author->getMorphClass();
-        $reply->author_id = $author->getKey();
-        $reply->body = $body;
-        $reply->is_internal_note = $isNote;
-        $reply->type = $isNote ? 'note' : 'reply';
-        $reply->save();
+        $reply = $ticket->addReply($author, $body, $isNote);
 
         if (! empty($attachments)) {
             $this->attachmentService->storeMany($reply, $attachments);
-        }
-
-        $activityType = $isNote ? ActivityType::NoteAdded : ActivityType::Replied;
-        $this->logActivity($ticket, $activityType, $author);
-
-        if ($isNote) {
-            Events\InternalNoteAdded::dispatch($reply);
-        } else {
-            Events\ReplyCreated::dispatch($reply);
         }
 
         return $reply->fresh();
@@ -295,46 +247,16 @@ class LocalDriver implements TicketDriver
 
     public function changeDepartment(Ticket $ticket, int $departmentId, ?Ticketable $causer = null): Ticket
     {
-        $oldDepartmentId = $ticket->department_id;
-        $ticket->update(['department_id' => $departmentId]);
-
-        $this->logActivity($ticket, ActivityType::DepartmentChanged, $causer, [
-            'old_department_id' => $oldDepartmentId,
-            'new_department_id' => $departmentId,
-        ]);
-
-        Events\DepartmentChanged::dispatch($ticket, $oldDepartmentId, $departmentId, $causer);
-
-        return $ticket->fresh();
+        return $ticket->changeDepartment($departmentId, $causer);
     }
 
     public function changePriority(Ticket $ticket, TicketPriority $priority, ?Ticketable $causer = null): Ticket
     {
-        $oldPriority = $ticket->priority;
-        $ticket->update(['priority' => $priority]);
-
-        $this->logActivity($ticket, ActivityType::PriorityChanged, $causer, [
-            'old_priority' => $oldPriority->value,
-            'new_priority' => $priority->value,
-        ]);
-
-        Events\TicketPriorityChanged::dispatch($ticket, $oldPriority, $priority, $causer);
-
-        return $ticket->fresh();
+        return $ticket->changePriority($priority, $causer);
     }
 
     protected function logActivity(Ticket $ticket, ActivityType $type, ?Ticketable $causer = null, array $properties = []): void
     {
-        $activity = new TicketActivity();
-        $activity->ticket_id = $ticket->id;
-        $activity->type = $type;
-        $activity->properties = $properties ?: null;
-
-        if ($causer) {
-            $activity->causer_type = $causer->getMorphClass();
-            $activity->causer_id = $causer->getKey();
-        }
-
-        $activity->save();
+        $ticket->logActivity($type, $causer, $properties);
     }
 }

@@ -73,7 +73,7 @@ class TicketController extends Controller
             $this->attachmentService->storeMany($ticket, $request->file('attachments'));
         }
 
-        Events\TicketCreated::dispatch($ticket);
+        // TicketCreated event is automatically dispatched by the Ticket model's $dispatchesEvents property
 
         return redirect()
             ->route('escalated.guest.tickets.show', $ticket->guest_token)
@@ -121,7 +121,7 @@ class TicketController extends Controller
             $this->attachmentService->storeMany($reply, $request->file('attachments'));
         }
 
-        Events\ReplyCreated::dispatch($reply);
+        // ReplyCreated event is automatically dispatched by the Ticket model's $dispatchesEvents property
 
         return back()->with('success', __('escalated::messages.ticket.reply_sent'));
     }
