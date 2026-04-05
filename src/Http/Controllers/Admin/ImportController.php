@@ -6,14 +6,15 @@ use Escalated\Laravel\Models\ImportJob;
 use Escalated\Laravel\Services\ImportService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Illuminate\Support\Facades\Gate;
-use Inertia\Inertia;
 
 class ImportController extends Controller
 {
-    public function __construct(private ImportService $importService)
-    {
-    }
+    public function __construct(
+        private ImportService $importService,
+        protected EscalatedUiRenderer $renderer,
+    ) {}
 
     public function index()
     {
@@ -26,7 +27,7 @@ class ImportController extends Controller
 
         $jobs = ImportJob::orderByDesc('created_at')->limit(20)->get();
 
-        return Inertia::render('Escalated/Admin/Import/Index', [
+        return $this->renderer->render('Escalated/Admin/Import/Index', [
             'adapters' => $adapters,
             'jobs' => $jobs,
         ]);
@@ -40,7 +41,7 @@ class ImportController extends Controller
             abort(404, "Import adapter not found: {$platform}");
         }
 
-        return Inertia::render('Escalated/Admin/Import/Connect', [
+        return $this->renderer->render('Escalated/Admin/Import/Connect', [
             'platform' => $platform,
             'display_name' => $adapter->displayName(),
             'credential_fields' => $adapter->credentialFields(),
@@ -100,7 +101,7 @@ class ImportController extends Controller
             ];
         }
 
-        return Inertia::render('Escalated/Admin/Import/Mapping', [
+        return $this->renderer->render('Escalated/Admin/Import/Mapping', [
             'platform' => $platform,
             'display_name' => $adapter->displayName(),
             'entity_types' => $entityTypes,
@@ -110,7 +111,7 @@ class ImportController extends Controller
 
     public function review(Request $request, string $platform)
     {
-        return Inertia::render('Escalated/Admin/Import/Review', [
+        return $this->renderer->render('Escalated/Admin/Import/Review', [
             'platform' => $platform,
             'field_mappings' => $request->input('field_mappings', []),
             'entity_types' => $request->input('entity_types', []),
@@ -156,7 +157,7 @@ class ImportController extends Controller
     {
         $job = ImportJob::findOrFail($jobId);
 
-        return Inertia::render('Escalated/Admin/Import/Progress', [
+        return $this->renderer->render('Escalated/Admin/Import/Progress', [
             'job' => $job,
         ]);
     }

@@ -8,12 +8,15 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
-use Inertia\Inertia;
-use Inertia\Response;
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 class ApiTokenController extends Controller
 {
-    public function index(): Response
+    public function __construct(
+        protected EscalatedUiRenderer $renderer,
+    ) {}
+
+    public function index(): mixed
     {
         $tokens = ApiToken::with('tokenable')->latest()->get()->map(fn ($token) => [
             'id' => $token->id,
@@ -43,7 +46,7 @@ class ApiTokenController extends Controller
 
         $users = $agentUsers->map(fn ($u) => ['id' => $u->getKey(), 'name' => $u->name, 'email' => $u->email])->values();
 
-        return Inertia::render('Escalated/Admin/ApiTokens/Index', [
+        return $this->renderer->render('Escalated/Admin/ApiTokens/Index', [
             'tokens' => $tokens,
             'users' => $users,
             'api_enabled' => config('escalated.api.enabled', false),

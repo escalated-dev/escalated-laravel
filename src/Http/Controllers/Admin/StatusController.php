@@ -2,26 +2,29 @@
 
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Models\TicketStatus;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class StatusController extends Controller
 {
-    public function index(): Response
+    public function __construct(
+        protected EscalatedUiRenderer $renderer,
+    ) {}
+
+    public function index(): mixed
     {
-        return Inertia::render('Escalated/Admin/Statuses/Index', [
+        return $this->renderer->render('Escalated/Admin/Statuses/Index', [
             'statuses' => TicketStatus::orderBy('category')->orderBy('position')->get(),
             'categories' => ['new', 'open', 'pending', 'on_hold', 'solved'],
         ]);
     }
 
-    public function create(): Response
+    public function create(): mixed
     {
-        return Inertia::render('Escalated/Admin/Statuses/Form', [
+        return $this->renderer->render('Escalated/Admin/Statuses/Form', [
             'categories' => ['new', 'open', 'pending', 'on_hold', 'solved'],
         ]);
     }
@@ -47,9 +50,9 @@ class StatusController extends Controller
             ->with('success', 'Status created.');
     }
 
-    public function edit(TicketStatus $status): Response
+    public function edit(TicketStatus $status): mixed
     {
-        return Inertia::render('Escalated/Admin/Statuses/Form', [
+        return $this->renderer->render('Escalated/Admin/Statuses/Form', [
             'status' => $status,
             'categories' => ['new', 'open', 'pending', 'on_hold', 'solved'],
         ]);

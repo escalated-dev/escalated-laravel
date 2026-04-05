@@ -7,12 +7,15 @@ use Escalated\Laravel\Models\AgentCapacity;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Inertia\Inertia;
-use Inertia\Response;
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 class CapacityController extends Controller
 {
-    public function index(): Response
+    public function __construct(
+        protected EscalatedUiRenderer $renderer,
+    ) {}
+
+    public function index(): mixed
     {
         $capacities = AgentCapacity::with('user')
             ->orderBy('user_id')
@@ -29,7 +32,7 @@ class CapacityController extends Controller
                 ];
             });
 
-        return Inertia::render('Escalated/Admin/Capacity/Index', [
+        return $this->renderer->render('Escalated/Admin/Capacity/Index', [
             'capacities' => $capacities,
         ]);
     }

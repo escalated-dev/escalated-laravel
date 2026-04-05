@@ -7,12 +7,13 @@ use Escalated\Laravel\Models\ArticleCategory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Inertia\Inertia;
-use Inertia\Response;
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 class KnowledgeBaseController extends Controller
 {
-    public function index(Request $request): Response
+    public function __construct(protected EscalatedUiRenderer $renderer) {}
+
+    public function index(Request $request): mixed
     {
         $categories = ArticleCategory::withCount(['articles' => function ($q) {
             $q->published();
@@ -30,14 +31,14 @@ class KnowledgeBaseController extends Controller
 
         $articles = $query->latest('published_at')->paginate(15)->withQueryString();
 
-        return Inertia::render('Escalated/Customer/KnowledgeBase/Index', [
+        return $this->renderer->render('Escalated/Customer/KnowledgeBase/Index', [
             'categories' => $categories,
             'articles' => $articles,
             'filters' => $request->only(['search', 'category']),
         ]);
     }
 
-    public function show(string $slug): Response
+    public function show(string $slug): mixed
     {
         $article = Article::published()->where('slug', $slug)->firstOrFail();
         $article->load('category');
@@ -49,7 +50,7 @@ class KnowledgeBaseController extends Controller
             ->limit(5)
             ->get(['id', 'title', 'slug']);
 
-        return Inertia::render('Escalated/Customer/KnowledgeBase/Article', [
+        return $this->renderer->render('Escalated/Customer/KnowledgeBase/Article', [
             'article' => $article,
             'related' => $related,
         ]);

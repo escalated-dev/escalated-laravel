@@ -6,12 +6,15 @@ use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Inertia\Inertia;
-use Inertia\Response;
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 class AuditLogController extends Controller
 {
-    public function index(Request $request): Response
+    public function __construct(
+        protected EscalatedUiRenderer $renderer,
+    ) {}
+
+    public function index(Request $request): mixed
     {
         $query = AuditLog::with('user')
             ->orderByDesc('created_at');
@@ -38,7 +41,7 @@ class AuditLogController extends Controller
 
         $userModel = Escalated::userModel();
 
-        return Inertia::render('Escalated/Admin/AuditLog/Index', [
+        return $this->renderer->render('Escalated/Admin/AuditLog/Index', [
             'logs' => $query->paginate(50)->withQueryString(),
             'filters' => $request->only(['user_id', 'action', 'auditable_type', 'date_from', 'date_to']),
             'users' => $userModel::select('id', 'name')->orderBy('name')->get(),

@@ -14,20 +14,22 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Str;
-use Inertia\Inertia;
-use Inertia\Response;
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 class TicketController extends Controller
 {
-    public function __construct(protected AttachmentService $attachmentService) {}
+    public function __construct(
+        protected AttachmentService $attachmentService,
+        protected EscalatedUiRenderer $renderer,
+    ) {}
 
-    public function create(): Response|RedirectResponse
+    public function create(): mixed
     {
         if (! EscalatedSettings::guestTicketsEnabled()) {
             abort(404);
         }
 
-        return Inertia::render('Escalated/Guest/Create', [
+        return $this->renderer->render('Escalated/Guest/Create', [
             'departments' => Department::active()->get(['id', 'name']),
             'priorities' => config('escalated.priorities'),
         ]);
@@ -78,7 +80,7 @@ class TicketController extends Controller
             ->with('success', __('escalated::messages.guest.created'));
     }
 
-    public function show(string $token): Response
+    public function show(string $token): mixed
     {
         $ticket = Ticket::where('guest_token', $token)->firstOrFail();
 
@@ -86,7 +88,7 @@ class TicketController extends Controller
             $q->where('is_internal_note', false)->with('author', 'attachments')->latest();
         }, 'attachments', 'department']);
 
-        return Inertia::render('Escalated/Guest/Show', [
+        return $this->renderer->render('Escalated/Guest/Show', [
             'ticket' => $ticket,
             'token' => $token,
         ]);

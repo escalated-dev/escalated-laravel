@@ -7,14 +7,17 @@ use Escalated\Laravel\Models\CannedResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Inertia\Inertia;
-use Inertia\Response;
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 class CannedResponseController extends Controller
 {
-    public function index(): Response
+    public function __construct(
+        protected EscalatedUiRenderer $renderer,
+    ) {}
+
+    public function index(): mixed
     {
-        return Inertia::render('Escalated/Admin/CannedResponses/Index', [
+        return $this->renderer->render('Escalated/Admin/CannedResponses/Index', [
             'responses' => CannedResponse::with('creator')->get(),
         ]);
     }

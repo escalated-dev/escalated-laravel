@@ -2,16 +2,20 @@
 
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Services\SsoService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Inertia\Inertia;
 
 class SsoSettingsController extends Controller
 {
-    public function index(SsoService $sso)
+    public function __construct(
+        protected EscalatedUiRenderer $renderer,
+    ) {}
+
+    public function index(SsoService $sso): mixed
     {
-        return Inertia::render('Escalated/Admin/Settings/SsoSettings', [
+        return $this->renderer->render('Escalated/Admin/Settings/SsoSettings', [
             'settings' => $sso->getConfig(),
         ]);
     }

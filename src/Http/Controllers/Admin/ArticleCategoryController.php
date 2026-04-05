@@ -7,14 +7,17 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Str;
-use Inertia\Inertia;
-use Inertia\Response;
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 class ArticleCategoryController extends Controller
 {
-    public function index(): Response
+    public function __construct(
+        protected EscalatedUiRenderer $renderer,
+    ) {}
+
+    public function index(): mixed
     {
-        return Inertia::render('Escalated/Admin/KnowledgeBase/Categories/Index', [
+        return $this->renderer->render('Escalated/Admin/KnowledgeBase/Categories/Index', [
             'categories' => ArticleCategory::withCount('articles')
                 ->ordered()
                 ->get(),

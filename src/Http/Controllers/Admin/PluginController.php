@@ -5,14 +5,14 @@ namespace Escalated\Laravel\Http\Controllers\Admin;
 use Escalated\Laravel\Services\PluginService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Illuminate\Support\Facades\Log;
-use Inertia\Inertia;
 
 class PluginController extends Controller
 {
     protected PluginService $pluginService;
 
-    public function __construct(PluginService $pluginService)
+    public function __construct(PluginService $pluginService, protected EscalatedUiRenderer $renderer)
     {
         $this->pluginService = $pluginService;
     }
@@ -24,7 +24,7 @@ class PluginController extends Controller
     {
         $plugins = $this->pluginService->getAllPlugins();
 
-        return Inertia::render('Escalated/Admin/Plugins/Index', [
+        return $this->renderer->render('Escalated/Admin/Plugins/Index', [
             'plugins' => $plugins,
         ]);
     }

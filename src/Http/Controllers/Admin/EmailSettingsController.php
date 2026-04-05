@@ -2,16 +2,20 @@
 
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Services\EmailChannelService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Inertia\Inertia;
 
 class EmailSettingsController extends Controller
 {
-    public function index(EmailChannelService $service)
+    public function __construct(
+        protected EscalatedUiRenderer $renderer,
+    ) {}
+
+    public function index(EmailChannelService $service): mixed
     {
-        return Inertia::render('Escalated/Admin/Settings/EmailSettings', [
+        return $this->renderer->render('Escalated/Admin/Settings/EmailSettings', [
             'addresses' => $service->getAddresses(),
             'defaultReplyAddress' => $service->getDefaultReplyAddress(),
         ]);

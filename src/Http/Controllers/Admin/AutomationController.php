@@ -6,23 +6,26 @@ use Escalated\Laravel\Models\Automation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Inertia\Inertia;
-use Inertia\Response;
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 class AutomationController extends Controller
 {
-    public function index(): Response
+    public function __construct(
+        protected EscalatedUiRenderer $renderer,
+    ) {}
+
+    public function index(): mixed
     {
         $automations = Automation::orderBy('position')->get();
 
-        return Inertia::render('Escalated/Admin/Automations/Index', [
+        return $this->renderer->render('Escalated/Admin/Automations/Index', [
             'automations' => $automations,
         ]);
     }
 
-    public function create(): Response
+    public function create(): mixed
     {
-        return Inertia::render('Escalated/Admin/Automations/Form');
+        return $this->renderer->render('Escalated/Admin/Automations/Form');
     }
 
     public function store(Request $request): RedirectResponse
@@ -46,9 +49,9 @@ class AutomationController extends Controller
             ->with('success', 'Automation created.');
     }
 
-    public function edit(Automation $automation): Response
+    public function edit(Automation $automation): mixed
     {
-        return Inertia::render('Escalated/Admin/Automations/Form', [
+        return $this->renderer->render('Escalated/Admin/Automations/Form', [
             'automation' => $automation,
         ]);
     }

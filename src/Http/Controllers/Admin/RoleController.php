@@ -2,26 +2,29 @@
 
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Models\Permission;
 use Escalated\Laravel\Models\Role;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class RoleController extends Controller
 {
-    public function index(): Response
+    public function __construct(
+        protected EscalatedUiRenderer $renderer,
+    ) {}
+
+    public function index(): mixed
     {
-        return Inertia::render('Escalated/Admin/Roles/Index', [
+        return $this->renderer->render('Escalated/Admin/Roles/Index', [
             'roles' => Role::withCount('users')->get(),
         ]);
     }
 
-    public function create(): Response
+    public function create(): mixed
     {
-        return Inertia::render('Escalated/Admin/Roles/Form', [
+        return $this->renderer->render('Escalated/Admin/Roles/Form', [
             'permissions' => Permission::all()->groupBy('group'),
         ]);
     }
@@ -48,11 +51,11 @@ class RoleController extends Controller
             ->with('success', 'Role created.');
     }
 
-    public function edit(Role $role): Response
+    public function edit(Role $role): mixed
     {
         $role->load('permissions');
 
-        return Inertia::render('Escalated/Admin/Roles/Form', [
+        return $this->renderer->render('Escalated/Admin/Roles/Form', [
             'role' => $role,
             'permissions' => Permission::all()->groupBy('group'),
         ]);

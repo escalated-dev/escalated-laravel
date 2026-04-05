@@ -6,14 +6,17 @@ use Escalated\Laravel\Models\EscalatedSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Inertia\Inertia;
-use Inertia\Response;
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 class CsatSettingsController extends Controller
 {
-    public function index(): Response
+    public function __construct(
+        protected EscalatedUiRenderer $renderer,
+    ) {}
+
+    public function index(): mixed
     {
-        return Inertia::render('Escalated/Admin/Settings/CsatSettings', [
+        return $this->renderer->render('Escalated/Admin/Settings/CsatSettings', [
             'settings' => $this->getSettings(),
         ]);
     }

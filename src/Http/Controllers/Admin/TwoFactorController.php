@@ -5,17 +5,21 @@ namespace Escalated\Laravel\Http\Controllers\Admin;
 use Escalated\Laravel\Models\TwoFactor;
 use Escalated\Laravel\Services\TwoFactorService;
 use Illuminate\Http\Request;
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Illuminate\Routing\Controller;
-use Inertia\Inertia;
 
 class TwoFactorController extends Controller
 {
+    public function __construct(
+        protected EscalatedUiRenderer $renderer,
+    ) {}
+
     public function index(Request $request)
     {
         $user = $request->user();
         $twoFactor = TwoFactor::where('user_id', $user->getKey())->first();
 
-        return Inertia::render('Escalated/Admin/Settings/TwoFactor', [
+        return $this->renderer->render('Escalated/Admin/Settings/TwoFactor', [
             'enabled' => $twoFactor?->isConfirmed() ?? false,
             'pending' => $twoFactor && ! $twoFactor->isConfirmed(),
         ]);

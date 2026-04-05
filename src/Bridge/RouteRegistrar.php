@@ -4,7 +4,7 @@ namespace Escalated\Laravel\Bridge;
 
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 /**
  * Reads plugin manifests returned by the runtime and registers Laravel routes.
@@ -20,7 +20,8 @@ use Inertia\Inertia;
 class RouteRegistrar
 {
     public function __construct(
-        private readonly PluginBridge $bridge
+        private readonly PluginBridge $bridge,
+        private readonly EscalatedUiRenderer $renderer,
     ) {}
 
     /**
@@ -108,7 +109,7 @@ class RouteRegistrar
                             // No matching endpoint for this page — props remain empty.
                         }
 
-                        return Inertia::render('Escalated/Plugin/Page', [
+                        return $this->renderer->render('Escalated/Plugin/Page', [
                             'plugin'    => $pluginName,
                             'component' => $component,
                             'layout'    => $layout,
