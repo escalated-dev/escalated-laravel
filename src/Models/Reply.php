@@ -3,6 +3,8 @@
 namespace Escalated\Laravel\Models;
 
 use Escalated\Laravel\Escalated;
+use Escalated\Laravel\Events\InternalNoteAdded;
+use Escalated\Laravel\Events\ReplyCreated;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,6 +17,19 @@ class Reply extends Model
     use HasFactory, SoftDeletes;
 
     protected $guarded = ['id'];
+
+    protected static function booted()
+    {
+        parent::booted();
+
+        static::created(function ($reply) {
+            if ($reply->is_internal_note) {
+                InternalNoteAdded::dispatch($reply);
+            }else{
+                ReplyCreated::dispatch($reply);
+            }
+        });
+    }
 
     protected function casts(): array
     {

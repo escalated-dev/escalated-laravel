@@ -175,7 +175,7 @@ class InboundEmailService
             $reply->type = 'reply';
             $reply->save();
 
-            Events\ReplyCreated::dispatch($reply);
+            // ReplyCreated event is automatically dispatched by the Ticket model's $dispatchesEvents property
         }
 
         // Handle attachments
@@ -232,7 +232,7 @@ class InboundEmailService
         // Handle attachments
         $this->storeInboundAttachments($ticket, $message->attachments);
 
-        Events\TicketCreated::dispatch($ticket);
+        // TicketCreated event is automatically dispatched by the Ticket model's $dispatchesEvents property
 
         return $ticket;
     }

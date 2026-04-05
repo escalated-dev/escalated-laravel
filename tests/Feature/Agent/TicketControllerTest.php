@@ -2,6 +2,8 @@
 
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
+use Escalated\Laravel\Events\InternalNoteAdded;
+use Escalated\Laravel\Events\ReplyCreated;
 use Escalated\Laravel\Models\Ticket;
 use Illuminate\Support\Facades\Gate;
 
@@ -67,6 +69,26 @@ it('agent can add internal note', function () {
         'ticket_id' => $ticket->id,
         'is_internal_note' => true,
     ]);
+});
+
+it('internal note does not fire reply created event', function () {
+
+    \Illuminate\Support\Facades\Event::fake([
+        \Escalated\Laravel\Events\ReplyCreated::class,
+        \Escalated\Laravel\Events\InternalNoteAdded::class,
+    ]);
+
+    $agent = $this->createAgent();
+    $ticket = Ticket::factory()->create();
+
+    $this->actingAs($agent)
+        ->post(route('escalated.agent.tickets.note', $ticket->reference), [
+            'body' => 'Internal note for agents.',
+        ]);
+
+    \Illuminate\Support\Facades\Event::assertNotDispatched(ReplyCreated::class);
+    \Illuminate\Support\Facades\Event::assertDispatched(InternalNoteAdded::class);
+
 });
 
 it('agent can assign ticket', function () {

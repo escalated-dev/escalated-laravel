@@ -2,9 +2,12 @@
 
 namespace Escalated\Laravel\Models;
 
+use Escalated\Laravel\Contracts\Ticketable;
+use Escalated\Laravel\Enums\ActivityType;
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Escalated;
+use Escalated\Laravel\Events;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,6 +25,22 @@ class Ticket extends Model
     public const TYPES = ['question', 'problem', 'incident', 'task'];
 
     protected $guarded = ['id'];
+
+    protected $dispatchesEvents = [
+        'created' => Events\TicketCreated::class,
+        'updated' => Events\TicketUpdated::class,
+    ];
+
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function ($ticket) {
+            if (empty($ticket->reference) || is_null($ticket->reference)) {
+                $ticket->reference = self::generateReference();
+            }
+        });
+    }
 
     public function getRouteKeyName(): string
     {
@@ -264,8 +283,257 @@ class Ticket extends Model
         return $this->status->isOpen();
     }
 
+    protected function canTransitionTo(TicketStatus $newStatus): bool
+    {
+        return $this->status->canTransitionTo($newStatus);
+    }
+
     protected static function newFactory(): \Escalated\Laravel\Database\Factories\TicketFactory
     {
         return \Escalated\Laravel\Database\Factories\TicketFactory::new();
     }
+
+    public function changeDepartment(Department|int $newDepartment, ?Ticketable $causer): self
+    {
+        // If an ID is provided, attempt to find the department
+        if(is_int($newDepartment)){
+            $newDepartment = Department::find($newDepartment);
+
+            if(! $newDepartment){
+                throw new \InvalidArgumentException("No department found with ID {$newDepartment}");
+            }
+        }
+
+        $oldDepartmentId = $this->department_id;
+        $this->update(['department_id' => $newDepartment->id]);
+
+        $this->logActivity(ActivityType::DepartmentChanged, $causer, [
+            'old_department_id' => $oldDepartmentId,
+            'new_department_id' => $newDepartment->id,
+        ]);
+
+        Events\DepartmentChanged::dispatch($this, $oldDepartmentId, $newDepartment, $causer);
+
+        return $this->fresh();
+    }
+
+    public function changePriority(TicketPriority $priority, ?Ticketable $causer = null): self
+    {
+        $oldPriority = $this->priority;
+        $this->update(['priority' => $priority]);
+
+        $this->logActivity(ActivityType::PriorityChanged, $causer, [
+            'old_priority' => $oldPriority->value,
+            'new_priority' => $priority->value,
+        ]);
+
+        Events\TicketPriorityChanged::dispatch($this, $oldPriority, $priority, $causer);
+
+        return $this->fresh();
+    }
+
+    public function assign(Model|int $user, ?Ticketable $causer = null): self
+    {
+        $userModel = Escalated::userModel();
+
+        // If an ID is provided, attempt to find the user
+        if(is_int($user)){
+            $user = $userModel::find($user);
+
+            if(! $user){
+                throw new \InvalidArgumentException("No user found with ID {$user}");
+            }
+        }
+
+        // If an Eloquent model is provided, ensure it's the correct type
+        if(! $user instanceof $userModel){
+            throw new \InvalidArgumentException("Assigned user must be an instance of {$userModel}");
+        }
+
+        $this->update(['assigned_to' => $user->id]);
+
+        $this->logActivity(ActivityType::Assigned, $causer, ['agent_id' => $user->id]);
+
+        Events\TicketAssigned::dispatch($this, $user->id, $causer);
+
+        return $this->fresh();
+    }
+
+    public function unassignTicket(?Ticketable $causer = null): self
+    {
+        $previousAgentId = $this->assigned_to;
+        $this->update(['assigned_to' => null]);
+
+        $this->logActivity(ActivityType::Unassigned, $causer, ['previous_agent_id' => $previousAgentId]);
+
+        Events\TicketUnassigned::dispatch($this, $previousAgentId, $causer);
+
+        return $this->fresh();
+    }
+
+    public function logActivity(ActivityType $type, ?Ticketable $causer = null, array $properties = []): void
+    {
+        $data = [
+            'type' => $type,
+            'properties' => $properties ?: null,
+        ];
+
+        if ($causer) {
+            $data['causer_type'] = $causer->getMorphClass();
+            $data['causer_id'] = $causer->getKey();
+        }
+
+        $this->activities()->create($data);
+    }
+
+    public function addReply(Ticketable $author, string $body, bool $isNote = false): Reply
+    {
+        $reply = $this->replies()->create([
+            'ticket_id' => $this->id,
+            'author_type' => $author->getMorphClass(),
+            'author_id' => $author->getKey(),
+            'body' => $body,
+            'is_internal_note' => $isNote,
+            'type' => $isNote ? 'note' : 'reply',
+        ]);
+
+        $activityType = $isNote ? ActivityType::NoteAdded : ActivityType::Replied;
+        $this->logActivity($activityType, $author);
+
+        if ($isNote) {
+            // TODO Handle Internal Note event
+            Events\InternalNoteAdded::dispatch($reply);
+        }
+
+        // ReplyCreated event is automatically dispatched by the Ticket model's $dispatchesEvents property
+
+        return $reply;
+    }
+
+    public function markResolved(?Ticketable $causer = null): self
+    {
+        $oldStatus = $this->status;
+        $newStatus = TicketStatus::Resolved;
+
+        if(!$this->canTransitionTo($newStatus)){
+            throw new \InvalidArgumentException("Cannot transition from {$this->status->value} to {$newStatus->value}");
+        }
+
+        $this->update([
+            'status' => $newStatus->value,
+            'resolved_at' => now(),
+        ]);
+
+        // Moved logging to Listener of TicketStatusChanged event
+
+        Events\TicketStatusChanged::dispatch($this, $oldStatus, $newStatus, $causer);
+        Events\TicketResolved::dispatch($this, $causer);
+
+        return $this->fresh();
+    }
+
+    public function markClosed(?Ticketable $causer = null): self
+    {
+        $oldStatus = $this->status;
+        $newStatus = TicketStatus::Closed;
+
+        if(!$this->canTransitionTo($newStatus)){
+            throw new \InvalidArgumentException("Cannot transition from {$this->status->value} to {$newStatus->value}");
+        }
+
+        $this->update([
+            'closed_at' => now(),
+            'status' => $newStatus->value,
+        ]);
+
+        // Moved logging to Listener of TicketStatusChanged event
+
+        Events\TicketStatusChanged::dispatch($this, $oldStatus, $newStatus, $causer);
+        Events\TicketClosed::dispatch($this, $causer);
+
+        return $this->fresh();
+
+    }
+
+    public function markReopened(?Ticketable $causer = null): self
+    {
+        $oldStatus = $this->status;
+        $newStatus = TicketStatus::Reopened;
+
+        if(!$this->canTransitionTo($newStatus)){
+            throw new \InvalidArgumentException("Cannot transition from {$this->status->value} to {$newStatus->value}");
+        }
+
+        $this->update([
+            'resolved_at' => null,
+            'closed_at' => null,
+            'status' => $newStatus->value,
+        ]);
+
+        // Moved logging to Listener of TicketStatusChanged event
+
+        Events\TicketStatusChanged::dispatch($this, $oldStatus, $newStatus, $causer);
+        Events\TicketReopened::dispatch($this, $causer);
+
+        return $this->fresh();
+
+    }
+
+    public function markEscalated(?Ticketable $causer = null): self
+    {
+        $oldStatus = $this->status;
+        $newStatus = TicketStatus::Escalated;
+
+        if(!$this->canTransitionTo($newStatus)){
+            throw new \InvalidArgumentException("Cannot transition from {$this->status->value} to {$newStatus->value}");
+        }
+
+        $this->update([
+            'resolved_at' => now(),
+            'status' => $newStatus->value,
+        ]);
+
+        // Moved logging to Listener of TicketStatusChanged event
+
+        Events\TicketStatusChanged::dispatch($this, $oldStatus, $newStatus, $causer);
+        Events\TicketEscalated::dispatch($this, $causer);
+
+        return $this->fresh();
+
+    }
+
+    public function transitionTo(TicketStatus $newStatus, ?Ticketable $causer = null): self
+    {
+        // Handle special status transitions with dedicated methods to ensure proper timestamp management and event dispatching
+        switch($newStatus){
+            case TicketStatus::Resolved:
+                return $this->markResolved($causer);
+
+            case TicketStatus::Closed:
+                return $this->markClosed($causer);
+
+            case TicketStatus::Reopened:
+                return $this->markReopened($causer);
+
+            case TicketStatus::Escalated:
+                return $this->markEscalated($causer);
+        }
+
+        $oldStatus = $this->status;
+
+        if(!$oldStatus->canTransitionTo($newStatus)){
+            throw new \InvalidArgumentException("Cannot transition from {$this->status->value} to {$newStatus->value}");
+        }
+
+        $this->update([
+            'status' => $newStatus->value,
+        ]);
+
+        // Moved logging to Listener of TicketStatusChanged event
+
+        Events\TicketStatusChanged::dispatch($this, $oldStatus, $newStatus, $causer);
+
+        return $this->fresh();
+    }
+
 }
