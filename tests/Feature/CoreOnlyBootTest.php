@@ -10,7 +10,10 @@ class CoreOnlyBootTest extends TestCase
     protected function defineEnvironment($app): void
     {
         parent::defineEnvironment($app);
-        $app['config']->set('escalated.ui.enabled', false);
+
+        // Set ui.enabled=false BEFORE the provider boots.
+        // We set the entire escalated.ui array so mergeConfigFrom won't overwrite it.
+        $app['config']->set('escalated.ui', ['enabled' => false]);
     }
 
     public function test_core_boots_without_ui(): void
@@ -21,7 +24,11 @@ class CoreOnlyBootTest extends TestCase
 
     public function test_ui_config_defaults_to_enabled(): void
     {
-        $this->assertTrue(config('escalated.ui.enabled', true));
+        // This test verifies the config FILE default, not the runtime value.
+        // Our test class sets it to false, so we verify the config file
+        // has the correct default by reading the raw config array.
+        $rawConfig = require __DIR__.'/../../config/escalated.php';
+        $this->assertTrue($rawConfig['ui']['enabled']);
     }
 
     public function test_api_routes_registered_when_ui_disabled(): void
