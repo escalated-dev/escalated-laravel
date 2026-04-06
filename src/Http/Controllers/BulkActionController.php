@@ -10,6 +10,7 @@ use Escalated\Laravel\Services\AssignmentService;
 use Escalated\Laravel\Services\TicketService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Gate;
 
 class BulkActionController extends Controller
 {
@@ -36,7 +37,9 @@ class BulkActionController extends Controller
                     'assign' => $this->assignmentService->assign($ticket, (int) $value, $causer),
                     'tags' => $this->ticketService->addTags($ticket, (array) $value, $causer),
                     'department' => $this->ticketService->changeDepartment($ticket, (int) $value, $causer),
-                    'delete' => $ticket->delete(),
+                    'delete' => Gate::allows(config('escalated.authorization.admin_gate', 'escalated-admin'), $request->user())
+                        ? $ticket->delete()
+                        : abort(403, 'Only admins can delete tickets'),
                 };
                 $successCount++;
             } catch (\Throwable) {
