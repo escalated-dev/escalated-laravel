@@ -25,7 +25,7 @@ class Reply extends Model
         static::created(function ($reply) {
             if ($reply->is_internal_note) {
                 InternalNoteAdded::dispatch($reply);
-            }else{
+            } else {
                 ReplyCreated::dispatch($reply);
             }
         });

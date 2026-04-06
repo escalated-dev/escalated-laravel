@@ -175,7 +175,7 @@ class InboundEmailService
             $reply->type = 'reply';
             $reply->save();
 
-            // ReplyCreated event is automatically dispatched by the Ticket model's $dispatchesEvents property
+            // ReplyCreated event is automatically dispatched by Reply::booted()
         }
 
         // Handle attachments

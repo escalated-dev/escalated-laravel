@@ -121,7 +121,7 @@ class TicketController extends Controller
             $this->attachmentService->storeMany($reply, $request->file('attachments'));
         }
 
-        // ReplyCreated event is automatically dispatched by the Ticket model's $dispatchesEvents property
+        // ReplyCreated event is automatically dispatched by Reply::booted()
 
         return back()->with('success', __('escalated::messages.ticket.reply_sent'));
     }

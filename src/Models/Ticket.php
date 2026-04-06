@@ -296,11 +296,12 @@ class Ticket extends Model
     public function changeDepartment(Department|int $newDepartment, ?Ticketable $causer): self
     {
         // If an ID is provided, attempt to find the department
-        if(is_int($newDepartment)){
-            $newDepartment = Department::find($newDepartment);
+        if (is_int($newDepartment)) {
+            $departmentId = $newDepartment;
+            $newDepartment = Department::find($departmentId);
 
-            if(! $newDepartment){
-                throw new \InvalidArgumentException("No department found with ID {$newDepartment}");
+            if (! $newDepartment) {
+                throw new \InvalidArgumentException("No department found with ID {$departmentId}");
             }
         }
 
@@ -337,16 +338,17 @@ class Ticket extends Model
         $userModel = Escalated::userModel();
 
         // If an ID is provided, attempt to find the user
-        if(is_int($user)){
-            $user = $userModel::find($user);
+        if (is_int($user)) {
+            $userId = $user;
+            $user = $userModel::find($userId);
 
-            if(! $user){
-                throw new \InvalidArgumentException("No user found with ID {$user}");
+            if (! $user) {
+                throw new \InvalidArgumentException("No user found with ID {$userId}");
             }
         }
 
         // If an Eloquent model is provided, ensure it's the correct type
-        if(! $user instanceof $userModel){
+        if (! $user instanceof $userModel) {
             throw new \InvalidArgumentException("Assigned user must be an instance of {$userModel}");
         }
 
@@ -400,12 +402,7 @@ class Ticket extends Model
         $activityType = $isNote ? ActivityType::NoteAdded : ActivityType::Replied;
         $this->logActivity($activityType, $author);
 
-        if ($isNote) {
-            // TODO Handle Internal Note event
-            Events\InternalNoteAdded::dispatch($reply);
-        }
-
-        // ReplyCreated event is automatically dispatched by the Ticket model's $dispatchesEvents property
+        // ReplyCreated / InternalNoteAdded events are automatically dispatched by Reply::booted()
 
         return $reply;
     }
@@ -415,7 +412,7 @@ class Ticket extends Model
         $oldStatus = $this->status;
         $newStatus = TicketStatus::Resolved;
 
-        if(!$this->canTransitionTo($newStatus)){
+        if (! $this->canTransitionTo($newStatus)) {
             throw new \InvalidArgumentException("Cannot transition from {$this->status->value} to {$newStatus->value}");
         }
 
@@ -437,7 +434,7 @@ class Ticket extends Model
         $oldStatus = $this->status;
         $newStatus = TicketStatus::Closed;
 
-        if(!$this->canTransitionTo($newStatus)){
+        if (! $this->canTransitionTo($newStatus)) {
             throw new \InvalidArgumentException("Cannot transition from {$this->status->value} to {$newStatus->value}");
         }
 
@@ -452,7 +449,6 @@ class Ticket extends Model
         Events\TicketClosed::dispatch($this, $causer);
 
         return $this->fresh();
-
     }
 
     public function markReopened(?Ticketable $causer = null): self
@@ -460,7 +456,7 @@ class Ticket extends Model
         $oldStatus = $this->status;
         $newStatus = TicketStatus::Reopened;
 
-        if(!$this->canTransitionTo($newStatus)){
+        if (! $this->canTransitionTo($newStatus)) {
             throw new \InvalidArgumentException("Cannot transition from {$this->status->value} to {$newStatus->value}");
         }
 
@@ -476,7 +472,6 @@ class Ticket extends Model
         Events\TicketReopened::dispatch($this, $causer);
 
         return $this->fresh();
-
     }
 
     public function markEscalated(?Ticketable $causer = null): self
@@ -484,12 +479,11 @@ class Ticket extends Model
         $oldStatus = $this->status;
         $newStatus = TicketStatus::Escalated;
 
-        if(!$this->canTransitionTo($newStatus)){
+        if (! $this->canTransitionTo($newStatus)) {
             throw new \InvalidArgumentException("Cannot transition from {$this->status->value} to {$newStatus->value}");
         }
 
         $this->update([
-            'resolved_at' => now(),
             'status' => $newStatus->value,
         ]);
 
@@ -499,13 +493,12 @@ class Ticket extends Model
         Events\TicketEscalated::dispatch($this, $causer);
 
         return $this->fresh();
-
     }
 
     public function transitionTo(TicketStatus $newStatus, ?Ticketable $causer = null): self
     {
         // Handle special status transitions with dedicated methods to ensure proper timestamp management and event dispatching
-        switch($newStatus){
+        switch ($newStatus) {
             case TicketStatus::Resolved:
                 return $this->markResolved($causer);
 
@@ -521,7 +514,7 @@ class Ticket extends Model
 
         $oldStatus = $this->status;
 
-        if(!$oldStatus->canTransitionTo($newStatus)){
+        if (! $oldStatus->canTransitionTo($newStatus)) {
             throw new \InvalidArgumentException("Cannot transition from {$this->status->value} to {$newStatus->value}");
         }
 

@@ -11,7 +11,6 @@ use Escalated\Laravel\Events;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\AttachmentService;
-use InvalidArgumentException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class LocalDriver implements TicketDriver
@@ -73,25 +72,7 @@ class LocalDriver implements TicketDriver
 
     public function transitionStatus(Ticket $ticket, TicketStatus $newStatus, ?Ticketable $causer = null): Ticket
     {
-        switch($newStatus){
-
-            case TicketStatus::Resolved:
-                return $ticket->markResolved($causer);
-
-            case TicketStatus::Closed:
-                return $ticket->markClosed($causer);
-
-            case TicketStatus::Reopened:
-                return $ticket->markReopened($causer);
-
-            case TicketStatus::Escalated:
-                return $ticket->markEscalated($causer);
-
-            default:
-                return $ticket->transitionTo($newStatus);
-
-        }
-
+        return $ticket->transitionTo($newStatus, $causer);
     }
 
     public function assignTicket(Ticket $ticket, int $agentId, ?Ticketable $causer = null): Ticket
