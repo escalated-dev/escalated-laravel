@@ -4,10 +4,11 @@ use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Models\Ticket;
 
-it('generates a unique reference', function () {
-    $ref1 = Ticket::generateReference();
-    expect($ref1)->toStartWith('ESC-');
-    expect($ref1)->toBe('ESC-00001');
+it('generates a reference from the ticket id', function () {
+    $ticket = Ticket::factory()->create();
+    $ref = $ticket->generateReference();
+    expect($ref)->toStartWith('ESC-');
+    expect($ref)->toBe(sprintf('ESC-%05d', $ticket->id));
 });
 
 it('uses dynamic table name from config', function () {

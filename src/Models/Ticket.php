@@ -251,12 +251,11 @@ class Ticket extends Model
 
     // Helpers
 
-    public static function generateReference(): string
+    public function generateReference(): string
     {
         $prefix = EscalatedSettings::get('ticket_reference_prefix', 'ESC');
-        $latest = static::withTrashed()->max('id') ?? 0;
 
-        return sprintf('%s-%05d', $prefix, $latest + 1);
+        return sprintf('%s-%05d', $prefix, $this->id);
     }
 
     public function isOpen(): bool

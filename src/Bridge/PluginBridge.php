@@ -82,7 +82,7 @@ class PluginBridge
     {
         $this->contextHandler = new ContextHandler();
         $this->contextHandler->setBridge($this);
-        $this->routeRegistrar = new RouteRegistrar($this);
+        $this->routeRegistrar = app(RouteRegistrar::class, ['bridge' => $this]);
     }
 
     // =========================================================================

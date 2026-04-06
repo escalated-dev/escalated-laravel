@@ -22,6 +22,12 @@ use Illuminate\Support\Facades\Log;
  */
 class ContextHandler
 {
+    private const PLUGIN_TICKET_FILLABLE = [
+        'subject', 'body', 'priority', 'status', 'department_id', 'ticket_type',
+    ];
+
+    private const PLUGIN_CONTACT_FILLABLE = ['name', 'email'];
+
     /**
      * The plugin name that is currently executing (set before each dispatch).
      */
@@ -221,7 +227,8 @@ class ContextHandler
         }
 
         if (isset($options['orderBy'])) {
-            $direction = $options['order'] ?? 'asc';
+            $this->validateFieldName($options['orderBy']);
+            $direction = in_array(strtolower($options['order'] ?? 'asc'), ['asc', 'desc']) ? strtolower($options['order']) : 'asc';
             $query->orderByRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '$.{$options['orderBy']}')) {$direction}");
         }
 
@@ -283,8 +290,16 @@ class ContextHandler
     /**
      * Apply a MongoDB-style query operator to a JSON column query.
      */
+    private function validateFieldName(string $field): void
+    {
+        if (! preg_match('/^[a-zA-Z_][a-zA-Z0-9_.]*$/', $field)) {
+            throw new \InvalidArgumentException("Invalid store field name: {$field}");
+        }
+    }
+
     private function applyJsonOperator(\Illuminate\Database\Eloquent\Builder $query, string $field, string $op, mixed $value): void
     {
+        $this->validateFieldName($field);
         $extract = "JSON_UNQUOTE(JSON_EXTRACT(data, '$.{$field}'))";
 
         match ($op) {
@@ -326,6 +341,7 @@ class ContextHandler
     private function ticketsCreate(array $params): array
     {
         $data   = $params['data'] ?? throw new \InvalidArgumentException('ctx.tickets.create requires data');
+        $data   = array_intersect_key($data, array_flip(self::PLUGIN_TICKET_FILLABLE));
         $ticket = \Escalated\Laravel\Models\Ticket::create($data);
 
         return $ticket->toArray();
@@ -337,6 +353,7 @@ class ContextHandler
         $data = $params['data'] ?? throw new \InvalidArgumentException('ctx.tickets.update requires data');
 
         $ticket = \Escalated\Laravel\Models\Ticket::findOrFail($id);
+        $data   = array_intersect_key($data, array_flip(self::PLUGIN_TICKET_FILLABLE));
         $ticket->update($data);
 
         return $ticket->fresh()->toArray();
@@ -399,6 +416,7 @@ class ContextHandler
     private function contactsCreate(array $params): array
     {
         $data  = $params['data'] ?? throw new \InvalidArgumentException('ctx.contacts.create requires data');
+        $data  = array_intersect_key($data, array_flip(self::PLUGIN_CONTACT_FILLABLE));
         $model = Escalated::userModel();
         $user  = $model::create($data);
 
@@ -450,7 +468,7 @@ class ContextHandler
         // Return users that have agent or admin gate access — we rely on the
         // application's user model structure. The simplest approach is to
         // return all users; the host application can filter via gates if needed.
-        return $model::all()->toArray();
+        return $model::select('id', 'name', 'email')->get()->toArray();
     }
 
     private function agentsFind(array $params): ?array
@@ -471,6 +489,8 @@ class ContextHandler
         $channel = $params['channel'] ?? throw new \InvalidArgumentException('ctx.broadcast.toChannel requires channel');
         $event   = $params['event'] ?? throw new \InvalidArgumentException('ctx.broadcast.toChannel requires event');
         $data    = $params['data'] ?? [];
+
+        $channel = "plugin.{$channel}";
 
         Broadcast::channel($channel, fn () => true);
         broadcast(new \Escalated\Laravel\Bridge\Events\PluginBroadcastEvent($channel, $event, $data));

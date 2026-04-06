@@ -216,7 +216,7 @@ class InboundEmailService
 
         // Guest ticket — follow GuestTicketController pattern
         $ticket = new Ticket();
-        $ticket->reference = Ticket::generateReference();
+        $ticket->reference = 'TEMP-'.Str::uuid()->toString();
         $ticket->requester_type = null;
         $ticket->requester_id = null;
         $ticket->guest_name = $message->fromName ?? $this->nameFromEmail($message->fromEmail);
@@ -228,6 +228,9 @@ class InboundEmailService
         $ticket->priority = TicketPriority::from(config('escalated.default_priority', 'medium'));
         $ticket->channel = 'email';
         $ticket->save();
+
+        $ticket->reference = $ticket->generateReference();
+        $ticket->saveQuietly();
 
         // Handle attachments
         $this->storeInboundAttachments($ticket, $message->attachments);

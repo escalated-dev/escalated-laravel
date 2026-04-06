@@ -14,7 +14,8 @@ class AttachmentService
     {
         $disk = config('escalated.storage.disk', 'public');
         $basePath = config('escalated.storage.path', 'escalated/attachments');
-        $filename = Str::uuid().'.'.$file->getClientOriginalExtension();
+        $extension = $file->guessExtension() ?? 'bin';
+        $filename = Str::uuid().'.'.$extension;
         $path = $file->storeAs($basePath, $filename, $disk);
 
         return Attachment::create([

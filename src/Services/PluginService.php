@@ -261,6 +261,15 @@ class PluginService
             throw new \Exception('Invalid plugin structure');
         }
 
+        // Validate ZIP entries for path traversal (zip slip)
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $entryName = $zip->getNameIndex($i);
+            if (str_contains($entryName, '..') || str_starts_with($entryName, '/')) {
+                $zip->close();
+                throw new \RuntimeException('Plugin ZIP contains unsafe path: ' . $entryName);
+            }
+        }
+
         // Extract to plugins directory
         $extractPath = $this->pluginsPath.'/'.$rootFolder;
 
@@ -280,6 +289,14 @@ class PluginService
         if (! File::exists($manifestPath)) {
             File::deleteDirectory($extractPath);
             throw new \Exception('Invalid plugin: missing plugin.json');
+        }
+
+        // Validate main_file from manifest doesn't contain path traversal
+        $manifest = json_decode(File::get($manifestPath), true);
+        $mainFile = $manifest['main_file'] ?? 'Plugin.php';
+        if (str_contains($mainFile, '..') || str_starts_with($mainFile, '/')) {
+            File::deleteDirectory($extractPath);
+            throw new \RuntimeException('Plugin manifest contains unsafe main_file path: ' . $mainFile);
         }
 
         return [

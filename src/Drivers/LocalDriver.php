@@ -13,6 +13,7 @@ use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Models\TicketActivity;
 use Escalated\Laravel\Services\AttachmentService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Str;
 
 class LocalDriver implements TicketDriver
 {
@@ -27,7 +28,7 @@ class LocalDriver implements TicketDriver
     public function createTicket(Ticketable $requester, array $data): Ticket
     {
         $ticket = new Ticket();
-        $ticket->reference = Ticket::generateReference();
+        $ticket->reference = 'TEMP-'.Str::uuid()->toString();
         $ticket->requester_type = $requester->getMorphClass();
         $ticket->requester_id = $requester->getKey();
         $ticket->subject = $data['subject'];
@@ -39,6 +40,9 @@ class LocalDriver implements TicketDriver
         $ticket->department_id = $data['department_id'] ?? null;
         $ticket->metadata = $data['metadata'] ?? null;
         $ticket->save();
+
+        $ticket->reference = $ticket->generateReference();
+        $ticket->saveQuietly();
 
         if (! empty($data['attachments'])) {
             $this->attachmentService->storeMany($ticket, $data['attachments']);
