@@ -223,7 +223,7 @@ class InboundEmailService
             'subject' => $this->sanitizeSubject($message->subject),
             'description' => $body,
             'status' => TicketStatus::Open,
-            'priority' => config('escalated.default_priority', 'medium'),
+            'priority' => TicketPriority::from(config('escalated.default_priority', 'medium')),
             'channel' => 'email',
         ]);
 

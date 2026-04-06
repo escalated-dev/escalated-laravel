@@ -28,7 +28,6 @@ class Ticket extends Model
     protected $guarded = ['id'];
 
     protected $dispatchesEvents = [
-        'created' => Events\TicketCreated::class,
         'updated' => Events\TicketUpdated::class,
     ];
 
@@ -37,29 +36,26 @@ class Ticket extends Model
         parent::boot();
 
         static::creating(function (self $ticket) {
-            // Set the ticket reference if not explicitly set upon creation.
-            // We use a temporary UUID to prevent collision with existing references in case of high concurrency,
-            // and then update it to the final format after creation.
-            if(empty($ticket->reference)){
-                $ticket->reference = 'TEMP-'.Str::uuid()->toString();
+            if (empty($ticket->reference)) {
+                $ticket->reference = 'TEMP-' . Str::uuid()->toString();
             }
 
-            // Set the status to open if not explicitly set upon creation.
-            if(empty($ticket->status)){
+            if (empty($ticket->status)) {
                 $ticket->status = TicketStatus::Open;
             }
         });
 
-
         static::created(function (self $ticket) {
-            // Update the reference to use the prefixed primary key if TEMP via UUID is used.
-            if(Str::startsWith($ticket->reference, 'TEMP-')){
+            // Generate the final reference from the primary key, then dispatch TicketCreated
+            // so listeners always receive the real reference (not TEMP-).
+            if (Str::startsWith($ticket->reference, 'TEMP-')) {
                 $ticket->updateQuietly([
                     'reference' => $ticket->generateReference(),
                 ]);
             }
-        });
 
+            Events\TicketCreated::dispatch($ticket);
+        });
     }
 
     public function getRouteKeyName(): string
