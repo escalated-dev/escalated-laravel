@@ -19,7 +19,7 @@ class ReplyToTicketRequest extends FormRequest
         return [
             'body' => ['required', 'string'],
             'attachments' => ['nullable', 'array'],
-            'attachments.*' => ['file', 'max:'.$maxSize],
+            'attachments.*' => ['file', 'max:'.$maxSize, 'mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,csv,txt,zip,mp4,mp3'],
         ];
     }
 }

@@ -22,7 +22,7 @@ class CreateTicketRequest extends FormRequest
             'priority' => ['nullable', 'in:low,medium,high,urgent,critical'],
             'department_id' => ['nullable', 'exists:escalated_departments,id'],
             'attachments' => ['nullable', 'array'],
-            'attachments.*' => ['file', 'max:'.$maxSize],
+            'attachments.*' => ['file', 'max:'.$maxSize, 'mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,csv,txt,zip,mp4,mp3'],
         ];
     }
 }
