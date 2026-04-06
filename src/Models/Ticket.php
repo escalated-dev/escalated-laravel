@@ -34,12 +34,6 @@ class Ticket extends Model
     protected static function boot(): void
     {
         parent::boot();
-
-        static::creating(function ($ticket) {
-            if (empty($ticket->reference) || is_null($ticket->reference)) {
-                $ticket->reference = self::generateReference();
-            }
-        });
     }
 
     public function getRouteKeyName(): string
@@ -270,12 +264,11 @@ class Ticket extends Model
 
     // Helpers
 
-    public static function generateReference(): string
+    public function generateReference(): string
     {
         $prefix = EscalatedSettings::get('ticket_reference_prefix', 'ESC');
-        $latest = static::withTrashed()->max('id') ?? 0;
 
-        return sprintf('%s-%05d', $prefix, $latest + 1);
+        return sprintf('%s-%05d', $prefix, $this->id);
     }
 
     public function isOpen(): bool
