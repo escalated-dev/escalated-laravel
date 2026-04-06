@@ -55,7 +55,7 @@ class TicketController extends Controller
         ]);
 
         $ticket = new Ticket();
-        $ticket->reference = Ticket::generateReference();
+        $ticket->reference = 'TEMP-'.Str::uuid()->toString();
         $ticket->requester_type = null;
         $ticket->requester_id = null;
         $ticket->guest_name = $validated['guest_name'];
@@ -68,6 +68,9 @@ class TicketController extends Controller
         $ticket->channel = 'web';
         $ticket->department_id = $validated['department_id'] ?? null;
         $ticket->save();
+
+        $ticket->reference = $ticket->generateReference();
+        $ticket->saveQuietly();
 
         if (! empty($validated['attachments'])) {
             $this->attachmentService->storeMany($ticket, $request->file('attachments'));

@@ -10,12 +10,8 @@ return new class extends Migration
     {
         $prefix = config('escalated.table_prefix', 'escalated_');
 
-        Schema::table($prefix.'tickets', function (Blueprint $table) {
-            // Unique constraint on reference to prevent duplicates
-            $table->unique('reference');
-
+        Schema::table($prefix.'tickets', function (Blueprint $table) use ($prefix) {
             // Performance indexes for SLA checks, reports, and filtering
-            $table->index('ticket_type');
             $table->index('resolved_at');
             $table->index('first_response_at');
             $table->index('first_response_due_at');
@@ -33,8 +29,6 @@ return new class extends Migration
         $prefix = config('escalated.table_prefix', 'escalated_');
 
         Schema::table($prefix.'tickets', function (Blueprint $table) use ($prefix) {
-            $table->dropUnique(['reference']);
-            $table->dropIndex(['ticket_type']);
             $table->dropIndex(['resolved_at']);
             $table->dropIndex(['first_response_at']);
             $table->dropIndex(['first_response_due_at']);
