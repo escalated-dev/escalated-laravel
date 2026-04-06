@@ -298,6 +298,7 @@ class EscalatedServiceProvider extends ServiceProvider
 
         Event::listen(Events\TicketAssigned::class, Listeners\SendAssignmentNotification::class);
 
+        Event::listen(Events\TicketStatusChanged::class, Listeners\LogTicketStatusChange::class);
         Event::listen(Events\TicketStatusChanged::class, Listeners\SendStatusChangeNotification::class);
 
         Event::listen(Events\SlaBreached::class, Listeners\SendSlaBreachNotification::class);
