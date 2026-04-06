@@ -28,22 +28,10 @@ A full-featured, embeddable support ticket system for Laravel. Drop it into any 
 - **Inbound email** — Create and reply to tickets via email (Mailgun, Postmark, AWS SES, IMAP)
 - **Inertia.js + Vue 3 UI** — Shared frontend via [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated)
 
-### v0.4.0 — Advanced Features
-
-- **Bulk actions** — Assign, change status/priority, add tags, close, or delete multiple tickets at once
-- **Macros** — Reusable multi-step automations (set status + assign + add note in one click)
-- **Ticket followers** — Agents follow tickets and receive the same notifications as the assignee
-- **Satisfaction ratings** — 1-5 star CSAT ratings with optional comments after resolution
-- **Pinned notes** — Pin important internal notes to the top of the ticket thread
-- **Keyboard shortcuts** — Full keyboard navigation for power users
-- **Quick filters** — One-click filter chips (My Tickets, Unassigned, Urgent, SLA Breaching)
-- **Presence indicators** — See who else is viewing a ticket in real-time
-- **Enhanced dashboard** — CSAT metrics, resolution times, SLA breach tracking
-
 ## Requirements
 
 - PHP 8.2+
-- Laravel 11.x or 12.x
+- Laravel 11.x, 12.x, or 13.x
 - Node.js 18+ (for frontend assets)
 
 ## Quick Start
