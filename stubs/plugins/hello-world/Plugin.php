@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Facades\Log;
+
 /**
  * Hello World Plugin for Escalated
  *
@@ -52,7 +54,7 @@ escalated_add_filter('escalated_ticket_display_subject', function (string $subje
 
 // Action: Log when a ticket is created
 escalated_add_action('escalated_ticket_created', function ($ticket, $user) {
-    \Illuminate\Support\Facades\Log::info('Hello World Plugin: Ticket created', [
+    Log::info('Hello World Plugin: Ticket created', [
         'ticket_id' => $ticket->id ?? null,
         'user_id' => $user->id ?? null,
     ]);
@@ -60,15 +62,15 @@ escalated_add_action('escalated_ticket_created', function ($ticket, $user) {
 
 // Action: Run code when this plugin is activated
 escalated_add_action('escalated_plugin_activated_hello-world', function () {
-    \Illuminate\Support\Facades\Log::info('Hello World Plugin: Activated!');
+    Log::info('Hello World Plugin: Activated!');
 });
 
 // Action: Run code when this plugin is deactivated
 escalated_add_action('escalated_plugin_deactivated_hello-world', function () {
-    \Illuminate\Support\Facades\Log::info('Hello World Plugin: Deactivated!');
+    Log::info('Hello World Plugin: Deactivated!');
 });
 
 // Action: Clean up when this plugin is being uninstalled
 escalated_add_action('escalated_plugin_uninstalling_hello-world', function () {
-    \Illuminate\Support\Facades\Log::info('Hello World Plugin: Uninstalling - cleaning up...');
+    Log::info('Hello World Plugin: Uninstalling - cleaning up...');
 });
