@@ -2,17 +2,18 @@
 
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Models\CustomObject;
 use Escalated\Laravel\Models\CustomObjectRecord;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 class CustomObjectController extends Controller
 {
     public function __construct(
         protected EscalatedUiRenderer $renderer,
     ) {}
+
     public function index()
     {
         $objects = CustomObject::withCount('records')

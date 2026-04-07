@@ -182,7 +182,7 @@ it('rejects deletion of composer plugins', function () {
 
     try {
         $this->pluginService->deletePlugin('acme--undeletable-plugin');
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
         expect($e->getMessage())->toContain('Composer plugins cannot be deleted');
     } finally {
         File::deleteDirectory($vendorDir);

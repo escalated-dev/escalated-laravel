@@ -5,7 +5,7 @@ namespace Escalated\Laravel\Database\Seeders;
 use Escalated\Laravel\Models\Permission;
 use Escalated\Laravel\Models\Role;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Collection;
 
 class PermissionSeeder extends Seeder
 {
@@ -68,7 +68,7 @@ class PermissionSeeder extends Seeder
      * A single '*' grants all permissions.
      *
      * @param  array<int, string>  $patterns
-     * @param  \Illuminate\Support\Collection  $slugToId  slug => id map
+     * @param  Collection  $slugToId  slug => id map
      * @return array<int, int>
      */
     protected function resolvePermissionIds(array $patterns, $slugToId): array

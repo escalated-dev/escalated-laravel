@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Facades;
 
+use Escalated\Laravel\Support\HookManager;
 use Illuminate\Support\Facades\Facade;
 
 /**
@@ -16,7 +17,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static array getActions()
  * @method static array getFilters()
  *
- * @see \Escalated\Laravel\Support\HookManager
+ * @see HookManager
  */
 class Hook extends Facade
 {

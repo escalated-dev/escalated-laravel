@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Models;
 
+use Escalated\Laravel\Database\Factories\ReplyFactory;
 use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Events\InternalNoteAdded;
 use Escalated\Laravel\Events\ReplyCreated;
@@ -65,8 +66,8 @@ class Reply extends Model
         return $this->morphMany(Attachment::class, 'attachable');
     }
 
-    protected static function newFactory(): \Escalated\Laravel\Database\Factories\ReplyFactory
+    protected static function newFactory(): ReplyFactory
     {
-        return \Escalated\Laravel\Database\Factories\ReplyFactory::new();
+        return ReplyFactory::new();
     }
 }

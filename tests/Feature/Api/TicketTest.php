@@ -3,8 +3,6 @@
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Models\ApiToken;
-use Escalated\Laravel\Models\Department;
-use Escalated\Laravel\Models\Tag;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Tests\Fixtures\TestUser;
 use Illuminate\Support\Facades\Gate;

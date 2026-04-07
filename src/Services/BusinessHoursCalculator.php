@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Services;
 
 use Carbon\Carbon;
 use Escalated\Laravel\Models\BusinessSchedule;
+use Illuminate\Database\Eloquent\Collection;
 
 class BusinessHoursCalculator
 {
@@ -41,6 +42,7 @@ class BusinessHoursCalculator
         while ($remainingMinutes > 0 && $maxIterations-- > 0) {
             if ($this->isHoliday($current, $schedule)) {
                 $current->addDay()->startOfDay();
+
                 continue;
             }
 
@@ -48,6 +50,7 @@ class BusinessHoursCalculator
 
             if (empty($daySchedule) || empty($daySchedule['start']) || empty($daySchedule['end'])) {
                 $current->addDay()->startOfDay();
+
                 continue;
             }
 
@@ -62,6 +65,7 @@ class BusinessHoursCalculator
             // If current time is at or after business hours end, jump to next day
             if ($current->gte($dayEnd)) {
                 $current->addDay()->startOfDay();
+
                 continue;
             }
 
@@ -97,9 +101,9 @@ class BusinessHoursCalculator
     {
         $holidays = $schedule->holidays ?? collect();
 
-        if ($holidays instanceof \Illuminate\Database\Eloquent\Collection && !$holidays->isNotEmpty()) {
+        if ($holidays instanceof Collection && ! $holidays->isNotEmpty()) {
             // Load the relationship if not already loaded
-            if (!$schedule->relationLoaded('holidays')) {
+            if (! $schedule->relationLoaded('holidays')) {
                 $schedule->load('holidays');
                 $holidays = $schedule->holidays;
             }

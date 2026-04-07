@@ -7,6 +7,7 @@ use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Events\TicketEscalated;
 use Escalated\Laravel\Models\EscalationRule;
 use Escalated\Laravel\Models\Ticket;
+use Illuminate\Support\Collection;
 
 class EscalationService
 {
@@ -32,7 +33,7 @@ class EscalationService
         return $escalated;
     }
 
-    protected function findMatchingTickets(EscalationRule $rule): \Illuminate\Support\Collection
+    protected function findMatchingTickets(EscalationRule $rule): Collection
     {
         $query = Ticket::open();
 

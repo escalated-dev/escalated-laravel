@@ -3,7 +3,6 @@
 use Escalated\Laravel\Console\Commands\InstallCommand;
 use Illuminate\Console\OutputStyle;
 use Illuminate\Console\View\Components\Factory as ComponentsFactory;
-use Illuminate\Support\Facades\File;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\NullOutput;
 
@@ -358,4 +357,3 @@ it('returns null for non-App namespace models', function () {
 
     expect($path)->toBeNull();
 });
-

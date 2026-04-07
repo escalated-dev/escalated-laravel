@@ -2,9 +2,10 @@
 
 use Escalated\Laravel\Mail\Adapters\SesAdapter;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 it('parses ses sns notification into inbound message', function () {
-    $adapter = new SesAdapter();
+    $adapter = new SesAdapter;
 
     $rawMime = implode("\r\n", [
         'Content-Type: multipart/alternative; boundary="boundary123"',
@@ -59,7 +60,7 @@ it('parses ses sns notification into inbound message', function () {
 });
 
 it('handles sns subscription confirmation', function () {
-    $adapter = new SesAdapter();
+    $adapter = new SesAdapter;
 
     $snsPayload = [
         'Type' => 'SubscriptionConfirmation',
@@ -72,8 +73,8 @@ it('handles sns subscription confirmation', function () {
     ], json_encode($snsPayload));
 
     // Mock the HTTP call for confirmation (it would fail in test, but parseRequest still returns a message)
-    \Illuminate\Support\Facades\Http::fake([
-        'sns.us-east-1.amazonaws.com/*' => \Illuminate\Support\Facades\Http::response('OK', 200),
+    Http::fake([
+        'sns.us-east-1.amazonaws.com/*' => Http::response('OK', 200),
     ]);
 
     $message = $adapter->parseRequest($request);
@@ -83,7 +84,7 @@ it('handles sns subscription confirmation', function () {
 });
 
 it('parses single-part mime message', function () {
-    $adapter = new SesAdapter();
+    $adapter = new SesAdapter;
 
     $rawMime = implode("\r\n", [
         'Content-Type: text/plain',
@@ -121,7 +122,7 @@ it('parses single-part mime message', function () {
 it('rejects when topic arn does not match', function () {
     config(['escalated.inbound_email.ses.topic_arn' => 'arn:aws:sns:us-east-1:123:correct-topic']);
 
-    $adapter = new SesAdapter();
+    $adapter = new SesAdapter;
 
     $snsPayload = [
         'Type' => 'Notification',
@@ -143,7 +144,7 @@ it('rejects when topic arn does not match', function () {
 it('rejects invalid signing cert url', function () {
     config(['escalated.inbound_email.ses.topic_arn' => null]);
 
-    $adapter = new SesAdapter();
+    $adapter = new SesAdapter;
 
     $snsPayload = [
         'Type' => 'Notification',
@@ -164,7 +165,7 @@ it('rejects invalid signing cert url', function () {
 it('rejects non-https signing cert url', function () {
     config(['escalated.inbound_email.ses.topic_arn' => null]);
 
-    $adapter = new SesAdapter();
+    $adapter = new SesAdapter;
 
     $snsPayload = [
         'Type' => 'Notification',
@@ -180,7 +181,7 @@ it('rejects non-https signing cert url', function () {
 });
 
 it('parses base64 encoded mime part', function () {
-    $adapter = new SesAdapter();
+    $adapter = new SesAdapter;
 
     $encodedBody = base64_encode('Decoded plain text body.');
 
@@ -222,7 +223,7 @@ it('parses base64 encoded mime part', function () {
 });
 
 it('parses notification without raw content', function () {
-    $adapter = new SesAdapter();
+    $adapter = new SesAdapter;
 
     $snsPayload = [
         'Type' => 'Notification',

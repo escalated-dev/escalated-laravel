@@ -2,9 +2,9 @@
 
 namespace Escalated\Laravel\Http\Controllers\Api;
 
-use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
+use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Http\Resources\TicketCollectionResource;
 use Escalated\Laravel\Http\Resources\TicketResource;
 use Escalated\Laravel\Models\Macro;

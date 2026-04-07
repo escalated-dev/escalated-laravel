@@ -10,7 +10,7 @@ return new class extends Migration
     {
         $prefix = config('escalated.table_prefix', 'escalated_');
 
-        Schema::create($prefix . 'import_source_maps', function (Blueprint $table) use ($prefix) {
+        Schema::create($prefix.'import_source_maps', function (Blueprint $table) use ($prefix) {
             $table->id();
             $table->uuid('import_job_id');
             $table->string('entity_type', 50);
@@ -20,7 +20,7 @@ return new class extends Migration
 
             $table->foreign('import_job_id')
                 ->references('id')
-                ->on($prefix . 'import_jobs')
+                ->on($prefix.'import_jobs')
                 ->cascadeOnDelete();
 
             $table->unique(['import_job_id', 'entity_type', 'source_id'], 'import_source_map_unique');
@@ -31,6 +31,6 @@ return new class extends Migration
     public function down(): void
     {
         $prefix = config('escalated.table_prefix', 'escalated_');
-        Schema::dropIfExists($prefix . 'import_source_maps');
+        Schema::dropIfExists($prefix.'import_source_maps');
     }
 };

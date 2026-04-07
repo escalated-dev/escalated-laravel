@@ -5,13 +5,15 @@ namespace Escalated\Laravel\Services;
 use Escalated\Laravel\Contracts\ImportAdapter;
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
+use Escalated\Laravel\Models\Attachment;
+use Escalated\Laravel\Models\CustomField;
 use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\ImportJob;
 use Escalated\Laravel\Models\ImportSourceMap;
+use Escalated\Laravel\Models\Reply;
+use Escalated\Laravel\Models\SatisfactionRating;
 use Escalated\Laravel\Models\Tag;
 use Escalated\Laravel\Models\Ticket;
-use Escalated\Laravel\Models\Reply;
-use Escalated\Laravel\Support\ExtractResult;
 use Escalated\Laravel\Support\ImportContext;
 
 class ImportService
@@ -51,7 +53,7 @@ class ImportService
     /**
      * Run the import for a job. Called by both UI and CLI.
      *
-     * @param callable|null $onProgress  Called after each batch: fn(string $entityType, array $progressData)
+     * @param  callable|null  $onProgress  Called after each batch: fn(string $entityType, array $progressData)
      */
     public function run(ImportJob $job, ?callable $onProgress = null): void
     {
@@ -125,12 +127,14 @@ class ImportService
 
                 if (! $sourceId) {
                     $failed++;
+
                     continue;
                 }
 
                 // Skip already-imported records (resumability)
                 if (ImportSourceMap::hasBeenImported($job->id, $entityType, $sourceId)) {
                     $skipped++;
+
                     continue;
                 }
 
@@ -259,7 +263,7 @@ class ImportService
 
         $userModel = config('escalated.user_model', 'App\\Models\\User');
 
-        $ticket = new Ticket();
+        $ticket = new Ticket;
         $ticket->timestamps = false;
         $ticket->fill([
             'title' => $record['title'] ?? 'Imported ticket',
@@ -296,7 +300,7 @@ class ImportService
         $ticketId = ImportSourceMap::resolve($job->id, 'tickets', $record['ticket_source_id'] ?? '');
 
         if (! $ticketId) {
-            throw new \RuntimeException("Parent ticket not found for reply.");
+            throw new \RuntimeException('Parent ticket not found for reply.');
         }
 
         $authorId = null;
@@ -309,7 +313,7 @@ class ImportService
             $authorType = $userModel;
         }
 
-        $reply = new Reply();
+        $reply = new Reply;
         $reply->timestamps = false;
         $reply->fill([
             'ticket_id' => $ticketId,
@@ -344,7 +348,7 @@ class ImportService
             ? Ticket::class
             : Reply::class;
 
-        $attachment = \Escalated\Laravel\Models\Attachment::create([
+        $attachment = Attachment::create([
             'attachable_type' => $parentModel,
             'attachable_id' => $parentId,
             'filename' => $record['filename'] ?? 'unknown',
@@ -359,7 +363,7 @@ class ImportService
 
     private function persistCustomField(array $record, array $mappings): string|int
     {
-        $field = \Escalated\Laravel\Models\CustomField::firstOrCreate(
+        $field = CustomField::firstOrCreate(
             ['slug' => \Str::slug($record['name'])],
             [
                 'name' => $record['name'],
@@ -376,10 +380,10 @@ class ImportService
         $ticketId = ImportSourceMap::resolve($job->id, 'tickets', $record['ticket_source_id'] ?? '');
 
         if (! $ticketId) {
-            throw new \RuntimeException("Ticket not found for satisfaction rating.");
+            throw new \RuntimeException('Ticket not found for satisfaction rating.');
         }
 
-        $rating = \Escalated\Laravel\Models\SatisfactionRating::create([
+        $rating = SatisfactionRating::create([
             'ticket_id' => $ticketId,
             'rating' => $record['rating'] ?? $record['score'] ?? null,
             'comment' => $record['comment'] ?? null,

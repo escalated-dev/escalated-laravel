@@ -4,7 +4,7 @@ use Escalated\Laravel\Mail\Adapters\PostmarkAdapter;
 use Illuminate\Http\Request;
 
 it('parses postmark inbound webhook json', function () {
-    $adapter = new PostmarkAdapter();
+    $adapter = new PostmarkAdapter;
 
     $payload = [
         'FromFull' => ['Email' => 'sender@example.com', 'Name' => 'Sender Name'],
@@ -38,7 +38,7 @@ it('parses postmark inbound webhook json', function () {
 });
 
 it('parses postmark attachments from base64', function () {
-    $adapter = new PostmarkAdapter();
+    $adapter = new PostmarkAdapter;
 
     $content = base64_encode('Hello attachment content');
 
@@ -73,7 +73,7 @@ it('parses postmark attachments from base64', function () {
 it('verifies postmark token from header', function () {
     config(['escalated.inbound_email.postmark.token' => 'secret-token-123']);
 
-    $adapter = new PostmarkAdapter();
+    $adapter = new PostmarkAdapter;
 
     $request = Request::create('/inbound/postmark', 'POST');
     $request->headers->set('X-Postmark-Token', 'secret-token-123');
@@ -84,7 +84,7 @@ it('verifies postmark token from header', function () {
 it('rejects invalid postmark token', function () {
     config(['escalated.inbound_email.postmark.token' => 'correct-token']);
 
-    $adapter = new PostmarkAdapter();
+    $adapter = new PostmarkAdapter;
 
     $request = Request::create('/inbound/postmark', 'POST');
     $request->headers->set('X-Postmark-Token', 'wrong-token');
@@ -95,7 +95,7 @@ it('rejects invalid postmark token', function () {
 it('rejects request when no postmark token is configured', function () {
     config(['escalated.inbound_email.postmark.token' => null]);
 
-    $adapter = new PostmarkAdapter();
+    $adapter = new PostmarkAdapter;
 
     $request = Request::create('/inbound/postmark', 'POST');
 

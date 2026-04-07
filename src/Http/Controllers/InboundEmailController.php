@@ -70,9 +70,9 @@ class InboundEmailController extends Controller
     protected function resolveAdapter(string $adapter): ?InboundAdapter
     {
         return match ($adapter) {
-            'mailgun' => new MailgunAdapter(),
-            'postmark' => new PostmarkAdapter(),
-            'ses' => new SesAdapter(),
+            'mailgun' => new MailgunAdapter,
+            'postmark' => new PostmarkAdapter,
+            'ses' => new SesAdapter,
             default => null,
         };
     }

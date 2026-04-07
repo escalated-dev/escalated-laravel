@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Http\Controllers\Customer;
 
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Http\Requests\CreateTicketRequest;
 use Escalated\Laravel\Http\Requests\ReplyToTicketRequest;
 use Escalated\Laravel\Models\Department;
@@ -10,7 +11,6 @@ use Escalated\Laravel\Services\TicketService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 class TicketController extends Controller
 {
