@@ -153,6 +153,11 @@ class EscalatedServiceProvider extends ServiceProvider
             $this->loadRoutesFrom(__DIR__.'/../routes/inbound.php');
         }
 
+        // Broadcasting channel authorization routes
+        if (config('escalated.broadcasting.enabled', false)) {
+            require __DIR__.'/../routes/channels.php';
+        }
+
         // Widget routes (public, rate-limited)
         $this->loadRoutesFrom(__DIR__.'/../routes/widget.php');
     }

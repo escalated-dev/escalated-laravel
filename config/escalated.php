@@ -211,6 +211,21 @@ return [
         'prefix' => 'support/api/v1',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Broadcasting / Real-time
+    |--------------------------------------------------------------------------
+    |
+    | Enable WebSocket broadcasting for core ticket events. Requires a
+    | broadcasting driver (Pusher, Ably, Reverb, Soketi, etc.) configured
+    | in the host application. When disabled (default), the frontend falls
+    | back to polling automatically.
+    |
+    */
+    'broadcasting' => [
+        'enabled' => env('ESCALATED_BROADCASTING_ENABLED', false),
+    ],
+
     'inbound_email' => [
         'enabled' => env('ESCALATED_INBOUND_EMAIL', false),
         'adapter' => env('ESCALATED_INBOUND_ADAPTER', 'mailgun'),
