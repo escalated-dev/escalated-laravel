@@ -27,6 +27,15 @@ A full-featured, embeddable support ticket system for Laravel. Drop it into any 
 - **Guest tickets** — Anonymous ticket submission with magic-link access via guest token
 - **Inbound email** — Create and reply to tickets via email (Mailgun, Postmark, AWS SES, IMAP)
 - **Inertia.js + Vue 3 UI** — Shared frontend via [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated)
+- **Ticket splitting** — Split a reply into a new standalone ticket while preserving the original context
+- **Ticket snooze** — Snooze tickets with presets (1h, 4h, tomorrow, next week); `escalated:wake-snoozed-tickets` Artisan command auto-wakes them on schedule
+- **Saved views / custom queues** — Save, name, and share filter presets as reusable ticket views
+- **Embeddable support widget** — Lightweight `<script>` widget served via `/support/widget/*` routes with KB search, ticket form, and status check
+- **Email threading** — Outbound emails include proper `In-Reply-To` and `References` headers for correct threading in mail clients
+- **Branded email templates** — Configurable logo, primary color, and footer text for all outbound emails
+- **Real-time broadcasting** — Opt-in broadcasting via Pusher, Reverb, or Soketi with automatic polling fallback
+- **Knowledge base toggle** — Enable or disable the public knowledge base from admin settings
+- **CI: Laravel Pint** — Automated code style enforcement on every pull request
 
 ## Requirements
 
