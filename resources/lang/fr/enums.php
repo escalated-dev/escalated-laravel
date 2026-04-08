@@ -40,6 +40,7 @@ return [
         'closed' => 'Fermé',
         'snoozed' => 'Mis en veille',
         'unsnoozed' => 'Réactivé',
+        'ticket_split' => 'Ticket scindé',
     ],
 
 ];

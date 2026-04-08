@@ -20,6 +20,7 @@ enum ActivityType: string
     case Closed = 'closed';
     case Snoozed = 'snoozed';
     case Unsnoozed = 'unsnoozed';
+    case TicketSplit = 'ticket_split';
 
     public function label(): string
     {

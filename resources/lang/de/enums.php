@@ -40,6 +40,7 @@ return [
         'closed' => 'Geschlossen',
         'snoozed' => 'Zurückgestellt',
         'unsnoozed' => 'Wieder aktiviert',
+        'ticket_split' => 'Ticket aufgeteilt',
     ],
 
 ];

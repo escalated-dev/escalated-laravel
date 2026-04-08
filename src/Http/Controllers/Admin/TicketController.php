@@ -16,6 +16,7 @@ use Escalated\Laravel\Models\CannedResponse;
 use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\Macro;
 use Escalated\Laravel\Models\Reply;
+use Escalated\Laravel\Models\SavedView;
 use Escalated\Laravel\Models\Tag;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\AssignmentService;
@@ -48,6 +49,7 @@ class TicketController extends Controller
             'departments' => Department::active()->get(['id', 'name']),
             'tags' => Tag::all(['id', 'name', 'color']),
             'agents' => $this->getAgents(),
+            'savedViews' => SavedView::forUser($request->user()->getKey())->orderBy('position')->get(),
         ]);
     }
 
@@ -183,6 +185,27 @@ class TicketController extends Controller
         Cache::put("escalated.presence_list.{$ticket->id}", $activeIds, 120);
 
         return response()->json(['viewers' => $viewers]);
+    }
+
+    public function split(Ticket $ticket, Request $request): RedirectResponse
+    {
+        $request->validate([
+            'reply_id' => 'required|integer',
+            'subject' => 'nullable|string|max:255',
+        ]);
+
+        $reply = $ticket->replies()->findOrFail($request->integer('reply_id'));
+
+        $data = [];
+        if ($request->filled('subject')) {
+            $data['subject'] = $request->input('subject');
+        }
+
+        $newTicket = $this->ticketService->splitTicket($ticket, $reply, $data);
+
+        return redirect()
+            ->route('escalated.admin.tickets.show', $newTicket)
+            ->with('success', __('escalated::messages.ticket.split_created'));
     }
 
     public function pin(Ticket $ticket, Reply $reply, Request $request): RedirectResponse
