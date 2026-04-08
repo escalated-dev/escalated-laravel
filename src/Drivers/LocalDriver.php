@@ -183,6 +183,13 @@ class LocalDriver implements TicketDriver
             $query->whereHas('followers', fn ($q) => $q->where('user_id', $for->getKey()));
         }
 
+        // Snooze filtering: show only snoozed, or exclude snoozed by default
+        if (isset($filters['snoozed']) && $filters['snoozed']) {
+            $query->snoozed();
+        } elseif (! isset($filters['include_snoozed']) || ! $filters['include_snoozed']) {
+            $query->notSnoozed();
+        }
+
         $sortBy = $filters['sort_by'] ?? 'created_at';
         $sortDir = strtolower($filters['sort_dir'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
 

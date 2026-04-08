@@ -18,6 +18,8 @@ enum ActivityType: string
     case Reopened = 'reopened';
     case Resolved = 'resolved';
     case Closed = 'closed';
+    case Snoozed = 'snoozed';
+    case Unsnoozed = 'unsnoozed';
 
     public function label(): string
     {

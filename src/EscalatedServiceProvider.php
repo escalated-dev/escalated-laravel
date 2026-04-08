@@ -12,6 +12,7 @@ use Escalated\Laravel\Console\Commands\PollImapCommand;
 use Escalated\Laravel\Console\Commands\PurgeActivitiesCommand;
 use Escalated\Laravel\Console\Commands\PurgeExpiredDataCommand;
 use Escalated\Laravel\Console\Commands\RunAutomationsCommand;
+use Escalated\Laravel\Console\Commands\WakeSnoozedTicketsCommand;
 use Escalated\Laravel\Events;
 use Escalated\Laravel\Listeners;
 use Escalated\Laravel\Models\AgentProfile;
