@@ -2,6 +2,7 @@
 
 use Escalated\Laravel\Http\Controllers\Admin\ArticleCategoryController;
 use Escalated\Laravel\Http\Controllers\Admin\ImportController;
+use EscalatedLaravelHttpControllersAdminSavedViewController;
 use Escalated\Laravel\Http\Controllers\Admin\ArticleController;
 use Escalated\Laravel\Http\Controllers\Admin\AuditLogController;
 use Escalated\Laravel\Http\Controllers\Admin\AutomationController;
@@ -61,6 +62,7 @@ Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web'
             Route::post('/tickets/{ticket}/typing', [PresenceController::class, 'typing'])->name('escalated.admin.tickets.typing');
             Route::post('/tickets/{ticket}/replies/{reply}/pin', [TicketController::class, 'pin'])->name('escalated.admin.tickets.pin');
             Route::post('/tickets/{ticket}/merge', [TicketMergeController::class, 'merge'])->name('escalated.admin.tickets.merge');
+            Route::post('/tickets/{ticket}/split', [TicketController::class, 'split'])->name('escalated.admin.tickets.split');
 
             // Ticket Links
             Route::get('/tickets/{ticket}/links', [TicketLinkController::class, 'index'])->name('escalated.admin.tickets.links.index');
@@ -197,6 +199,13 @@ Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web'
         Route::post('/custom-objects/{customObject}/records', [CustomObjectController::class, 'storeRecord'])->name('escalated.admin.custom-objects.records.store');
         Route::put('/custom-objects/{customObject}/records/{record}', [CustomObjectController::class, 'updateRecord'])->name('escalated.admin.custom-objects.records.update');
         Route::delete('/custom-objects/{customObject}/records/{record}', [CustomObjectController::class, 'destroyRecord'])->name('escalated.admin.custom-objects.records.destroy');
+
+        // Saved Views
+        Route::get('/saved-views', [SavedViewController::class, 'index'])->name('escalated.admin.saved-views.index');
+        Route::post('/saved-views', [SavedViewController::class, 'store'])->name('escalated.admin.saved-views.store');
+        Route::put('/saved-views/{savedView}', [SavedViewController::class, 'update'])->name('escalated.admin.saved-views.update');
+        Route::delete('/saved-views/{savedView}', [SavedViewController::class, 'destroy'])->name('escalated.admin.saved-views.destroy');
+        Route::post('/saved-views/reorder', [SavedViewController::class, 'reorder'])->name('escalated.admin.saved-views.reorder');
 
         // Import (admin-only — inherits EnsureIsAdmin middleware from parent group)
         Route::prefix('import')->name('escalated.admin.import.')->group(function () {
