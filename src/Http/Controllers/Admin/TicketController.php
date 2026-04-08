@@ -15,6 +15,7 @@ use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\Macro;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Tag;
+use Escalated\Laravel\Models\SavedView;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\AssignmentService;
 use Escalated\Laravel\Services\MacroService;
@@ -46,6 +47,7 @@ class TicketController extends Controller
             'departments' => Department::active()->get(['id', 'name']),
             'tags' => Tag::all(['id', 'name', 'color']),
             'agents' => $this->getAgents(),
+            'savedViews' => SavedView::forUser($request->user()->getKey())->orderBy('position')->get(),
         ]);
     }
 
