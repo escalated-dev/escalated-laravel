@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Notifications;
 
+use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Models\Ticket;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -24,22 +25,28 @@ class TicketEscalatedNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $mail = (new MailMessage)
+        $ticket = $this->ticket;
+        $url = url(config('escalated.routes.prefix').'/agent/tickets/'.$ticket->reference);
+
+        return (new MailMessage)
             ->subject(__('escalated::notifications.ticket_escalated.subject', [
-                'reference' => $this->ticket->reference,
-                'subject' => $this->ticket->subject,
+                'reference' => $ticket->reference,
+                'subject' => $ticket->subject,
             ]))
-            ->line(__('escalated::notifications.ticket_escalated.line1'))
-            ->line(__('escalated::notifications.ticket_escalated.subject_line', ['subject' => $this->ticket->subject]))
-            ->line(__('escalated::notifications.ticket_escalated.priority_line', ['priority' => $this->ticket->priority->label()]));
-
-        if ($this->reason) {
-            $mail->line(__('escalated::notifications.ticket_escalated.reason_line', ['reason' => $this->reason]));
-        }
-
-        return $mail
-            ->action(__('escalated::notifications.ticket_escalated.action'), url(config('escalated.routes.prefix').'/agent/tickets/'.$this->ticket->reference))
-            ->line(__('escalated::notifications.ticket_escalated.closing'));
+            ->markdown('escalated::emails.escalated', [
+                'ticket' => $ticket,
+                'reason' => $this->reason,
+                'url' => $url,
+                'logoUrl' => EscalatedSettings::get('email_logo_url'),
+                'accentColor' => EscalatedSettings::get('email_accent_color', '#2d3748'),
+                'footerText' => EscalatedSettings::get('email_footer_text'),
+            ])
+            ->withSymfonyMessage(function ($message) use ($ticket) {
+                $domain = parse_url(config('app.url'), PHP_URL_HOST) ?: 'escalated.dev';
+                $threadId = 'ticket-'.$ticket->id.'@'.$domain;
+                $message->getHeaders()->addIdHeader('In-Reply-To', $threadId);
+                $message->getHeaders()->addIdHeader('References', $threadId);
+            });
     }
 
     public function toArray(object $notifiable): array

@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Notifications;
 
+use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Models\Ticket;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -24,21 +25,30 @@ class SlaBreachNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $typeLabel = $this->breachType === 'first_response'
-            ? __('escalated::notifications.sla_breach.type_first_response')
-            : __('escalated::notifications.sla_breach.type_resolution');
+        $ticket = $this->ticket;
+        $url = url(config('escalated.routes.prefix').'/agent/tickets/'.$ticket->reference);
 
         return (new MailMessage)
             ->subject(__('escalated::notifications.sla_breach.subject', [
-                'reference' => $this->ticket->reference,
-                'type' => $typeLabel,
+                'reference' => $ticket->reference,
+                'type' => $this->breachType === 'first_response'
+                    ? __('escalated::notifications.sla_breach.type_first_response')
+                    : __('escalated::notifications.sla_breach.type_resolution'),
             ]))
-            ->line(__('escalated::notifications.sla_breach.line1', ['reference' => $this->ticket->reference]))
-            ->line(__('escalated::notifications.sla_breach.type_line', ['type' => $typeLabel]))
-            ->line(__('escalated::notifications.sla_breach.subject_line', ['subject' => $this->ticket->subject]))
-            ->line(__('escalated::notifications.sla_breach.priority_line', ['priority' => $this->ticket->priority->label()]))
-            ->action(__('escalated::notifications.sla_breach.action'), url(config('escalated.routes.prefix').'/agent/tickets/'.$this->ticket->reference))
-            ->line(__('escalated::notifications.sla_breach.closing'));
+            ->markdown('escalated::emails.sla-breach', [
+                'ticket' => $ticket,
+                'breachType' => $this->breachType,
+                'url' => $url,
+                'logoUrl' => EscalatedSettings::get('email_logo_url'),
+                'accentColor' => EscalatedSettings::get('email_accent_color', '#2d3748'),
+                'footerText' => EscalatedSettings::get('email_footer_text'),
+            ])
+            ->withSymfonyMessage(function ($message) use ($ticket) {
+                $domain = parse_url(config('app.url'), PHP_URL_HOST) ?: 'escalated.dev';
+                $threadId = 'ticket-'.$ticket->id.'@'.$domain;
+                $message->getHeaders()->addIdHeader('In-Reply-To', $threadId);
+                $message->getHeaders()->addIdHeader('References', $threadId);
+            });
     }
 
     public function toArray(object $notifiable): array

@@ -77,6 +77,7 @@ class EscalatedServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'escalated');
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'escalated');
 
         $this->registerPublishing();
@@ -152,6 +153,14 @@ class EscalatedServiceProvider extends ServiceProvider
         if (config('escalated.inbound_email.enabled', false)) {
             $this->loadRoutesFrom(__DIR__.'/../routes/inbound.php');
         }
+
+        // Broadcasting channel authorization routes
+        if (config('escalated.broadcasting.enabled', false)) {
+            require __DIR__.'/../routes/channels.php';
+        }
+
+        // Widget routes (public, rate-limited)
+        $this->loadRoutesFrom(__DIR__.'/../routes/widget.php');
     }
 
     /**
@@ -260,6 +269,9 @@ class EscalatedServiceProvider extends ServiceProvider
                 if (Schema::hasTable(Escalated::table('settings'))) {
                     $data['guest_tickets_enabled'] = EscalatedSettings::guestTicketsEnabled();
                     $data['show_powered_by'] = EscalatedSettings::getBool('show_powered_by', true);
+                    $data['knowledge_base_enabled'] = EscalatedSettings::knowledgeBaseEnabled();
+                    $data['knowledge_base_public'] = EscalatedSettings::knowledgeBasePublic();
+                    $data['knowledge_base_feedback_enabled'] = EscalatedSettings::knowledgeBaseFeedbackEnabled();
                 }
             } catch (\Throwable) {
                 // Settings table may not exist yet

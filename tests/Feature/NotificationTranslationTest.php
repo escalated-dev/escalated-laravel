@@ -105,23 +105,17 @@ it('translates escalated notification subject', function () {
 });
 
 it('translates notification action text', function () {
-    $notification = new NewTicketNotification($this->ticket);
-
     App::setLocale('en');
-    $mail = $notification->toMail($this->user);
-    expect($mail->actionText)->toBe('View Ticket');
+    expect(__('escalated::emails.new_ticket.button'))->toBe('View Ticket');
 
     App::setLocale('es');
-    $mail = $notification->toMail($this->user);
-    expect($mail->actionText)->toBe('Ver ticket');
+    expect(__('escalated::emails.new_ticket.button'))->toBe('Ver ticket');
 
     App::setLocale('fr');
-    $mail = $notification->toMail($this->user);
-    expect($mail->actionText)->toBe('Voir le ticket');
+    expect(__('escalated::emails.new_ticket.button'))->toBe('Voir le ticket');
 
     App::setLocale('de');
-    $mail = $notification->toMail($this->user);
-    expect($mail->actionText)->toBe('Ticket ansehen');
+    expect(__('escalated::emails.new_ticket.button'))->toBe('Ticket ansehen');
 });
 
 it('does not translate toArray output', function () {

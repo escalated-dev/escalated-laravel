@@ -1,4 +1,8 @@
 @component('mail::message')
+@if($logoUrl ?? null)
+<img src="{{ $logoUrl }}" alt="{{ config('app.name') }}" style="max-height: 48px; margin-bottom: 16px;">
+@endif
+
 # {{ __('escalated::emails.sla_breach.heading') }}
 
 {{ __('escalated::emails.sla_breach.intro') }}
@@ -10,10 +14,15 @@
 
 {{ __('escalated::emails.sla_breach.attention_note') }}
 
-@component('mail::button', ['url' => $url])
+@component('mail::button', ['url' => $url, 'color' => $accentColor ?? null])
 {{ __('escalated::emails.sla_breach.button') }}
 @endcomponent
 
 {{ __('escalated::emails.sla_breach.thanks') }},<br>
 {{ config('app.name') }}
+
+@if($footerText ?? null)
+---
+<small>{{ $footerText }}</small>
+@endif
 @endcomponent
