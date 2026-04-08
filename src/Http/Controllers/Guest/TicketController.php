@@ -2,9 +2,9 @@
 
 namespace Escalated\Laravel\Http\Controllers\Guest;
 
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
-use Escalated\Laravel\Events;
 use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Models\Reply;
@@ -14,7 +14,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Str;
-use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 class TicketController extends Controller
 {
@@ -106,7 +105,7 @@ class TicketController extends Controller
             'attachments.*' => ['file', 'max:'.config('escalated.tickets.max_attachment_size_kb', 10240)],
         ]);
 
-        $reply = new Reply();
+        $reply = new Reply;
         $reply->ticket_id = $ticket->id;
         $reply->author_type = null;
         $reply->author_id = null;

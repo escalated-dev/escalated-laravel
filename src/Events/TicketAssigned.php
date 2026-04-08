@@ -22,8 +22,8 @@ class TicketAssigned implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('escalated.tickets.' . $this->ticket->id),
-            new PrivateChannel('escalated.agents.' . $this->agentId),
+            new PrivateChannel('escalated.tickets.'.$this->ticket->id),
+            new PrivateChannel('escalated.agents.'.$this->agentId),
         ];
     }
 

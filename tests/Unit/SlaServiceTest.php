@@ -10,7 +10,7 @@ use Escalated\Laravel\Services\SlaService;
 use Illuminate\Support\Facades\Event;
 
 beforeEach(function () {
-    $this->slaService = new SlaService();
+    $this->slaService = new SlaService;
 });
 
 it('attaches default SLA policy to ticket', function () {

@@ -4,7 +4,7 @@ use Escalated\Laravel\Mail\Adapters\MailgunAdapter;
 use Illuminate\Http\Request;
 
 it('parses mailgun webhook into inbound message', function () {
-    $adapter = new MailgunAdapter();
+    $adapter = new MailgunAdapter;
 
     $request = Request::create('/inbound/mailgun', 'POST', [
         'sender' => 'customer@example.com',
@@ -35,7 +35,7 @@ it('parses mailgun webhook into inbound message', function () {
 });
 
 it('extracts email from "Name <email>" format', function () {
-    $adapter = new MailgunAdapter();
+    $adapter = new MailgunAdapter;
 
     $request = Request::create('/inbound/mailgun', 'POST', [
         'sender' => 'Jane Doe <jane@example.com>',
@@ -57,7 +57,7 @@ it('verifies valid mailgun signature', function () {
     $signingKey = 'test-signing-key-12345';
     config(['escalated.inbound_email.mailgun.signing_key' => $signingKey]);
 
-    $adapter = new MailgunAdapter();
+    $adapter = new MailgunAdapter;
 
     $timestamp = (string) time();
     $token = 'random-token-value';
@@ -75,7 +75,7 @@ it('verifies valid mailgun signature', function () {
 it('rejects invalid mailgun signature', function () {
     config(['escalated.inbound_email.mailgun.signing_key' => 'correct-key']);
 
-    $adapter = new MailgunAdapter();
+    $adapter = new MailgunAdapter;
 
     $request = Request::create('/inbound/mailgun', 'POST', [
         'timestamp' => (string) time(),
@@ -90,7 +90,7 @@ it('rejects mailgun request with stale timestamp', function () {
     $signingKey = 'test-key';
     config(['escalated.inbound_email.mailgun.signing_key' => $signingKey]);
 
-    $adapter = new MailgunAdapter();
+    $adapter = new MailgunAdapter;
 
     $timestamp = (string) (time() - 400); // 6+ minutes ago
     $token = 'some-token';
@@ -108,7 +108,7 @@ it('rejects mailgun request with stale timestamp', function () {
 it('rejects when no signing key is configured', function () {
     config(['escalated.inbound_email.mailgun.signing_key' => null]);
 
-    $adapter = new MailgunAdapter();
+    $adapter = new MailgunAdapter;
 
     $request = Request::create('/inbound/mailgun', 'POST', [
         'timestamp' => (string) time(),

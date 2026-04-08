@@ -11,7 +11,6 @@ use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Ticket;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
-use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Gate;
 
 beforeEach(function () {
@@ -51,7 +50,7 @@ it('TicketUpdated broadcastOn returns ticket-specific channel', function () {
 
     $channels = $event->broadcastOn();
     expect($channels)->toHaveCount(1);
-    expect($channels[0]->name)->toBe('private-escalated.tickets.' . $ticket->id);
+    expect($channels[0]->name)->toBe('private-escalated.tickets.'.$ticket->id);
 });
 
 it('TicketAssigned broadcastOn returns ticket and agent channels', function () {
@@ -62,7 +61,7 @@ it('TicketAssigned broadcastOn returns ticket and agent channels', function () {
     expect($channels)->toHaveCount(2);
 
     $channelNames = array_map(fn ($ch) => $ch->name, $channels);
-    expect($channelNames)->toContain('private-escalated.tickets.' . $ticket->id);
+    expect($channelNames)->toContain('private-escalated.tickets.'.$ticket->id);
     expect($channelNames)->toContain('private-escalated.agents.42');
 });
 
@@ -81,7 +80,7 @@ it('ReplyCreated broadcastOn returns ticket-specific channel', function () {
     $channels = $event->broadcastOn();
 
     expect($channels)->toHaveCount(1);
-    expect($channels[0]->name)->toBe('private-escalated.tickets.' . $ticket->id);
+    expect($channels[0]->name)->toBe('private-escalated.tickets.'.$ticket->id);
 });
 
 it('broadcastAs returns clean event names', function () {
@@ -140,7 +139,7 @@ it('broadcastWhen returns true when broadcasting is enabled', function () {
 it('channel authorization callback allows agents on tickets channel', function () {
     // Enable broadcasting to load the channels file
     config(['escalated.broadcasting.enabled' => true]);
-    require_once __DIR__ . '/../../routes/channels.php';
+    require_once __DIR__.'/../../routes/channels.php';
 
     $agent = $this->createAgent();
     $this->actingAs($agent);

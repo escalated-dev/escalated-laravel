@@ -3,7 +3,6 @@
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
-use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\EscalatedSettings;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;

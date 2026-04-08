@@ -1,8 +1,6 @@
 <?php
 
-use Escalated\Laravel\Models\CannedResponse;
 use Escalated\Laravel\Models\Department;
-use Escalated\Laravel\Models\EscalationRule;
 use Escalated\Laravel\Models\SlaPolicy;
 use Escalated\Laravel\Models\Tag;
 use Illuminate\Support\Facades\Gate;

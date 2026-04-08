@@ -166,7 +166,7 @@ class InboundEmailService
             $reply = $this->ticketService->reply($ticket, $user, $body);
         } else {
             // Guest reply — create directly like GuestTicketController does
-            $reply = new Reply();
+            $reply = new Reply;
             $reply->ticket_id = $ticket->id;
             $reply->author_type = null;
             $reply->author_id = null;

@@ -6,6 +6,7 @@ use Escalated\Laravel\Models\Automation;
 use Escalated\Laravel\Models\Tag;
 use Escalated\Laravel\Models\Ticket;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
 class AutomationRunner
@@ -35,7 +36,7 @@ class AutomationRunner
     /**
      * Find open tickets matching the automation's conditions.
      */
-    protected function findMatchingTickets(Automation $automation): \Illuminate\Support\Collection
+    protected function findMatchingTickets(Automation $automation): Collection
     {
         $query = Ticket::open();
 

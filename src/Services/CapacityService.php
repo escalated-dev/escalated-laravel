@@ -3,6 +3,7 @@
 namespace Escalated\Laravel\Services;
 
 use Escalated\Laravel\Models\AgentCapacity;
+use Illuminate\Support\Collection;
 
 class CapacityService
 {
@@ -50,7 +51,7 @@ class CapacityService
     /**
      * Get all agent capacities for admin view.
      */
-    public function getAllCapacities(): \Illuminate\Support\Collection
+    public function getAllCapacities(): Collection
     {
         return AgentCapacity::with('user')->get();
     }

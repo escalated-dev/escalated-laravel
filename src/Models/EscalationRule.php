@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Models;
 
+use Escalated\Laravel\Database\Factories\EscalationRuleFactory;
 use Escalated\Laravel\Escalated;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -31,8 +32,8 @@ class EscalationRule extends Model
         return $query->where('is_active', true)->orderBy('order');
     }
 
-    protected static function newFactory(): \Escalated\Laravel\Database\Factories\EscalationRuleFactory
+    protected static function newFactory(): EscalationRuleFactory
     {
-        return \Escalated\Laravel\Database\Factories\EscalationRuleFactory::new();
+        return EscalationRuleFactory::new();
     }
 }

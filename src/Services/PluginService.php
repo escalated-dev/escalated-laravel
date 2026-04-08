@@ -266,7 +266,7 @@ class PluginService
             $entryName = $zip->getNameIndex($i);
             if (str_contains($entryName, '..') || str_starts_with($entryName, '/')) {
                 $zip->close();
-                throw new \RuntimeException('Plugin ZIP contains unsafe path: ' . $entryName);
+                throw new \RuntimeException('Plugin ZIP contains unsafe path: '.$entryName);
             }
         }
 
@@ -296,7 +296,7 @@ class PluginService
         $mainFile = $manifest['main_file'] ?? 'Plugin.php';
         if (str_contains($mainFile, '..') || str_starts_with($mainFile, '/')) {
             File::deleteDirectory($extractPath);
-            throw new \RuntimeException('Plugin manifest contains unsafe main_file path: ' . $mainFile);
+            throw new \RuntimeException('Plugin manifest contains unsafe main_file path: '.$mainFile);
         }
 
         return [

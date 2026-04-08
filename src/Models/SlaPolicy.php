@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Models;
 
+use Escalated\Laravel\Database\Factories\SlaPolicyFactory;
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Escalated;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -55,8 +56,8 @@ class SlaPolicy extends Model
         return $query->where('is_default', true);
     }
 
-    protected static function newFactory(): \Escalated\Laravel\Database\Factories\SlaPolicyFactory
+    protected static function newFactory(): SlaPolicyFactory
     {
-        return \Escalated\Laravel\Database\Factories\SlaPolicyFactory::new();
+        return SlaPolicyFactory::new();
     }
 }

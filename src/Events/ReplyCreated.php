@@ -18,7 +18,7 @@ class ReplyCreated implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('escalated.tickets.' . $this->reply->ticket_id),
+            new PrivateChannel('escalated.tickets.'.$this->reply->ticket_id),
         ];
     }
 

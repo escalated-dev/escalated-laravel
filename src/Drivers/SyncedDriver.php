@@ -8,6 +8,7 @@ use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Http\Client\HostedApiClient;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Services\AttachmentService;
 use Illuminate\Support\Facades\Log;
 
 class SyncedDriver extends LocalDriver
@@ -15,7 +16,7 @@ class SyncedDriver extends LocalDriver
     protected HostedApiClient $apiClient;
 
     public function __construct(
-        \Escalated\Laravel\Services\AttachmentService $attachmentService,
+        AttachmentService $attachmentService,
         HostedApiClient $apiClient
     ) {
         parent::__construct($attachmentService);

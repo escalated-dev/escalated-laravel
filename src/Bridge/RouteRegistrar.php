@@ -2,9 +2,11 @@
 
 namespace Escalated\Laravel\Bridge;
 
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
+use Escalated\Laravel\Http\Middleware\EnsureIsAdmin;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
-use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 /**
  * Reads plugin manifests returned by the runtime and registers Laravel routes.
@@ -70,23 +72,24 @@ class RouteRegistrar
 
         $middleware = array_merge(
             config('escalated.routes.admin_middleware', ['web', 'auth']),
-            [\Escalated\Laravel\Http\Middleware\EnsureIsAdmin::class]
+            [EnsureIsAdmin::class]
         );
 
         Route::middleware($middleware)
             ->prefix("{$prefix}/admin/plugins/{$pluginName}")
             ->group(function () use ($pluginName, $pages) {
                 foreach ($pages as $page) {
-                    $route     = ltrim($page['route'] ?? '', '/');
+                    $route = ltrim($page['route'] ?? '', '/');
                     $component = $page['component'] ?? '';
-                    $layout    = $page['layout'] ?? 'admin';
+                    $layout = $page['layout'] ?? 'admin';
                     $capability = $page['capability'] ?? null;
 
                     if (empty($route) || empty($component)) {
-                        Log::warning("Escalated PluginBridge: skipping page with missing route or component", [
+                        Log::warning('Escalated PluginBridge: skipping page with missing route or component', [
                             'plugin' => $pluginName,
-                            'page'   => $page,
+                            'page' => $page,
                         ]);
+
                         continue;
                     }
 
@@ -110,10 +113,10 @@ class RouteRegistrar
                         }
 
                         return $this->renderer->render('Escalated/Plugin/Page', [
-                            'plugin'    => $pluginName,
+                            'plugin' => $pluginName,
                             'component' => $component,
-                            'layout'    => $layout,
-                            'props'     => $props,
+                            'layout' => $layout,
+                            'props' => $props,
                         ]);
                     })->name($routeName);
                 }
@@ -138,7 +141,7 @@ class RouteRegistrar
 
         $middleware = array_merge(
             config('escalated.routes.admin_middleware', ['web', 'auth']),
-            [\Escalated\Laravel\Http\Middleware\EnsureIsAdmin::class]
+            [EnsureIsAdmin::class]
         );
 
         Route::middleware($middleware)
@@ -152,12 +155,12 @@ class RouteRegistrar
                     }
 
                     $capability = $definition['capability'] ?? null;
-                    $routeName  = "escalated.plugin.{$pluginName}.endpoint.".strtolower($httpMethod).str_replace('/', '.', $path);
+                    $routeName = "escalated.plugin.{$pluginName}.endpoint.".strtolower($httpMethod).str_replace('/', '.', $path);
 
                     Route::match(
                         [strtolower($httpMethod)],
                         ltrim($path, '/'),
-                        function (\Illuminate\Http\Request $request) use ($pluginName, $httpMethod, $path, $capability) {
+                        function (Request $request) use ($pluginName, $httpMethod, $path, $capability) {
                             if ($capability !== null) {
                                 abort_unless(
                                     auth()->check() && auth()->user()->can($capability),
@@ -170,8 +173,8 @@ class RouteRegistrar
                                 $httpMethod,
                                 $path,
                                 [
-                                    'body'    => $request->all(),
-                                    'params'  => $request->query(),
+                                    'body' => $request->all(),
+                                    'params' => $request->query(),
                                     'headers' => $request->headers->all(),
                                 ]
                             );
@@ -216,7 +219,7 @@ class RouteRegistrar
                     Route::match(
                         [strtolower($httpMethod)],
                         ltrim($path, '/'),
-                        function (\Illuminate\Http\Request $request) use ($pluginName, $httpMethod, $path) {
+                        function (Request $request) use ($pluginName, $httpMethod, $path) {
                             $result = $this->bridge->callWebhook(
                                 $pluginName,
                                 $httpMethod,
@@ -252,7 +255,7 @@ class RouteRegistrar
         }
 
         $method = strtoupper($parts[0]);
-        $path   = $parts[1];
+        $path = $parts[1];
 
         $valid = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 

@@ -5,14 +5,15 @@ namespace Escalated\Laravel\Support;
 class HookManager
 {
     protected array $actions = [];
+
     protected array $filters = [];
 
     /**
      * Add an action hook.
      *
-     * @param string $tag The name of the action
-     * @param callable $callback The function to call
-     * @param int $priority Priority (lower numbers run first)
+     * @param  string  $tag  The name of the action
+     * @param  callable  $callback  The function to call
+     * @param  int  $priority  Priority (lower numbers run first)
      */
     public function addAction(string $tag, callable $callback, int $priority = 10): void
     {
@@ -22,8 +23,8 @@ class HookManager
     /**
      * Execute all callbacks registered for an action.
      *
-     * @param string $tag The action name
-     * @param mixed ...$args Arguments to pass to callbacks
+     * @param  string  $tag  The action name
+     * @param  mixed  ...$args  Arguments to pass to callbacks
      */
     public function doAction(string $tag, ...$args): void
     {
@@ -52,8 +53,8 @@ class HookManager
     /**
      * Remove an action hook.
      *
-     * @param string $tag The action name
-     * @param callable|null $callback The specific callback to remove (null removes all)
+     * @param  string  $tag  The action name
+     * @param  callable|null  $callback  The specific callback to remove (null removes all)
      */
     public function removeAction(string $tag, ?callable $callback = null): void
     {
@@ -79,9 +80,9 @@ class HookManager
     /**
      * Add a filter hook.
      *
-     * @param string $tag The name of the filter
-     * @param callable $callback The function to call
-     * @param int $priority Priority (lower numbers run first)
+     * @param  string  $tag  The name of the filter
+     * @param  callable  $callback  The function to call
+     * @param  int  $priority  Priority (lower numbers run first)
      */
     public function addFilter(string $tag, callable $callback, int $priority = 10): void
     {
@@ -91,9 +92,9 @@ class HookManager
     /**
      * Apply all callbacks registered for a filter.
      *
-     * @param string $tag The filter name
-     * @param mixed $value The value to filter
-     * @param mixed ...$args Additional arguments
+     * @param  string  $tag  The filter name
+     * @param  mixed  $value  The value to filter
+     * @param  mixed  ...$args  Additional arguments
      * @return mixed The filtered value
      */
     public function applyFilters(string $tag, mixed $value, ...$args): mixed
@@ -125,8 +126,8 @@ class HookManager
     /**
      * Remove a filter hook.
      *
-     * @param string $tag The filter name
-     * @param callable|null $callback The specific callback to remove (null removes all)
+     * @param  string  $tag  The filter name
+     * @param  callable|null  $callback  The specific callback to remove (null removes all)
      */
     public function removeFilter(string $tag, ?callable $callback = null): void
     {

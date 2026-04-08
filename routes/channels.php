@@ -1,5 +1,6 @@
 <?php
 
+use Escalated\Laravel\Models\Ticket;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Gate;
 
@@ -27,7 +28,7 @@ Broadcast::channel('escalated.tickets.{ticketId}', function ($user, $ticketId) {
         return true;
     }
 
-    $ticket = \Escalated\Laravel\Models\Ticket::find($ticketId);
+    $ticket = Ticket::find($ticketId);
 
     return $ticket && (int) $ticket->requester_id === (int) $user->id;
 });

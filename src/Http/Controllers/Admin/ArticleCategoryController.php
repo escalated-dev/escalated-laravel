@@ -2,12 +2,12 @@
 
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Models\ArticleCategory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Str;
-use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 class ArticleCategoryController extends Controller
 {

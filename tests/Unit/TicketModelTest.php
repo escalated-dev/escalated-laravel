@@ -12,7 +12,7 @@ it('generates a reference from the ticket id', function () {
 });
 
 it('uses dynamic table name from config', function () {
-    $ticket = new Ticket();
+    $ticket = new Ticket;
     expect($ticket->getTable())->toBe('escalated_tickets');
 });
 

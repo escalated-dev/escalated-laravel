@@ -5,6 +5,7 @@ use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Events\InternalNoteAdded;
 use Escalated\Laravel\Events\ReplyCreated;
 use Escalated\Laravel\Models\Ticket;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 
 beforeEach(function () {
@@ -73,9 +74,9 @@ it('agent can add internal note', function () {
 
 it('internal note does not fire reply created event', function () {
 
-    \Illuminate\Support\Facades\Event::fake([
-        \Escalated\Laravel\Events\ReplyCreated::class,
-        \Escalated\Laravel\Events\InternalNoteAdded::class,
+    Event::fake([
+        ReplyCreated::class,
+        InternalNoteAdded::class,
     ]);
 
     $agent = $this->createAgent();
@@ -86,8 +87,8 @@ it('internal note does not fire reply created event', function () {
             'body' => 'Internal note for agents.',
         ]);
 
-    \Illuminate\Support\Facades\Event::assertNotDispatched(ReplyCreated::class);
-    \Illuminate\Support\Facades\Event::assertDispatched(InternalNoteAdded::class);
+    Event::assertNotDispatched(ReplyCreated::class);
+    Event::assertDispatched(InternalNoteAdded::class);
 
 });
 

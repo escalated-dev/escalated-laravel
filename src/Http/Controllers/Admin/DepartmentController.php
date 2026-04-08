@@ -2,11 +2,11 @@
 
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Http\Requests\StoreDepartmentRequest;
 use Escalated\Laravel\Models\Department;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
-use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 class DepartmentController extends Controller
 {

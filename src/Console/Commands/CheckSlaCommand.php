@@ -15,6 +15,7 @@ class CheckSlaCommand extends Command
     {
         if (! config('escalated.sla.enabled')) {
             $this->info('SLA checking is disabled.');
+
             return self::SUCCESS;
         }
 

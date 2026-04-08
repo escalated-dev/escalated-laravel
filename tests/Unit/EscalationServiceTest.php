@@ -3,9 +3,7 @@
 use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Models\EscalationRule;
 use Escalated\Laravel\Models\Ticket;
-use Escalated\Laravel\Services\AssignmentService;
 use Escalated\Laravel\Services\EscalationService;
-use Escalated\Laravel\Services\TicketService;
 
 beforeEach(function () {
     $this->escalationService = app(EscalationService::class);
