@@ -12,6 +12,7 @@ enum TicketStatus: string
     case Resolved = 'resolved';
     case Closed = 'closed';
     case Reopened = 'reopened';
+    case Live = 'live';
 
     public function label(): string
     {
@@ -29,6 +30,7 @@ enum TicketStatus: string
             self::Resolved => '#10B981',
             self::Closed => '#6B7280',
             self::Reopened => '#3B82F6',
+            self::Live => '#06B6D4',
         };
     }
 

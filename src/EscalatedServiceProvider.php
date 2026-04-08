@@ -4,6 +4,8 @@ namespace Escalated\Laravel;
 
 use Escalated\Laravel\Bridge\PluginBridge;
 use Escalated\Laravel\Console\Commands\CheckSlaCommand;
+use Escalated\Laravel\Console\Commands\CleanupAbandonedChatsCommand;
+use Escalated\Laravel\Console\Commands\CloseIdleChatsCommand;
 use Escalated\Laravel\Console\Commands\CloseResolvedCommand;
 use Escalated\Laravel\Console\Commands\EvaluateEscalationsCommand;
 use Escalated\Laravel\Console\Commands\ImportCommand;
@@ -214,6 +216,8 @@ class EscalatedServiceProvider extends ServiceProvider
             PurgeExpiredDataCommand::class,
             ImportCommand::class,
             WakeSnoozedTicketsCommand::class,
+            CloseIdleChatsCommand::class,
+            CleanupAbandonedChatsCommand::class,
         ]);
     }
 

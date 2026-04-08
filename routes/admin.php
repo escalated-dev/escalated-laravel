@@ -7,6 +7,9 @@ use Escalated\Laravel\Http\Controllers\Admin\AutomationController;
 use Escalated\Laravel\Http\Controllers\Admin\BusinessHoursController;
 use Escalated\Laravel\Http\Controllers\Admin\CannedResponseController;
 use Escalated\Laravel\Http\Controllers\Admin\CapacityController;
+use Escalated\Laravel\Http\Controllers\Admin\ChatController;
+use Escalated\Laravel\Http\Controllers\Admin\ChatRoutingRuleController;
+use Escalated\Laravel\Http\Controllers\Admin\ChatSettingsController;
 use Escalated\Laravel\Http\Controllers\Admin\CsatSettingsController;
 use Escalated\Laravel\Http\Controllers\Admin\CustomFieldController;
 use Escalated\Laravel\Http\Controllers\Admin\CustomObjectController;
@@ -207,6 +210,26 @@ Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web'
         Route::put('/saved-views/{savedView}', [SavedViewController::class, 'update'])->name('escalated.admin.saved-views.update');
         Route::delete('/saved-views/{savedView}', [SavedViewController::class, 'destroy'])->name('escalated.admin.saved-views.destroy');
         Route::post('/saved-views/reorder', [SavedViewController::class, 'reorder'])->name('escalated.admin.saved-views.reorder');
+
+        // Live Chat
+        Route::post('/chat/status', [ChatController::class, 'updateStatus'])->name('escalated.admin.chat.status');
+        Route::get('/chat/active', [ChatController::class, 'index'])->name('escalated.admin.chat.active');
+        Route::get('/chat/queue', [ChatController::class, 'queue'])->name('escalated.admin.chat.queue');
+        Route::post('/chat/{session}/accept', [ChatController::class, 'accept'])->name('escalated.admin.chat.accept');
+        Route::post('/chat/{session}/end', [ChatController::class, 'end'])->name('escalated.admin.chat.end');
+        Route::post('/chat/{session}/transfer', [ChatController::class, 'transfer'])->name('escalated.admin.chat.transfer');
+        Route::post('/chat/{session}/message', [ChatController::class, 'message'])->name('escalated.admin.chat.message');
+        Route::post('/chat/{session}/typing', [ChatController::class, 'typing'])->name('escalated.admin.chat.typing');
+
+        // Chat Routing Rules
+        Route::get('/chat/routing-rules', [ChatRoutingRuleController::class, 'index'])->name('escalated.admin.chat.routing-rules.index');
+        Route::post('/chat/routing-rules', [ChatRoutingRuleController::class, 'store'])->name('escalated.admin.chat.routing-rules.store');
+        Route::put('/chat/routing-rules/{routingRule}', [ChatRoutingRuleController::class, 'update'])->name('escalated.admin.chat.routing-rules.update');
+        Route::delete('/chat/routing-rules/{routingRule}', [ChatRoutingRuleController::class, 'destroy'])->name('escalated.admin.chat.routing-rules.destroy');
+
+        // Chat Settings
+        Route::get('/chat/settings', [ChatSettingsController::class, 'index'])->name('escalated.admin.chat.settings');
+        Route::post('/chat/settings', [ChatSettingsController::class, 'update'])->name('escalated.admin.chat.settings.update');
 
         // Import (admin-only — inherits EnsureIsAdmin middleware from parent group)
         Route::prefix('import')->name('escalated.admin.import.')->group(function () {

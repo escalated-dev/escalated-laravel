@@ -94,7 +94,7 @@ return [
     */
     'statuses' => [
         'open', 'in_progress', 'waiting_on_customer', 'waiting_on_agent',
-        'escalated', 'resolved', 'closed', 'reopened',
+        'escalated', 'resolved', 'closed', 'reopened', 'live',
     ],
 
     'transitions' => [
@@ -106,6 +106,7 @@ return [
         'resolved' => ['reopened', 'closed'],
         'closed' => ['reopened'],
         'reopened' => ['in_progress', 'waiting_on_customer', 'waiting_on_agent', 'escalated', 'resolved', 'closed'],
+        'live' => ['open', 'resolved', 'closed'],
     ],
 
     /*
@@ -224,6 +225,23 @@ return [
     */
     'broadcasting' => [
         'enabled' => env('ESCALATED_BROADCASTING_ENABLED', false),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Live Chat
+    |--------------------------------------------------------------------------
+    |
+    | Configure the live chat / widget chat feature. Chat sessions are
+    | tickets with status "live" and channel "chat" that stream messages
+    | in real-time via WebSocket.
+    |
+    */
+    'chat' => [
+        'enabled' => env('ESCALATED_CHAT_ENABLED', false),
+        'sound_enabled' => true,
+        'auto_close_idle_minutes' => 30,
+        'abandoned_timeout_minutes' => 10,
     ],
 
     'inbound_email' => [

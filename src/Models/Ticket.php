@@ -5,6 +5,7 @@ namespace Escalated\Laravel\Models;
 use Escalated\Laravel\Contracts\Ticketable;
 use Escalated\Laravel\Database\Factories\TicketFactory;
 use Escalated\Laravel\Enums\ActivityType;
+use Escalated\Laravel\Enums\TicketChannel;
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Escalated;
@@ -69,7 +70,10 @@ class Ticket extends Model
         return [
             'status' => TicketStatus::class,
             'priority' => TicketPriority::class,
+            'channel' => TicketChannel::class,
             'metadata' => 'array',
+            'chat_ended_at' => 'datetime',
+            'chat_metadata' => 'array',
             'first_response_at' => 'datetime',
             'first_response_due_at' => 'datetime',
             'resolution_due_at' => 'datetime',
@@ -154,6 +158,11 @@ class Ticket extends Model
     public function sideConversations(): HasMany
     {
         return $this->hasMany(SideConversation::class, 'ticket_id');
+    }
+
+    public function chatSession(): HasOne
+    {
+        return $this->hasOne(ChatSession::class, 'ticket_id');
     }
 
     public function linksAsParent(): HasMany
@@ -251,6 +260,11 @@ class Ticket extends Model
         });
     }
 
+    public function scopeLive($query)
+    {
+        return $query->where('status', TicketStatus::Live->value);
+    }
+
     public function scopeSnoozed($query)
     {
         return $query->whereNotNull('snoozed_until')->where('snoozed_until', '>', now());
@@ -296,6 +310,11 @@ class Ticket extends Model
     public function getLastReplyAuthorAttribute(): ?string
     {
         return $this->latestReply?->author?->name;
+    }
+
+    public function getIsLiveChatAttribute(): bool
+    {
+        return $this->status === TicketStatus::Live && $this->channel === TicketChannel::Chat;
     }
 
     public function getIsSnoozedAttribute(): bool

@@ -33,7 +33,7 @@ it('creates a new ticket from inbound email for a registered user', function () 
     $ticket = Ticket::find($inbound->ticket_id);
     expect($ticket->subject)->toBe('I need help with login');
     expect($ticket->description)->toBe('I cannot log in to my account.');
-    expect($ticket->channel)->toBe('email');
+    expect($ticket->channel->value)->toBe('email');
     expect($ticket->requester_id)->toBe($user->id);
 });
 
@@ -57,7 +57,7 @@ it('creates a guest ticket when sender email is not a registered user', function
     expect($ticket->guest_name)->toBe('Some Stranger');
     expect($ticket->guest_email)->toBe('stranger@unknown.com');
     expect($ticket->guest_token)->not->toBeNull();
-    expect($ticket->channel)->toBe('email');
+    expect($ticket->channel->value)->toBe('email');
 });
 
 it('adds a reply to existing ticket when subject contains reference', function () {

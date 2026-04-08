@@ -1,5 +1,6 @@
 <?php
 
+use Escalated\Laravel\Models\ChatSession;
 use Escalated\Laravel\Models\Ticket;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Gate;
@@ -36,4 +37,28 @@ Broadcast::channel('escalated.tickets.{ticketId}', function ($user, $ticketId) {
 // Agent-specific channel - only the agent themselves
 Broadcast::channel('escalated.agents.{agentId}', function ($user, $agentId) {
     return (int) $user->id === (int) $agentId;
+});
+
+// Chat session channel - assigned agent only (customer auth is handled via session token)
+Broadcast::channel('escalated.chat.{sessionId}', function ($user, $sessionId) {
+    $session = ChatSession::find($sessionId);
+
+    if (! $session) {
+        return false;
+    }
+
+    // Agent assigned to the session
+    if ($session->agent_id && (int) $session->agent_id === (int) $user->id) {
+        return true;
+    }
+
+    // Any agent/admin can view if not yet assigned
+    return Gate::allows(config('escalated.authorization.agent_gate', 'escalated-agent'))
+        || Gate::allows(config('escalated.authorization.admin_gate', 'escalated-admin'));
+});
+
+// Chat queue channel - any agent/admin
+Broadcast::channel('escalated.chat.queue', function ($user) {
+    return Gate::allows(config('escalated.authorization.agent_gate', 'escalated-agent'))
+        || Gate::allows(config('escalated.authorization.admin_gate', 'escalated-admin'));
 });

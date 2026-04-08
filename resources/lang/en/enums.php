@@ -13,6 +13,7 @@ return [
         'snoozed' => 'Snoozed',
         'unsnoozed' => 'Unsnoozed',
         'reopened' => 'Reopened',
+        'live' => 'Live',
     ],
 
     'priority' => [

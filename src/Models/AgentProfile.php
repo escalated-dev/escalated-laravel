@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Models;
 
+use Escalated\Laravel\Enums\ChatStatus;
 use Escalated\Laravel\Escalated;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,6 +20,7 @@ class AgentProfile extends Model
     {
         return [
             'max_tickets' => 'integer',
+            'chat_status' => ChatStatus::class,
         ];
     }
 

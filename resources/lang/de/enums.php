@@ -13,6 +13,7 @@ return [
         'snoozed' => 'Zurückgestellt',
         'unsnoozed' => 'Wieder aktiviert',
         'reopened' => 'Wiedereröffnet',
+        'live' => 'Live',
     ],
 
     'priority' => [

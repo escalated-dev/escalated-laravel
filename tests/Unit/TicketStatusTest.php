@@ -3,7 +3,7 @@
 use Escalated\Laravel\Enums\TicketStatus;
 
 it('has all expected statuses', function () {
-    expect(TicketStatus::cases())->toHaveCount(8);
+    expect(TicketStatus::cases())->toHaveCount(9);
 });
 
 it('returns label for each status', function () {
