@@ -10,6 +10,8 @@ return [
         'escalated' => 'Eskaliert',
         'resolved' => 'Gelöst',
         'closed' => 'Geschlossen',
+        'snoozed' => 'Zurückgestellt',
+        'unsnoozed' => 'Wieder aktiviert',
         'reopened' => 'Wiedereröffnet',
     ],
 
@@ -36,6 +38,8 @@ return [
         'reopened' => 'Wiedereröffnet',
         'resolved' => 'Gelöst',
         'closed' => 'Geschlossen',
+        'snoozed' => 'Zurückgestellt',
+        'unsnoozed' => 'Wieder aktiviert',
     ],
 
 ];
