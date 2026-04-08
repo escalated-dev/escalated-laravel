@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Notifications;
 
+use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Models\Ticket;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -21,16 +22,26 @@ class NewTicketNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
+        $ticket = $this->ticket;
+        $url = url(config('escalated.routes.prefix').'/'.$ticket->reference);
+
         return (new MailMessage)
             ->subject(__('escalated::notifications.new_ticket.subject', [
-                'reference' => $this->ticket->reference,
-                'subject' => $this->ticket->subject,
+                'reference' => $ticket->reference,
+                'subject' => $ticket->subject,
             ]))
-            ->line(__('escalated::notifications.new_ticket.line1'))
-            ->line(__('escalated::notifications.new_ticket.subject_line', ['subject' => $this->ticket->subject]))
-            ->line(__('escalated::notifications.new_ticket.priority_line', ['priority' => $this->ticket->priority->label()]))
-            ->action(__('escalated::notifications.new_ticket.action'), url(config('escalated.routes.prefix').'/'.$this->ticket->reference))
-            ->line(__('escalated::notifications.new_ticket.closing'));
+            ->markdown('escalated::emails.new-ticket', [
+                'ticket' => $ticket,
+                'url' => $url,
+                'logoUrl' => EscalatedSettings::get('email_logo_url'),
+                'accentColor' => EscalatedSettings::get('email_accent_color', '#2d3748'),
+                'footerText' => EscalatedSettings::get('email_footer_text'),
+            ])
+            ->withSymfonyMessage(function ($message) use ($ticket) {
+                $domain = parse_url(config('app.url'), PHP_URL_HOST) ?: 'escalated.dev';
+                $messageId = '<ticket-'.$ticket->id.'@'.$domain.'>';
+                $message->getHeaders()->addTextHeader('Message-ID', $messageId);
+            });
     }
 
     public function toArray(object $notifiable): array

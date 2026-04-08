@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Notifications;
 
+use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Models\Ticket;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -21,15 +22,26 @@ class TicketResolvedNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
+        $ticket = $this->ticket;
+        $url = url(config('escalated.routes.prefix').'/'.$ticket->reference);
+
         return (new MailMessage)
             ->subject(__('escalated::notifications.ticket_resolved.subject', [
-                'reference' => $this->ticket->reference,
+                'reference' => $ticket->reference,
             ]))
-            ->line(__('escalated::notifications.ticket_resolved.line1'))
-            ->line(__('escalated::notifications.ticket_resolved.subject_line', ['subject' => $this->ticket->subject]))
-            ->line(__('escalated::notifications.ticket_resolved.reopen_line'))
-            ->action(__('escalated::notifications.ticket_resolved.action'), url(config('escalated.routes.prefix').'/'.$this->ticket->reference))
-            ->line(__('escalated::notifications.ticket_resolved.closing'));
+            ->markdown('escalated::emails.resolved', [
+                'ticket' => $ticket,
+                'url' => $url,
+                'logoUrl' => EscalatedSettings::get('email_logo_url'),
+                'accentColor' => EscalatedSettings::get('email_accent_color', '#2d3748'),
+                'footerText' => EscalatedSettings::get('email_footer_text'),
+            ])
+            ->withSymfonyMessage(function ($message) use ($ticket) {
+                $domain = parse_url(config('app.url'), PHP_URL_HOST) ?: 'escalated.dev';
+                $messageId = '<ticket-'.$ticket->id.'@'.$domain.'>';
+                $message->getHeaders()->addTextHeader('In-Reply-To', $messageId);
+                $message->getHeaders()->addTextHeader('References', $messageId);
+            });
     }
 
     public function toArray(object $notifiable): array

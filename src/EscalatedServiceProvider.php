@@ -71,6 +71,7 @@ class EscalatedServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->loadViewsFrom(__DIR__."/../resources/views", "escalated");
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'escalated');
 
         $this->registerPublishing();
