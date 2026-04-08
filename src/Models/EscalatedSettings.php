@@ -63,4 +63,28 @@ class EscalatedSettings extends Model
     {
         return static::getBool('guest_tickets_enabled', true);
     }
+
+    /**
+     * Check if the knowledge base is enabled.
+     */
+    public static function knowledgeBaseEnabled(): bool
+    {
+        return static::getBool('knowledge_base_enabled', true);
+    }
+
+    /**
+     * Check if the knowledge base is publicly accessible (no login required).
+     */
+    public static function knowledgeBasePublic(): bool
+    {
+        return static::getBool('knowledge_base_public', true);
+    }
+
+    /**
+     * Check if article feedback (helpful/not helpful) is enabled.
+     */
+    public static function knowledgeBaseFeedbackEnabled(): bool
+    {
+        return static::getBool('knowledge_base_feedback_enabled', true);
+    }
 }

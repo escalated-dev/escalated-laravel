@@ -43,6 +43,9 @@ class SettingsController extends Controller
             'imap_username' => ['sometimes', 'nullable', 'string', 'max:255'],
             'imap_password' => ['sometimes', 'nullable', 'string', 'max:255'],
             'imap_mailbox' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'knowledge_base_enabled' => ['sometimes', 'boolean'],
+            'knowledge_base_public' => ['sometimes', 'boolean'],
+            'knowledge_base_feedback_enabled' => ['sometimes', 'boolean'],
         ]);
 
         $sensitiveKeys = ['mailgun_signing_key', 'postmark_inbound_token', 'imap_password'];
@@ -82,6 +85,9 @@ class SettingsController extends Controller
             'imap_username' => EscalatedSettings::get('imap_username', config('escalated.inbound_email.imap.username', '')),
             'imap_password' => $this->maskSecret(EscalatedSettings::get('imap_password', config('escalated.inbound_email.imap.password', ''))),
             'imap_mailbox' => EscalatedSettings::get('imap_mailbox', config('escalated.inbound_email.imap.mailbox', 'INBOX')),
+            'knowledge_base_enabled' => EscalatedSettings::getBool('knowledge_base_enabled', true),
+            'knowledge_base_public' => EscalatedSettings::getBool('knowledge_base_public', true),
+            'knowledge_base_feedback_enabled' => EscalatedSettings::getBool('knowledge_base_feedback_enabled', true),
         ];
     }
 
