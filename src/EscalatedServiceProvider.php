@@ -198,6 +198,7 @@ class EscalatedServiceProvider extends ServiceProvider
             RunAutomationsCommand::class,
             PurgeExpiredDataCommand::class,
             \Escalated\Laravel\Console\Commands\ImportCommand::class,
+            WakeSnoozedTicketsCommand::class,
         ]);
     }
 
