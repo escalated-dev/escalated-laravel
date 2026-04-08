@@ -53,9 +53,9 @@ class SsoService
      * Validate a SAML assertion.
      *
      * @param  string  $samlResponse  The base64-encoded SAML response
-     * @return array  Parsed user attributes from the assertion
+     * @return array Parsed user attributes from the assertion
      *
-     * @throws \RuntimeException  If validation fails
+     * @throws \RuntimeException If validation fails
      */
     public function validateSamlAssertion(string $samlResponse): array
     {
@@ -66,7 +66,7 @@ class SsoService
             throw new \RuntimeException('Invalid SAML response: base64 decode failed.');
         }
 
-        $doc = new \DOMDocument();
+        $doc = new \DOMDocument;
         $prevUseErrors = libxml_use_internal_errors(true);
         $loaded = $doc->loadXML($xml);
         libxml_use_internal_errors($prevUseErrors);
@@ -174,8 +174,8 @@ class SsoService
         $certPem = $certificate;
         if (strpos($certPem, '-----BEGIN CERTIFICATE-----') === false) {
             $certPem = "-----BEGIN CERTIFICATE-----\n"
-                . chunk_split($certPem, 64, "\n")
-                . "-----END CERTIFICATE-----\n";
+                .chunk_split($certPem, 64, "\n")
+                ."-----END CERTIFICATE-----\n";
         }
 
         $pubKey = openssl_pkey_get_public($certPem);
@@ -217,9 +217,9 @@ class SsoService
      * Validate a JWT token.
      *
      * @param  string  $token  The JWT token string
-     * @return array  Decoded token payload with mapped user attributes
+     * @return array Decoded token payload with mapped user attributes
      *
-     * @throws \RuntimeException  If validation fails
+     * @throws \RuntimeException If validation fails
      */
     public function validateJwtToken(string $token): array
     {
@@ -253,7 +253,7 @@ class SsoService
         }
 
         $signature = $this->base64UrlDecode($signatureB64);
-        $signingInput = $headerB64 . '.' . $payloadB64;
+        $signingInput = $headerB64.'.'.$payloadB64;
 
         if (! $this->verifyJwtSignature($signingInput, $signature, $secret, $algorithm)) {
             throw new \RuntimeException('Invalid JWT: signature verification failed.');

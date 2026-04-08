@@ -12,6 +12,7 @@ use Escalated\Laravel\Models\TicketLink;
 use Escalated\Laravel\Services\TicketService;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 
 beforeEach(function () {
     Gate::define('escalated-agent', fn ($user) => $user->is_agent || $user->is_admin);
@@ -33,7 +34,7 @@ function createReplyForTicket(Ticket $ticket, array $attrs = []): Reply
 function createTestTicket(array $attrs = []): Ticket
 {
     return Ticket::factory()->create(array_merge([
-        'reference' => 'TST-' . \Illuminate\Support\Str::random(8),
+        'reference' => 'TST-'.Str::random(8),
     ], $attrs));
 }
 

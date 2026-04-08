@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Models;
 
+use Escalated\Laravel\Database\Factories\CannedResponseFactory;
 use Escalated\Laravel\Escalated;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -42,8 +43,8 @@ class CannedResponse extends Model
         });
     }
 
-    protected static function newFactory(): \Escalated\Laravel\Database\Factories\CannedResponseFactory
+    protected static function newFactory(): CannedResponseFactory
     {
-        return \Escalated\Laravel\Database\Factories\CannedResponseFactory::new();
+        return CannedResponseFactory::new();
     }
 }

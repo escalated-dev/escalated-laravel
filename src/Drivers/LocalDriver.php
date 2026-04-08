@@ -9,10 +9,10 @@ use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Events;
 use Escalated\Laravel\Models\Reply;
+use Escalated\Laravel\Models\Tag;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\AttachmentService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Str;
 
 class LocalDriver implements TicketDriver
 {
@@ -112,7 +112,7 @@ class LocalDriver implements TicketDriver
 
         if ($for) {
             $query->where('requester_type', $for->getMorphClass())
-                  ->where('requester_id', $for->getKey());
+                ->where('requester_id', $for->getKey());
         }
 
         if (! empty($filters['status'])) {
@@ -171,11 +171,11 @@ class LocalDriver implements TicketDriver
             $term = $filters['requester'];
             $query->where(function ($q) use ($term) {
                 $q->where('guest_name', 'like', "%{$term}%")
-                  ->orWhere('guest_email', 'like', "%{$term}%")
-                  ->orWhereHas('requester', function ($rq) use ($term) {
-                      $rq->where('name', 'like', "%{$term}%")
-                        ->orWhere('email', 'like', "%{$term}%");
-                  });
+                    ->orWhere('guest_email', 'like', "%{$term}%")
+                    ->orWhereHas('requester', function ($rq) use ($term) {
+                        $rq->where('name', 'like', "%{$term}%")
+                            ->orWhere('email', 'like', "%{$term}%");
+                    });
             });
         }
 
@@ -202,7 +202,7 @@ class LocalDriver implements TicketDriver
         foreach ($tagIds as $tagId) {
             $this->logActivity($ticket, ActivityType::TagAdded, $causer, ['tag_id' => $tagId]);
 
-            $tag = \Escalated\Laravel\Models\Tag::find($tagId);
+            $tag = Tag::find($tagId);
             if ($tag) {
                 Events\TagAddedToTicket::dispatch($ticket, $tag);
             }
@@ -218,7 +218,7 @@ class LocalDriver implements TicketDriver
         foreach ($tagIds as $tagId) {
             $this->logActivity($ticket, ActivityType::TagRemoved, $causer, ['tag_id' => $tagId]);
 
-            $tag = \Escalated\Laravel\Models\Tag::find($tagId);
+            $tag = Tag::find($tagId);
             if ($tag) {
                 Events\TagRemovedFromTicket::dispatch($ticket, $tag);
             }

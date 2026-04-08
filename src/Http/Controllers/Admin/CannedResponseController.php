@@ -2,12 +2,11 @@
 
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Http\Requests\StoreCannedResponseRequest;
 use Escalated\Laravel\Models\CannedResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 class CannedResponseController extends Controller
 {

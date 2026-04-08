@@ -8,14 +8,17 @@ namespace Escalated\Laravel\Services;
 class PluginUIService
 {
     protected array $menuItems = [];
+
     protected array $customPages = [];
+
     protected array $dashboardWidgets = [];
+
     protected array $pageComponents = [];
 
     /**
      * Register a custom menu item.
      *
-     * @param array $item Menu item configuration
+     * @param  array  $item  Menu item configuration
      */
     public function addMenuItem(array $item): void
     {
@@ -39,7 +42,7 @@ class PluginUIService
     /**
      * Register multiple menu items at once.
      *
-     * @param array $items Array of menu item configurations
+     * @param  array  $items  Array of menu item configurations
      */
     public function addMenuItems(array $items): void
     {
@@ -51,8 +54,8 @@ class PluginUIService
     /**
      * Add a submenu item to an existing menu item.
      *
-     * @param string $parentLabel The label of the parent menu item
-     * @param array $submenuItem Submenu item configuration
+     * @param  string  $parentLabel  The label of the parent menu item
+     * @param  array  $submenuItem  Submenu item configuration
      */
     public function addSubmenuItem(string $parentLabel, array $submenuItem): void
     {
@@ -99,9 +102,9 @@ class PluginUIService
     /**
      * Register a custom page route.
      *
-     * @param string $route Route name
-     * @param string $component Inertia component name
-     * @param array $options Additional options
+     * @param  string  $route  Route name
+     * @param  string  $component  Inertia component name
+     * @param  array  $options  Additional options
      */
     public function registerPage(string $route, string $component, array $options = []): void
     {
@@ -128,7 +131,7 @@ class PluginUIService
     /**
      * Register a dashboard widget.
      *
-     * @param array $widget Widget configuration
+     * @param  array  $widget  Widget configuration
      */
     public function addDashboardWidget(array $widget): void
     {
@@ -166,9 +169,9 @@ class PluginUIService
     /**
      * Register a component to be injected into an existing page.
      *
-     * @param string $page Page identifier (e.g., 'ticket.show', 'dashboard', 'ticket.index')
-     * @param string $slot Slot name (e.g., 'sidebar', 'header', 'footer', 'actions', 'tabs')
-     * @param array $component Component configuration
+     * @param  string  $page  Page identifier (e.g., 'ticket.show', 'dashboard', 'ticket.index')
+     * @param  string  $slot  Slot name (e.g., 'sidebar', 'header', 'footer', 'actions', 'tabs')
+     * @param  array  $component  Component configuration
      */
     public function addPageComponent(string $page, string $slot, array $component): void
     {
@@ -193,8 +196,8 @@ class PluginUIService
     /**
      * Get components registered for a specific page and slot.
      *
-     * @param string $page Page identifier
-     * @param string $slot Slot name
+     * @param  string  $page  Page identifier
+     * @param  string  $slot  Slot name
      */
     public function getPageComponents(string $page, string $slot): array
     {
@@ -213,7 +216,7 @@ class PluginUIService
     /**
      * Get all components for a specific page.
      *
-     * @param string $page Page identifier
+     * @param  string  $page  Page identifier
      */
     public function getAllPageComponents(string $page): array
     {

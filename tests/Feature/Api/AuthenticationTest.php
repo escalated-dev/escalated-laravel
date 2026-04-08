@@ -1,6 +1,9 @@
 <?php
 
+use Escalated\Laravel\Enums\TicketPriority;
+use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Models\ApiToken;
+use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Tests\Fixtures\TestUser;
 use Illuminate\Support\Facades\Gate;
 
@@ -16,8 +19,8 @@ it('validates a valid api token', function () {
     $this->postJson('/support/api/v1/auth/validate', [], [
         'Authorization' => 'Bearer '.$result['plainTextToken'],
     ])->assertOk()
-      ->assertJsonPath('user.name', 'Agent')
-      ->assertJsonPath('token_name', 'Test Token');
+        ->assertJsonPath('user.name', 'Agent')
+        ->assertJsonPath('token_name', 'Test Token');
 });
 
 it('rejects requests without a token', function () {
@@ -30,7 +33,7 @@ it('rejects invalid tokens', function () {
     $this->getJson('/support/api/v1/dashboard', [
         'Authorization' => 'Bearer invalid-token-here',
     ])->assertStatus(401)
-      ->assertJsonPath('message', 'Invalid token.');
+        ->assertJsonPath('message', 'Invalid token.');
 });
 
 it('rejects expired tokens', function () {
@@ -40,7 +43,7 @@ it('rejects expired tokens', function () {
     $this->getJson('/support/api/v1/dashboard', [
         'Authorization' => 'Bearer '.$result['plainTextToken'],
     ])->assertStatus(401)
-      ->assertJsonPath('message', 'Token has expired.');
+        ->assertJsonPath('message', 'Token has expired.');
 });
 
 it('tracks last used at on first request', function () {
@@ -99,14 +102,14 @@ it('denies agent-only token from admin routes', function () {
     $result = ApiToken::createToken($user, 'Agent Only', ['agent']);
 
     // Create a ticket to try to delete
-    $ticket = \Escalated\Laravel\Models\Ticket::create([
+    $ticket = Ticket::create([
         'reference' => 'ESC-99999',
         'requester_type' => $user->getMorphClass(),
         'requester_id' => $user->getKey(),
         'subject' => 'Test',
         'description' => 'Test',
-        'status' => \Escalated\Laravel\Enums\TicketStatus::Open,
-        'priority' => \Escalated\Laravel\Enums\TicketPriority::Medium,
+        'status' => TicketStatus::Open,
+        'priority' => TicketPriority::Medium,
     ]);
 
     $this->deleteJson('/support/api/v1/tickets/ESC-99999', [], [
@@ -125,14 +128,14 @@ it('allows wildcard token on admin routes', function () {
 
     $result = ApiToken::createToken($user, 'Wildcard', ['*']);
 
-    $ticket = \Escalated\Laravel\Models\Ticket::create([
+    $ticket = Ticket::create([
         'reference' => 'ESC-99998',
         'requester_type' => $user->getMorphClass(),
         'requester_id' => $user->getKey(),
         'subject' => 'Test',
         'description' => 'Test',
-        'status' => \Escalated\Laravel\Enums\TicketStatus::Open,
-        'priority' => \Escalated\Laravel\Enums\TicketPriority::Medium,
+        'status' => TicketStatus::Open,
+        'priority' => TicketPriority::Medium,
     ]);
 
     $this->deleteJson('/support/api/v1/tickets/ESC-99998', [], [
@@ -154,7 +157,7 @@ it('rejects non-agent user even with valid token', function () {
     $this->getJson('/support/api/v1/tickets', [
         'Authorization' => 'Bearer '.$result['plainTextToken'],
     ])->assertStatus(403)
-      ->assertJsonPath('message', 'User no longer has agent access.');
+        ->assertJsonPath('message', 'User no longer has agent access.');
 });
 
 // Helpers

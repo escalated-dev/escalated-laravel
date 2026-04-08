@@ -37,7 +37,7 @@ class Macro extends Model
     {
         return $query->where(function ($q) use ($agentId) {
             $q->where('is_shared', true)
-              ->orWhere('created_by', $agentId);
+                ->orWhere('created_by', $agentId);
         });
     }
 }

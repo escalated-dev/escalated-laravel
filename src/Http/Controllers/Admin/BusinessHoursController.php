@@ -2,12 +2,11 @@
 
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Models\BusinessSchedule;
-use Escalated\Laravel\Models\Holiday;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 class BusinessHoursController extends Controller
 {
@@ -42,7 +41,7 @@ class BusinessHoursController extends Controller
             'holidays.*.recurring' => 'boolean',
         ]);
 
-        if (!empty($validated['is_default'])) {
+        if (! empty($validated['is_default'])) {
             BusinessSchedule::where('is_default', true)->update(['is_default' => false]);
         }
 
@@ -53,7 +52,7 @@ class BusinessHoursController extends Controller
             'schedule' => $validated['schedule'],
         ]);
 
-        if (!empty($validated['holidays'])) {
+        if (! empty($validated['holidays'])) {
             foreach ($validated['holidays'] as $holiday) {
                 $schedule->holidays()->create($holiday);
             }
@@ -86,7 +85,7 @@ class BusinessHoursController extends Controller
             'holidays.*.recurring' => 'boolean',
         ]);
 
-        if (!empty($validated['is_default'])) {
+        if (! empty($validated['is_default'])) {
             BusinessSchedule::where('is_default', true)
                 ->where('id', '!=', $businessHour->id)
                 ->update(['is_default' => false]);
@@ -101,7 +100,7 @@ class BusinessHoursController extends Controller
 
         // Sync holidays
         $businessHour->holidays()->delete();
-        if (!empty($validated['holidays'])) {
+        if (! empty($validated['holidays'])) {
             foreach ($validated['holidays'] as $holiday) {
                 $businessHour->holidays()->create($holiday);
             }

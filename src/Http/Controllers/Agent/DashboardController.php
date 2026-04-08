@@ -2,9 +2,9 @@
 
 namespace Escalated\Laravel\Http\Controllers\Agent;
 
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Models\Ticket;
 use Illuminate\Http\Request;
-use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Illuminate\Routing\Controller;
 
 class DashboardController extends Controller

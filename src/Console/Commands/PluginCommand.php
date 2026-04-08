@@ -6,6 +6,7 @@ use Escalated\Laravel\Services\PluginService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Process;
 use ZipArchive;
 
 class PluginCommand extends Command
@@ -215,7 +216,7 @@ class PluginCommand extends Command
         $this->info("Installing \"{$package}\" via Composer...");
 
         $this->components->task('Running composer require', function () use ($package) {
-            $result = \Illuminate\Support\Facades\Process::run("composer require {$package}");
+            $result = Process::run("composer require {$package}");
 
             if (! $result->successful()) {
                 throw new \RuntimeException('Composer install failed: '.$result->errorOutput());

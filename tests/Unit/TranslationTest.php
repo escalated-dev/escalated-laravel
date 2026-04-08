@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\File;
 
 $locales = ['en', 'es', 'fr', 'de'];
 $langFiles = ['enums', 'notifications', 'emails', 'messages', 'commands'];
@@ -34,6 +33,7 @@ it('has identical key sets across all locales', function () use ($locales, $lang
             if ($referenceKeys === null) {
                 $referenceKeys = $keys;
                 $referenceLocale = $locale;
+
                 continue;
             }
 

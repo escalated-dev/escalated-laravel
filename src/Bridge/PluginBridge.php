@@ -31,7 +31,7 @@ use RuntimeException;
  */
 class PluginBridge
 {
-    /** @var resource[]|null  [stdin, stdout, stderr, process] */
+    /** @var resource[]|null [stdin, stdout, stderr, process] */
     private ?array $process = null;
 
     /** @var resource|null */
@@ -54,8 +54,10 @@ class PluginBridge
     private bool $routesRegistered = false;
 
     /** Crash-restart state */
-    private int $restartAttempts   = 0;
-    private int $lastRestartAt     = 0;
+    private int $restartAttempts = 0;
+
+    private int $lastRestartAt = 0;
+
     private const MAX_BACKOFF_SECS = 300; // 5 minutes
 
     /** Queue depth limit for fire-and-forget action hooks */
@@ -65,22 +67,28 @@ class PluginBridge
     private int $pendingActionCount = 0;
 
     /** Protocol version we speak */
-    private const PROTOCOL_VERSION  = '1.0';
-    private const HOST_NAME         = 'laravel';
+    private const PROTOCOL_VERSION = '1.0';
+
+    private const HOST_NAME = 'laravel';
 
     /**
      * Timeout constants (seconds) per call type.
      */
-    private const TIMEOUT_ACTION   = 30;
-    private const TIMEOUT_FILTER   = 5;
+    private const TIMEOUT_ACTION = 30;
+
+    private const TIMEOUT_FILTER = 5;
+
     private const TIMEOUT_ENDPOINT = 30;
-    private const TIMEOUT_WEBHOOK  = 60;
+
+    private const TIMEOUT_WEBHOOK = 60;
+
     private const TIMEOUT_HANDSHAKE = 15;
-    private const TIMEOUT_MANIFEST  = 15;
+
+    private const TIMEOUT_MANIFEST = 15;
 
     public function __construct()
     {
-        $this->contextHandler = new ContextHandler();
+        $this->contextHandler = new ContextHandler;
         $this->contextHandler->setBridge($this);
         $this->routeRegistrar = app(RouteRegistrar::class, ['bridge' => $this]);
     }
@@ -209,9 +217,9 @@ class PluginBridge
             [
                 'plugin' => $plugin,
                 'method' => $method,
-                'path'   => $path,
-                'body'   => $request['body']    ?? null,
-                'params' => $request['params']  ?? [],
+                'path' => $path,
+                'body' => $request['body'] ?? null,
+                'params' => $request['params'] ?? [],
             ],
             self::TIMEOUT_ENDPOINT,
             [$this->contextHandler, 'handle']
@@ -232,10 +240,10 @@ class PluginBridge
         return $this->rpc->call(
             'webhook',
             [
-                'plugin'  => $plugin,
-                'method'  => $method,
-                'path'    => $path,
-                'body'    => $body,
+                'plugin' => $plugin,
+                'method' => $method,
+                'path' => $path,
+                'body' => $body,
                 'headers' => $headers,
             ],
             self::TIMEOUT_WEBHOOK,
@@ -311,9 +319,9 @@ class PluginBridge
         stream_set_blocking($pipes[2], false);
 
         $this->process = [$proc, $pipes];
-        $this->stdin   = $pipes[0];
-        $this->stdout  = $pipes[1];
-        $this->rpc     = new JsonRpcClient($this->stdin, $this->stdout);
+        $this->stdin = $pipes[0];
+        $this->stdout = $pipes[1];
+        $this->rpc = new JsonRpcClient($this->stdin, $this->stdout);
 
         Log::info('Escalated PluginBridge: plugin runtime spawned');
     }
@@ -327,15 +335,15 @@ class PluginBridge
             'handshake',
             [
                 'protocol_version' => self::PROTOCOL_VERSION,
-                'host'             => self::HOST_NAME,
-                'host_version'     => $this->hostVersion(),
+                'host' => self::HOST_NAME,
+                'host_version' => $this->hostVersion(),
             ],
             self::TIMEOUT_HANDSHAKE,
             [$this->contextHandler, 'handle']
         );
 
         if (! ($result['compatible'] ?? false)) {
-            $runtimeVer  = $result['runtime_version'] ?? 'unknown';
+            $runtimeVer = $result['runtime_version'] ?? 'unknown';
             $protocolVer = $result['protocol_version'] ?? 'unknown';
 
             throw new RuntimeException(
@@ -344,7 +352,7 @@ class PluginBridge
         }
 
         Log::info('Escalated PluginBridge: handshake OK', [
-            'runtime_version'  => $result['runtime_version'] ?? 'unknown',
+            'runtime_version' => $result['runtime_version'] ?? 'unknown',
             'protocol_version' => $result['protocol_version'] ?? 'unknown',
         ]);
     }
@@ -425,7 +433,7 @@ class PluginBridge
             $this->registerRoutes();
 
             $this->restartAttempts = 0;
-            $this->booted          = true;
+            $this->booted = true;
 
             return true;
         } catch (\Throwable $e) {
@@ -433,7 +441,7 @@ class PluginBridge
             $this->lastRestartAt = time();
 
             Log::error('Escalated PluginBridge: failed to start plugin runtime', [
-                'error'    => $e->getMessage(),
+                'error' => $e->getMessage(),
                 'attempts' => $this->restartAttempts,
             ]);
 
@@ -518,9 +526,9 @@ class PluginBridge
         }
 
         $this->process = null;
-        $this->stdin   = null;
-        $this->stdout  = null;
-        $this->rpc     = null;
+        $this->stdin = null;
+        $this->stdout = null;
+        $this->rpc = null;
     }
 
     /**

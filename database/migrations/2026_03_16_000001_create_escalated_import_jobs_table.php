@@ -10,7 +10,7 @@ return new class extends Migration
     {
         $prefix = config('escalated.table_prefix', 'escalated_');
 
-        Schema::create($prefix . 'import_jobs', function (Blueprint $table) {
+        Schema::create($prefix.'import_jobs', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->unsignedBigInteger('user_id');
             $table->string('platform', 50);
@@ -31,6 +31,6 @@ return new class extends Migration
     public function down(): void
     {
         $prefix = config('escalated.table_prefix', 'escalated_');
-        Schema::dropIfExists($prefix . 'import_jobs');
+        Schema::dropIfExists($prefix.'import_jobs');
     }
 };

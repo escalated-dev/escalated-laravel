@@ -140,7 +140,7 @@ class CloudDriver implements TicketDriver
 
     protected function hydrateTicket(array $data): Ticket
     {
-        $ticket = new Ticket();
+        $ticket = new Ticket;
         $ticket->forceFill($data);
         $ticket->exists = true;
 
@@ -149,7 +149,7 @@ class CloudDriver implements TicketDriver
 
     protected function hydrateReply(array $data): Reply
     {
-        $reply = new Reply();
+        $reply = new Reply;
         $reply->forceFill($data);
         $reply->exists = true;
 

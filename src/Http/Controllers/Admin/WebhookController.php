@@ -2,12 +2,12 @@
 
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Models\Webhook;
 use Escalated\Laravel\Models\WebhookDelivery;
 use Escalated\Laravel\Services\WebhookDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Illuminate\Routing\Controller;
 
 class WebhookController extends Controller

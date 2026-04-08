@@ -40,13 +40,10 @@ class JsonRpcClient
      * While waiting, any incoming ctx.* requests from the runtime are handled
      * by the provided $ctxHandler callable.
      *
-     * @param  string    $method
-     * @param  array     $params
-     * @param  int       $timeoutSeconds
      * @param  callable  $ctxHandler  fn(string $method, array $params, int $id): mixed
-     * @return mixed     The JSON-RPC result
+     * @return mixed The JSON-RPC result
      *
-     * @throws \RuntimeException  On timeout or protocol error
+     * @throws RuntimeException On timeout or protocol error
      */
     public function call(string $method, array $params, int $timeoutSeconds, callable $ctxHandler): mixed
     {
@@ -54,9 +51,9 @@ class JsonRpcClient
 
         $message = json_encode([
             'jsonrpc' => '2.0',
-            'method'  => $method,
-            'params'  => $params,
-            'id'      => $id,
+            'method' => $method,
+            'params' => $params,
+            'id' => $id,
         ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
 
         $this->writeLine($message);
@@ -71,8 +68,8 @@ class JsonRpcClient
     {
         $message = json_encode([
             'jsonrpc' => '2.0',
-            'method'  => $method,
-            'params'  => $params,
+            'method' => $method,
+            'params' => $params,
         ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
 
         $this->writeLine($message);
@@ -85,8 +82,8 @@ class JsonRpcClient
     {
         $message = json_encode([
             'jsonrpc' => '2.0',
-            'result'  => $result,
-            'id'      => $id,
+            'result' => $result,
+            'id' => $id,
         ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
 
         $this->writeLine($message);
@@ -99,8 +96,8 @@ class JsonRpcClient
     {
         $payload = json_encode([
             'jsonrpc' => '2.0',
-            'error'   => ['code' => $code, 'message' => $message],
-            'id'      => $id,
+            'error' => ['code' => $code, 'message' => $message],
+            'id' => $id,
         ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
 
         $this->writeLine($payload);
@@ -170,12 +167,14 @@ class JsonRpcClient
                 Log::warning('Escalated PluginBridge: received invalid JSON-RPC message', [
                     'raw' => substr($line, 0, 200),
                 ]);
+
                 continue;
             }
 
             // This is a request FROM the runtime (ctx.* callback)
             if (isset($decoded['method'])) {
                 $this->handleIncomingRequest($decoded, $ctxHandler);
+
                 continue;
             }
 
@@ -199,7 +198,7 @@ class JsonRpcClient
                 // synchronous single-threaded model but log it and skip.
                 Log::warning('Escalated PluginBridge: unexpected response id', [
                     'expected' => $expectedId,
-                    'got'      => $msgId,
+                    'got' => $msgId,
                 ]);
             }
         }
@@ -211,7 +210,7 @@ class JsonRpcClient
      */
     private function handleIncomingRequest(array $message, callable $ctxHandler): void
     {
-        $id     = isset($message['id']) ? (int) $message['id'] : null;
+        $id = isset($message['id']) ? (int) $message['id'] : null;
         $method = $message['method'] ?? '';
         $params = $message['params'] ?? [];
 
@@ -224,7 +223,7 @@ class JsonRpcClient
         } catch (\Throwable $e) {
             Log::warning('Escalated PluginBridge: ctx handler threw', [
                 'method' => $method,
-                'error'  => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             if ($id !== null) {
