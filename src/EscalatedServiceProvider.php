@@ -13,6 +13,7 @@ use Escalated\Laravel\Console\Commands\PollImapCommand;
 use Escalated\Laravel\Console\Commands\PurgeActivitiesCommand;
 use Escalated\Laravel\Console\Commands\PurgeExpiredDataCommand;
 use Escalated\Laravel\Console\Commands\RunAutomationsCommand;
+use Escalated\Laravel\Console\Commands\WakeSnoozedTicketsCommand;
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Http\Controllers\Admin\ApiTokenController;
 use Escalated\Laravel\Http\Middleware\EnsureIsAdmin;
@@ -212,6 +213,7 @@ class EscalatedServiceProvider extends ServiceProvider
             RunAutomationsCommand::class,
             PurgeExpiredDataCommand::class,
             ImportCommand::class,
+            WakeSnoozedTicketsCommand::class,
         ]);
     }
 

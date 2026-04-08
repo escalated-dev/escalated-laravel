@@ -10,6 +10,7 @@ use Escalated\Laravel\Http\Requests\AssignTicketRequest;
 use Escalated\Laravel\Http\Requests\ChangePriorityRequest;
 use Escalated\Laravel\Http\Requests\ChangeStatusRequest;
 use Escalated\Laravel\Http\Requests\ReplyToTicketRequest;
+use Escalated\Laravel\Http\Requests\SnoozeTicketRequest;
 use Escalated\Laravel\Http\Requests\UpdateTagsRequest;
 use Escalated\Laravel\Models\CannedResponse;
 use Escalated\Laravel\Models\Department;
@@ -38,7 +39,7 @@ class TicketController extends Controller
     public function index(Request $request): mixed
     {
         $tickets = $this->ticketService->list(
-            $request->only(['status', 'priority', 'ticket_type', 'assigned_to', 'unassigned', 'department_id', 'search', 'sla_breached', 'tag_ids', 'sort_by', 'sort_dir', 'per_page', 'following']),
+            $request->only(['status', 'priority', 'ticket_type', 'assigned_to', 'unassigned', 'department_id', 'search', 'sla_breached', 'tag_ids', 'sort_by', 'sort_dir', 'per_page', 'following', 'snoozed']),
             $request->has('following') ? $request->user() : null,
         );
 
@@ -70,6 +71,7 @@ class TicketController extends Controller
             'macros' => Macro::forAgent($request->user()->getKey())->orderBy('order')->get(),
             'is_following' => $ticket->isFollowedBy($request->user()->getKey()),
             'followers_count' => $ticket->followers()->count(),
+            'is_snoozed' => $ticket->is_snoozed,
         ]);
     }
 
@@ -215,6 +217,22 @@ class TicketController extends Controller
         $reply->update(['is_pinned' => ! $reply->is_pinned]);
 
         return back()->with('success', $reply->is_pinned ? 'Note pinned.' : 'Note unpinned.');
+    }
+
+    public function snooze(Ticket $ticket, SnoozeTicketRequest $request): RedirectResponse
+    {
+        $until = Carbon::parse($request->validated('snoozed_until'));
+
+        $this->ticketService->snoozeTicket($ticket, $until, $request->user());
+
+        return back()->with('success', 'Ticket snoozed until '.$until->format('M j, Y g:ia').'.');
+    }
+
+    public function unsnooze(Ticket $ticket, Request $request): RedirectResponse
+    {
+        $this->ticketService->unsnoozeTicket($ticket, $request->user());
+
+        return back()->with('success', 'Ticket unsnoozed.');
     }
 
     protected function getAgents(): array

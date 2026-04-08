@@ -77,6 +77,7 @@ class Ticket extends Model
             'sla_resolution_breached' => 'boolean',
             'resolved_at' => 'datetime',
             'closed_at' => 'datetime',
+            'snoozed_until' => 'datetime',
         ];
     }
 
@@ -250,6 +251,18 @@ class Ticket extends Model
         });
     }
 
+    public function scopeSnoozed($query)
+    {
+        return $query->whereNotNull('snoozed_until')->where('snoozed_until', '>', now());
+    }
+
+    public function scopeNotSnoozed($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereNull('snoozed_until')->orWhere('snoozed_until', '<=', now());
+        });
+    }
+
     // Guest helpers
 
     public function isGuest(): bool
@@ -283,6 +296,11 @@ class Ticket extends Model
     public function getLastReplyAuthorAttribute(): ?string
     {
         return $this->latestReply?->author?->name;
+    }
+
+    public function getIsSnoozedAttribute(): bool
+    {
+        return $this->snoozed_until !== null && $this->snoozed_until->isFuture();
     }
 
     // Helpers

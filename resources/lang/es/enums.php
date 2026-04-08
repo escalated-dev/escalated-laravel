@@ -10,6 +10,8 @@ return [
         'escalated' => 'Escalado',
         'resolved' => 'Resuelto',
         'closed' => 'Cerrado',
+        'snoozed' => 'Aplazado',
+        'unsnoozed' => 'Reactivado',
         'reopened' => 'Reabierto',
     ],
 
@@ -36,6 +38,8 @@ return [
         'reopened' => 'Reabierto',
         'resolved' => 'Resuelto',
         'closed' => 'Cerrado',
+        'snoozed' => 'Aplazado',
+        'unsnoozed' => 'Reactivado',
         'ticket_split' => 'Ticket dividido',
     ],
 

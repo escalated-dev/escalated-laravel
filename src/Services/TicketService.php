@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Services;
 
+use Carbon\Carbon;
 use Escalated\Laravel\Contracts\Ticketable;
 use Escalated\Laravel\Enums\ActivityType;
 use Escalated\Laravel\Enums\TicketPriority;
@@ -85,6 +86,43 @@ class TicketService
     public function reopen(Ticket $ticket, ?Ticketable $causer = null): Ticket
     {
         return $this->changeStatus($ticket, TicketStatus::Reopened, $causer);
+    }
+
+    public function snoozeTicket(Ticket $ticket, Carbon $until, Ticketable $by): Ticket
+    {
+        $ticket->update([
+            'snoozed_until' => $until,
+            'snoozed_by' => $by->getKey(),
+            'status_before_snooze' => $ticket->status->value,
+        ]);
+
+        $ticket->logActivity(ActivityType::Snoozed, $by, [
+            'snoozed_until' => $until->toIso8601String(),
+        ]);
+
+        return $ticket->fresh();
+    }
+
+    public function unsnoozeTicket(Ticket $ticket, ?Ticketable $causer = null): Ticket
+    {
+        $previousStatus = $ticket->status_before_snooze;
+
+        $ticket->update([
+            'snoozed_until' => null,
+            'snoozed_by' => null,
+            'status_before_snooze' => null,
+        ]);
+
+        if ($previousStatus) {
+            $status = TicketStatus::tryFrom($previousStatus);
+            if ($status) {
+                $ticket->update(['status' => $status->value]);
+            }
+        }
+
+        $ticket->logActivity(ActivityType::Unsnoozed, $causer);
+
+        return $ticket->fresh();
     }
 
     /**
