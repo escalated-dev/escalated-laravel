@@ -254,6 +254,9 @@ class EscalatedServiceProvider extends ServiceProvider
                 if (Schema::hasTable(Escalated::table('settings'))) {
                     $data['guest_tickets_enabled'] = EscalatedSettings::guestTicketsEnabled();
                     $data['show_powered_by'] = EscalatedSettings::getBool('show_powered_by', true);
+                    $data['knowledge_base_enabled'] = EscalatedSettings::knowledgeBaseEnabled();
+                    $data['knowledge_base_public'] = EscalatedSettings::knowledgeBasePublic();
+                    $data['knowledge_base_feedback_enabled'] = EscalatedSettings::knowledgeBaseFeedbackEnabled();
                 }
             } catch (\Throwable) {
                 // Settings table may not exist yet
