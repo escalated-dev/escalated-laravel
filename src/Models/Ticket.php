@@ -3,6 +3,7 @@
 namespace Escalated\Laravel\Models;
 
 use Escalated\Laravel\Contracts\Ticketable;
+use Escalated\Laravel\Database\Factories\TicketFactory;
 use Escalated\Laravel\Enums\ActivityType;
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
@@ -37,7 +38,7 @@ class Ticket extends Model
 
         static::creating(function (self $ticket) {
             if (empty($ticket->reference)) {
-                $ticket->reference = 'TEMP-' . Str::uuid()->toString();
+                $ticket->reference = 'TEMP-'.Str::uuid()->toString();
             }
 
             if (empty($ticket->status)) {
@@ -231,7 +232,7 @@ class Ticket extends Model
     {
         return $query->where(function ($q) {
             $q->where('sla_first_response_breached', true)
-              ->orWhere('sla_resolution_breached', true);
+                ->orWhere('sla_resolution_breached', true);
         });
     }
 
@@ -239,14 +240,14 @@ class Ticket extends Model
     {
         return $query->where(function ($q) use ($term) {
             $q->where('subject', 'like', "%{$term}%")
-              ->orWhere('reference', 'like', "%{$term}%")
-              ->orWhere('description', 'like', "%{$term}%")
-              ->orWhere('guest_name', 'like', "%{$term}%")
-              ->orWhere('guest_email', 'like', "%{$term}%")
-              ->orWhereHas('requester', function ($rq) use ($term) {
-                  $rq->where('name', 'like', "%{$term}%")
-                    ->orWhere('email', 'like', "%{$term}%");
-              });
+                ->orWhere('reference', 'like', "%{$term}%")
+                ->orWhere('description', 'like', "%{$term}%")
+                ->orWhere('guest_name', 'like', "%{$term}%")
+                ->orWhere('guest_email', 'like', "%{$term}%")
+                ->orWhereHas('requester', function ($rq) use ($term) {
+                    $rq->where('name', 'like', "%{$term}%")
+                        ->orWhere('email', 'like', "%{$term}%");
+                });
         });
     }
 
@@ -321,9 +322,9 @@ class Ticket extends Model
         return $this->status->canTransitionTo($newStatus);
     }
 
-    protected static function newFactory(): \Escalated\Laravel\Database\Factories\TicketFactory
+    protected static function newFactory(): TicketFactory
     {
-        return \Escalated\Laravel\Database\Factories\TicketFactory::new();
+        return TicketFactory::new();
     }
 
     public function changeDepartment(Department|int $newDepartment, ?Ticketable $causer): self
@@ -561,5 +562,4 @@ class Ticket extends Model
 
         return $this->fresh();
     }
-
 }

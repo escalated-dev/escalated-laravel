@@ -1,6 +1,5 @@
 <?php
 
-use Carbon\Carbon;
 use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\TicketService;

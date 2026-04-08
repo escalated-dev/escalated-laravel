@@ -24,7 +24,7 @@ trait Auditable
                 $newValues[$key] = $value;
             }
 
-            if (!empty($newValues)) {
+            if (! empty($newValues)) {
                 static::logAudit($model, 'updated', $oldValues, $newValues);
             }
         });
@@ -43,8 +43,8 @@ trait Auditable
             'action' => $action,
             'auditable_type' => $model->getMorphClass(),
             'auditable_id' => $model->getKey(),
-            'old_values' => !empty($oldValues) ? $oldValues : null,
-            'new_values' => !empty($newValues) ? $newValues : null,
+            'old_values' => ! empty($oldValues) ? $oldValues : null,
+            'new_values' => ! empty($newValues) ? $newValues : null,
             'ip_address' => $request?->ip(),
             'user_agent' => $request?->userAgent(),
         ]);

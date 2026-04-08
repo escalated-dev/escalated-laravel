@@ -44,6 +44,7 @@ class ImportCommand extends Command
 
             if (empty($adapters)) {
                 $this->components->error('No import adapters installed.');
+
                 return 1;
             }
 
@@ -57,6 +58,7 @@ class ImportCommand extends Command
 
         if (! $adapter) {
             $this->components->error("No adapter found for platform '{$platform}'.");
+
             return 1;
         }
 
@@ -74,6 +76,7 @@ class ImportCommand extends Command
             $path = $this->option('mapping');
             if (! file_exists($path)) {
                 $this->components->error("Mapping file not found: {$path}");
+
                 return 1;
             }
             $mappings = json_decode(file_get_contents($path), true);
@@ -103,7 +106,7 @@ class ImportCommand extends Command
 
             if (! $value) {
                 $method = ($field['type'] ?? 'text') === 'password' ? 'secret' : 'ask';
-                $value = $this->{$method}($field['label'] . ($field['help'] ? " ({$field['help']})" : ''));
+                $value = $this->{$method}($field['label'].($field['help'] ? " ({$field['help']})" : ''));
             }
 
             $credentials[$field['name']] = $value;
@@ -136,11 +139,13 @@ class ImportCommand extends Command
 
             $this->newLine();
             $this->components->info('Import completed successfully.');
+
             return 0;
         } catch (\Throwable $e) {
             $this->newLine();
             $this->components->error("Import failed: {$e->getMessage()}");
             $this->info("Job ID: {$job->id} — use --resume={$job->id} to retry.");
+
             return 1;
         }
     }
@@ -151,11 +156,13 @@ class ImportCommand extends Command
 
         if (! $job) {
             $this->components->error("Import job not found: {$jobId}");
+
             return 1;
         }
 
         if (! $job->isResumable()) {
             $this->components->error("Job is not resumable (status: {$job->status}).");
+
             return 1;
         }
 
@@ -174,6 +181,7 @@ class ImportCommand extends Command
 
         if ($jobs->isEmpty()) {
             $this->info('No import jobs found.');
+
             return 0;
         }
 

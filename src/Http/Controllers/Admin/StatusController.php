@@ -40,7 +40,7 @@ class StatusController extends Controller
             'is_default' => 'boolean',
         ]);
 
-        if (!empty($validated['is_default'])) {
+        if (! empty($validated['is_default'])) {
             TicketStatus::where('category', $validated['category'])->update(['is_default' => false]);
         }
 
@@ -69,7 +69,7 @@ class StatusController extends Controller
             'is_default' => 'boolean',
         ]);
 
-        if (!empty($validated['is_default'])) {
+        if (! empty($validated['is_default'])) {
             TicketStatus::where('category', $validated['category'])
                 ->where('id', '!=', $status->id)
                 ->update(['is_default' => false]);

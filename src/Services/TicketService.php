@@ -2,8 +2,8 @@
 
 namespace Escalated\Laravel\Services;
 
-use Escalated\Laravel\Contracts\Ticketable;
 use Carbon\Carbon;
+use Escalated\Laravel\Contracts\Ticketable;
 use Escalated\Laravel\Enums\ActivityType;
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;

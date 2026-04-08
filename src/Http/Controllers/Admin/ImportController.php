@@ -2,12 +2,11 @@
 
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Models\ImportJob;
 use Escalated\Laravel\Services\ImportService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Escalated\Laravel\Contracts\EscalatedUiRenderer;
-use Illuminate\Support\Facades\Gate;
 
 class ImportController extends Controller
 {

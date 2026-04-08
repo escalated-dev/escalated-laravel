@@ -1,12 +1,11 @@
 <?php
 
-use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Policies\TicketPolicy;
 use Illuminate\Support\Facades\Gate;
 
 beforeEach(function () {
-    $this->policy = new TicketPolicy();
+    $this->policy = new TicketPolicy;
 });
 
 it('allows any authenticated user to view tickets', function () {

@@ -1,6 +1,5 @@
 <?php
 
-use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Notifications\NewTicketNotification;

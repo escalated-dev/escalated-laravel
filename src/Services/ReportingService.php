@@ -2,11 +2,11 @@
 
 namespace Escalated\Laravel\Services;
 
+use Carbon\Carbon;
 use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Models\SatisfactionRating;
 use Escalated\Laravel\Models\SlaPolicy;
 use Escalated\Laravel\Models\Ticket;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class ReportingService
@@ -17,7 +17,7 @@ class ReportingService
     public function getTicketVolumeByDate(Carbon $startDate, Carbon $endDate): array
     {
         $driver = DB::connection()->getDriverName();
-        $dateExpr = $driver === 'sqlite' ? "date(created_at)" : "DATE(created_at)";
+        $dateExpr = $driver === 'sqlite' ? 'date(created_at)' : 'DATE(created_at)';
 
         return Ticket::whereBetween('created_at', [$startDate, $endDate])
             ->selectRaw("{$dateExpr} as date, count(*) as count")
@@ -117,7 +117,7 @@ class ReportingService
             ->select([
                 "{$ticketsTable}.assigned_to as agent_id",
                 "{$usersTable}.name as agent_name",
-                DB::raw("count(*) as total_tickets"),
+                DB::raw('count(*) as total_tickets'),
                 DB::raw("SUM(CASE WHEN {$ticketsTable}.resolved_at IS NOT NULL THEN 1 ELSE 0 END) as resolved_tickets"),
                 DB::raw("ROUND({$avgResponseRaw}, 1) as avg_response_hours"),
                 DB::raw("ROUND({$avgResolutionRaw}, 1) as avg_resolution_hours"),
@@ -143,7 +143,7 @@ class ReportingService
             ->whereNotNull('sla_policy_id')
             ->where(function ($q) {
                 $q->where('sla_first_response_breached', true)
-                  ->orWhere('sla_resolution_breached', true);
+                    ->orWhere('sla_resolution_breached', true);
             })
             ->count();
 
@@ -214,7 +214,7 @@ class ReportingService
         return Ticket::whereBetween('created_at', [$startDate, $endDate])
             ->where(function ($q) {
                 $q->where('sla_first_response_breached', true)
-                  ->orWhere('sla_resolution_breached', true);
+                    ->orWhere('sla_resolution_breached', true);
             })
             ->with('assignee', 'slaPolicy')
             ->select(['id', 'reference', 'subject', 'assigned_to', 'sla_policy_id',
@@ -243,7 +243,7 @@ class ReportingService
                 ->where('sla_policy_id', $policy->id)
                 ->where(function ($q) {
                     $q->where('sla_first_response_breached', true)
-                      ->orWhere('sla_resolution_breached', true);
+                        ->orWhere('sla_resolution_breached', true);
                 })
                 ->count();
 
@@ -277,7 +277,7 @@ class ReportingService
                 "{$ticketsTable}.assigned_to as agent_id",
                 "{$usersTable}.name as agent_name",
                 DB::raw("ROUND(AVG({$ratingsTable}.rating), 1) as avg_rating"),
-                DB::raw("COUNT(*) as total_ratings"),
+                DB::raw('COUNT(*) as total_ratings'),
             ])
             ->get()
             ->toArray();
@@ -289,7 +289,7 @@ class ReportingService
     public function getCsatOverTime(Carbon $startDate, Carbon $endDate): array
     {
         $driver = DB::connection()->getDriverName();
-        $dateExpr = $driver === 'sqlite' ? "date(created_at)" : "DATE(created_at)";
+        $dateExpr = $driver === 'sqlite' ? 'date(created_at)' : 'DATE(created_at)';
 
         return SatisfactionRating::whereBetween('created_at', [$startDate, $endDate])
             ->selectRaw("{$dateExpr} as date, ROUND(AVG(rating), 1) as avg_rating, COUNT(*) as count")

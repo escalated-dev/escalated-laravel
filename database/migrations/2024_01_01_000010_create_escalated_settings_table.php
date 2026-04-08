@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -20,7 +21,7 @@ return new class extends Migration
         // Seed default settings
         $now = now();
 
-        \Illuminate\Support\Facades\DB::table($prefix.'settings')->insert([
+        DB::table($prefix.'settings')->insert([
             ['key' => 'guest_tickets_enabled', 'value' => '1', 'created_at' => $now, 'updated_at' => $now],
             ['key' => 'allow_customer_close', 'value' => '1', 'created_at' => $now, 'updated_at' => $now],
             ['key' => 'auto_close_resolved_after_days', 'value' => '7', 'created_at' => $now, 'updated_at' => $now],

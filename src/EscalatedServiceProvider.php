@@ -6,6 +6,7 @@ use Escalated\Laravel\Bridge\PluginBridge;
 use Escalated\Laravel\Console\Commands\CheckSlaCommand;
 use Escalated\Laravel\Console\Commands\CloseResolvedCommand;
 use Escalated\Laravel\Console\Commands\EvaluateEscalationsCommand;
+use Escalated\Laravel\Console\Commands\ImportCommand;
 use Escalated\Laravel\Console\Commands\InstallCommand;
 use Escalated\Laravel\Console\Commands\PluginCommand;
 use Escalated\Laravel\Console\Commands\PollImapCommand;
@@ -13,15 +14,20 @@ use Escalated\Laravel\Console\Commands\PurgeActivitiesCommand;
 use Escalated\Laravel\Console\Commands\PurgeExpiredDataCommand;
 use Escalated\Laravel\Console\Commands\RunAutomationsCommand;
 use Escalated\Laravel\Console\Commands\WakeSnoozedTicketsCommand;
-use Escalated\Laravel\Events;
-use Escalated\Laravel\Listeners;
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
+use Escalated\Laravel\Http\Controllers\Admin\ApiTokenController;
+use Escalated\Laravel\Http\Middleware\EnsureIsAdmin;
 use Escalated\Laravel\Models\AgentProfile;
 use Escalated\Laravel\Models\EscalatedSettings;
+use Escalated\Laravel\Services\ImportService;
 use Escalated\Laravel\Services\PluginService;
 use Escalated\Laravel\Services\PluginUIService;
 use Escalated\Laravel\Support\HookManager;
+use Escalated\Laravel\UI\InertiaUiRenderer;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Inertia\Inertia;
@@ -33,34 +39,34 @@ class EscalatedServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/escalated.php', 'escalated');
 
         $this->app->singleton(EscalatedManager::class, function ($app) {
-            return new EscalatedManager();
+            return new EscalatedManager;
         });
 
         // Register hook manager singleton
         $this->app->singleton('escalated.hooks', function ($app) {
-            return new HookManager();
+            return new HookManager;
         });
 
         // Register plugin UI service singleton
         $this->app->singleton(PluginUIService::class, function ($app) {
-            return new PluginUIService();
+            return new PluginUIService;
         });
 
-        $this->app->singleton(\Escalated\Laravel\Services\ImportService::class);
+        $this->app->singleton(ImportService::class);
 
         // Register the plugin bridge as a singleton.
         // The bridge manages the Node.js plugin runtime subprocess and is
         // reused for every request in the same PHP-FPM worker.
         $this->app->singleton(PluginBridge::class, function ($app) {
-            return new PluginBridge();
+            return new PluginBridge;
         });
 
         // Register UI renderer — Inertia by default, swappable by the host app
         $this->app->singleton(
-            \Escalated\Laravel\Contracts\EscalatedUiRenderer::class,
+            EscalatedUiRenderer::class,
             function () {
                 if ($this->uiEnabled()) {
-                    return new \Escalated\Laravel\UI\InertiaUiRenderer();
+                    return new InertiaUiRenderer;
                 }
 
                 throw new \RuntimeException(
@@ -93,7 +99,7 @@ class EscalatedServiceProvider extends ServiceProvider
     protected function uiEnabled(): bool
     {
         return config('escalated.ui.enabled', true)
-            && class_exists(\Inertia\Inertia::class);
+            && class_exists(Inertia::class);
     }
 
     protected function registerPublishing(): void
@@ -168,16 +174,16 @@ class EscalatedServiceProvider extends ServiceProvider
     {
         $middleware = array_merge(
             config('escalated.routes.admin_middleware', ['web', 'auth']),
-            [\Escalated\Laravel\Http\Middleware\EnsureIsAdmin::class]
+            [EnsureIsAdmin::class]
         );
 
-        \Illuminate\Support\Facades\Route::middleware($middleware)
+        Route::middleware($middleware)
             ->prefix(config('escalated.routes.prefix', 'support').'/admin')
             ->group(function () {
-                \Illuminate\Support\Facades\Route::get('/api-tokens', [\Escalated\Laravel\Http\Controllers\Admin\ApiTokenController::class, 'index'])->name('escalated.admin.api-tokens.index');
-                \Illuminate\Support\Facades\Route::post('/api-tokens', [\Escalated\Laravel\Http\Controllers\Admin\ApiTokenController::class, 'store'])->name('escalated.admin.api-tokens.store');
-                \Illuminate\Support\Facades\Route::patch('/api-tokens/{id}', [\Escalated\Laravel\Http\Controllers\Admin\ApiTokenController::class, 'update'])->name('escalated.admin.api-tokens.update');
-                \Illuminate\Support\Facades\Route::delete('/api-tokens/{id}', [\Escalated\Laravel\Http\Controllers\Admin\ApiTokenController::class, 'destroy'])->name('escalated.admin.api-tokens.destroy');
+                Route::get('/api-tokens', [ApiTokenController::class, 'index'])->name('escalated.admin.api-tokens.index');
+                Route::post('/api-tokens', [ApiTokenController::class, 'store'])->name('escalated.admin.api-tokens.store');
+                Route::patch('/api-tokens/{id}', [ApiTokenController::class, 'update'])->name('escalated.admin.api-tokens.update');
+                Route::delete('/api-tokens/{id}', [ApiTokenController::class, 'destroy'])->name('escalated.admin.api-tokens.destroy');
             });
     }
 
@@ -197,7 +203,7 @@ class EscalatedServiceProvider extends ServiceProvider
             PollImapCommand::class,
             RunAutomationsCommand::class,
             PurgeExpiredDataCommand::class,
-            \Escalated\Laravel\Console\Commands\ImportCommand::class,
+            ImportCommand::class,
             WakeSnoozedTicketsCommand::class,
         ]);
     }
@@ -213,7 +219,7 @@ class EscalatedServiceProvider extends ServiceProvider
             $bridge->boot();
         } catch (\Throwable $e) {
             // Bridge failures must not break the application.
-            \Illuminate\Support\Facades\Log::warning('Escalated: Plugin bridge boot failed', [
+            Log::warning('Escalated: Plugin bridge boot failed', [
                 'error' => $e->getMessage(),
             ]);
         }
@@ -230,7 +236,7 @@ class EscalatedServiceProvider extends ServiceProvider
             $pluginService->loadActivePlugins();
         } catch (\Throwable $e) {
             // Plugins table may not exist yet or directory issues
-            \Illuminate\Support\Facades\Log::debug('Escalated: Could not load plugins', [
+            Log::debug('Escalated: Could not load plugins', [
                 'error' => $e->getMessage(),
             ]);
         }

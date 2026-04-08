@@ -43,7 +43,7 @@ class RoleController extends Controller
             'description' => $validated['description'] ?? null,
         ]);
 
-        if (!empty($validated['permissions'])) {
+        if (! empty($validated['permissions'])) {
             $role->permissions()->sync($validated['permissions']);
         }
 

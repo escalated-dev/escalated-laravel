@@ -1,5 +1,6 @@
 <?php
 
+use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Models\InboundEmail;
 use Escalated\Laravel\Models\Ticket;
 use Illuminate\Support\Facades\Notification;
@@ -96,7 +97,7 @@ it('processes a valid mailgun webhook and creates a ticket', function () {
 
     // Verify ticket was created
     $this->assertDatabaseHas(
-        \Escalated\Laravel\Escalated::table('tickets'),
+        Escalated::table('tickets'),
         ['subject' => 'Feature request']
     );
 
@@ -126,7 +127,7 @@ it('processes a valid postmark webhook with token', function () {
     $response->assertJson(['status' => 'ok']);
 
     $this->assertDatabaseHas(
-        \Escalated\Laravel\Escalated::table('tickets'),
+        Escalated::table('tickets'),
         ['subject' => 'Billing question']
     );
 });
@@ -180,7 +181,7 @@ it('adds reply to existing ticket via subject reference', function () {
 
     // Should have a reply on the existing ticket
     $this->assertDatabaseHas(
-        \Escalated\Laravel\Escalated::table('replies'),
+        Escalated::table('replies'),
         [
             'ticket_id' => $ticket->id,
             'body' => 'This is a follow-up reply.',

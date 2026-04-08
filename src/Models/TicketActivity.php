@@ -13,6 +13,7 @@ class TicketActivity extends Model
     protected $guarded = ['id'];
 
     public $timestamps = true;
+
     const UPDATED_AT = null;
 
     protected function casts(): array

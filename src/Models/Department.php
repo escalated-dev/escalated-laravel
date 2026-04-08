@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Models;
 
+use Escalated\Laravel\Database\Factories\DepartmentFactory;
 use Escalated\Laravel\Escalated;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -51,8 +52,8 @@ class Department extends Model
         });
     }
 
-    protected static function newFactory(): \Escalated\Laravel\Database\Factories\DepartmentFactory
+    protected static function newFactory(): DepartmentFactory
     {
-        return \Escalated\Laravel\Database\Factories\DepartmentFactory::new();
+        return DepartmentFactory::new();
     }
 }

@@ -2,12 +2,12 @@
 
 namespace Escalated\Laravel\Http\Controllers\Customer;
 
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Models\Article;
 use Escalated\Laravel\Models\ArticleCategory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 class KnowledgeBaseController extends Controller
 {

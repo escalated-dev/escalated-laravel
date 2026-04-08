@@ -71,11 +71,21 @@ class ImportJob extends Model
             'total' => 0, 'processed' => 0, 'skipped' => 0, 'failed' => 0, 'cursor' => null,
         ];
 
-        if ($processed !== null) $current['processed'] = $processed;
-        if ($total !== null) $current['total'] = $total;
-        if ($skipped !== null) $current['skipped'] = $skipped;
-        if ($failed !== null) $current['failed'] = $failed;
-        if ($cursor !== null) $current['cursor'] = $cursor;
+        if ($processed !== null) {
+            $current['processed'] = $processed;
+        }
+        if ($total !== null) {
+            $current['total'] = $total;
+        }
+        if ($skipped !== null) {
+            $current['skipped'] = $skipped;
+        }
+        if ($failed !== null) {
+            $current['failed'] = $failed;
+        }
+        if ($cursor !== null) {
+            $current['cursor'] = $cursor;
+        }
 
         $progress[$entityType] = $current;
         $this->update(['progress' => $progress]);

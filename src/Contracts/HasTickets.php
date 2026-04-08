@@ -2,7 +2,7 @@
 
 namespace Escalated\Laravel\Contracts;
 
-use Escalated\Laravel\Escalated;
+use Escalated\Laravel\Models\Ticket;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Notifications\Notifiable;
@@ -13,12 +13,12 @@ trait HasTickets
 
     public function escalatedTickets(): MorphMany
     {
-        return $this->morphMany(\Escalated\Laravel\Models\Ticket::class, 'requester');
+        return $this->morphMany(Ticket::class, 'requester');
     }
 
     public function escalatedAssignedTickets(): HasMany
     {
-        return $this->hasMany(\Escalated\Laravel\Models\Ticket::class, 'assigned_to');
+        return $this->hasMany(Ticket::class, 'assigned_to');
     }
 
     public function getTicketableNameAttribute(): string
