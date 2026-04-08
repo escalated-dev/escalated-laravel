@@ -2,7 +2,7 @@
 
 use Escalated\Laravel\Http\Controllers\Admin\ArticleCategoryController;
 use Escalated\Laravel\Http\Controllers\Admin\ImportController;
-use EscalatedLaravelHttpControllersAdminSavedViewController;
+use Escalated\Laravel\Http\Controllers\Admin\SavedViewController;
 use Escalated\Laravel\Http\Controllers\Admin\ArticleController;
 use Escalated\Laravel\Http\Controllers\Admin\AuditLogController;
 use Escalated\Laravel\Http\Controllers\Admin\AutomationController;
