@@ -36,6 +36,7 @@ return [
         'reopened' => 'Reabierto',
         'resolved' => 'Resuelto',
         'closed' => 'Cerrado',
+        'ticket_split' => 'Ticket dividido',
     ],
 
 ];
