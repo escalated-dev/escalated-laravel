@@ -185,6 +185,27 @@ class TicketController extends Controller
         return response()->json(['viewers' => $viewers]);
     }
 
+    public function split(Ticket $ticket, Request $request): RedirectResponse
+    {
+        $request->validate([
+            'reply_id' => 'required|integer',
+            'subject' => 'nullable|string|max:255',
+        ]);
+
+        $reply = $ticket->replies()->findOrFail($request->integer('reply_id'));
+
+        $data = [];
+        if ($request->filled('subject')) {
+            $data['subject'] = $request->input('subject');
+        }
+
+        $newTicket = $this->ticketService->splitTicket($ticket, $reply, $data);
+
+        return redirect()
+            ->route('escalated.admin.tickets.show', $newTicket)
+            ->with('success', __('escalated::messages.ticket.split_created'));
+    }
+
     public function pin(Ticket $ticket, Reply $reply, Request $request): RedirectResponse
     {
         if (! $reply->is_internal_note) {

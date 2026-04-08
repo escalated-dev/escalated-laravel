@@ -61,6 +61,7 @@ Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web'
             Route::post('/tickets/{ticket}/typing', [PresenceController::class, 'typing'])->name('escalated.admin.tickets.typing');
             Route::post('/tickets/{ticket}/replies/{reply}/pin', [TicketController::class, 'pin'])->name('escalated.admin.tickets.pin');
             Route::post('/tickets/{ticket}/merge', [TicketMergeController::class, 'merge'])->name('escalated.admin.tickets.merge');
+            Route::post('/tickets/{ticket}/split', [TicketController::class, 'split'])->name('escalated.admin.tickets.split');
 
             // Ticket Links
             Route::get('/tickets/{ticket}/links', [TicketLinkController::class, 'index'])->name('escalated.admin.tickets.links.index');
