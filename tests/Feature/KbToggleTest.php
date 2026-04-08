@@ -3,6 +3,7 @@
 use Escalated\Laravel\Models\Article;
 use Escalated\Laravel\Models\ArticleCategory;
 use Escalated\Laravel\Models\EscalatedSettings;
+use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Support\Facades\Gate;
 
 beforeEach(function () {
@@ -26,7 +27,7 @@ it('KB controller returns 403 when not public and unauthenticated', function () 
     EscalatedSettings::set('knowledge_base_public', '0');
 
     // Use withoutMiddleware to bypass auth middleware, simulating unauthenticated access
-    $response = $this->withoutMiddleware(\Illuminate\Auth\Middleware\Authenticate::class)
+    $response = $this->withoutMiddleware(Authenticate::class)
         ->get(route('escalated.customer.kb.index'));
 
     $response->assertForbidden();

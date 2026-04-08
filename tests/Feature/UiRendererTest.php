@@ -3,8 +3,10 @@
 namespace Escalated\Laravel\Tests\Feature;
 
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
-use Escalated\Laravel\UI\InertiaUiRenderer;
 use Escalated\Laravel\Tests\TestCase;
+use Escalated\Laravel\UI\InertiaUiRenderer;
+use Illuminate\Http\JsonResponse;
+use Inertia\Response;
 
 class UiRendererTest extends TestCase
 {
@@ -25,12 +27,13 @@ class UiRendererTest extends TestCase
         $renderer = app(EscalatedUiRenderer::class);
         $response = $renderer->render('Escalated/Agent/Dashboard', ['stats' => []]);
 
-        $this->assertInstanceOf(\Inertia\Response::class, $response);
+        $this->assertInstanceOf(Response::class, $response);
     }
 
     public function test_custom_renderer_can_be_bound(): void
     {
-        $custom = new class implements EscalatedUiRenderer {
+        $custom = new class implements EscalatedUiRenderer
+        {
             public function render(string $page, array $props = []): mixed
             {
                 return response()->json(['page' => $page, 'props' => $props]);
@@ -42,6 +45,6 @@ class UiRendererTest extends TestCase
         $renderer = app(EscalatedUiRenderer::class);
         $response = $renderer->render('Test/Page', ['foo' => 'bar']);
 
-        $this->assertInstanceOf(\Illuminate\Http\JsonResponse::class, $response);
+        $this->assertInstanceOf(JsonResponse::class, $response);
     }
 }

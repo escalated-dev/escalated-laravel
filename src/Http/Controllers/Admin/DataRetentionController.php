@@ -3,19 +3,20 @@
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Carbon\Carbon;
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Models\EscalatedSettings;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 class DataRetentionController extends Controller
 {
     public function __construct(
         protected EscalatedUiRenderer $renderer,
     ) {}
+
     protected array $retentionDaysMap = [
         'never' => null,
         '90_days' => 90,

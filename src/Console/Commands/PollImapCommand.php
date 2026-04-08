@@ -48,7 +48,7 @@ class PollImapCommand extends Command
         $this->info("Connecting to IMAP server: {$host}...");
 
         try {
-            $adapter = new ImapAdapter();
+            $adapter = new ImapAdapter;
             $messages = $adapter->fetchMessages();
         } catch (\Throwable $e) {
             $this->error("Failed to fetch IMAP messages: {$e->getMessage()}");

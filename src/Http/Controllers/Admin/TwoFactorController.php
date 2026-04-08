@@ -2,10 +2,10 @@
 
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Models\TwoFactor;
 use Escalated\Laravel\Services\TwoFactorService;
 use Illuminate\Http\Request;
-use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Illuminate\Routing\Controller;
 
 class TwoFactorController extends Controller

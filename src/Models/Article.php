@@ -49,7 +49,7 @@ class Article extends Model
     {
         return $query->where(function ($q) use ($term) {
             $q->where('title', 'like', "%{$term}%")
-              ->orWhere('body', 'like', "%{$term}%");
+                ->orWhere('body', 'like', "%{$term}%");
         });
     }
 

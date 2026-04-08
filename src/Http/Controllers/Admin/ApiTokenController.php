@@ -2,13 +2,13 @@
 
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Models\ApiToken;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
-use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 
 class ApiTokenController extends Controller
 {

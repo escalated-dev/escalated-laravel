@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Models;
 
+use Escalated\Laravel\Database\Factories\TagFactory;
 use Escalated\Laravel\Escalated;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -33,8 +34,8 @@ class Tag extends Model
         });
     }
 
-    protected static function newFactory(): \Escalated\Laravel\Database\Factories\TagFactory
+    protected static function newFactory(): TagFactory
     {
-        return \Escalated\Laravel\Database\Factories\TagFactory::new();
+        return TagFactory::new();
     }
 }

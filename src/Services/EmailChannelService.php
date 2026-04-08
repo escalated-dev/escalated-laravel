@@ -58,7 +58,7 @@ class EmailChannelService
      * common selectors (default, google, selector1, selector2).
      *
      * @param  string  $domain  The domain to check
-     * @return string  DKIM status: 'verified', 'pending', 'failed', or 'unknown'
+     * @return string DKIM status: 'verified', 'pending', 'failed', or 'unknown'
      */
     public function checkDkimStatus(string $domain): string
     {

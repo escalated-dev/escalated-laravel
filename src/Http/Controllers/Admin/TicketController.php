@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Escalated;
@@ -19,9 +20,9 @@ use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\AssignmentService;
 use Escalated\Laravel\Services\MacroService;
 use Escalated\Laravel\Services\TicketService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
 
@@ -157,7 +158,7 @@ class TicketController extends Controller
         return back()->with('success', __('escalated::messages.ticket.following'));
     }
 
-    public function presence(Ticket $ticket, Request $request): \Illuminate\Http\JsonResponse
+    public function presence(Ticket $ticket, Request $request): JsonResponse
     {
         $userId = $request->user()->getKey();
         $userName = $request->user()->name;

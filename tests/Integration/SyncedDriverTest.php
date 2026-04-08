@@ -19,7 +19,7 @@ it('synced driver creates ticket locally and syncs to cloud', function () {
 
     $driver = new SyncedDriver(
         app(AttachmentService::class),
-        new HostedApiClient(),
+        new HostedApiClient,
     );
 
     $customer = $this->createTestUser();
@@ -53,7 +53,7 @@ it('synced driver continues working if cloud is unreachable', function () {
 
     $driver = new SyncedDriver(
         app(AttachmentService::class),
-        new HostedApiClient(),
+        new HostedApiClient,
     );
 
     $customer = $this->createTestUser();
