@@ -12,6 +12,7 @@ use Escalated\Laravel\Console\Commands\ImportCommand;
 use Escalated\Laravel\Console\Commands\InstallCommand;
 use Escalated\Laravel\Console\Commands\PluginCommand;
 use Escalated\Laravel\Console\Commands\PollImapCommand;
+use Escalated\Laravel\Console\Commands\ProcessDelayedActionsCommand;
 use Escalated\Laravel\Console\Commands\PurgeActivitiesCommand;
 use Escalated\Laravel\Console\Commands\PurgeExpiredDataCommand;
 use Escalated\Laravel\Console\Commands\RunAutomationsCommand;
@@ -218,6 +219,7 @@ class EscalatedServiceProvider extends ServiceProvider
             WakeSnoozedTicketsCommand::class,
             CloseIdleChatsCommand::class,
             CleanupAbandonedChatsCommand::class,
+            ProcessDelayedActionsCommand::class,
         ]);
     }
 
@@ -352,6 +354,27 @@ class EscalatedServiceProvider extends ServiceProvider
 
         foreach ($webhookEvents as $event) {
             Event::listen($event, Listeners\DispatchWebhook::class);
+        }
+
+        // Cancel pending delayed actions when a ticket is resolved or closed
+        Event::listen(Events\TicketStatusChanged::class, Listeners\CancelDelayedActionsOnClose::class);
+
+        // Workflow engine for all ticket and chat events
+        $workflowEvents = [
+            Events\TicketCreated::class,
+            Events\TicketUpdated::class,
+            Events\ReplyCreated::class,
+            Events\TicketStatusChanged::class,
+            Events\TicketAssigned::class,
+            Events\TicketEscalated::class,
+            Events\SlaBreached::class,
+            Events\SlaWarning::class,
+            Events\ChatStarted::class,
+            Events\ChatEnded::class,
+        ];
+
+        foreach ($workflowEvents as $event) {
+            Event::listen($event, Listeners\ProcessWorkflows::class);
         }
     }
 }
