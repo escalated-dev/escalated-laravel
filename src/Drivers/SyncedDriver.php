@@ -9,6 +9,7 @@ use Escalated\Laravel\Http\Client\HostedApiClient;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\AttachmentService;
+use Escalated\Laravel\Services\MentionService;
 use Illuminate\Support\Facades\Log;
 
 class SyncedDriver extends LocalDriver
@@ -17,9 +18,10 @@ class SyncedDriver extends LocalDriver
 
     public function __construct(
         AttachmentService $attachmentService,
+        MentionService $mentionService,
         HostedApiClient $apiClient
     ) {
-        parent::__construct($attachmentService);
+        parent::__construct($attachmentService, $mentionService);
         $this->apiClient = $apiClient;
     }
 
