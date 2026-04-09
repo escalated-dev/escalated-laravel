@@ -1,18 +1,18 @@
 <p align="center">
-  <a href="docs/translations/README.ar.md">العربية</a> •
-  <a href="docs/translations/README.de.md">Deutsch</a> •
-  <b>English</b> •
-  <a href="docs/translations/README.es.md">Español</a> •
-  <a href="docs/translations/README.fr.md">Français</a> •
-  <a href="docs/translations/README.it.md">Italiano</a> •
-  <a href="docs/translations/README.ja.md">日本語</a> •
-  <a href="docs/translations/README.ko.md">한국어</a> •
-  <a href="docs/translations/README.nl.md">Nederlands</a> •
-  <a href="docs/translations/README.pl.md">Polski</a> •
-  <a href="docs/translations/README.pt-BR.md">Português (BR)</a> •
-  <a href="docs/translations/README.ru.md">Русский</a> •
-  <a href="docs/translations/README.tr.md">Türkçe</a> •
-  <a href="docs/translations/README.zh-CN.md">简体中文</a>
+  <a href="README.ar.md">العربية</a> •
+  <a href="README.de.md">Deutsch</a> •
+  <a href="../../README.md">English</a> •
+  <a href="README.es.md">Español</a> •
+  <b>Français</b> •
+  <a href="README.it.md">Italiano</a> •
+  <a href="README.ja.md">日本語</a> •
+  <a href="README.ko.md">한국어</a> •
+  <a href="README.nl.md">Nederlands</a> •
+  <a href="README.pl.md">Polski</a> •
+  <a href="README.pt-BR.md">Português (BR)</a> •
+  <a href="README.ru.md">Русский</a> •
+  <a href="README.tr.md">Türkçe</a> •
+  <a href="README.zh-CN.md">简体中文</a>
 </p>
 
 # Escalated for Laravel
@@ -28,7 +28,7 @@ A full-featured, embeddable support ticket system for Laravel. Drop it into any 
 
 **Three hosting modes.** Run entirely self-hosted, sync to a central cloud for multi-app visibility, or proxy everything to the cloud. Switch modes with a single config change.
 
-## Features
+## Fonctionnalités
 
 - **Ticket lifecycle** — Create, assign, reply, resolve, close, reopen with configurable status transitions
 - **SLA engine** — Per-priority response and resolution targets, business hours calculation, automatic breach detection
@@ -54,13 +54,13 @@ A full-featured, embeddable support ticket system for Laravel. Drop it into any 
 - **Knowledge base toggle** — Enable or disable the public knowledge base from admin settings
 - **CI: Laravel Pint** — Automated code style enforcement on every pull request
 
-## Requirements
+## Prérequis
 
 - PHP 8.2+
 - Laravel 11.x, 12.x, or 13.x
 - Node.js 18+ (for frontend assets)
 
-## Quick Start
+## Démarrage Rapide
 
 ```bash
 composer require escalated-dev/escalated-laravel
@@ -92,7 +92,7 @@ Gate::define('escalated-agent', fn ($user) => $user->is_agent || $user->is_admin
 
 Visit `/support` — you're live.
 
-## Frontend Integration
+## Intégration Frontend
 
 Escalated ships a Vue component library and default pages via the [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated) npm package.
 
@@ -215,7 +215,7 @@ page.props.escalated = {
 
 Use these to conditionally show nav links or restrict UI elements.
 
-## Hosting Modes
+## Modes d'Hébergement
 
 ### Self-Hosted (default)
 
@@ -248,7 +248,7 @@ All ticket data proxied to the cloud API. Your app handles auth and renders UI, 
 
 All three modes share the same controllers, UI, and business logic. The driver pattern handles the rest.
 
-## Publishing Assets
+## Publication des Assets
 
 ```bash
 # Email templates
@@ -261,7 +261,7 @@ php artisan vendor:publish --tag=escalated-config
 php artisan vendor:publish --tag=escalated-migrations
 ```
 
-## Scheduling
+## Planification
 
 Add these to your scheduler for SLA and escalation automation:
 
@@ -308,7 +308,7 @@ All config lives in `config/escalated.php`. Key options:
 
 See the [full configuration reference](docs/configuration.md).
 
-## Events
+## Événements
 
 Every ticket action dispatches an event you can listen to:
 
@@ -334,7 +334,7 @@ Event::listen(TicketCreated::class, function ($event) {
 
 [Full events documentation →](docs/events.md)
 
-## Inbound Email
+## E-mail Entrant
 
 Escalated can create and reply to tickets from incoming emails. Supports **Mailgun**, **Postmark**, **AWS SES** webhooks, and **IMAP** polling as a fallback.
 
@@ -574,7 +574,7 @@ export default definePlugin({
 
 See the detailed [Plugin Bridge](#plugin-bridge-sdk-plugins) section below for the full architecture, auto-generated routes, dual dispatch, and store documentation.
 
-## Plugin Bridge (SDK Plugins)
+## Pont de Plugins (SDK Plugins)
 
 Escalated supports a second generation of plugins written in TypeScript using the `@escalated-dev/plugin-sdk`. These plugins run as a Node.js subprocess managed by `@escalated-dev/plugin-runtime` and communicate with Laravel over JSON-RPC 2.0 via stdio.
 
@@ -698,14 +698,14 @@ export default definePlugin({
 - [Escalation Rules](docs/escalation-rules.md)
 - [Hosting Modes](docs/hosting-modes.md)
 
-## Testing
+## Tests
 
 ```bash
 composer install
 vendor/bin/pest
 ```
 
-## Also Available For
+## Également Disponible Pour
 
 - **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** — Laravel Composer package (you are here)
 - **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** — Ruby on Rails engine
@@ -716,6 +716,6 @@ vendor/bin/pest
 
 Same architecture, same Vue UI, same three hosting modes — for every major backend framework.
 
-## License
+## Licence
 
 MIT
