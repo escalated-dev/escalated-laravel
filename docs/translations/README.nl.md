@@ -30,28 +30,28 @@ A full-featured, embeddable support ticket system for Laravel. Drop it into any 
 
 ## Functies
 
-- **Ticket lifecycle** — Create, assign, reply, resolve, close, reopen with configurable status transitions
-- **SLA engine** — Per-priority response and resolution targets, business hours calculation, automatic breach detection
-- **Escalation rules** — Condition-based rules that auto-escalate, reprioritize, reassign, or notify
-- **Agent dashboard** — Ticket queue with filters, bulk actions, internal notes, canned responses
-- **Customer portal** — Self-service ticket creation, replies, and status tracking
-- **Admin panel** — Manage departments, SLA policies, escalation rules, tags, and view reports
-- **File attachments** — Drag-and-drop uploads with configurable storage and size limits
-- **Activity timeline** — Full audit log of every action on every ticket
-- **Email notifications** — Configurable per-event notifications with webhook support
-- **Department routing** — Organize agents into departments with auto-assignment (round-robin)
-- **Tagging system** — Categorize tickets with colored tags
-- **Guest tickets** — Anonymous ticket submission with magic-link access via guest token
-- **Inbound email** — Create and reply to tickets via email (Mailgun, Postmark, AWS SES, IMAP)
+- **Ticketlevenscyclus** — Aanmaken, toewijzen, beantwoorden, oplossen, sluiten, heropenen met configureerbare statusovergangen
+- **SLA-engine** — Respons- en oplossingsdoelen per prioriteit, berekening van kantooruren, automatische schendingsdetectie
+- **Escalatieregels** — Voorwaardelijke regels die automatisch escaleren, herprioriteren, hertoewijzen of notificeren
+- **Agentdashboard** — Ticketwachtrij met filters, bulkacties, interne notities, standaardantwoorden
+- **Klantenportaal** — Zelfbediening voor ticketaanmaak, antwoorden en statustracking
+- **Beheerpaneel** — Beheer afdelingen, SLA-beleid, escalatieregels, tags en bekijk rapporten
+- **Bestandsbijlagen** — Drag-and-drop uploads met configureerbare opslag en groottelimieten
+- **Activiteitstijdlijn** — Volledig auditlogboek van elke actie op elk ticket
+- **E-mailnotificaties** — Configureerbare notificaties per gebeurtenis met webhook-ondersteuning
+- **Afdelingsroutering** — Agents organiseren in afdelingen met automatische toewijzing (round-robin)
+- **Taggingsysteem** — Tickets categoriseren met gekleurde tags
+- **Gasttickets** — Anonieme ticketindiening met magic-link toegang via gasttoken
+- **Inkomende e-mail** — Tickets aanmaken en beantwoorden via e-mail (Mailgun, Postmark, AWS SES, IMAP)
 - **Inertia.js + Vue 3 UI** — Shared frontend via [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated)
-- **Ticket splitting** — Split a reply into a new standalone ticket while preserving the original context
+- **Ticket splitsen** — Een antwoord afsplitsen naar een nieuw zelfstandig ticket met behoud van de originele context
 - **Ticket snooze** — Snooze tickets with presets (1h, 4h, tomorrow, next week); `escalated:wake-snoozed-tickets` Artisan command auto-wakes them on schedule
-- **Saved views / custom queues** — Save, name, and share filter presets as reusable ticket views
+- **Opgeslagen weergaven / aangepaste wachtrijen** — Filterpresets opslaan, benoemen en delen als herbruikbare ticketweergaven
 - **Embeddable support widget** — Lightweight `<script>` widget served via `/support/widget/*` routes with KB search, ticket form, and status check
-- **Email threading** — Outbound emails include proper `In-Reply-To` and `References` headers for correct threading in mail clients
-- **Branded email templates** — Configurable logo, primary color, and footer text for all outbound emails
+- **E-mailthreading** — Uitgaande e-mails bevatten de juiste `In-Reply-To`- en `References`-headers voor correcte threading in mailclients
+- **E-mailsjablonen met branding** — Configureerbaar logo, primaire kleur en voettekst voor alle uitgaande e-mails
 - **Real-time broadcasting** — Opt-in broadcasting via Pusher, Reverb, or Soketi with automatic polling fallback
-- **Knowledge base toggle** — Enable or disable the public knowledge base from admin settings
+- **Kennisbank-schakelaar** — De publieke kennisbank in- of uitschakelen vanuit beheerinstellingen
 - **CI: Laravel Pint** — Automated code style enforcement on every pull request
 
 ## Vereisten
@@ -60,7 +60,7 @@ A full-featured, embeddable support ticket system for Laravel. Drop it into any 
 - Laravel 11.x, 12.x, or 13.x
 - Node.js 18+ (for frontend assets)
 
-## Snel Starten
+## Snelstart
 
 ```bash
 composer require escalated-dev/escalated-laravel
@@ -96,7 +96,7 @@ Visit `/support` — you're live.
 
 Escalated ships a Vue component library and default pages via the [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated) npm package.
 
-### 1. Tailwind Content
+### 1. Tailwind-inhoud
 
 Add the Escalated package to your Tailwind `content` config so its classes aren't purged:
 
@@ -108,7 +108,7 @@ content: [
 ],
 ```
 
-### 2. Page Resolver
+### 2. Pagina-resolver
 
 Add the Escalated page resolver to your `app.ts`:
 
@@ -136,7 +136,7 @@ createInertiaApp({
 });
 ```
 
-### 3. Theming (Optional)
+### 3. Theming (Optioneel)
 
 Register the `EscalatedPlugin` to render Escalated pages inside your app's layout — no page duplication needed:
 
@@ -160,7 +160,7 @@ Your layout component must accept a `#header` slot and a default slot. Escalated
 
 Without the plugin, Escalated uses its own standalone layout with a simple nav bar.
 
-### CSS Custom Properties
+### CSS Aangepaste Eigenschappen
 
 Pass a `theme` option to customize colors and radii:
 
@@ -182,7 +182,7 @@ app.use(EscalatedPlugin, {
 | `--esc-radius-lg` | auto-scaled | Border radius for cards and panels |
 | `--esc-font-family` | inherit | Font family override |
 
-### Available Components
+### Beschikbare Componenten
 
 | Component | Description |
 |-----------|-------------|
@@ -201,7 +201,7 @@ app.use(EscalatedPlugin, {
 | `TicketList` | Paginated ticket table |
 | `TicketSidebar` | Ticket metadata sidebar |
 
-### Shared Inertia Props
+### Gedeelde Inertia Props
 
 Escalated automatically shares data to all Inertia pages via `page.props.escalated`:
 
@@ -217,7 +217,7 @@ Use these to conditionally show nav links or restrict UI elements.
 
 ## Hostingmodi
 
-### Self-Hosted (default)
+### Self-Hosted (standaard)
 
 Everything stays in your database. No external calls. Full autonomy.
 
@@ -226,7 +226,7 @@ Everything stays in your database. No external calls. Full autonomy.
 'mode' => 'self-hosted',
 ```
 
-### Synced
+### Gesynchroniseerd
 
 Local database + automatic sync to `cloud.escalated.dev` for unified inbox across multiple apps. If the cloud is unreachable, your app keeps working — events queue and retry.
 
@@ -338,7 +338,7 @@ Event::listen(TicketCreated::class, function ($event) {
 
 Escalated can create and reply to tickets from incoming emails. Supports **Mailgun**, **Postmark**, **AWS SES** webhooks, and **IMAP** polling as a fallback.
 
-### How It Works
+### Hoe Het Werkt
 
 1. An external email service receives an email at your support address (e.g., `support@yourapp.com`)
 2. The service forwards the email to your application via webhook (or IMAP polling fetches it)
@@ -349,14 +349,14 @@ Escalated can create and reply to tickets from incoming emails. Supports **Mailg
    - **No match**: creates a new ticket — if the sender is a registered user they become the requester, otherwise a guest ticket is created
 5. Every inbound email is logged to `escalated_inbound_emails` for audit
 
-### Enable Inbound Email
+### Inkomende E-mail Inschakelen
 
 ```env
 ESCALATED_INBOUND_EMAIL=true
 ESCALATED_INBOUND_ADDRESS=support@yourapp.com
 ```
 
-### Adapter Setup
+### Adapterconfiguratie
 
 #### Mailgun
 
@@ -423,7 +423,7 @@ Schedule the poll command:
 Schedule::command('escalated:poll-imap')->everyMinute();
 ```
 
-### Webhook URL
+### Webhook-URL
 
 ```
 POST /{prefix}/inbound/{adapter}
@@ -431,7 +431,7 @@ POST /{prefix}/inbound/{adapter}
 
 Where `{prefix}` is your configured route prefix (default: `support`) and `{adapter}` is `mailgun`, `postmark`, or `ses`. These routes use the `api` middleware (no CSRF, no auth).
 
-### Processing Features
+### Verwerkingsfuncties
 
 - **Thread detection** via subject reference pattern (`[ESC-00001]`) and `In-Reply-To` / `References` headers
 - **Guest tickets** for unknown senders — display name derived from email (e.g., `john.doe@example.com` → `John Doe`)
@@ -442,7 +442,7 @@ Where `{prefix}` is your configured route prefix (default: `support`) and `{adap
 - **Auto-reopen** — reopens resolved/closed tickets when a reply arrives via email
 - **Audit logging** — every inbound email recorded in `escalated_inbound_emails` with status tracking
 
-### Custom Adapter
+### Aangepaste Adapter
 
 Implement the `InboundAdapter` interface:
 
@@ -474,7 +474,7 @@ class MyAdapter implements InboundAdapter
 }
 ```
 
-### Inbound Email Environment Variables
+### Omgevingsvariabelen voor Inkomende E-mail
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -522,11 +522,11 @@ class MyAdapter implements InboundAdapter
 
 All routes use the configurable prefix (default: `support`). Inbound webhook routes use the `api` middleware (no auth, no CSRF).
 
-## Plugin SDK
+## Plugin-SDK
 
 Escalated supports framework-agnostic plugins built with the [Plugin SDK](https://github.com/escalated-dev/escalated-plugin-sdk). Plugins are written once in TypeScript and work across all Escalated backends.
 
-### Installing Plugins
+### Plugins Installeren
 
 The plugin bridge is built into `escalated-laravel` — no additional PHP package required. Install plugins and the runtime via npm:
 
@@ -536,7 +536,7 @@ npm install @escalated-dev/plugin-slack
 npm install @escalated-dev/plugin-jira
 ```
 
-### Enabling SDK Plugins
+### SDK-plugins Inschakelen
 
 ```php
 // config/escalated.php
@@ -546,11 +546,11 @@ npm install @escalated-dev/plugin-jira
 ],
 ```
 
-### How It Works
+### Hoe Het Werkt
 
 SDK plugins run as a Node.js subprocess managed by `@escalated-dev/plugin-runtime`, communicating with Laravel over JSON-RPC 2.0 via stdio. The `escalated_do_action()` and `escalated_apply_filters()` helpers dual-dispatch to both legacy PHP plugins and new SDK plugins simultaneously — no changes to existing hook call sites.
 
-### Building Your Own Plugin
+### Uw Eigen Plugin Bouwen
 
 ```typescript
 import { definePlugin } from '@escalated-dev/plugin-sdk'
@@ -566,7 +566,7 @@ export default definePlugin({
 })
 ```
 
-### Resources
+### Bronnen
 
 - [Plugin SDK](https://github.com/escalated-dev/escalated-plugin-sdk) — TypeScript SDK for building plugins
 - [Plugin Runtime](https://github.com/escalated-dev/escalated-plugin-runtime) — Runtime host for plugins
@@ -574,11 +574,11 @@ export default definePlugin({
 
 See the detailed [Plugin Bridge](#plugin-bridge-sdk-plugins) section below for the full architecture, auto-generated routes, dual dispatch, and store documentation.
 
-## Plugin-brug (SDK Plugins)
+## Plugin-bridge (SDK-plugins)
 
 Escalated supports a second generation of plugins written in TypeScript using the `@escalated-dev/plugin-sdk`. These plugins run as a Node.js subprocess managed by `@escalated-dev/plugin-runtime` and communicate with Laravel over JSON-RPC 2.0 via stdio.
 
-### How It Works
+### Hoe Het Werkt
 
 ```
 Laravel (PHP)                     Plugin Runtime (Node.js)
@@ -595,7 +595,7 @@ Laravel (PHP)                     Plugin Runtime (Node.js)
 
 The bridge spawns the runtime **lazily** on the first hook dispatch and keeps the process alive across requests (one long-lived subprocess per PHP-FPM worker). If the process crashes it is automatically restarted with exponential backoff.
 
-### Requirements
+### Vereisten
 
 - Node.js 18+
 - `@escalated-dev/plugin-runtime` installed in your project:
@@ -610,7 +610,7 @@ Install any SDK plugins the same way:
 npm install @escalated-dev/plugin-slack @escalated-dev/plugin-jira
 ```
 
-### Startup Sequence
+### Opstartsequentie
 
 1. `EscalatedServiceProvider::boot()` calls `$bridge->boot()`
 2. Bridge spawns `node node_modules/@escalated-dev/plugin-runtime/dist/index.js`
@@ -619,7 +619,7 @@ npm install @escalated-dev/plugin-slack @escalated-dev/plugin-jira
 5. Routes are registered in Laravel for plugin pages, API endpoints, and webhooks
 6. Runtime is ready to receive hook dispatches
 
-### Auto-generated Routes
+### Automatisch Gegenereerde Routes
 
 For each installed SDK plugin the bridge automatically registers:
 
@@ -629,7 +629,7 @@ For each installed SDK plugin the bridge automatically registers:
 | Data endpoints | `{prefix}/api/plugins/{plugin}/{path}` | Admin |
 | Webhook endpoints | `{prefix}/webhooks/plugins/{plugin}/{path}` | None |
 
-### Dual Dispatch (Backward Compatibility)
+### Dubbele Dispatch (Achterwaartse Compatibiliteit)
 
 The existing `escalated_do_action()` and `escalated_apply_filters()` helper functions dispatch hooks to **both** old PHP plugins and new SDK plugins simultaneously. No changes are required to existing hook call sites.
 
@@ -641,7 +641,7 @@ escalated_do_action('ticket.created', $ticket->toArray());
 $channels = escalated_apply_filters('notification.channels', []);
 ```
 
-### Plugin Store
+### Plugin-store
 
 SDK plugins can persist data using `ctx.store`. This is backed by the `escalated_plugin_store` table:
 
@@ -650,7 +650,7 @@ php artisan vendor:publish --tag=escalated-migrations
 php artisan migrate
 ```
 
-### Configuration
+### Configuratie
 
 ```php
 // config/escalated.php
@@ -662,7 +662,7 @@ php artisan migrate
 ],
 ```
 
-### Writing SDK Plugins
+### SDK-plugins Schrijven
 
 See the [`@escalated-dev/plugin-sdk`](https://github.com/escalated-dev/plugin-sdk) package for the full TypeScript authoring API. A minimal plugin looks like:
 
