@@ -1,5 +1,6 @@
 <?php
 
+use Escalated\Laravel\Http\Controllers\Admin\AgentSearchController;
 use Escalated\Laravel\Http\Controllers\Admin\ArticleCategoryController;
 use Escalated\Laravel\Http\Controllers\Admin\ArticleController;
 use Escalated\Laravel\Http\Controllers\Admin\AuditLogController;
@@ -43,6 +44,8 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web', 'auth']), [EnsureIsAdmin::class]))
     ->prefix(config('escalated.routes.prefix', 'support').'/admin')
     ->group(function () {
+        Route::get('/agents/search', AgentSearchController::class)->name('escalated.admin.agents.search');
+
         Route::get('/reports', ReportController::class)->name('escalated.admin.reports');
 
         Route::get('/tickets', [TicketController::class, 'index'])->name('escalated.admin.tickets.index');
