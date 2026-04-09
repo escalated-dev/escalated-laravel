@@ -173,6 +173,16 @@ Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web'
         Route::get('/reports/sla', [ReportController::class, 'sla'])->name('escalated.admin.reports.sla');
         Route::get('/reports/csat', [ReportController::class, 'csat'])->name('escalated.admin.reports.csat');
 
+        // Advanced reporting endpoints
+        Route::get('/reports/sla-trends', [ReportController::class, 'slaTrends'])->name('escalated.admin.reports.sla-trends');
+        Route::get('/reports/frt', [ReportController::class, 'firstResponseTime'])->name('escalated.admin.reports.frt');
+        Route::get('/reports/resolution', [ReportController::class, 'resolutionTime'])->name('escalated.admin.reports.resolution');
+        Route::get('/reports/agent-ranking', [ReportController::class, 'agentRanking'])->name('escalated.admin.reports.agent-ranking');
+        Route::get('/reports/agent/{id}/detail', [ReportController::class, 'agentDetail'])->name('escalated.admin.reports.agent-detail');
+        Route::get('/reports/cohorts', [ReportController::class, 'cohortAnalysis'])->name('escalated.admin.reports.cohorts');
+        Route::get('/reports/comparison', [ReportController::class, 'periodComparison'])->name('escalated.admin.reports.comparison');
+        Route::get('/reports/export/{type}', [ReportController::class, 'export'])->name('escalated.admin.reports.export');
+
         // CSAT Settings
         Route::get('/settings/csat', [CsatSettingsController::class, 'index'])->name('escalated.admin.settings.csat');
         Route::post('/settings/csat', [CsatSettingsController::class, 'update'])->name('escalated.admin.settings.csat.update');

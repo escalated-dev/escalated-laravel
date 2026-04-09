@@ -2,6 +2,7 @@
 
 use Escalated\Laravel\Http\Controllers\Api\AuthController;
 use Escalated\Laravel\Http\Controllers\Api\DashboardController;
+use Escalated\Laravel\Http\Controllers\Api\ReportController;
 use Escalated\Laravel\Http\Controllers\Api\ResourceController;
 use Escalated\Laravel\Http\Controllers\Api\TicketController;
 use Escalated\Laravel\Http\Middleware\ApiRateLimit;
@@ -47,4 +48,8 @@ Route::middleware([AuthenticateApiToken::class.':admin', ApiRateLimit::class])
         Route::middleware(ResolveTicketByReference::class)->group(function () {
             Route::delete('/tickets/{ticket}', [TicketController::class, 'destroy'])->name('escalated.api.tickets.destroy');
         });
+
+        // Report API endpoints
+        Route::get('/reports/summary', [ReportController::class, 'summary'])->name('escalated.api.reports.summary');
+        Route::get('/reports/export/{type}', [ReportController::class, 'export'])->name('escalated.api.reports.export');
     });

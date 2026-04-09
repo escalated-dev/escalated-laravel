@@ -5,6 +5,7 @@ namespace Escalated\Laravel\Http\Controllers\Admin;
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Models\SatisfactionRating;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Services\ReportExportService;
 use Escalated\Laravel\Services\ReportingService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -14,6 +15,7 @@ class ReportController extends Controller
 {
     public function __construct(
         protected ReportingService $reporting,
+        protected ReportExportService $exportService,
         protected EscalatedUiRenderer $renderer,
     ) {}
 
@@ -114,6 +116,143 @@ class ReportController extends Controller
             'by_agent' => $this->reporting->getCsatByAgent($start, $end),
             'over_time' => $this->reporting->getCsatOverTime($start, $end),
         ]);
+    }
+
+    /**
+     * SLA breach trends (daily/weekly/monthly, by dept, by priority).
+     */
+    public function slaTrends(Request $request): mixed
+    {
+        $days = $this->periodDays($request);
+        $groupBy = $request->input('group_by', 'day');
+
+        return $this->renderer->render('Escalated/Admin/Reports/SlaTrends', [
+            'period_days' => $days,
+            'trends' => $this->reporting->slaBreachTrends($days, $groupBy),
+            'by_department' => $this->reporting->slaBreachByDepartment($days),
+            'by_priority' => $this->reporting->slaBreachByPriority($days),
+            'risk_forecast' => $this->reporting->slaRiskForecast(),
+        ]);
+    }
+
+    /**
+     * First response time analytics.
+     */
+    public function firstResponseTime(Request $request): mixed
+    {
+        $days = $this->periodDays($request);
+
+        return $this->renderer->render('Escalated/Admin/Reports/FirstResponseTime', [
+            'period_days' => $days,
+            'distribution' => $this->reporting->firstResponseTimeDistribution($days),
+            'trend' => $this->reporting->firstResponseTimeTrend($days),
+            'by_agent' => $this->reporting->firstResponseTimeByAgent($days),
+            'by_department' => $this->reporting->firstResponseTimeByDepartment($days),
+            'by_priority' => $this->reporting->firstResponseTimeByPriority($days),
+        ]);
+    }
+
+    /**
+     * Resolution time analytics.
+     */
+    public function resolutionTime(Request $request): mixed
+    {
+        $days = $this->periodDays($request);
+
+        return $this->renderer->render('Escalated/Admin/Reports/ResolutionTime', [
+            'period_days' => $days,
+            'distribution' => $this->reporting->resolutionTimeDistribution($days),
+            'trend' => $this->reporting->resolutionTimeTrend($days),
+            'by_agent' => $this->reporting->resolutionTimeByAgent($days),
+            'by_department' => $this->reporting->resolutionTimeByDepartment($days),
+            'by_channel' => $this->reporting->resolutionTimeByChannel($days),
+        ]);
+    }
+
+    /**
+     * Agent performance ranking.
+     */
+    public function agentRanking(Request $request): mixed
+    {
+        $days = $this->periodDays($request);
+
+        return $this->renderer->render('Escalated/Admin/Reports/AgentRanking', [
+            'period_days' => $days,
+            'ranking' => $this->reporting->agentPerformanceRanking($days),
+            'workload' => $this->reporting->agentWorkloadDistribution($days),
+            'productivity' => $this->reporting->agentProductivity($days),
+        ]);
+    }
+
+    /**
+     * Individual agent deep-dive.
+     */
+    public function agentDetail(Request $request, int $id): mixed
+    {
+        $days = $this->periodDays($request);
+        $start = now()->subDays($days);
+        $end = now();
+
+        return $this->renderer->render('Escalated/Admin/Reports/AgentDetail', [
+            'period_days' => $days,
+            'agent_id' => $id,
+            'metrics' => $this->reporting->getAgentMetrics($id, $start, $end),
+            'percentiles' => $this->reporting->agentResponseTimePercentiles($id, $days),
+        ]);
+    }
+
+    /**
+     * Cohort analysis (by tag, dept, channel, type).
+     */
+    public function cohortAnalysis(Request $request): mixed
+    {
+        $days = $this->periodDays($request);
+
+        return $this->renderer->render('Escalated/Admin/Reports/CohortAnalysis', [
+            'period_days' => $days,
+            'by_tag' => $this->reporting->ticketsByTag($days),
+            'by_department' => $this->reporting->ticketsByDepartment($days),
+            'by_channel' => $this->reporting->ticketsByChannel($days),
+            'by_type' => $this->reporting->ticketsByType($days),
+            'by_priority' => $this->reporting->ticketsByPriority($days),
+            'requester_analysis' => $this->reporting->requesterAnalysis($days),
+        ]);
+    }
+
+    /**
+     * Period comparison (current vs previous).
+     */
+    public function periodComparison(Request $request): mixed
+    {
+        $days = $this->periodDays($request);
+
+        return $this->renderer->render('Escalated/Admin/Reports/PeriodComparison', [
+            'period_days' => $days,
+            'comparison' => $this->reporting->periodComparison($days),
+            'forecast' => $this->reporting->ticketVolumeForecast($days),
+        ]);
+    }
+
+    /**
+     * Export report as CSV or JSON.
+     */
+    public function export(Request $request, string $type): mixed
+    {
+        $format = $request->input('format', 'csv');
+        $filters = [
+            'period' => $this->periodDays($request),
+        ];
+
+        if ($format === 'json') {
+            return $this->exportService->exportToJson($type, $filters);
+        }
+
+        return $this->exportService->exportToCsv($type, $filters);
+    }
+
+    protected function periodDays(Request $request): int
+    {
+        return $request->integer('period', 30);
     }
 
     protected function avgFirstResponseHours($since): float
