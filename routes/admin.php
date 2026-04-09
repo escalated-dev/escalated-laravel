@@ -34,6 +34,7 @@ use Escalated\Laravel\Http\Controllers\Admin\TicketLinkController;
 use Escalated\Laravel\Http\Controllers\Admin\TicketMergeController;
 use Escalated\Laravel\Http\Controllers\Admin\TwoFactorController;
 use Escalated\Laravel\Http\Controllers\Admin\WebhookController;
+use Escalated\Laravel\Http\Controllers\Admin\WorkflowController;
 use Escalated\Laravel\Http\Controllers\BulkActionController;
 use Escalated\Laravel\Http\Controllers\PresenceController;
 use Escalated\Laravel\Http\Middleware\EnsureIsAdmin;
@@ -230,6 +231,18 @@ Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web'
         // Chat Settings
         Route::get('/chat/settings', [ChatSettingsController::class, 'index'])->name('escalated.admin.chat.settings');
         Route::post('/chat/settings', [ChatSettingsController::class, 'update'])->name('escalated.admin.chat.settings.update');
+
+        // Workflows
+        Route::get('/workflows', [WorkflowController::class, 'index'])->name('escalated.admin.workflows.index');
+        Route::get('/workflows/create', [WorkflowController::class, 'create'])->name('escalated.admin.workflows.create');
+        Route::post('/workflows', [WorkflowController::class, 'store'])->name('escalated.admin.workflows.store');
+        Route::get('/workflows/{workflow}', [WorkflowController::class, 'edit'])->name('escalated.admin.workflows.edit');
+        Route::put('/workflows/{workflow}', [WorkflowController::class, 'update'])->name('escalated.admin.workflows.update');
+        Route::delete('/workflows/{workflow}', [WorkflowController::class, 'destroy'])->name('escalated.admin.workflows.destroy');
+        Route::post('/workflows/{workflow}/toggle', [WorkflowController::class, 'toggle'])->name('escalated.admin.workflows.toggle');
+        Route::post('/workflows/reorder', [WorkflowController::class, 'reorder'])->name('escalated.admin.workflows.reorder');
+        Route::get('/workflows/{workflow}/logs', [WorkflowController::class, 'logs'])->name('escalated.admin.workflows.logs');
+        Route::post('/workflows/{workflow}/test', [WorkflowController::class, 'test'])->name('escalated.admin.workflows.test');
 
         // Import (admin-only — inherits EnsureIsAdmin middleware from parent group)
         Route::prefix('import')->name('escalated.admin.import.')->group(function () {
