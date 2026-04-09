@@ -12,6 +12,7 @@ use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Tag;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\AttachmentService;
+use Escalated\Laravel\Services\MentionService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class LocalDriver implements TicketDriver
@@ -22,7 +23,10 @@ class LocalDriver implements TicketDriver
         'resolved_at', 'closed_at',
     ];
 
-    public function __construct(protected AttachmentService $attachmentService) {}
+    public function __construct(
+        protected AttachmentService $attachmentService,
+        protected MentionService $mentionService,
+    ) {}
 
     public function createTicket(Ticketable $requester, array $data): Ticket
     {
@@ -93,6 +97,10 @@ class LocalDriver implements TicketDriver
         if (! empty($attachments)) {
             $this->attachmentService->storeMany($reply, $attachments);
         }
+
+        // Process @mentions in the reply body
+        $mentionedUserIds = $this->mentionService->extractMentions($body);
+        $this->mentionService->processMentions($reply, $mentionedUserIds);
 
         return $reply->fresh();
     }

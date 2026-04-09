@@ -5,6 +5,7 @@ use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Http\Client\HostedApiClient;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\AttachmentService;
+use Escalated\Laravel\Services\MentionService;
 use Illuminate\Support\Facades\Http;
 
 it('synced driver creates ticket locally and syncs to cloud', function () {
@@ -19,6 +20,7 @@ it('synced driver creates ticket locally and syncs to cloud', function () {
 
     $driver = new SyncedDriver(
         app(AttachmentService::class),
+        app(MentionService::class),
         new HostedApiClient,
     );
 
@@ -53,6 +55,7 @@ it('synced driver continues working if cloud is unreachable', function () {
 
     $driver = new SyncedDriver(
         app(AttachmentService::class),
+        app(MentionService::class),
         new HostedApiClient,
     );
 
