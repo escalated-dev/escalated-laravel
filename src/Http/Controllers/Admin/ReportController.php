@@ -3,6 +3,7 @@
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
+use Escalated\Laravel\Models\AuditLog;
 use Escalated\Laravel\Models\SatisfactionRating;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\ReportExportService;
@@ -242,6 +243,14 @@ class ReportController extends Controller
         $filters = [
             'period' => $this->periodDays($request),
         ];
+
+        AuditLog::create([
+            'user_id' => $request->user()?->id,
+            'action' => 'report.exported',
+            'auditable_type' => Ticket::class,
+            'auditable_id' => 0,
+            'new_values' => ['type' => $type, 'format' => $format, 'period' => $filters['period']],
+        ]);
 
         if ($format === 'json') {
             return $this->exportService->exportToJson($type, $filters);

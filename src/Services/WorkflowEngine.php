@@ -179,7 +179,9 @@ class WorkflowEngine
                 : 0,
             'reply_count' => $ticket->replies()->where('is_internal_note', false)->count(),
             'is_first_reply' => $ticket->replies()->where('is_internal_note', false)->count() <= 1,
-            default => $ticket->{$field} ?? null,
+            default => in_array($field, ['subject', 'description', 'ticket_type', 'channel'])
+                ? ($ticket->{$field} ?? null)
+                : null,
         };
     }
 
@@ -213,7 +215,7 @@ class WorkflowEngine
             'less_than_or_equal' => is_numeric($actual) && is_numeric($expected) && $actual <= $expected,
             'is_empty' => empty($actual),
             'is_not_empty' => ! empty($actual),
-            'matches' => is_string($actual) && is_string($expected) && (bool) preg_match($expected, $actual),
+            'matches' => is_string($actual) && is_string($expected) && $this->safeRegexMatch($expected, $actual),
             default => false,
         };
     }
@@ -238,6 +240,25 @@ class WorkflowEngine
         }
 
         return false;
+    }
+
+    /**
+     * Safely execute a regex match with validation and ReDoS protection.
+     */
+    protected function safeRegexMatch(string $pattern, string $subject): bool
+    {
+        // Validate pattern compiles without errors
+        if (@preg_match($pattern, '') === false) {
+            return false;
+        }
+
+        // Set a PCRE backtrack limit to prevent ReDoS
+        $oldLimit = ini_get('pcre.backtrack_limit');
+        ini_set('pcre.backtrack_limit', '10000');
+        $result = @preg_match($pattern, $subject);
+        ini_set('pcre.backtrack_limit', $oldLimit);
+
+        return (bool) $result;
     }
 
     /**
@@ -413,7 +434,26 @@ class WorkflowEngine
 
         $url = $value['url'] ?? null;
 
-        if (! $url) {
+        if (! $url || ! filter_var($url, FILTER_VALIDATE_URL)) {
+            return;
+        }
+
+        // Block non-HTTP(S) schemes
+        if (! in_array(parse_url($url, PHP_URL_SCHEME), ['https', 'http'])) {
+            return;
+        }
+
+        // Block private/reserved IPs to prevent SSRF
+        $host = parse_url($url, PHP_URL_HOST);
+        $ip = gethostbyname($host);
+
+        if ($ip === $host) {
+            return; // DNS resolution failed
+        }
+
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+            Log::warning('Escalated workflow: webhook blocked - resolves to private IP', ['url' => $url, 'ip' => $ip]);
+
             return;
         }
 

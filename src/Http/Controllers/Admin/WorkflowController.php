@@ -3,6 +3,7 @@
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
+use Escalated\Laravel\Models\AuditLog;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Models\Workflow;
 use Escalated\Laravel\Services\WorkflowEngine;
@@ -40,11 +41,12 @@ class WorkflowController extends Controller
             'trigger_event' => 'required|string',
             'conditions' => 'required|array',
             'actions' => 'required|array|min:1',
+            'actions.*.type' => 'required|string|in:assign_agent,change_status,change_priority,add_tag,remove_tag,move_department,add_internal_note,send_notification,send_webhook,apply_macro,close_ticket,snooze_ticket,delay',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
 
-        Workflow::create([
+        $workflow = Workflow::create([
             'name' => $request->input('name'),
             'description' => $request->input('description'),
             'trigger_event' => $request->input('trigger_event'),
@@ -53,6 +55,14 @@ class WorkflowController extends Controller
             'is_active' => $request->boolean('is_active', true),
             'position' => (Workflow::max('position') ?? 0) + 1,
             'created_by' => $request->user()?->id,
+        ]);
+
+        AuditLog::create([
+            'user_id' => $request->user()?->id,
+            'action' => 'workflow.created',
+            'auditable_type' => $workflow->getMorphClass(),
+            'auditable_id' => $workflow->id,
+            'new_values' => ['name' => $workflow->name, 'trigger_event' => $workflow->trigger_event],
         ]);
 
         return redirect()->route('escalated.admin.workflows.index')
@@ -74,9 +84,12 @@ class WorkflowController extends Controller
             'trigger_event' => 'required|string',
             'conditions' => 'required|array',
             'actions' => 'required|array|min:1',
+            'actions.*.type' => 'required|string|in:assign_agent,change_status,change_priority,add_tag,remove_tag,move_department,add_internal_note,send_notification,send_webhook,apply_macro,close_ticket,snooze_ticket,delay',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
+
+        $oldValues = ['name' => $workflow->name, 'trigger_event' => $workflow->trigger_event];
 
         $workflow->update([
             'name' => $request->input('name'),
@@ -87,12 +100,29 @@ class WorkflowController extends Controller
             'is_active' => $request->boolean('is_active', true),
         ]);
 
+        AuditLog::create([
+            'user_id' => $request->user()?->id,
+            'action' => 'workflow.updated',
+            'auditable_type' => $workflow->getMorphClass(),
+            'auditable_id' => $workflow->id,
+            'old_values' => $oldValues,
+            'new_values' => ['name' => $workflow->name, 'trigger_event' => $workflow->trigger_event],
+        ]);
+
         return redirect()->route('escalated.admin.workflows.index')
             ->with('success', 'Workflow updated.');
     }
 
-    public function destroy(Workflow $workflow): RedirectResponse
+    public function destroy(Request $request, Workflow $workflow): RedirectResponse
     {
+        AuditLog::create([
+            'user_id' => $request->user()?->id,
+            'action' => 'workflow.deleted',
+            'auditable_type' => $workflow->getMorphClass(),
+            'auditable_id' => $workflow->id,
+            'old_values' => ['name' => $workflow->name, 'trigger_event' => $workflow->trigger_event],
+        ]);
+
         $workflow->delete();
 
         return redirect()->route('escalated.admin.workflows.index')
