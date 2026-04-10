@@ -22,11 +22,11 @@
 [![PHP](https://img.shields.io/badge/php-8.2+-777BB4?logo=php&logoColor=white)](https://www.php.net/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A full-featured, embeddable support ticket system for Laravel. Drop it into any app — get a complete helpdesk with SLA tracking, escalation rules, agent workflows, and a customer portal. No external services required.
+Полнофункциональная встраиваемая система тикетов поддержки для Laravel. Добавьте её в любое приложение — получите полноценный хелпдеск с отслеживанием SLA, правилами эскалации, рабочими процессами агентов и клиентским порталом. Внешние сервисы не требуются.
 
-> **[escalated.dev](https://escalated.dev)** — Learn more, view demos, and compare Cloud vs Self-Hosted options.
+> **[escalated.dev](https://escalated.dev)** — Узнайте больше, посмотрите демо и сравните варианты Cloud и Self-Hosted.
 
-**Three hosting modes.** Run entirely self-hosted, sync to a central cloud for multi-app visibility, or proxy everything to the cloud. Switch modes with a single config change.
+**Три режима хостинга.** Полностью самостоятельный хостинг, синхронизация с центральным облаком для видимости нескольких приложений или проксирование всего в облако. Переключение режимов одним изменением конфигурации.
 
 ## Возможности
 
@@ -43,22 +43,22 @@ A full-featured, embeddable support ticket system for Laravel. Drop it into any 
 - **Система тегов** — Категоризация тикетов с помощью цветных тегов
 - **Гостевые тикеты** — Анонимная подача тикетов с доступом по магической ссылке через гостевой токен
 - **Входящая почта** — Создание и ответ на тикеты по email (Mailgun, Postmark, AWS SES, IMAP)
-- **Inertia.js + Vue 3 UI** — Shared frontend via [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated)
+- **Inertia.js + Vue 3 UI** — Общий фронтенд через [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated)
 - **Разделение тикетов** — Выделение ответа в новый самостоятельный тикет с сохранением исходного контекста
-- **Ticket snooze** — Snooze tickets with presets (1h, 4h, tomorrow, next week); `escalated:wake-snoozed-tickets` Artisan command auto-wakes them on schedule
+- **Ticket snooze** — Откладывание тикетов с предустановками (1ч, 4ч, завтра, на следующей неделе); команда Artisan `escalated:wake-snoozed-tickets` автоматически пробуждает их по расписанию
 - **Сохранённые представления / пользовательские очереди** — Сохранение, именование и обмен пресетами фильтров как повторно используемыми представлениями тикетов
-- **Embeddable support widget** — Lightweight `<script>` widget served via `/support/widget/*` routes with KB search, ticket form, and status check
+- **Embeddable support widget** — Лёгкий виджет `<script>`, обслуживаемый через маршруты `/support/widget/*` с поиском по базе знаний, формой тикета и проверкой статуса
 - **Потоки электронной почты** — Исходящие письма включают корректные заголовки `In-Reply-To` и `References` для правильной группировки в почтовых клиентах
 - **Брендированные шаблоны писем** — Настраиваемый логотип, основной цвет и текст нижнего колонтитула для всех исходящих писем
-- **Real-time broadcasting** — Opt-in broadcasting via Pusher, Reverb, or Soketi with automatic polling fallback
+- **Real-time broadcasting** — Опциональная трансляция через Pusher, Reverb или Soketi с автоматическим откатом на опрос
 - **Переключатель базы знаний** — Включение или отключение публичной базы знаний из настроек администратора
-- **CI: Laravel Pint** — Automated code style enforcement on every pull request
+- **CI: Laravel Pint** — Автоматическое применение стиля кода при каждом пулл-реквесте
 
 ## Требования
 
 - PHP 8.2+
 - Laravel 11.x, 12.x, or 13.x
-- Node.js 18+ (for frontend assets)
+- Node.js 18+ (для фронтенд-ресурсов)
 
 ## Быстрый Старт
 
@@ -98,7 +98,7 @@ Escalated ships a Vue component library and default pages via the [`@escalated-d
 
 ### 1. Контент Tailwind
 
-Add the Escalated package to your Tailwind `content` config so its classes aren't purged:
+Добавьте пакет Escalated в конфигурацию `content` Tailwind, чтобы его классы не были удалены:
 
 ```js
 // tailwind.config.js
@@ -138,7 +138,7 @@ createInertiaApp({
 
 ### 3. Темизация (Опционально)
 
-Register the `EscalatedPlugin` to render Escalated pages inside your app's layout — no page duplication needed:
+Зарегистрируйте `EscalatedPlugin` для рендеринга страниц Escalated внутри макета вашего приложения — дублирование страниц не требуется:
 
 ```ts
 import { EscalatedPlugin } from '@escalated-dev/escalated';
@@ -219,7 +219,7 @@ Use these to conditionally show nav links or restrict UI elements.
 
 ### Self-Hosted (по умолчанию)
 
-Everything stays in your database. No external calls. Full autonomy.
+Всё остаётся в вашей базе данных. Никаких внешних вызовов. Полная автономия.
 
 ```php
 // config/escalated.php
@@ -228,7 +228,7 @@ Everything stays in your database. No external calls. Full autonomy.
 
 ### Синхронизированный
 
-Local database + automatic sync to `cloud.escalated.dev` for unified inbox across multiple apps. If the cloud is unreachable, your app keeps working — events queue and retry.
+Локальная база данных + автоматическая синхронизация с `cloud.escalated.dev` для единого почтового ящика на нескольких приложениях. Если облако недоступно, ваше приложение продолжает работать — события ставятся в очередь и повторяются.
 
 ```php
 'mode' => 'synced',
@@ -240,13 +240,13 @@ Local database + automatic sync to `cloud.escalated.dev` for unified inbox acros
 
 ### Облако
 
-All ticket data proxied to the cloud API. Your app handles auth and renders UI, but storage lives in the cloud. Supports multiple domains per API key.
+Все данные тикетов проксируются через облачный API. Ваше приложение обрабатывает аутентификацию и рендерит UI, но хранилище находится в облаке. Поддерживает несколько доменов на один API-ключ.
 
 ```php
 'mode' => 'cloud',
 ```
 
-All three modes share the same controllers, UI, and business logic. The driver pattern handles the rest.
+Все три режима используют одни и те же контроллеры, интерфейс и бизнес-логику. Паттерн драйвера обрабатывает остальное.
 
 ## Публикация Ресурсов
 
@@ -263,7 +263,7 @@ php artisan vendor:publish --tag=escalated-migrations
 
 ## Планирование
 
-Add these to your scheduler for SLA and escalation automation:
+Добавьте эти задачи в ваш планировщик для автоматизации SLA и эскалации:
 
 ```php
 // app/Console/Kernel.php or routes/console.php
@@ -524,7 +524,7 @@ All routes use the configurable prefix (default: `support`). Inbound webhook rou
 
 ## SDK Плагинов
 
-Escalated supports framework-agnostic plugins built with the [Plugin SDK](https://github.com/escalated-dev/escalated-plugin-sdk). Plugins are written once in TypeScript and work across all Escalated backends.
+Escalated поддерживает фреймворк-агностичные плагины, созданные с помощью [Plugin SDK](https://github.com/escalated-dev/escalated-plugin-sdk). Плагины пишутся один раз на TypeScript и работают на всех бэкендах Escalated.
 
 ### Установка Плагинов
 
@@ -568,9 +568,9 @@ export default definePlugin({
 
 ### Ресурсы
 
-- [Plugin SDK](https://github.com/escalated-dev/escalated-plugin-sdk) — TypeScript SDK for building plugins
-- [Plugin Runtime](https://github.com/escalated-dev/escalated-plugin-runtime) — Runtime host for plugins
-- [Plugin Development Guide](https://github.com/escalated-dev/escalated-docs) — Full documentation
+- [Plugin SDK](https://github.com/escalated-dev/escalated-plugin-sdk) — TypeScript SDK для создания плагинов
+- [Plugin Runtime](https://github.com/escalated-dev/escalated-plugin-runtime) — Хост среды выполнения для плагинов
+- [Plugin Development Guide](https://github.com/escalated-dev/escalated-docs) — Полная документация
 
 See the detailed [Plugin Bridge](#plugin-bridge-sdk-plugins) section below for the full architecture, auto-generated routes, dual dispatch, and store documentation.
 
@@ -707,14 +707,14 @@ vendor/bin/pest
 
 ## Также Доступно Для
 
-- **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** — Laravel Composer package (you are here)
-- **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** — Ruby on Rails engine
-- **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** — Django reusable app
-- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** — AdonisJS v6 package
-- **[Escalated for Filament](https://github.com/escalated-dev/escalated-filament)** — Filament v3 admin panel plugin
-- **[Shared Frontend](https://github.com/escalated-dev/escalated)** — Vue 3 + Inertia.js UI components
+- **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** — Пакет Laravel Composer (вы здесь)
+- **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** — Движок Ruby on Rails
+- **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** — Переиспользуемое приложение Django
+- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** — Пакет AdonisJS v6
+- **[Escalated for Filament](https://github.com/escalated-dev/escalated-filament)** — Плагин админ-панели Filament v3
+- **[Shared Frontend](https://github.com/escalated-dev/escalated)** — Компоненты UI Vue 3 + Inertia.js
 
-Same architecture, same Vue UI, same three hosting modes — for every major backend framework.
+Та же архитектура, тот же Vue UI, те же три режима хостинга — для каждого основного бэкенд-фреймворка.
 
 ## Лицензия
 
