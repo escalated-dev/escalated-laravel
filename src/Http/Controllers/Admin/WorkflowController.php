@@ -156,7 +156,7 @@ class WorkflowController extends Controller
     public function logs(Workflow $workflow): mixed
     {
         $logs = $workflow->workflowLogs()
-            ->with('ticket')
+            ->with('workflow', 'ticket')
             ->latest()
             ->paginate(25);
 

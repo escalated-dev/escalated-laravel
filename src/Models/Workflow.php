@@ -11,6 +11,8 @@ class Workflow extends Model
 {
     protected $guarded = ['id'];
 
+    protected $appends = ['trigger'];
+
     public function getTable(): string
     {
         return Escalated::table('workflows');
@@ -41,6 +43,11 @@ class Workflow extends Model
     public function delayedActions(): HasMany
     {
         return $this->hasMany(DelayedAction::class, 'workflow_id');
+    }
+
+    public function getTriggerAttribute(): ?string
+    {
+        return $this->trigger_event;
     }
 
     public function scopeActive($query)
