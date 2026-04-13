@@ -36,11 +36,6 @@ class Ticket extends Model
         'last_reply_author',
         'is_live_chat',
         'is_snoozed',
-        'chat_session_id',
-        'chat_started_at',
-        'chat_messages',
-        'requester_ticket_count',
-        'related_tickets',
     ];
 
     protected $dispatchesEvents = [
@@ -352,25 +347,34 @@ class Ticket extends Model
             return [];
         }
 
-        return Reply::where('ticket_id', $this->id)
-            ->with('author')
-            ->oldest()
-            ->get()
+        $replies = $this->relationLoaded('replies')
+            ? $this->replies->sortBy('created_at')
+            : $this->replies()->with('author')->oldest()->get();
+
+        return $replies
+            ->reject(fn ($r) => $r->is_internal_note)
             ->map(fn ($r) => [
                 'id' => $r->id,
                 'body' => $r->body,
-                'is_internal_note' => $r->is_internal_note,
+                'is_internal_note' => false,
                 'is_agent' => $r->author_type !== null && $r->author_type !== $this->requester_type,
                 'author' => $r->author ? ['id' => $r->author->getKey(), 'name' => $r->author->name] : null,
                 'created_at' => $r->created_at?->toIso8601String(),
             ])
+            ->values()
             ->toArray();
     }
 
     public function getRequesterTicketCountAttribute(): int
     {
         if ($this->isGuest()) {
-            return self::where('guest_email', $this->guest_email)->count();
+            return $this->guest_email
+                ? self::where('guest_email', $this->guest_email)->count()
+                : 1;
+        }
+
+        if (! $this->requester_type || ! $this->requester_id) {
+            return 1;
         }
 
         return self::where('requester_type', $this->requester_type)
