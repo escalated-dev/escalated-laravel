@@ -11,6 +11,8 @@ class Attachment extends Model
 {
     protected $guarded = ['id'];
 
+    protected $appends = ['url'];
+
     public function getTable(): string
     {
         return Escalated::table('attachments');
@@ -21,9 +23,14 @@ class Attachment extends Model
         return $this->morphTo();
     }
 
-    public function url(): string
+    public function getUrlAttribute(): string
     {
         return Storage::disk($this->disk)->url($this->path);
+    }
+
+    public function url(): string
+    {
+        return $this->url;
     }
 
     public function sizeForHumans(): string
