@@ -56,7 +56,10 @@ class TicketController extends Controller
             'attachments', 'tags', 'department', 'requester', 'assignee',
             'slaPolicy', 'activities' => fn ($q) => $q->with('causer')->latest()->take(20),
             'satisfactionRating', 'pinnedNotes.author', 'chatSession',
+            'linksAsParent.childTicket', 'linksAsChild.parentTicket',
         ]);
+
+        $ticket->append(['chat_session_id', 'chat_started_at', 'chat_messages', 'requester_ticket_count', 'related_tickets']);
 
         return $this->renderer->render('Escalated/Agent/TicketShow', [
             'ticket' => $ticket,
