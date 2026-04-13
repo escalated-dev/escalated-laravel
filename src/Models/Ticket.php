@@ -29,6 +29,15 @@ class Ticket extends Model
 
     protected $guarded = ['id'];
 
+    protected $appends = [
+        'requester_name',
+        'requester_email',
+        'last_reply_at',
+        'last_reply_author',
+        'is_live_chat',
+        'is_snoozed',
+    ];
+
     protected $dispatchesEvents = [
         'updated' => Events\TicketUpdated::class,
     ];
