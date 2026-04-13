@@ -36,6 +36,11 @@ class Ticket extends Model
         'last_reply_author',
         'is_live_chat',
         'is_snoozed',
+        'chat_session_id',
+        'chat_started_at',
+        'chat_messages',
+        'requester_ticket_count',
+        'related_tickets',
     ];
 
     protected $dispatchesEvents = [
@@ -329,6 +334,58 @@ class Ticket extends Model
     public function getIsSnoozedAttribute(): bool
     {
         return $this->snoozed_until !== null && $this->snoozed_until->isFuture();
+    }
+
+    public function getChatSessionIdAttribute(): ?int
+    {
+        return $this->chatSession?->id;
+    }
+
+    public function getChatStartedAtAttribute(): ?string
+    {
+        return $this->chatSession?->started_at?->toIso8601String();
+    }
+
+    public function getChatMessagesAttribute(): array
+    {
+        if (! $this->is_live_chat) {
+            return [];
+        }
+
+        return Reply::where('ticket_id', $this->id)
+            ->with('author')
+            ->oldest()
+            ->get()
+            ->map(fn ($r) => [
+                'id' => $r->id,
+                'body' => $r->body,
+                'is_internal_note' => $r->is_internal_note,
+                'is_agent' => $r->author_type !== null && $r->author_type !== $this->requester_type,
+                'author' => $r->author ? ['id' => $r->author->getKey(), 'name' => $r->author->name] : null,
+                'created_at' => $r->created_at?->toIso8601String(),
+            ])
+            ->toArray();
+    }
+
+    public function getRequesterTicketCountAttribute(): int
+    {
+        if ($this->isGuest()) {
+            return self::where('guest_email', $this->guest_email)->count();
+        }
+
+        return self::where('requester_type', $this->requester_type)
+            ->where('requester_id', $this->requester_id)
+            ->count();
+    }
+
+    public function getRelatedTicketsAttribute(): array
+    {
+        $parentIds = $this->linksAsChild()->pluck('parent_ticket_id');
+        $childIds = $this->linksAsParent()->pluck('child_ticket_id');
+
+        return self::whereIn('id', $parentIds->merge($childIds))
+            ->get(['id', 'reference', 'subject', 'status'])
+            ->toArray();
     }
 
     // Helpers

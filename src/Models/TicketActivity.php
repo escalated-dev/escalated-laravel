@@ -12,6 +12,8 @@ class TicketActivity extends Model
 {
     protected $guarded = ['id'];
 
+    protected $appends = ['created_at_human'];
+
     public $timestamps = true;
 
     const UPDATED_AT = null;
@@ -37,5 +39,10 @@ class TicketActivity extends Model
     public function causer(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    public function getCreatedAtHumanAttribute(): string
+    {
+        return $this->created_at?->diffForHumans() ?? '';
     }
 }

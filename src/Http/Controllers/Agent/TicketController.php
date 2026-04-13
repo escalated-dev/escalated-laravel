@@ -55,7 +55,7 @@ class TicketController extends Controller
             'replies' => fn ($q) => $q->with('author', 'attachments')->latest(),
             'attachments', 'tags', 'department', 'requester', 'assignee',
             'slaPolicy', 'activities' => fn ($q) => $q->with('causer')->latest()->take(20),
-            'satisfactionRating', 'pinnedNotes.author',
+            'satisfactionRating', 'pinnedNotes.author', 'chatSession',
         ]);
 
         return $this->renderer->render('Escalated/Agent/TicketShow', [
