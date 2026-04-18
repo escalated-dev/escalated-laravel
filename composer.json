@@ -17,7 +17,8 @@
     },
     "autoload": {
         "psr-4": {
-            "Escalated\\Laravel\\": "src/"
+            "Escalated\\Laravel\\": "src/",
+            "Escalated\\Laravel\\Database\\Seeders\\": "database/seeders/"
         },
         "files": [
             "src/Support/helpers.php"
