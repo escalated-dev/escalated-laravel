@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -11,14 +12,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
         then: function () {
             if (app()->environment('demo')) {
-                \Illuminate\Support\Facades\Route::middleware('web')
+                Route::middleware('web')
                     ->group(__DIR__.'/../routes/demo.php');
             }
         },
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
-            \Inertia\Middleware::class,
+            Inertia\Middleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

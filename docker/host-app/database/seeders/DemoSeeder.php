@@ -15,8 +15,8 @@ use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\EscalationRule;
 use Escalated\Laravel\Models\Macro;
 use Escalated\Laravel\Models\Reply;
-use Escalated\Laravel\Models\SlaPolicy;
 use Escalated\Laravel\Models\Skill;
+use Escalated\Laravel\Models\SlaPolicy;
 use Escalated\Laravel\Models\Tag;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Models\TicketStatus;
@@ -200,6 +200,7 @@ class DemoSeeder extends Seeder
                 'slug' => $slug, 'color' => $color,
             ]);
         }
+
         return $tags;
     }
 
