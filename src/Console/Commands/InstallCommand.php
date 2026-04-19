@@ -61,11 +61,48 @@ class InstallCommand extends Command
     protected function publishMigrations(bool $force): void
     {
         $this->components->task(__('escalated::commands.install.publishing_migrations'), function () use ($force) {
+            $existing = $this->existingPublishedMigrations();
+
+            if (! empty($existing) && ! $force) {
+                $this->components->info(__(
+                    'escalated::commands.install.migrations_already_published',
+                    ['count' => count($existing)]
+                ));
+
+                return;
+            }
+
+            if (! empty($existing) && $force) {
+                foreach ($existing as $path) {
+                    @unlink($path);
+                }
+            }
+
             $this->callSilently('vendor:publish', [
                 '--tag' => 'escalated-migrations',
                 '--force' => $force,
             ]);
         });
+    }
+
+    /**
+     * Returns absolute paths of already-published Escalated migration files in
+     * the host app's database/migrations directory. A migration counts as
+     * "published by Escalated" if its filename ends in _create_escalated_*_table.php.
+     *
+     * @return array<int, string>
+     */
+    protected function existingPublishedMigrations(): array
+    {
+        $migrationsDir = database_path('migrations');
+
+        if (! is_dir($migrationsDir)) {
+            return [];
+        }
+
+        $matches = glob($migrationsDir.'/*_create_escalated_*_table.php') ?: [];
+
+        return array_values($matches);
     }
 
     protected function publishEmailViews(bool $force): void

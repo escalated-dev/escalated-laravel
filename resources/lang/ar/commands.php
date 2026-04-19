@@ -6,6 +6,7 @@ return [
         'installing' => 'جارٍ تثبيت Escalated...',
         'publishing_config' => 'نشر الإعدادات',
         'publishing_migrations' => 'نشر عمليات الترحيل',
+        'migrations_already_published' => ':count ملف ترحيل من Escalated منشور بالفعل؛ تم التخطي. أعد التشغيل مع --force لاستبدالها.',
         'publishing_views' => 'نشر قوالب البريد الإلكتروني',
         'installing_npm' => 'تثبيت حزمة npm',
         'npm_manual' => 'تعذّر تثبيت حزمة npm تلقائيًا. قم بتشغيل الأمر يدويًا:',

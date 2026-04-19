@@ -6,6 +6,7 @@ return [
         'installing' => 'Escalated wordt geïnstalleerd...',
         'publishing_config' => 'Configuratie publiceren',
         'publishing_migrations' => 'Migraties publiceren',
+        'migrations_already_published' => ':count Escalated-migratie(s) al gepubliceerd; overgeslagen. Voer opnieuw uit met --force om ze te vervangen.',
         'publishing_views' => 'E-mailweergaven publiceren',
         'installing_npm' => 'npm-pakket installeren',
         'npm_manual' => 'Kan het npm-pakket niet automatisch installeren. Voer handmatig uit:',

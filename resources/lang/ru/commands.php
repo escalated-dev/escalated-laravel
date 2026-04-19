@@ -6,6 +6,7 @@ return [
         'installing' => 'Установка Escalated...',
         'publishing_config' => 'Публикация конфигурации',
         'publishing_migrations' => 'Публикация миграций',
+        'migrations_already_published' => 'Миграции Escalated уже опубликованы (:count); пропущено. Запустите снова с --force, чтобы заменить их.',
         'publishing_views' => 'Публикация шаблонов электронной почты',
         'installing_npm' => 'Установка npm-пакета',
         'npm_manual' => 'Не удалось автоматически установить npm-пакет. Выполните вручную:',

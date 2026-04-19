@@ -357,3 +357,65 @@ it('returns null for non-App namespace models', function () {
 
     expect($path)->toBeNull();
 });
+
+// --- existingPublishedMigrations ---
+
+function seedFakeMigrationsDir(array $filenames): string
+{
+    $dir = sys_get_temp_dir().'/escalated-install-test-'.uniqid();
+    mkdir($dir.'/migrations', 0777, true);
+    foreach ($filenames as $name) {
+        file_put_contents($dir.'/migrations/'.$name, "<?php\n");
+    }
+    app()->useDatabasePath($dir);
+
+    return $dir;
+}
+
+it('returns empty array when no escalated migrations are published yet', function () {
+    seedFakeMigrationsDir([
+        '2024_01_01_000001_create_users_table.php',
+        '2024_01_01_000002_create_password_resets_table.php',
+    ]);
+
+    $result = callMethod(makeCommand(), 'existingPublishedMigrations');
+
+    expect($result)->toBe([]);
+});
+
+it('detects published escalated migrations by filename pattern', function () {
+    seedFakeMigrationsDir([
+        '2024_01_01_000001_create_users_table.php',
+        '2026_04_19_120000_create_escalated_departments_table.php',
+        '2026_04_19_120001_create_escalated_tickets_table.php',
+    ]);
+
+    $result = callMethod(makeCommand(), 'existingPublishedMigrations');
+
+    expect($result)->toHaveCount(2);
+    expect(basename($result[0]))->toContain('create_escalated_departments_table');
+    expect(basename($result[1]))->toContain('create_escalated_tickets_table');
+});
+
+it('does not match unrelated migrations that happen to mention escalated', function () {
+    seedFakeMigrationsDir([
+        '2024_01_01_000001_add_escalated_at_column_to_tickets.php',
+        '2026_04_19_120000_create_escalated_departments_table.php',
+    ]);
+
+    $result = callMethod(makeCommand(), 'existingPublishedMigrations');
+
+    // Pattern requires _create_escalated_*_table.php — first file must not match.
+    expect($result)->toHaveCount(1);
+    expect(basename($result[0]))->toContain('create_escalated_departments_table');
+});
+
+it('returns empty array when migrations directory does not exist', function () {
+    $dir = sys_get_temp_dir().'/escalated-install-test-'.uniqid();
+    mkdir($dir, 0777, true);
+    app()->useDatabasePath($dir);
+
+    $result = callMethod(makeCommand(), 'existingPublishedMigrations');
+
+    expect($result)->toBe([]);
+});

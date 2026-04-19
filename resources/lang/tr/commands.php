@@ -6,6 +6,7 @@ return [
         'installing' => 'Escalated kuruluyor...',
         'publishing_config' => 'Yapılandırma yayınlanıyor',
         'publishing_migrations' => 'Geçişler yayınlanıyor',
+        'migrations_already_published' => ':count Escalated geçişi zaten yayımlanmış; atlanıyor. Değiştirmek için --force ile yeniden çalıştırın.',
         'publishing_views' => 'E-posta görünümleri yayınlanıyor',
         'installing_npm' => 'npm paketi kuruluyor',
         'npm_manual' => 'npm paketi otomatik olarak kurulamadı. Manuel olarak çalıştırın:',

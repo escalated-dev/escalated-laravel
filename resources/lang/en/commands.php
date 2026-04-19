@@ -6,6 +6,7 @@ return [
         'installing' => 'Installing Escalated...',
         'publishing_config' => 'Publishing configuration',
         'publishing_migrations' => 'Publishing migrations',
+        'migrations_already_published' => ':count Escalated migration(s) already published; skipping. Re-run with --force to replace them.',
         'publishing_views' => 'Publishing email views',
         'installing_npm' => 'Installing npm package',
         'npm_manual' => 'Could not install npm package automatically. Run manually:',

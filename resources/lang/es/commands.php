@@ -6,6 +6,7 @@ return [
         'installing' => 'Instalando Escalated...',
         'publishing_config' => 'Publicando configuración',
         'publishing_migrations' => 'Publicando migraciones',
+        'migrations_already_published' => ':count migración(es) de Escalated ya publicada(s); omitiendo. Vuelve a ejecutar con --force para reemplazarlas.',
         'publishing_views' => 'Publicando vistas de correo',
         'installing_npm' => 'Instalando paquete npm',
         'npm_manual' => 'No se pudo instalar el paquete npm automáticamente. Ejecute manualmente:',

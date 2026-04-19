@@ -6,6 +6,7 @@ return [
         'installing' => '正在安装 Escalated...',
         'publishing_config' => '正在发布配置文件',
         'publishing_migrations' => '正在发布数据库迁移',
+        'migrations_already_published' => '已发布 :count 个 Escalated 迁移文件；已跳过。使用 --force 重新运行可替换它们。',
         'publishing_views' => '正在发布邮件视图',
         'installing_npm' => '正在安装 npm 包',
         'npm_manual' => '无法自动安装 npm 包。请手动运行：',

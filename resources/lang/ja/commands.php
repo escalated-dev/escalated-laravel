@@ -6,6 +6,7 @@ return [
         'installing' => 'Escalated をインストールしています...',
         'publishing_config' => '設定ファイルを公開しています',
         'publishing_migrations' => 'マイグレーションを公開しています',
+        'migrations_already_published' => 'Escalated のマイグレーション :count 件は既に公開済みのためスキップしました。--force を付けて再実行すると置き換えます。',
         'publishing_views' => 'メールビューを公開しています',
         'installing_npm' => 'npm パッケージをインストールしています',
         'npm_manual' => 'npm パッケージを自動でインストールできませんでした。手動で実行してください:',

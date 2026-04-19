@@ -6,6 +6,7 @@ return [
         'installing' => 'Escalated wird installiert...',
         'publishing_config' => 'Konfiguration wird veröffentlicht',
         'publishing_migrations' => 'Migrationen werden veröffentlicht',
+        'migrations_already_published' => ':count Escalated-Migration(en) bereits veröffentlicht; übersprungen. Mit --force neu veröffentlichen.',
         'publishing_views' => 'E-Mail-Ansichten werden veröffentlicht',
         'installing_npm' => 'npm-Paket wird installiert',
         'npm_manual' => 'npm-Paket konnte nicht automatisch installiert werden. Führen Sie manuell aus:',
