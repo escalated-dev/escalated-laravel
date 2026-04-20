@@ -7,6 +7,7 @@ use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\TicketService;
 use Escalated\Laravel\Tests\TestCase;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * Regression for https://github.com/escalated-dev/escalated-laravel/issues/64
@@ -40,8 +41,8 @@ class PriorityFilterTest extends TestCase
 
     public function test_agent_index_filters_by_priority(): void
     {
-        \Illuminate\Support\Facades\Gate::define('escalated-agent', fn () => true);
-        \Illuminate\Support\Facades\Gate::define('escalated-admin', fn () => true);
+        Gate::define('escalated-agent', fn () => true);
+        Gate::define('escalated-admin', fn () => true);
 
         $agent = $this->createAgent();
         Ticket::factory()->create(['priority' => TicketPriority::Low, 'subject' => 'low one']);
@@ -65,8 +66,8 @@ class PriorityFilterTest extends TestCase
     {
         // Reproduce the Clockwork scenario from the bug report: both
         // status and priority set on the URL at the same time.
-        \Illuminate\Support\Facades\Gate::define('escalated-agent', fn () => true);
-        \Illuminate\Support\Facades\Gate::define('escalated-admin', fn () => true);
+        Gate::define('escalated-agent', fn () => true);
+        Gate::define('escalated-admin', fn () => true);
 
         $agent = $this->createAgent();
         Ticket::factory()->create([
