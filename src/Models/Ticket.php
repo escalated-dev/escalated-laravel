@@ -263,8 +263,7 @@ class Ticket extends Model
                 ->orWhere('guest_name', 'like', "%{$term}%")
                 ->orWhere('guest_email', 'like', "%{$term}%")
                 ->orWhereHas('requester', function ($rq) use ($term) {
-                    $rq->where('name', 'like', "%{$term}%")
-                        ->orWhere('email', 'like', "%{$term}%");
+                    Escalated::applyUserSearch($rq, $term);
                 });
         });
     }

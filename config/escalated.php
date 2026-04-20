@@ -19,6 +19,18 @@ return [
     |--------------------------------------------------------------------------
     | User Model
     |--------------------------------------------------------------------------
+    |
+    | `user_display_column` is the column Escalated reads + searches to
+    | show the requester's human-readable name. Defaults to `name`.
+    |
+    | If your `users` table uses split columns (e.g. `first_name` /
+    | `last_name`) or any other schema without a single `name` column,
+    | point this at whichever column holds the display text (e.g.
+    | `'first_name'`). If the configured column doesn't exist on the
+    | table at all, Escalated silently falls back to searching the
+    | `email` column — so no code changes are required for hosts with
+    | non-standard user schemas.
+    |
     */
     'user_model' => env('ESCALATED_USER_MODEL', 'App\\Models\\User'),
     'user_display_column' => env('ESCALATED_USER_DISPLAY_COLUMN', 'name'),
