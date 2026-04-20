@@ -21,14 +21,25 @@ class TicketController extends Controller
 
     public function index(Request $request): mixed
     {
+        // Customer-visible filter surface. Keep this in sync with the
+        // `TicketFilters.vue` component's `filterData` keys so every
+        // control the customer can see actually reaches the driver.
+        // (Historically `priority` was omitted here even though the UI
+        // exposed a priority dropdown — see #64.)
+        $filterKeys = [
+            'status', 'priority', 'ticket_type', 'search',
+            'tag', 'has_attachments', 'created_after', 'created_before',
+            'sort_by', 'sort_dir',
+        ];
+
         $tickets = $this->ticketService->list(
-            $request->only(['status', 'search', 'sort_by', 'sort_dir']),
+            $request->only($filterKeys),
             $request->user()
         );
 
         return $this->renderer->render('Escalated/Customer/Index', [
             'tickets' => $tickets,
-            'filters' => $request->only(['status', 'search']),
+            'filters' => $request->only($filterKeys),
         ]);
     }
 
