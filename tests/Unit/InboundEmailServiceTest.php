@@ -2,6 +2,7 @@
 
 use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Mail\InboundMessage;
+use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Models\InboundEmail;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\InboundEmailService;
@@ -292,4 +293,70 @@ it('finds ticket by In-Reply-To header', function () {
 
     expect($inbound->ticket_id)->toBe($ticket->id);
     expect($inbound->reply_id)->not->toBeNull();
+});
+
+it('routes inbound guest ticket to configured host user when guest_user mode is set', function () {
+    $host_user = $this->createTestUser(['email' => 'support_bot@example.com']);
+    EscalatedSettings::set('guest_policy_mode', 'guest_user');
+    EscalatedSettings::set('guest_policy_user_id', (string) $host_user->id);
+
+    $service = app(InboundEmailService::class);
+    $message = new InboundMessage(
+        fromEmail: 'stranger@unknown.com',
+        fromName: 'Stranger',
+        toEmail: 'support@example.com',
+        subject: 'Question',
+        bodyText: 'Body',
+        bodyHtml: null,
+    );
+
+    $inbound = $service->process($message, 'postmark');
+    $ticket = Ticket::find($inbound->ticket_id);
+
+    expect((int) $ticket->requester_id)->toBe($host_user->id);
+    expect($ticket->requester_type)->toBe(config('escalated.user_model', 'App\Models\User'));
+    // guest_email is still recorded so agents see who submitted:
+    expect($ticket->guest_email)->toBe('stranger@unknown.com');
+});
+
+it('falls through to unassigned behavior when guest_user mode has zero user id', function () {
+    EscalatedSettings::set('guest_policy_mode', 'guest_user');
+    EscalatedSettings::set('guest_policy_user_id', '0');
+
+    $service = app(InboundEmailService::class);
+    $message = new InboundMessage(
+        fromEmail: 'stranger@unknown.com',
+        fromName: 'Stranger',
+        toEmail: 'support@example.com',
+        subject: 'Question',
+        bodyText: 'Body',
+        bodyHtml: null,
+    );
+
+    $inbound = $service->process($message, 'postmark');
+    $ticket = Ticket::find($inbound->ticket_id);
+
+    expect($ticket->requester_id)->toBeNull();
+    expect($ticket->guest_email)->toBe('stranger@unknown.com');
+    expect($ticket->guest_token)->not->toBeNull();
+});
+
+it('uses unassigned ticket path in prompt_signup mode (signup invite is separate)', function () {
+    EscalatedSettings::set('guest_policy_mode', 'prompt_signup');
+
+    $service = app(InboundEmailService::class);
+    $message = new InboundMessage(
+        fromEmail: 'stranger@unknown.com',
+        fromName: 'Stranger',
+        toEmail: 'support@example.com',
+        subject: 'Question',
+        bodyText: 'Body',
+        bodyHtml: null,
+    );
+
+    $inbound = $service->process($message, 'postmark');
+    $ticket = Ticket::find($inbound->ticket_id);
+
+    expect($ticket->requester_id)->toBeNull();
+    expect($ticket->guest_email)->toBe('stranger@unknown.com');
 });
