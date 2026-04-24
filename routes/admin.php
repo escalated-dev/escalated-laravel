@@ -22,6 +22,7 @@ use Escalated\Laravel\Http\Controllers\Admin\ImportController;
 use Escalated\Laravel\Http\Controllers\Admin\MacroController;
 use Escalated\Laravel\Http\Controllers\Admin\ReportController;
 use Escalated\Laravel\Http\Controllers\Admin\RoleController;
+use Escalated\Laravel\Http\Controllers\Admin\PublicTicketsSettingsController;
 use Escalated\Laravel\Http\Controllers\Admin\SavedViewController;
 use Escalated\Laravel\Http\Controllers\Admin\SettingsController;
 use Escalated\Laravel\Http\Controllers\Admin\SideConversationController;
@@ -190,6 +191,12 @@ Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web'
         // CSAT Settings
         Route::get('/settings/csat', [CsatSettingsController::class, 'index'])->name('escalated.admin.settings.csat');
         Route::post('/settings/csat', [CsatSettingsController::class, 'update'])->name('escalated.admin.settings.csat.update');
+
+        // Public Ticket (guest policy) settings
+        Route::get('/settings/public-tickets', [PublicTicketsSettingsController::class, 'index'])
+            ->name('escalated.admin.settings.public-tickets');
+        Route::put('/settings/public-tickets', [PublicTicketsSettingsController::class, 'update'])
+            ->name('escalated.admin.settings.public-tickets.update');
 
         // SSO Settings
         Route::get('/settings/sso', [SsoSettingsController::class, 'index'])->name('escalated.admin.settings.sso');
