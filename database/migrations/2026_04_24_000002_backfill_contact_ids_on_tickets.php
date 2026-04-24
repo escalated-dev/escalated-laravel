@@ -29,9 +29,11 @@ return new class extends Migration
         $seen = []; // normalized email => contact id
         foreach ($rows as $row) {
             $email = Str::lower(trim($row->guest_email));
-            if ($email === '') continue;
+            if ($email === '') {
+                continue;
+            }
 
-            if (!isset($seen[$email])) {
+            if (! isset($seen[$email])) {
                 $existing = DB::table($contacts)->where('email', $email)->first();
                 if ($existing) {
                     $seen[$email] = $existing->id;

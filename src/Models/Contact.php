@@ -38,10 +38,11 @@ class Contact extends Model
 
         $existing = static::where('email', $normalized)->first();
         if ($existing) {
-            if (empty($existing->name) && !empty($name)) {
+            if (empty($existing->name) && ! empty($name)) {
                 $existing->name = $name;
                 $existing->save();
             }
+
             return $existing;
         }
 
@@ -57,6 +58,7 @@ class Contact extends Model
     {
         $this->user_id = $userId;
         $this->save();
+
         return $this;
     }
 
@@ -71,6 +73,7 @@ class Contact extends Model
             'requester_id' => $userId,
             'requester_type' => $userType,
         ]);
+
         return $this;
     }
 }
