@@ -104,6 +104,11 @@ class Ticket extends Model
         return $this->morphTo();
     }
 
+    public function contact(): BelongsTo
+    {
+        return $this->belongsTo(Contact::class, 'contact_id');
+    }
+
     public function assignee(): BelongsTo
     {
         return $this->belongsTo(Escalated::userModel(), 'assigned_to');
