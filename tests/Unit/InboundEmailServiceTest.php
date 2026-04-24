@@ -2,6 +2,7 @@
 
 use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Mail\InboundMessage;
+use Escalated\Laravel\Mail\MessageIdUtil;
 use Escalated\Laravel\Models\InboundEmail;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\InboundEmailService;
@@ -262,6 +263,103 @@ it('derives guest name from email when no name provided', function () {
 
     $ticket = Ticket::find($inbound->ticket_id);
     expect($ticket->guest_name)->toBe('John Doe');
+});
+
+it('finds ticket by canonical In-Reply-To Message-ID via MessageIdUtil', function () {
+    // No InboundEmail row — this is the cold-start path where the
+    // reply hits us first. Parsing the ticket id out of the canonical
+    // Message-ID format lets us route without database lookup.
+    $ticket = Ticket::factory()->create();
+
+    $service = app(InboundEmailService::class);
+    $message = new InboundMessage(
+        fromEmail: 'nobody@example.com',
+        fromName: null,
+        toEmail: 'support@example.com',
+        subject: 'RE: ticket',
+        bodyText: 'Follow up.',
+        bodyHtml: null,
+        inReplyTo: "<ticket-{$ticket->id}@support.example.com>",
+    );
+
+    $inbound = $service->process($message, 'mailgun');
+
+    expect($inbound->ticket_id)->toBe($ticket->id);
+});
+
+it('finds ticket by canonical References header via MessageIdUtil', function () {
+    $ticket = Ticket::factory()->create();
+
+    $service = app(InboundEmailService::class);
+    $message = new InboundMessage(
+        fromEmail: 'nobody@example.com',
+        fromName: null,
+        toEmail: 'support@example.com',
+        subject: 'RE: ticket',
+        bodyText: 'Follow up.',
+        bodyHtml: null,
+        references: "<unrelated@mail.com> <ticket-{$ticket->id}@support.example.com>",
+    );
+
+    $inbound = $service->process($message, 'mailgun');
+
+    expect($inbound->ticket_id)->toBe($ticket->id);
+});
+
+it('finds ticket by signed Reply-To when inbound_secret is configured', function () {
+    config(['escalated.email.inbound_secret' => 'test-secret']);
+    config(['escalated.email.domain' => 'support.example.com']);
+    $ticket = Ticket::factory()->create();
+
+    $replyTo = MessageIdUtil::buildReplyTo(
+        $ticket->id,
+        'test-secret',
+        'support.example.com'
+    );
+
+    $service = app(InboundEmailService::class);
+    $message = new InboundMessage(
+        fromEmail: 'customer@example.com',
+        fromName: null,
+        toEmail: $replyTo, // this is what the customer's client sends to
+        subject: 'My issue',
+        bodyText: 'Another message.',
+        bodyHtml: null,
+        // No In-Reply-To / References — clients stripped them. The
+        // signed Reply-To is the safety net.
+    );
+
+    $inbound = $service->process($message, 'mailgun');
+
+    expect($inbound->ticket_id)->toBe($ticket->id);
+});
+
+it('rejects a forged Reply-To signature', function () {
+    config(['escalated.email.inbound_secret' => 'real-secret']);
+    config(['escalated.email.domain' => 'support.example.com']);
+    $ticket = Ticket::factory()->create();
+
+    // Signed with a DIFFERENT secret — should not verify.
+    $forged = MessageIdUtil::buildReplyTo(
+        $ticket->id,
+        'wrong-secret',
+        'support.example.com'
+    );
+
+    $service = app(InboundEmailService::class);
+    $message = new InboundMessage(
+        fromEmail: 'attacker@example.com',
+        fromName: null,
+        toEmail: $forged,
+        subject: 'Try to take over ticket',
+        bodyText: 'injected content.',
+        bodyHtml: null,
+    );
+
+    $inbound = $service->process($message, 'mailgun');
+
+    // Not routed to the ticket — falls through to new-ticket creation.
+    expect($inbound->ticket_id)->not->toBe($ticket->id);
 });
 
 it('finds ticket by In-Reply-To header', function () {
