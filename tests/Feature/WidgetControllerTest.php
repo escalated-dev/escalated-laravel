@@ -107,6 +107,59 @@ it('ticket creation works with valid data', function () {
     ]);
 });
 
+it('widget ticket creation resolves/creates a Contact and links the ticket', function () {
+    EscalatedSettings::set('widget_enabled', '1');
+    EscalatedSettings::set('guest_tickets_enabled', '1');
+
+    $this->postJson(route('escalated.widget.tickets.store'), [
+        'name' => 'Alice',
+        'email' => 'alice@example.com',
+        'subject' => 'First ticket',
+        'description' => 'body',
+    ]);
+
+    $this->assertDatabaseHas('escalated_contacts', [
+        'email' => 'alice@example.com',
+        'name' => 'Alice',
+    ]);
+
+    $contact = \Escalated\Laravel\Models\Contact::where('email', 'alice@example.com')->first();
+    expect($contact)->not->toBeNull();
+
+    $this->assertDatabaseHas('escalated_tickets', [
+        'guest_email' => 'alice@example.com',
+        'contact_id' => $contact->id,
+    ]);
+});
+
+it('dedupes repeat widget submissions onto the same Contact', function () {
+    EscalatedSettings::set('widget_enabled', '1');
+    EscalatedSettings::set('guest_tickets_enabled', '1');
+
+    // First submission — creates the Contact
+    $this->postJson(route('escalated.widget.tickets.store'), [
+        'name' => 'Alice',
+        'email' => 'alice@example.com',
+        'subject' => 'First',
+        'description' => 'body',
+    ]);
+
+    // Second submission from the same email (different casing, to exercise
+    // normalization) — should reuse the Contact
+    $this->postJson(route('escalated.widget.tickets.store'), [
+        'name' => 'Alice',
+        'email' => 'ALICE@example.com',
+        'subject' => 'Second',
+        'description' => 'body',
+    ]);
+
+    $contacts = \Escalated\Laravel\Models\Contact::where('email', 'alice@example.com')->get();
+    expect($contacts)->toHaveCount(1);
+
+    $tickets = \Escalated\Laravel\Models\Ticket::where('contact_id', $contacts->first()->id)->get();
+    expect($tickets)->toHaveCount(2);
+});
+
 it('ticket lookup by reference and email works', function () {
     EscalatedSettings::set('widget_enabled', '1');
 

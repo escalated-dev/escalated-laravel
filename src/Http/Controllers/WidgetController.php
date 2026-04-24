@@ -5,6 +5,7 @@ namespace Escalated\Laravel\Http\Controllers;
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Models\Article;
+use Escalated\Laravel\Models\Contact;
 use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Models\Ticket;
@@ -110,10 +111,15 @@ class WidgetController extends Controller
             'department_id' => ['nullable', 'integer', 'exists:'.config('escalated.table_prefix', 'escalated_').'departments,id'],
         ]);
 
+        // Dedupe repeat submitters by email — one Contact per email
+        // across all their tickets (Pattern B).
+        $contact = Contact::findOrCreateByEmail($validated['email'], $validated['name']);
+
         $ticket = Ticket::create([
             'guest_name' => $validated['name'],
             'guest_email' => $validated['email'],
             'guest_token' => Str::random(64),
+            'contact_id' => $contact->id,
             'subject' => $validated['subject'],
             'description' => $validated['description'],
             'status' => TicketStatus::Open,
