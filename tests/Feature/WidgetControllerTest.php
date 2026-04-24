@@ -3,6 +3,7 @@
 use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Models\Article;
 use Escalated\Laravel\Models\ArticleCategory;
+use Escalated\Laravel\Models\Contact;
 use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Models\Ticket;
 
@@ -123,7 +124,7 @@ it('widget ticket creation resolves/creates a Contact and links the ticket', fun
         'name' => 'Alice',
     ]);
 
-    $contact = \Escalated\Laravel\Models\Contact::where('email', 'alice@example.com')->first();
+    $contact = Contact::where('email', 'alice@example.com')->first();
     expect($contact)->not->toBeNull();
 
     $this->assertDatabaseHas('escalated_tickets', [
@@ -153,10 +154,10 @@ it('dedupes repeat widget submissions onto the same Contact', function () {
         'description' => 'body',
     ]);
 
-    $contacts = \Escalated\Laravel\Models\Contact::where('email', 'alice@example.com')->get();
+    $contacts = Contact::where('email', 'alice@example.com')->get();
     expect($contacts)->toHaveCount(1);
 
-    $tickets = \Escalated\Laravel\Models\Ticket::where('contact_id', $contacts->first()->id)->get();
+    $tickets = Ticket::where('contact_id', $contacts->first()->id)->get();
     expect($tickets)->toHaveCount(2);
 });
 
