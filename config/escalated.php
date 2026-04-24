@@ -149,6 +149,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Email (outbound + inbound)
+    |--------------------------------------------------------------------------
+    |
+    | `domain` is the right-hand side of RFC 5322 Message-IDs and
+    | signed Reply-To addresses. Defaults to the host parsed from
+    | APP_URL, then falls back to "escalated.dev".
+    |
+    | `inbound_secret` is the HMAC key used to sign the Reply-To local
+    | part (reply+{id}.{hmac8}@domain). When empty, Reply-To is left
+    | untouched — basic threading still works via Message-ID /
+    | In-Reply-To, but inbound providers can't verify ticket identity.
+    |
+    */
+    'email' => [
+        'domain' => env('ESCALATED_EMAIL_DOMAIN'),
+        'inbound_secret' => env('ESCALATED_EMAIL_INBOUND_SECRET', ''),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Storage (Attachments)
     |--------------------------------------------------------------------------
     */

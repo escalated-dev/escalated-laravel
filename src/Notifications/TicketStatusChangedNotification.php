@@ -3,6 +3,7 @@
 namespace Escalated\Laravel\Notifications;
 
 use Escalated\Laravel\Enums\TicketStatus;
+use Escalated\Laravel\Mail\NotificationThreading;
 use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Models\Ticket;
 use Illuminate\Bus\Queueable;
@@ -45,10 +46,7 @@ class TicketStatusChangedNotification extends Notification implements ShouldQueu
                 'footerText' => EscalatedSettings::get('email_footer_text'),
             ])
             ->withSymfonyMessage(function ($message) use ($ticket) {
-                $domain = parse_url(config('app.url'), PHP_URL_HOST) ?: 'escalated.dev';
-                $threadId = 'ticket-'.$ticket->id.'@'.$domain;
-                $message->getHeaders()->addIdHeader('In-Reply-To', $threadId);
-                $message->getHeaders()->addIdHeader('References', $threadId);
+                NotificationThreading::applyThread($message, $ticket);
             });
     }
 
