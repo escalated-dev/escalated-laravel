@@ -8,6 +8,7 @@ use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Events;
 use Escalated\Laravel\Mail\InboundMessage;
+use Escalated\Laravel\Mail\MessageIdUtil;
 use Escalated\Laravel\Models\Attachment;
 use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Models\InboundEmail;
@@ -86,13 +87,46 @@ class InboundEmailService
     /**
      * Find an existing ticket that this email is replying to.
      *
-     * Checks:
-     * 1. Subject line for ticket reference pattern like [ESC-00001]
-     * 2. In-Reply-To / References headers for matching message IDs
+     * Resolution order (first match wins):
+     *   1. In-Reply-To header parsed via MessageIdUtil — the reply is
+     *      threading off a Message-ID we issued.
+     *   2. References header, each id parsed in order.
+     *   3. Signed Reply-To on the recipient address (`reply+{id}.{hmac8}@...`)
+     *      — verified with MessageIdUtil::verifyReplyTo, which rules out
+     *      forgery. This is the survive-through-client path: even when
+     *      clients strip our threading headers, the Reply-To we set on
+     *      outbound carries ticket identity.
+     *   4. Subject line `[ESC-00001]` reference pattern (historical).
+     *   5. In-Reply-To / References looked up in the InboundEmail table
+     *      (relies on the receiving mail server storing Message-IDs we
+     *      issued in the past — weaker than #1 but covers legacy).
      */
     protected function findTicketByEmail(InboundMessage $message): ?Ticket
     {
-        // Check subject for reference pattern
+        // 1/2. Parse our own Message-IDs out of In-Reply-To / References.
+        foreach ($this->candidateHeaderMessageIds($message) as $raw) {
+            $ticketId = MessageIdUtil::parseTicketIdFromMessageId($raw);
+            if ($ticketId !== null) {
+                $ticket = Ticket::find($ticketId);
+                if ($ticket) {
+                    return $ticket;
+                }
+            }
+        }
+
+        // 3. Signed Reply-To on the recipient address.
+        $secret = (string) config('escalated.email.inbound_secret', '');
+        if ($secret !== '') {
+            $verified = MessageIdUtil::verifyReplyTo($message->toEmail, $secret);
+            if ($verified !== null) {
+                $ticket = Ticket::find($verified);
+                if ($ticket) {
+                    return $ticket;
+                }
+            }
+        }
+
+        // 4. Subject line reference pattern.
         $prefix = EscalatedSettings::get('ticket_reference_prefix', 'ESC');
         $pattern = '/\[('.preg_quote($prefix, '/').'-\d+)\]/';
 
@@ -103,19 +137,8 @@ class InboundEmailService
             }
         }
 
-        // Check In-Reply-To and References headers against stored message IDs
-        $headerMessageIds = [];
-
-        if (! empty($message->inReplyTo)) {
-            $headerMessageIds[] = $message->inReplyTo;
-        }
-
-        if (! empty($message->references)) {
-            // References header can contain multiple message IDs separated by whitespace
-            $refs = preg_split('/\s+/', $message->references);
-            $headerMessageIds = array_merge($headerMessageIds, $refs);
-        }
-
+        // 5. Legacy fallback: look up by any header id stored in InboundEmail.
+        $headerMessageIds = $this->candidateHeaderMessageIds($message);
         if (! empty($headerMessageIds)) {
             $relatedEmail = InboundEmail::whereIn('message_id', $headerMessageIds)
                 ->whereNotNull('ticket_id')
@@ -129,6 +152,32 @@ class InboundEmailService
         }
 
         return null;
+    }
+
+    /**
+     * Return every candidate Message-ID in the inbound headers, in
+     * the order the mail client sent them. The first entry in References
+     * is the oldest ancestor; In-Reply-To is the immediate parent.
+     *
+     * @return array<string>
+     */
+    protected function candidateHeaderMessageIds(InboundMessage $message): array
+    {
+        $ids = [];
+        if (! empty($message->inReplyTo)) {
+            $ids[] = $message->inReplyTo;
+        }
+        if (! empty($message->references)) {
+            $refs = preg_split('/\s+/', $message->references) ?: [];
+            foreach ($refs as $ref) {
+                $ref = trim($ref);
+                if ($ref !== '') {
+                    $ids[] = $ref;
+                }
+            }
+        }
+
+        return $ids;
     }
 
     /**
