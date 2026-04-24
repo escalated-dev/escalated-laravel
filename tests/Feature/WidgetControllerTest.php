@@ -222,3 +222,87 @@ it('returns 403 for all endpoints when widget disabled', function () {
         'description' => 'Test',
     ])->assertStatus(403);
 });
+
+// --- Guest policy integration with widget ticket creation ---
+
+it('respects guest_policy unassigned mode (default) writing guest_* fields', function () {
+    EscalatedSettings::set('widget_enabled', '1');
+    EscalatedSettings::set('guest_tickets_enabled', '1');
+    EscalatedSettings::set('guest_policy_mode', 'unassigned');
+
+    $response = $this->postJson(route('escalated.widget.tickets.store'), [
+        'name' => 'Alice',
+        'email' => 'alice@example.com',
+        'subject' => 'Hello',
+        'description' => 'Question.',
+    ]);
+
+    $response->assertCreated();
+    $this->assertDatabaseHas('escalated_tickets', [
+        'guest_email' => 'alice@example.com',
+        'requester_id' => null,
+        'requester_type' => null,
+    ]);
+});
+
+it('respects guest_policy guest_user mode routing to the configured host user', function () {
+    EscalatedSettings::set('widget_enabled', '1');
+    EscalatedSettings::set('guest_tickets_enabled', '1');
+    EscalatedSettings::set('guest_policy_mode', 'guest_user');
+    EscalatedSettings::set('guest_policy_user_id', '42');
+
+    $response = $this->postJson(route('escalated.widget.tickets.store'), [
+        'name' => 'Bob',
+        'email' => 'bob@example.com',
+        'subject' => 'Hi',
+        'description' => 'Another question.',
+    ]);
+
+    $response->assertCreated();
+    $this->assertDatabaseHas('escalated_tickets', [
+        'requester_id' => 42,
+        'requester_type' => config('escalated.user_model', 'App\\Models\\User'),
+        'guest_email' => 'bob@example.com',
+    ]);
+});
+
+it('falls through to unassigned behavior when guest_user mode has no user id', function () {
+    EscalatedSettings::set('widget_enabled', '1');
+    EscalatedSettings::set('guest_tickets_enabled', '1');
+    EscalatedSettings::set('guest_policy_mode', 'guest_user');
+    // user_id intentionally missing / zero
+    EscalatedSettings::set('guest_policy_user_id', '');
+
+    $response = $this->postJson(route('escalated.widget.tickets.store'), [
+        'name' => 'Charlie',
+        'email' => 'charlie@example.com',
+        'subject' => 'Help',
+        'description' => 'Guest user fallback scenario.',
+    ]);
+
+    $response->assertCreated();
+    $this->assertDatabaseHas('escalated_tickets', [
+        'guest_email' => 'charlie@example.com',
+        'requester_id' => null,
+        'requester_type' => null,
+    ]);
+});
+
+it('prompt_signup mode uses unassigned ticket-creation path (signup invite is separate)', function () {
+    EscalatedSettings::set('widget_enabled', '1');
+    EscalatedSettings::set('guest_tickets_enabled', '1');
+    EscalatedSettings::set('guest_policy_mode', 'prompt_signup');
+
+    $response = $this->postJson(route('escalated.widget.tickets.store'), [
+        'name' => 'Dana',
+        'email' => 'dana@example.com',
+        'subject' => 'Hi',
+        'description' => 'Signup-prompt scenario.',
+    ]);
+
+    $response->assertCreated();
+    $this->assertDatabaseHas('escalated_tickets', [
+        'guest_email' => 'dana@example.com',
+        'requester_id' => null,
+    ]);
+});

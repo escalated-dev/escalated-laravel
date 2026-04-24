@@ -115,18 +115,50 @@ class WidgetController extends Controller
         // across all their tickets (Pattern B).
         $contact = Contact::findOrCreateByEmail($validated['email'], $validated['name']);
 
-        $ticket = Ticket::create([
-            'guest_name' => $validated['name'],
-            'guest_email' => $validated['email'],
-            'guest_token' => Str::random(64),
-            'contact_id' => $contact->id,
+        $attrs = [
             'subject' => $validated['subject'],
             'description' => $validated['description'],
             'status' => TicketStatus::Open,
             'priority' => TicketPriority::from(config('escalated.default_priority', 'medium')),
             'channel' => 'widget',
             'department_id' => $validated['department_id'] ?? null,
-        ]);
+            'contact_id' => $contact->id,
+        ];
+
+        // Apply the admin-configured guest policy. Persisted by
+        // PublicTicketsSettingsController under three keys in the
+        // EscalatedSettings table. Modes:
+        //   - unassigned (default): write guest_name / guest_email /
+        //     guest_token, leave requester_* null.
+        //   - guest_user: route to a pre-created host-app user via
+        //     requester_id + requester_type. Still records guest_name/
+        //     guest_email so agents can see who submitted.
+        //   - prompt_signup: same ticket-create path as unassigned;
+        //     signup-invite emission is a listener-level follow-up.
+        $mode = EscalatedSettings::get('guest_policy_mode', 'unassigned');
+
+        if ($mode === 'guest_user') {
+            $guestUserId = (int) EscalatedSettings::get('guest_policy_user_id', 0);
+            if ($guestUserId > 0) {
+                $attrs['requester_type'] = config('escalated.user_model', 'App\\Models\\User');
+                $attrs['requester_id'] = $guestUserId;
+                $attrs['guest_name'] = $validated['name'];
+                $attrs['guest_email'] = $validated['email'];
+            } else {
+                // Misconfigured guest_user mode (no/zero user id):
+                // fall through to unassigned behavior so submissions
+                // still succeed instead of 500ing.
+                $attrs['guest_name'] = $validated['name'];
+                $attrs['guest_email'] = $validated['email'];
+                $attrs['guest_token'] = Str::random(64);
+            }
+        } else {
+            $attrs['guest_name'] = $validated['name'];
+            $attrs['guest_email'] = $validated['email'];
+            $attrs['guest_token'] = Str::random(64);
+        }
+
+        $ticket = Ticket::create($attrs);
 
         return response()->json([
             'message' => 'Ticket created successfully.',
