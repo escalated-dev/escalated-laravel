@@ -6,7 +6,7 @@
         "build": "vite build"
     },
     "dependencies": {
-        "@escalated-dev/escalated": "^0.6.0"
+        "@escalated-dev/escalated": "^0.7.1"
     },
     "devDependencies": {
         "@inertiajs/vue3": "^2.0.0",
