@@ -40,7 +40,7 @@ jobs:
 
       - name: Commit auto-fixes
         if: github.event_name == 'pull_request'
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "style: apply Pint auto-fixes"
           commit_user_name: github-actions[bot]
