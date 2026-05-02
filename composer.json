@@ -4,6 +4,12 @@
     "keywords": ["laravel", "support", "tickets", "helpdesk", "customer-support"],
     "license": "MIT",
     "type": "library",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/escalated-dev/escalated-locale"
+        }
+    ],
     "require": {
         "php": "^8.2",
         "escalated-dev/locale": "^0.1.0",
