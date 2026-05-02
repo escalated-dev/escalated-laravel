@@ -82,7 +82,7 @@ class EscalatedServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'escalated');
-        $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'escalated');
+        $this->registerTranslations();
 
         $this->registerPublishing();
         $this->registerCoreRoutes();
@@ -104,6 +104,47 @@ class EscalatedServiceProvider extends ServiceProvider
     {
         return config('escalated.ui.enabled', true)
             && class_exists(Inertia::class);
+    }
+
+    /**
+     * Register the `escalated` translation namespace.
+     *
+     * Resolution order (lowest to highest precedence):
+     *   1. Central package at vendor/escalated-dev/locale/locales — canonical source.
+     *   2. Plugin-shipped overrides at lang/vendor/escalated/{locale}/{group}.php
+     *      (Laravel's namespace-override convention; loaded automatically by
+     *      \Illuminate\Translation\FileLoader::loadNamespaceOverrides via addPath).
+     *   3. Host-app overrides at the application's lang/vendor/escalated/{locale}/...
+     *      directory — already supported by Laravel because the framework registers
+     *      the app's lang path on the file loader by default. Apps populate this via
+     *      `php artisan vendor:publish --tag=escalated-lang`.
+     *
+     * The pre-1.3 behavior loaded everything from `resources/lang` of this package.
+     * That directory is retained as a fallback so dev environments keep working
+     * before `composer install` has pulled the central package.
+     */
+    protected function registerTranslations(): void
+    {
+        $centralPath = base_path('vendor/escalated-dev/locale/locales');
+        $fallbackPath = __DIR__.'/../resources/lang';
+
+        $base = is_dir($centralPath) ? $centralPath : $fallbackPath;
+
+        $this->loadTranslationsFrom($base, 'escalated');
+        $this->loadJsonTranslationsFrom($base);
+
+        // Plugin-shipped overrides. Files live under lang/vendor/escalated/{locale}/...
+        // following Laravel's published-vendor-translations convention so the framework
+        // discovers them through FileLoader::loadNamespaceOverrides().
+        $pluginOverrideRoot = __DIR__.'/../lang';
+
+        if (is_dir($pluginOverrideRoot.'/vendor/escalated')) {
+            $this->callAfterResolving('translator', function ($translator) use ($pluginOverrideRoot) {
+                $loader = $translator->getLoader();
+                $loader->addPath($pluginOverrideRoot);
+                $loader->addJsonPath($pluginOverrideRoot.'/vendor/escalated');
+            });
+        }
     }
 
     protected function registerPublishing(): void
@@ -128,8 +169,11 @@ class EscalatedServiceProvider extends ServiceProvider
             __DIR__.'/../resources/views' => resource_path('views/vendor/escalated'),
         ], 'escalated-views');
 
+        $centralPath = base_path('vendor/escalated-dev/locale/locales');
+        $langSource = is_dir($centralPath) ? $centralPath : __DIR__.'/../resources/lang';
+
         $this->publishes([
-            __DIR__.'/../resources/lang' => $this->app->langPath('vendor/escalated'),
+            $langSource => $this->app->langPath('vendor/escalated'),
         ], 'escalated-lang');
     }
 
