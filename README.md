@@ -260,7 +260,34 @@ php artisan vendor:publish --tag=escalated-config
 
 # Database migrations
 php artisan vendor:publish --tag=escalated-migrations
+
+# Translations (sourced from the central escalated-dev/locale package)
+php artisan vendor:publish --tag=escalated-lang
 ```
+
+## Translations
+
+Translation strings for the `escalated` namespace are sourced from the
+shared [`escalated-dev/locale`](https://github.com/escalated-dev/escalated-locale)
+Composer package, which is consumed by every Escalated host plugin
+(Laravel, Rails, NestJS, Django, …) so wording stays consistent across
+backends.
+
+The `EscalatedServiceProvider` wires three layers, lowest to highest
+precedence:
+
+1. **Central package** — `vendor/escalated-dev/locale/locales/{locale}/...`
+   The canonical source.
+2. **Plugin-shipped overrides** — `lang/vendor/escalated/{locale}/...` in
+   this repository, for Laravel-specific divergences.
+3. **Host-app overrides** — `{app}/lang/vendor/escalated/{locale}/...`,
+   populated via `php artisan vendor:publish --tag=escalated-lang`. Apps
+   edit those files to brand or relocalize Escalated.
+
+Each layer is merged on top of the previous one with
+`array_replace_recursive` (PHP groups) and `array_merge` (JSON), so a
+layer only needs to define the keys it changes. See
+[`lang/README.md`](lang/README.md) for details.
 
 ## Scheduling
 
