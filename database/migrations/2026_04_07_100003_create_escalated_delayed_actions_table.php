@@ -20,7 +20,7 @@ return new class extends Migration
             $table->boolean('cancelled')->default(false);
             $table->timestamps();
 
-            $table->index(['execute_at', 'executed', 'cancelled']);
+            $table->index(['execute_at', 'executed', 'cancelled'], 'delayed_actions_exec_idx');
             $table->index('ticket_id');
         });
     }
