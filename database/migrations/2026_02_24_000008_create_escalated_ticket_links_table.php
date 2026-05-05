@@ -27,7 +27,7 @@ return new class extends Migration
                 ->on($prefix.'tickets')
                 ->cascadeOnDelete();
 
-            $table->unique(['parent_ticket_id', 'child_ticket_id', 'link_type']);
+            $table->unique(['parent_ticket_id', 'child_ticket_id', 'link_type'], 'parent_child_type_unique');
         });
 
         Schema::table($prefix.'tickets', function (Blueprint $table) {
