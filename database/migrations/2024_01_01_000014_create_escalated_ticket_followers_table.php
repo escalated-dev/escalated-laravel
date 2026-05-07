@@ -12,7 +12,8 @@ return new class extends Migration
 
         Schema::create($prefix.'ticket_followers', function (Blueprint $table) use ($prefix) {
             $table->foreignId('ticket_id')->constrained($prefix.'tickets')->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            // No DB-level FK to host `users` — see #88 / macros migration for rationale.
+            $table->unsignedBigInteger('user_id');
             $table->timestamps();
             $table->unique(['ticket_id', 'user_id']);
         });

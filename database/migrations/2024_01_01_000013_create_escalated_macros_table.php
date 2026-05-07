@@ -15,7 +15,12 @@ return new class extends Migration
             $table->string('name');
             $table->string('description')->nullable();
             $table->json('actions');
-            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            // No DB-level FK to host `users`. Host apps run on a wide range of
+            // MySQL/MariaDB configurations (MyISAM `users` table, signed bigint
+            // id from pre-Laravel-5.8 scaffolds, INT UNSIGNED from
+            // `increments()`, UUID/CHAR(36) from `HasUuids`) — any of which
+            // make MariaDB reject FK creation with errno 150. See #88.
+            $table->unsignedBigInteger('created_by')->nullable();
             $table->boolean('is_shared')->default(true);
             $table->integer('order')->default(0);
             $table->timestamps();

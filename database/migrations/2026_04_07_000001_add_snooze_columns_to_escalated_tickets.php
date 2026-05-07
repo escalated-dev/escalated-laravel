@@ -12,13 +12,9 @@ return new class extends Migration
 
         Schema::table($prefix.'tickets', function (Blueprint $table) {
             $table->dateTime('snoozed_until')->nullable()->after('closed_at');
+            // No DB-level FK to host `users` — see #88 / macros migration for rationale.
             $table->unsignedBigInteger('snoozed_by')->nullable()->after('snoozed_until');
             $table->string('status_before_snooze')->nullable()->after('snoozed_by');
-
-            $table->foreign('snoozed_by')
-                ->references('id')
-                ->on('users')
-                ->nullOnDelete();
 
             $table->index('snoozed_until');
         });
@@ -29,7 +25,6 @@ return new class extends Migration
         $prefix = config('escalated.table_prefix', 'escalated_');
 
         Schema::table($prefix.'tickets', function (Blueprint $table) {
-            $table->dropForeign(['snoozed_by']);
             $table->dropIndex(['snoozed_until']);
             $table->dropColumn(['snoozed_until', 'snoozed_by', 'status_before_snooze']);
         });
