@@ -125,13 +125,27 @@ class EscalatedServiceProvider extends ServiceProvider
      */
     protected function registerTranslations(): void
     {
-        $centralPath = base_path('vendor/escalated-dev/locale/locales');
         $fallbackPath = __DIR__.'/../resources/lang';
 
-        $base = is_dir($centralPath) ? $centralPath : $fallbackPath;
+        // PHP fallback (snake_case keys) is always registered as the namespace
+        // hint so Laravel's FileLoader can resolve groups we don't pre-populate
+        // (enums, notifications, emails, messages, validation) and so dev
+        // environments without composer-installed deps still work.
+        $this->loadTranslationsFrom($fallbackPath, 'escalated');
+        $this->loadJsonTranslationsFrom($fallbackPath);
 
-        $this->loadTranslationsFrom($base, 'escalated');
-        $this->loadJsonTranslationsFrom($base);
+        // Bridge selected groups from the central locale package via
+        // Translator::addLines so namespaced lookups resolve against the
+        // central JSON instead of the package's own commands.php fallback.
+        // Only groups that have been migrated to camelCase parity with the
+        // central package are pre-populated; others continue to load from
+        // the PHP fallback above.
+        $centralLocalesPath = $this->resolveCentralLocalesPath();
+        if ($centralLocalesPath !== null) {
+            $this->callAfterResolving('translator', function ($translator) use ($centralLocalesPath) {
+                $this->bridgeCentralGroups($translator, $centralLocalesPath, ['commands']);
+            });
+        }
 
         // Plugin-shipped overrides. Files live under lang/vendor/escalated/{locale}/...
         // following Laravel's published-vendor-translations convention so the framework
@@ -144,6 +158,72 @@ class EscalatedServiceProvider extends ServiceProvider
                 $loader->addPath($pluginOverrideRoot);
                 $loader->addJsonPath($pluginOverrideRoot.'/vendor/escalated');
             });
+        }
+    }
+
+    /**
+     * Locate the central `escalated-dev/locale` package's `locales/` directory.
+     * Production: composer installs the dep into the host app's vendor/. Tests
+     * and dev: the dep lives under this package's own vendor/. Try both.
+     */
+    protected function resolveCentralLocalesPath(): ?string
+    {
+        $candidates = [
+            base_path('vendor/escalated-dev/locale/locales'),
+            __DIR__.'/../vendor/escalated-dev/locale/locales',
+        ];
+
+        foreach ($candidates as $path) {
+            if (is_dir($path)) {
+                return $path;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Inject selected top-level groups from each `<locale>.json` in the central
+     * locale package into the translator's loaded array under the `escalated`
+     * namespace. After this runs, `__('escalated::<group>.<key>')` resolves
+     * against the central JSON for any group listed in `$groups`.
+     *
+     * @param  array<int, string>  $groups
+     */
+    protected function bridgeCentralGroups(\Illuminate\Translation\Translator $translator, string $centralLocalesPath, array $groups): void
+    {
+        $files = glob($centralLocalesPath.'/*.json') ?: [];
+
+        foreach ($files as $file) {
+            $locale = basename($file, '.json');
+            $raw = @file_get_contents($file);
+            if ($raw === false) {
+                continue;
+            }
+            $data = json_decode($raw, true);
+            if (! is_array($data)) {
+                continue;
+            }
+
+            foreach ($groups as $group) {
+                if (! isset($data[$group]) || ! is_array($data[$group])) {
+                    continue;
+                }
+                // addLines expects flat keys like "<group>.<dotted-item>".
+                $lines = \Illuminate\Support\Arr::dot([$group => $data[$group]]);
+
+                // Central JSON uses {placeholder} syntax (matches the Vue
+                // frontend's t() helper); Laravel's makeReplacements expects
+                // :placeholder. Rewrite on the way in so call sites stay
+                // idiomatic Laravel.
+                foreach ($lines as $key => $value) {
+                    if (is_string($value)) {
+                        $lines[$key] = preg_replace('/\{(\w+)\}/', ':$1', $value);
+                    }
+                }
+
+                $translator->addLines($lines, $locale, 'escalated');
+            }
         }
     }
 
