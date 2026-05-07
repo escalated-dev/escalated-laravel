@@ -23,6 +23,10 @@ return [
         'step_tailwind' => 'أضف صفحات Escalated إلى إعدادات محتوى Tailwind الخاصة بك:',
         'step_inertia' => 'أضف محلل صفحات Inertia والإضافة في ملف app.ts الخاص بك:',
         'step_visit' => 'قم بزيارة /support لرؤية بوابة العملاء',
+        'running_migrations' => 'تشغيل الترحيلات',
+        'seeding_permissions' => 'زرع الأذونات والأدوار',
+        'run_migrations_confirm' => 'هل تريد تشغيل الترحيلات وزرع الأذونات الافتراضية الآن؟',
+        'step_seed' => 'زرع الأذونات والأدوار الافتراضية:',
     ],
 
 ];

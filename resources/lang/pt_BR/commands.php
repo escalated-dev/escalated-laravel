@@ -23,6 +23,10 @@ return [
         'step_tailwind' => 'Adicione as páginas do Escalated à configuração de conteúdo do Tailwind:',
         'step_inertia' => 'Adicione o resolver de páginas e o plugin do Inertia no seu app.ts:',
         'step_visit' => 'Acesse /support para ver o portal do cliente',
+        'running_migrations' => 'Executando migrações',
+        'seeding_permissions' => 'Semeando permissões e funções',
+        'run_migrations_confirm' => 'Executar migrações e semear permissões padrão agora?',
+        'step_seed' => 'Semear permissões e funções padrão:',
     ],
 
 ];

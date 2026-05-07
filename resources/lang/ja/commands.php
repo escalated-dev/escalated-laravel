@@ -23,6 +23,10 @@ return [
         'step_tailwind' => 'Tailwind のコンテンツ設定に Escalated のページを追加してください:',
         'step_inertia' => 'app.ts に Inertia のページリゾルバーとプラグインを追加してください:',
         'step_visit' => '/support にアクセスしてカスタマーポータルを確認してください',
+        'running_migrations' => 'マイグレーションを実行中',
+        'seeding_permissions' => '権限とロールをシード中',
+        'run_migrations_confirm' => '今すぐマイグレーションを実行し、デフォルトの権限をシードしますか？',
+        'step_seed' => 'デフォルトの権限とロールをシードする：',
     ],
 
 ];

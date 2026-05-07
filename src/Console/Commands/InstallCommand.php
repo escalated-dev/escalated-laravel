@@ -34,16 +34,32 @@ class InstallCommand extends Command
         }
 
         $userModelConfigured = false;
+        $migrationsRan = false;
+        $permissionsSeeded = false;
 
         if ($publishAll) {
             $this->publishEmailViews($force);
-            $this->seedPermissions();
+
+            // Seeding permissions requires the escalated_permissions table that
+            // the migrations create. Offer to run both together so users don't
+            // hit "table doesn't exist" on a clean install.
+            if ($this->confirmRunMigrations()) {
+                $migrationsRan = $this->runMigrations();
+                if ($migrationsRan) {
+                    $permissionsSeeded = $this->seedPermissions();
+                }
+            }
+
             $this->installNpmPackage();
             $userModelConfigured = $this->configureUserModel();
         }
 
         $this->newLine();
-        $this->outputSetupInstructions($userModelConfigured);
+        $this->outputSetupInstructions(
+            userModelConfigured: $userModelConfigured,
+            migrationsRan: $migrationsRan,
+            permissionsSeeded: $permissionsSeeded,
+        );
 
         return self::SUCCESS;
     }
@@ -115,13 +131,58 @@ class InstallCommand extends Command
         });
     }
 
-    protected function seedPermissions(): void
+    protected function confirmRunMigrations(): bool
     {
-        $this->components->task(__('escalated::commands.install.seeding_permissions', [], 'Seeding permissions and roles'), function () {
-            $this->callSilently('db:seed', [
-                '--class' => PermissionSeeder::class,
-            ]);
+        // Non-interactive contexts (CI, --no-interaction) opt out of running
+        // migrations automatically. The on-screen instructions still tell the
+        // user what to run themselves.
+        if (! $this->input->isInteractive()) {
+            return false;
+        }
+
+        return $this->components->confirm(
+            __('escalated::commands.install.run_migrations_confirm'),
+            true
+        );
+    }
+
+    protected function runMigrations(): bool
+    {
+        $success = false;
+
+        $this->components->task(__('escalated::commands.install.running_migrations'), function () use (&$success) {
+            try {
+                $exit = $this->callSilently('migrate', ['--force' => true]);
+                $success = $exit === 0;
+            } catch (\Throwable) {
+                $success = false;
+            }
+
+            return $success;
         });
+
+        return $success;
+    }
+
+    protected function seedPermissions(): bool
+    {
+        $success = false;
+
+        $this->components->task(__('escalated::commands.install.seeding_permissions'), function () use (&$success) {
+            try {
+                $exit = $this->callSilently('db:seed', [
+                    '--class' => PermissionSeeder::class,
+                    '--force' => true,
+                ]);
+                $success = $exit === 0;
+            } catch (\Throwable) {
+                $success = false;
+            }
+
+            return $success;
+        });
+
+        return $success;
     }
 
     protected function installNpmPackage(): void
@@ -315,8 +376,11 @@ class InstallCommand extends Command
         return false;
     }
 
-    protected function outputSetupInstructions(bool $userModelConfigured = false): void
-    {
+    protected function outputSetupInstructions(
+        bool $userModelConfigured = false,
+        bool $migrationsRan = false,
+        bool $permissionsSeeded = false,
+    ): void {
         $this->components->info(__('escalated::commands.install.success'));
         $this->newLine();
 
@@ -346,11 +410,21 @@ class InstallCommand extends Command
         $this->newLine();
         $step++;
 
-        $this->line('  '.$step.'. '.__('escalated::commands.install.step_migrate'));
-        $this->newLine();
-        $this->line('     php artisan migrate');
-        $this->newLine();
-        $step++;
+        if (! $migrationsRan) {
+            $this->line('  '.$step.'. '.__('escalated::commands.install.step_migrate'));
+            $this->newLine();
+            $this->line('     php artisan migrate');
+            $this->newLine();
+            $step++;
+        }
+
+        if (! $permissionsSeeded) {
+            $this->line('  '.$step.'. '.__('escalated::commands.install.step_seed'));
+            $this->newLine();
+            $this->line('     php artisan db:seed --class="'.PermissionSeeder::class.'"');
+            $this->newLine();
+            $step++;
+        }
 
         $this->line('  '.$step.'. '.__('escalated::commands.install.step_tailwind'));
         $this->newLine();

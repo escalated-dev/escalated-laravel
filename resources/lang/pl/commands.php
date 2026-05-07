@@ -23,6 +23,10 @@ return [
         'step_tailwind' => 'Dodaj strony Escalated do konfiguracji zawartości Tailwind:',
         'step_inertia' => 'Dodaj resolver stron Inertia i wtyczkę w swoim pliku app.ts:',
         'step_visit' => 'Odwiedź /support, aby zobaczyć portal klienta',
+        'running_migrations' => 'Uruchamianie migracji',
+        'seeding_permissions' => 'Tworzenie uprawnień i ról',
+        'run_migrations_confirm' => 'Uruchomić migracje i utworzyć domyślne uprawnienia teraz?',
+        'step_seed' => 'Utwórz domyślne uprawnienia i role:',
     ],
 
 ];

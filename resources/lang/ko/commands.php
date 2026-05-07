@@ -23,6 +23,10 @@ return [
         'step_tailwind' => 'Tailwind 콘텐츠 설정에 Escalated 페이지를 추가하세요:',
         'step_inertia' => 'app.ts에 Inertia 페이지 리졸버와 플러그인을 추가하세요:',
         'step_visit' => '/support를 방문하여 고객 포털을 확인하세요',
+        'running_migrations' => '마이그레이션 실행 중',
+        'seeding_permissions' => '권한과 역할 시딩 중',
+        'run_migrations_confirm' => '지금 마이그레이션을 실행하고 기본 권한을 시드할까요?',
+        'step_seed' => '기본 권한과 역할 시딩:',
     ],
 
 ];

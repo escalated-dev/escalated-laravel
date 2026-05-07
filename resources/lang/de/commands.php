@@ -23,6 +23,10 @@ return [
         'step_tailwind' => 'Fügen Sie Escalated-Seiten zur Tailwind-Inhaltskonfiguration hinzu:',
         'step_inertia' => 'Fügen Sie den Inertia-Seitenresolver und das Plugin in Ihrer app.ts hinzu:',
         'step_visit' => 'Besuchen Sie /support, um das Kundenportal zu sehen',
+        'running_migrations' => 'Migrationen werden ausgeführt',
+        'seeding_permissions' => 'Berechtigungen und Rollen werden eingerichtet',
+        'run_migrations_confirm' => 'Migrationen jetzt ausführen und Standardberechtigungen anlegen?',
+        'step_seed' => 'Standardberechtigungen und -rollen anlegen:',
     ],
 
 ];
