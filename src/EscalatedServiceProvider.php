@@ -27,12 +27,14 @@ use Escalated\Laravel\Services\PluginService;
 use Escalated\Laravel\Services\PluginUIService;
 use Escalated\Laravel\Support\HookManager;
 use Escalated\Laravel\UI\InertiaUiRenderer;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Translation\Translator;
 use Inertia\Inertia;
 
 class EscalatedServiceProvider extends ServiceProvider
@@ -190,7 +192,7 @@ class EscalatedServiceProvider extends ServiceProvider
      *
      * @param  array<int, string>  $groups
      */
-    protected function bridgeCentralGroups(\Illuminate\Translation\Translator $translator, string $centralLocalesPath, array $groups): void
+    protected function bridgeCentralGroups(Translator $translator, string $centralLocalesPath, array $groups): void
     {
         $files = glob($centralLocalesPath.'/*.json') ?: [];
 
@@ -210,7 +212,7 @@ class EscalatedServiceProvider extends ServiceProvider
                     continue;
                 }
                 // addLines expects flat keys like "<group>.<dotted-item>".
-                $lines = \Illuminate\Support\Arr::dot([$group => $data[$group]]);
+                $lines = Arr::dot([$group => $data[$group]]);
 
                 // Central JSON uses {placeholder} syntax (matches the Vue
                 // frontend's t() helper); Laravel's makeReplacements expects
