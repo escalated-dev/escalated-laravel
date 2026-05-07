@@ -13,7 +13,8 @@ return new class extends Migration
         Schema::create($prefix.'mentions', function (Blueprint $table) use ($prefix) {
             $table->id();
             $table->foreignId('reply_id')->constrained($prefix.'replies')->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            // No DB-level FK to host `users` — see #88 / macros migration for rationale.
+            $table->unsignedBigInteger('user_id');
             $table->datetime('read_at')->nullable();
             $table->timestamps();
 

@@ -14,7 +14,8 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->json('filters');
-            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            // No DB-level FK to host `users` — see #88 / macros migration for rationale.
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->boolean('is_shared')->default(false);
             $table->boolean('is_default')->default(false);
             $table->integer('position')->default(0);
