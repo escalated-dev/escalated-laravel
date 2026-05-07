@@ -23,6 +23,10 @@ return [
         'step_tailwind' => 'Add Escalated pages to your Tailwind content config:',
         'step_inertia' => 'Add the Inertia page resolver and plugin in your app.ts:',
         'step_visit' => 'Visit /support to see the customer portal',
+        'running_migrations' => 'Running migrations',
+        'seeding_permissions' => 'Seeding permissions and roles',
+        'run_migrations_confirm' => 'Run migrations and seed default permissions now?',
+        'step_seed' => 'Seed default permissions and roles:',
     ],
 
 ];

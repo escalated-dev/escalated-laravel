@@ -23,6 +23,10 @@ return [
         'step_tailwind' => 'Tailwind içerik yapılandırmanıza Escalated sayfalarını ekleyin:',
         'step_inertia' => 'app.ts dosyanıza Inertia sayfa çözümleyicisini ve eklentisini ekleyin:',
         'step_visit' => 'Müşteri portalını görmek için /support adresini ziyaret edin',
+        'running_migrations' => 'Geçişler çalıştırılıyor',
+        'seeding_permissions' => 'İzinler ve roller ekiliyor',
+        'run_migrations_confirm' => 'Geçişleri şimdi çalıştır ve varsayılan izinleri oluştur?',
+        'step_seed' => 'Varsayılan izinleri ve rolleri ekle:',
     ],
 
 ];

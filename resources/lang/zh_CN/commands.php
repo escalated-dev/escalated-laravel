@@ -23,6 +23,10 @@ return [
         'step_tailwind' => '将 Escalated 页面添加到 Tailwind 内容配置中：',
         'step_inertia' => '在 app.ts 中添加 Inertia 页面解析器和插件：',
         'step_visit' => '访问 /support 查看客户门户',
+        'running_migrations' => '正在运行迁移',
+        'seeding_permissions' => '正在初始化权限和角色',
+        'run_migrations_confirm' => '现在运行迁移并初始化默认权限？',
+        'step_seed' => '初始化默认权限和角色：',
     ],
 
 ];

@@ -23,6 +23,10 @@ return [
         'step_tailwind' => 'Voeg Escalated-pagina\'s toe aan uw Tailwind-contentconfiguratie:',
         'step_inertia' => 'Voeg de Inertia-paginaresolver en -plugin toe in uw app.ts:',
         'step_visit' => 'Bezoek /support om het klantenportaal te bekijken',
+        'running_migrations' => 'Migraties worden uitgevoerd',
+        'seeding_permissions' => 'Permissies en rollen zaaien',
+        'run_migrations_confirm' => 'Migraties uitvoeren en standaardrechten nu aanmaken?',
+        'step_seed' => 'Standaardrechten en -rollen aanmaken:',
     ],
 
 ];
