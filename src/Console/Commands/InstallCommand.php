@@ -148,41 +148,52 @@ class InstallCommand extends Command
 
     protected function runMigrations(): bool
     {
-        $success = false;
+        // Print output directly (no `task` component / no `callSilently`) so
+        // the user sees the actual SQL error if a migration fails. Swallowing
+        // it produces a useless "FAIL" with no diagnosis — see issue #88.
+        $this->components->info(__('escalated::commands.install.runningMigrations'));
+        try {
+            $exit = $this->call('migrate', ['--force' => true]);
+        } catch (\Throwable $e) {
+            $this->components->error('migrate threw: '.$e->getMessage());
 
-        $this->components->task(__('escalated::commands.install.runningMigrations'), function () use (&$success) {
-            try {
-                $exit = $this->callSilently('migrate', ['--force' => true]);
-                $success = $exit === 0;
-            } catch (\Throwable) {
-                $success = false;
-            }
+            return false;
+        }
 
-            return $success;
-        });
+        if ($exit !== 0) {
+            $this->components->error(
+                'migrate exited with code '.$exit.'. The error is shown above. '
+                .'Run `php artisan migrate -vvv` to see the full PDO/SQL detail, '
+                .'then re-run this command.'
+            );
 
-        return $success;
+            return false;
+        }
+
+        return true;
     }
 
     protected function seedPermissions(): bool
     {
-        $success = false;
+        $this->components->info(__('escalated::commands.install.seedingPermissions'));
+        try {
+            $exit = $this->call('db:seed', [
+                '--class' => PermissionSeeder::class,
+                '--force' => true,
+            ]);
+        } catch (\Throwable $e) {
+            $this->components->error('db:seed threw: '.$e->getMessage());
 
-        $this->components->task(__('escalated::commands.install.seedingPermissions'), function () use (&$success) {
-            try {
-                $exit = $this->callSilently('db:seed', [
-                    '--class' => PermissionSeeder::class,
-                    '--force' => true,
-                ]);
-                $success = $exit === 0;
-            } catch (\Throwable) {
-                $success = false;
-            }
+            return false;
+        }
 
-            return $success;
-        });
+        if ($exit !== 0) {
+            $this->components->error('db:seed exited with code '.$exit.'. The error is shown above.');
 
-        return $success;
+            return false;
+        }
+
+        return true;
     }
 
     protected function installNpmPackage(): void
