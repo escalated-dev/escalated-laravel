@@ -66,7 +66,7 @@ class InstallCommand extends Command
 
     protected function publishConfig(bool $force): void
     {
-        $this->components->task(__('escalated::commands.install.publishing_config'), function () use ($force) {
+        $this->components->task(__('escalated::commands.install.publishingConfig'), function () use ($force) {
             $this->callSilently('vendor:publish', [
                 '--tag' => 'escalated-config',
                 '--force' => $force,
@@ -76,12 +76,12 @@ class InstallCommand extends Command
 
     protected function publishMigrations(bool $force): void
     {
-        $this->components->task(__('escalated::commands.install.publishing_migrations'), function () use ($force) {
+        $this->components->task(__('escalated::commands.install.publishingMigrations'), function () use ($force) {
             $existing = $this->existingPublishedMigrations();
 
             if (! empty($existing) && ! $force) {
                 $this->components->info(__(
-                    'escalated::commands.install.migrations_already_published',
+                    'escalated::commands.install.migrationsAlreadyPublished',
                     ['count' => count($existing)]
                 ));
 
@@ -123,7 +123,7 @@ class InstallCommand extends Command
 
     protected function publishEmailViews(bool $force): void
     {
-        $this->components->task(__('escalated::commands.install.publishing_views'), function () use ($force) {
+        $this->components->task(__('escalated::commands.install.publishingViews'), function () use ($force) {
             $this->callSilently('vendor:publish', [
                 '--tag' => 'escalated-views',
                 '--force' => $force,
@@ -141,7 +141,7 @@ class InstallCommand extends Command
         }
 
         return $this->components->confirm(
-            __('escalated::commands.install.run_migrations_confirm'),
+            __('escalated::commands.install.runMigrationsConfirm'),
             true
         );
     }
@@ -150,7 +150,7 @@ class InstallCommand extends Command
     {
         $success = false;
 
-        $this->components->task(__('escalated::commands.install.running_migrations'), function () use (&$success) {
+        $this->components->task(__('escalated::commands.install.runningMigrations'), function () use (&$success) {
             try {
                 $exit = $this->callSilently('migrate', ['--force' => true]);
                 $success = $exit === 0;
@@ -168,7 +168,7 @@ class InstallCommand extends Command
     {
         $success = false;
 
-        $this->components->task(__('escalated::commands.install.seeding_permissions'), function () use (&$success) {
+        $this->components->task(__('escalated::commands.install.seedingPermissions'), function () use (&$success) {
             try {
                 $exit = $this->callSilently('db:seed', [
                     '--class' => PermissionSeeder::class,
@@ -187,11 +187,11 @@ class InstallCommand extends Command
 
     protected function installNpmPackage(): void
     {
-        $this->components->task(__('escalated::commands.install.installing_npm'), function () {
+        $this->components->task(__('escalated::commands.install.installingNpm'), function () {
             $result = Process::run('npm install @escalated-dev/escalated');
 
             if (! $result->successful()) {
-                $this->components->warn(__('escalated::commands.install.npm_manual'));
+                $this->components->warn(__('escalated::commands.install.npmManual'));
                 $this->line('  npm install @escalated-dev/escalated');
 
                 return false;
@@ -204,7 +204,7 @@ class InstallCommand extends Command
         $modelPath = $this->resolveUserModelPath();
 
         if ($modelPath === null || ! file_exists($modelPath)) {
-            $this->components->warn(__('escalated::commands.install.user_model_not_found'));
+            $this->components->warn(__('escalated::commands.install.userModelNotFound'));
 
             return false;
         }
@@ -212,18 +212,18 @@ class InstallCommand extends Command
         $contents = file_get_contents($modelPath);
 
         if ($contents === false) {
-            $this->components->warn(__('escalated::commands.install.user_model_not_found'));
+            $this->components->warn(__('escalated::commands.install.userModelNotFound'));
 
             return false;
         }
 
         if (preg_match('/\bimplements\b[^{]*\bTicketable\b/', $contents)) {
-            $this->components->info(__('escalated::commands.install.user_model_already_configured'));
+            $this->components->info(__('escalated::commands.install.userModelAlreadyConfigured'));
 
             return true;
         }
 
-        if (! $this->components->confirm(__('escalated::commands.install.user_model_confirm'), true)) {
+        if (! $this->components->confirm(__('escalated::commands.install.userModelConfirm'), true)) {
             return false;
         }
 
@@ -234,11 +234,11 @@ class InstallCommand extends Command
 
             file_put_contents($modelPath, $modified);
 
-            $this->components->info(__('escalated::commands.install.user_model_configured'));
+            $this->components->info(__('escalated::commands.install.userModelConfigured'));
 
             return true;
         } catch (\RuntimeException $e) {
-            $this->components->warn(__('escalated::commands.install.user_model_failed', ['error' => $e->getMessage()]));
+            $this->components->warn(__('escalated::commands.install.userModelFailed', ['error' => $e->getMessage()]));
 
             return false;
         }
@@ -384,13 +384,13 @@ class InstallCommand extends Command
         $this->components->info(__('escalated::commands.install.success'));
         $this->newLine();
 
-        $this->line('  '.__('escalated::commands.install.next_steps'));
+        $this->line('  '.__('escalated::commands.install.nextSteps'));
         $this->newLine();
 
         $step = 1;
 
         if (! $userModelConfigured) {
-            $this->line('  '.$step.'. '.__('escalated::commands.install.step_ticketable'));
+            $this->line('  '.$step.'. '.__('escalated::commands.install.stepTicketable'));
             $this->newLine();
             $this->line('     use Escalated\Laravel\Contracts\HasTickets;');
             $this->line('     use Escalated\Laravel\Contracts\Ticketable;');
@@ -403,7 +403,7 @@ class InstallCommand extends Command
             $step++;
         }
 
-        $this->line('  '.$step.'. '.__('escalated::commands.install.step_gates'));
+        $this->line('  '.$step.'. '.__('escalated::commands.install.stepGates'));
         $this->newLine();
         $this->line('     Gate::define(\'escalated-admin\', fn ($user) => $user->is_admin);');
         $this->line('     Gate::define(\'escalated-agent\', fn ($user) => $user->is_agent);');
@@ -411,7 +411,7 @@ class InstallCommand extends Command
         $step++;
 
         if (! $migrationsRan) {
-            $this->line('  '.$step.'. '.__('escalated::commands.install.step_migrate'));
+            $this->line('  '.$step.'. '.__('escalated::commands.install.stepMigrate'));
             $this->newLine();
             $this->line('     php artisan migrate');
             $this->newLine();
@@ -419,14 +419,14 @@ class InstallCommand extends Command
         }
 
         if (! $permissionsSeeded) {
-            $this->line('  '.$step.'. '.__('escalated::commands.install.step_seed'));
+            $this->line('  '.$step.'. '.__('escalated::commands.install.stepSeed'));
             $this->newLine();
             $this->line('     php artisan db:seed --class="'.PermissionSeeder::class.'"');
             $this->newLine();
             $step++;
         }
 
-        $this->line('  '.$step.'. '.__('escalated::commands.install.step_tailwind'));
+        $this->line('  '.$step.'. '.__('escalated::commands.install.stepTailwind'));
         $this->newLine();
         $this->line('     // tailwind.config.js');
         $this->line('     content: [');
@@ -436,7 +436,7 @@ class InstallCommand extends Command
         $this->newLine();
         $step++;
 
-        $this->line('  '.$step.'. '.__('escalated::commands.install.step_inertia'));
+        $this->line('  '.$step.'. '.__('escalated::commands.install.stepInertia'));
         $this->newLine();
         $this->line('     import { EscalatedPlugin } from \'@escalated-dev/escalated\';');
         $this->newLine();
@@ -460,7 +460,7 @@ class InstallCommand extends Command
         $this->newLine();
         $step++;
 
-        $this->line('  '.$step.'. '.__('escalated::commands.install.step_visit'));
+        $this->line('  '.$step.'. '.__('escalated::commands.install.stepVisit'));
         $this->newLine();
     }
 }
