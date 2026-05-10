@@ -35,6 +35,7 @@ use Escalated\Laravel\Http\Controllers\Admin\TicketController;
 use Escalated\Laravel\Http\Controllers\Admin\TicketLinkController;
 use Escalated\Laravel\Http\Controllers\Admin\TicketMergeController;
 use Escalated\Laravel\Http\Controllers\Admin\TwoFactorController;
+use Escalated\Laravel\Http\Controllers\Admin\UserController;
 use Escalated\Laravel\Http\Controllers\Admin\WebhookController;
 use Escalated\Laravel\Http\Controllers\Admin\WorkflowController;
 use Escalated\Laravel\Http\Controllers\BulkActionController;
@@ -136,6 +137,10 @@ Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web'
         Route::resource('roles', RoleController::class)
             ->names('escalated.admin.roles')
             ->except(['show']);
+
+        // Users (host User model: list + grant/revoke admin/agent)
+        Route::get('/users', [UserController::class, 'index'])->name('escalated.admin.users.index');
+        Route::patch('/users/{user}/role', [UserController::class, 'updateRole'])->name('escalated.admin.users.role');
 
         // Audit Log
         Route::get('/audit-log', [AuditLogController::class, 'index'])
