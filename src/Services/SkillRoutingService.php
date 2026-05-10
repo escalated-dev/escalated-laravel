@@ -11,50 +11,94 @@ use Illuminate\Support\Facades\DB;
 class SkillRoutingService
 {
     /**
-     * Find agents with skills matching ticket tags, sorted by current load.
+     * Find agents with skills matching ticket tags and/or department,
+     * sorted by skill coverage, total proficiency, then current load.
      *
-     * Maps ticket tags to skills by name, then finds agents
-     * who have those skills, ordered by current open ticket count (ascending).
+     * Explicit routing rules win: a skill may target ticket tags and/or
+     * departments. If a skill has no routing arrays configured, we fall
+     * back to name-based tag matching to preserve earlier placeholder
+     * behavior.
      */
     public function findMatchingAgents(Ticket $ticket): Collection
     {
-        // Get the ticket's tag names
-        $tagNames = $ticket->tags()->pluck('name')->toArray();
+        $tagIds = $ticket->tags()->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $tagNames = $ticket->tags()->pluck('name')->map(fn ($name) => mb_strtolower((string) $name))->all();
+        $departmentId = $ticket->department_id ? (int) $ticket->department_id : null;
 
-        if (empty($tagNames)) {
+        if (empty($tagIds) && $departmentId === null && empty($tagNames)) {
             return collect();
         }
 
-        // Find skills that match tag names
-        $skillIds = Skill::whereIn('name', $tagNames)->pluck('id')->toArray();
-
-        if (empty($skillIds)) {
-            return collect();
-        }
-
-        // Find agents with matching skills
-        $agentSkillTable = Escalated::table('agent_skill');
-        $ticketsTable = Escalated::table('tickets');
-
-        $agents = DB::table($agentSkillTable)
-            ->whereIn('skill_id', $skillIds)
-            ->select('user_id')
-            ->distinct()
+        $matchingSkills = Skill::query()
             ->get()
-            ->pluck('user_id');
+            ->filter(function (Skill $skill) use ($tagIds, $tagNames, $departmentId) {
+                $routingTagIds = array_map('intval', $skill->routing_tag_ids ?? []);
+                $routingDepartmentIds = array_map('intval', $skill->routing_department_ids ?? []);
+                $hasExplicitRules = $routingTagIds !== [] || $routingDepartmentIds !== [];
 
-        if ($agents->isEmpty()) {
+                if ($hasExplicitRules) {
+                    return ($routingTagIds !== [] && array_intersect($routingTagIds, $tagIds) !== [])
+                        || ($departmentId !== null && in_array($departmentId, $routingDepartmentIds, true));
+                }
+
+                return in_array(mb_strtolower($skill->name), $tagNames, true);
+            })
+            ->values();
+
+        if ($matchingSkills->isEmpty()) {
             return collect();
         }
 
-        // Load agents with their current open ticket count, sorted by load
-        $userModel = Escalated::userModel();
+        $agentSkillTable = Escalated::table('agent_skill');
+        $skillIds = $matchingSkills->pluck('id')->all();
 
-        return $userModel::whereIn((new $userModel)->getKeyName(), $agents->toArray())
-            ->withCount(['tickets as open_tickets_count' => function ($q) {
-                $q->whereNotIn('status', ['resolved', 'closed']);
-            }])
-            ->orderBy('open_tickets_count', 'asc')
-            ->get();
+        $agentSkillRows = DB::table($agentSkillTable)
+            ->whereIn('skill_id', $skillIds)
+            ->get(['user_id', 'skill_id', 'proficiency']);
+
+        if ($agentSkillRows->isEmpty()) {
+            return collect();
+        }
+
+        $userModel = Escalated::userModel();
+        $userKey = (new $userModel)->getKeyName();
+        $agentIds = $agentSkillRows->pluck('user_id')->map(fn ($id) => (int) $id)->unique()->values();
+
+        $openTicketCounts = Ticket::query()
+            ->open()
+            ->whereIn('assigned_to', $agentIds->all())
+            ->selectRaw('assigned_to, COUNT(*) as aggregate')
+            ->groupBy('assigned_to')
+            ->pluck('aggregate', 'assigned_to');
+
+        $rowsByUser = $agentSkillRows->groupBy('user_id');
+        $agents = $userModel::query()
+            ->whereIn($userKey, $agentIds->all())
+            ->get()
+            ->map(function ($agent) use ($rowsByUser, $openTicketCounts, $skillIds) {
+                $rows = $rowsByUser->get($agent->getKey(), collect());
+                $matchedSkillIds = $rows->pluck('skill_id')->map(fn ($id) => (int) $id)->intersect($skillIds)->unique();
+                $agent->matched_skill_count = $matchedSkillIds->count();
+                $agent->total_skill_proficiency = (int) $rows->sum('proficiency');
+                $agent->open_tickets_count = (int) ($openTicketCounts[$agent->getKey()] ?? 0);
+
+                return $agent;
+            })
+            ->filter(fn ($agent) => $agent->matched_skill_count > 0)
+            ->values();
+
+        return $agents->sort(function ($left, $right) {
+            return [
+                $right->matched_skill_count,
+                $right->total_skill_proficiency,
+                $left->open_tickets_count,
+                mb_strtolower((string) $left->name),
+            ] <=> [
+                $left->matched_skill_count,
+                $left->total_skill_proficiency,
+                $right->open_tickets_count,
+                mb_strtolower((string) $right->name),
+            ];
+        })->values();
     }
 }

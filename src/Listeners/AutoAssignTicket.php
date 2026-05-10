@@ -18,7 +18,7 @@ class AutoAssignTicket
 
         $ticket = $event->ticket;
 
-        if ($ticket->assigned_to === null && $ticket->department_id !== null) {
+        if ($ticket->assigned_to === null) {
             $this->assignmentService->autoAssign($ticket);
         }
     }

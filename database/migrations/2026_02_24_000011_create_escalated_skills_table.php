@@ -14,6 +14,8 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('slug')->unique();
+            $table->json('routing_tag_ids')->nullable();
+            $table->json('routing_department_ids')->nullable();
             $table->timestamps();
         });
 
