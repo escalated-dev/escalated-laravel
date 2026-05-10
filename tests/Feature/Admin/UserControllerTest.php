@@ -1,6 +1,5 @@
 <?php
 
-use Escalated\Laravel\Tests\Fixtures\TestUser;
 use Illuminate\Support\Facades\Gate;
 
 beforeEach(function () {
