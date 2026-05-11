@@ -13,12 +13,21 @@ class SsoService
         'sso_provider' => 'none',
         'sso_entity_id' => '',
         'sso_url' => '',
+        'sso_login_url' => '',
+        'sso_logout_url' => '',
+        'sso_metadata_url' => '',
         'sso_certificate' => '',
         'sso_attr_email' => 'email',
         'sso_attr_name' => 'name',
         'sso_attr_role' => 'role',
         'sso_jwt_secret' => '',
         'sso_jwt_algorithm' => 'HS256',
+        'sso_oauth_authorize_url' => '',
+        'sso_oauth_token_url' => '',
+        'sso_oauth_userinfo_url' => '',
+        'sso_oauth_client_id' => '',
+        'sso_oauth_client_secret' => '',
+        'sso_oauth_scopes' => 'openid profile email',
     ];
 
     /**
@@ -30,6 +39,21 @@ class SsoService
 
         foreach ($this->configKeys as $key => $default) {
             $config[$key] = EscalatedSettings::get($key, $default);
+        }
+
+        $legacyUrl = trim((string) ($config['sso_url'] ?? ''));
+        if ($legacyUrl !== '') {
+            if ($config['sso_login_url'] === '') {
+                $config['sso_login_url'] = $legacyUrl;
+            }
+
+            if ($config['sso_provider'] === 'oauth') {
+                if ($config['sso_oauth_authorize_url'] === '') {
+                    $config['sso_oauth_authorize_url'] = $legacyUrl;
+                }
+            } elseif ($config['sso_provider'] === 'saml' && $config['sso_metadata_url'] === '') {
+                $config['sso_metadata_url'] = $legacyUrl;
+            }
         }
 
         return $config;
