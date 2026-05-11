@@ -9,7 +9,10 @@ use Escalated\Laravel\Models\Ticket;
 
 class AssignmentService
 {
-    public function __construct(protected EscalatedManager $manager) {}
+    public function __construct(
+        protected EscalatedManager $manager,
+        protected SkillRoutingService $skillRoutingService,
+    ) {}
 
     public function assign(Ticket $ticket, int $agentId, ?Ticketable $causer = null): Ticket
     {
@@ -28,6 +31,11 @@ class AssignmentService
 
     public function autoAssign(Ticket $ticket): ?Ticket
     {
+        $matchedAgent = $this->skillRoutingService->findMatchingAgents($ticket)->first();
+        if ($matchedAgent) {
+            return $this->assign($ticket, $matchedAgent->getKey());
+        }
+
         if (! $ticket->department_id) {
             return null;
         }

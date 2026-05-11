@@ -11,6 +11,14 @@ class Skill extends Model
 {
     protected $guarded = ['id'];
 
+    protected function casts(): array
+    {
+        return [
+            'routing_tag_ids' => 'array',
+            'routing_department_ids' => 'array',
+        ];
+    }
+
     public function getTable(): string
     {
         return Escalated::table('skills');
@@ -32,6 +40,11 @@ class Skill extends Model
             if (empty($skill->slug)) {
                 $skill->slug = Str::slug($skill->name);
             }
+        });
+
+        static::saving(function (self $skill) {
+            $skill->routing_tag_ids = array_values(array_unique(array_map('intval', $skill->routing_tag_ids ?? [])));
+            $skill->routing_department_ids = array_values(array_unique(array_map('intval', $skill->routing_department_ids ?? [])));
         });
     }
 }
