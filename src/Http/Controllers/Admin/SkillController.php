@@ -138,7 +138,7 @@ class SkillController extends Controller
     protected function formPayload(): array
     {
         $userModel = Escalated::userModel();
-        $userInstance = new $userModel();
+        $userInstance = new $userModel;
         $userTable = $userInstance->getTable();
         $userKey = $userInstance->getKeyName();
 

@@ -3,8 +3,8 @@
 namespace Escalated\Laravel\Models;
 
 use Escalated\Laravel\Escalated;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Str;
 
 class Skill extends Model
