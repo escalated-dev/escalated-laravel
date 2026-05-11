@@ -120,6 +120,7 @@ describe('SSO Config', function () {
 
         expect($config['sso_provider'])->toBe('none');
         expect($config['sso_jwt_algorithm'])->toBe('HS256');
+        expect($config['sso_oauth_scopes'])->toBe('openid profile email');
     });
 
     it('reports disabled when provider is none', function () {
@@ -133,13 +134,28 @@ describe('SSO Config', function () {
 
     it('saves and retrieves config', function () {
         $this->service->saveConfig([
-            'sso_provider' => 'jwt',
-            'sso_jwt_secret' => 'my-secret',
+            'sso_provider' => 'oauth',
+            'sso_oauth_authorize_url' => 'https://id.example.com/oauth/authorize',
+            'sso_oauth_token_url' => 'https://id.example.com/oauth/token',
+            'sso_oauth_userinfo_url' => 'https://id.example.com/oauth/userinfo',
+            'sso_oauth_client_id' => 'client-id',
+            'sso_oauth_client_secret' => 'client-secret',
         ]);
 
         $config = $this->service->getConfig();
-        expect($config['sso_provider'])->toBe('jwt');
-        expect($config['sso_jwt_secret'])->toBe('my-secret');
+        expect($config['sso_provider'])->toBe('oauth');
+        expect($config['sso_oauth_authorize_url'])->toBe('https://id.example.com/oauth/authorize');
+        expect($config['sso_oauth_client_secret'])->toBe('client-secret');
+    });
+
+    it('hydrates provider specific urls from the legacy url setting', function () {
+        EscalatedSettings::set('sso_provider', 'saml');
+        EscalatedSettings::set('sso_url', 'https://id.example.com/sso');
+
+        $config = $this->service->getConfig();
+
+        expect($config['sso_login_url'])->toBe('https://id.example.com/sso');
+        expect($config['sso_metadata_url'])->toBe('https://id.example.com/sso');
     });
 });
 
