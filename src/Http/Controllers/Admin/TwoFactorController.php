@@ -68,9 +68,14 @@ class TwoFactorController extends Controller
             return back()->withErrors(['code' => 'Invalid verification code.']);
         }
 
+        $recoveryCodes = $twoFactor->recovery_codes ?? [];
         $twoFactor->update(['confirmed_at' => now()]);
 
-        return back()->with('success', 'Two-factor authentication enabled.');
+        return back()
+            ->with('success', 'Two-factor authentication enabled.')
+            ->with('two_factor_confirmed', [
+                'recovery_codes' => $recoveryCodes,
+            ]);
     }
 
     public function disable(Request $request)
