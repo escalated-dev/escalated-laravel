@@ -42,6 +42,26 @@ it('creates a skill with agent assignments and routing rules', function () {
     expect($skill->agents()->first()?->pivot?->proficiency)->toBe(5);
 });
 
+it('rejects assigning a user without agent or admin role', function () {
+    $admin = $this->createAdmin();
+    $nonAgent = $this->createTestUser([
+        'email' => 'just-a-user@example.com',
+        'is_agent' => false,
+        'is_admin' => false,
+    ]);
+
+    $this->actingAs($admin)
+        ->post(route('escalated.admin.skills.store'), [
+            'name' => 'Closed Door',
+            'agents' => [
+                ['user_id' => $nonAgent->id, 'proficiency' => 3],
+            ],
+        ])
+        ->assertSessionHasErrors('agents.0.user_id');
+
+    expect(Skill::query()->where('name', 'Closed Door')->exists())->toBeFalse();
+});
+
 it('updates skill routing rules and re-syncs agent proficiencies', function () {
     $admin = $this->createAdmin();
     $agentOne = $this->createAgent(['email' => 'skill-agent-1@example.com']);
