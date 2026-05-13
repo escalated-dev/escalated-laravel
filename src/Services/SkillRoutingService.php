@@ -2,59 +2,107 @@
 
 namespace Escalated\Laravel\Services;
 
+use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Escalated;
-use Escalated\Laravel\Models\Skill;
 use Escalated\Laravel\Models\Ticket;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class SkillRoutingService
 {
     /**
-     * Find agents with skills matching ticket tags, sorted by current load.
+     * Find agents whose skill assignments satisfy every skill required for this
+     * ticket's explicit routing rules, ordered by total proficiency (desc) then
+     * current open-ticket load (asc).
      *
-     * Maps ticket tags to skills by name, then finds agents
-     * who have those skills, ordered by current open ticket count (ascending).
+     * Required skills are those with a routing tag matching any ticket tag, or
+     * a routing department matching the ticket's department.
      */
     public function findMatchingAgents(Ticket $ticket): Collection
     {
-        // Get the ticket's tag names
-        $tagNames = $ticket->tags()->pluck('name')->toArray();
+        $ticketTagPivot = Escalated::table('ticket_tag');
 
-        if (empty($tagNames)) {
+        $tagIds = DB::table($ticketTagPivot)
+            ->where('ticket_id', $ticket->getKey())
+            ->pluck('tag_id')
+            ->all();
+
+        $routingTagsTable = Escalated::table('skill_routing_tags');
+        $routingDeptsTable = Escalated::table('skill_routing_departments');
+
+        $skillIdsFromTags = DB::table($routingTagsTable)
+            ->whereIn('tag_id', $tagIds)
+            ->pluck('skill_id')
+            ->all();
+
+        $skillIdsFromDepartments = [];
+
+        if ($ticket->department_id) {
+            $skillIdsFromDepartments = DB::table($routingDeptsTable)
+                ->where('department_id', $ticket->department_id)
+                ->pluck('skill_id')
+                ->all();
+        }
+
+        $requiredSkillIds = array_values(array_unique(array_merge(
+            $skillIdsFromTags,
+            $skillIdsFromDepartments,
+        )));
+
+        if ($requiredSkillIds === []) {
             return collect();
         }
 
-        // Find skills that match tag names
-        $skillIds = Skill::whereIn('name', $tagNames)->pluck('id')->toArray();
-
-        if (empty($skillIds)) {
-            return collect();
-        }
-
-        // Find agents with matching skills
         $agentSkillTable = Escalated::table('agent_skill');
-        $ticketsTable = Escalated::table('tickets');
+        $requiredCount = count($requiredSkillIds);
 
-        $agents = DB::table($agentSkillTable)
-            ->whereIn('skill_id', $skillIds)
-            ->select('user_id')
-            ->distinct()
-            ->get()
-            ->pluck('user_id');
+        $rows = DB::table($agentSkillTable)
+            ->selectRaw('user_id, SUM(proficiency) as proficiency_sum')
+            ->whereIn('skill_id', $requiredSkillIds)
+            ->groupBy('user_id')
+            ->havingRaw('COUNT(DISTINCT skill_id) = ?', [$requiredCount])
+            ->get();
 
-        if ($agents->isEmpty()) {
+        if ($rows->isEmpty()) {
             return collect();
         }
 
-        // Load agents with their current open ticket count, sorted by load
         $userModel = Escalated::userModel();
+        /** @var Model $probe */
+        $probe = new $userModel;
 
-        return $userModel::whereIn((new $userModel)->getKeyName(), $agents->toArray())
-            ->withCount(['tickets as open_tickets_count' => function ($q) {
-                $q->whereNotIn('status', ['resolved', 'closed']);
-            }])
-            ->orderBy('open_tickets_count', 'asc')
+        /** @var \Illuminate\Database\Eloquent\Collection<int, Model> $agents */
+        $agents = $userModel::query()
+            ->whereIn($probe->getKeyName(), $rows->pluck('user_id')->all())
+            ->withCount([
+                'escalatedAssignedTickets as open_tickets_count' => function ($q): void {
+                    $q->whereNotIn('status', [
+                        TicketStatus::Resolved,
+                        TicketStatus::Closed,
+                    ]);
+                },
+            ])
             ->get();
+
+        $weights = $rows->mapWithKeys(
+            fn ($row) => [(int) $row->user_id => (int) $row->proficiency_sum],
+        );
+
+        return $agents
+            ->sort(function ($a, $b) use ($weights): int {
+                $sumA = (int) ($weights[(int) $a->getKey()] ?? 0);
+                $sumB = (int) ($weights[(int) $b->getKey()] ?? 0);
+
+                if ($sumA !== $sumB) {
+                    return $sumB <=> $sumA;
+                }
+
+                $loadA = (int) ($a->open_tickets_count ?? 0);
+                $loadB = (int) ($b->open_tickets_count ?? 0);
+
+                return $loadA <=> $loadB;
+            })
+            ->values();
     }
 }

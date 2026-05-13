@@ -134,7 +134,9 @@ class DemoSeeder extends Seeder
         }
 
         foreach ($agents as $idx => $agent) {
-            $skills[$idx % count($skills)]->agents()->syncWithoutDetaching([$agent->id]);
+            $skills[$idx % count($skills)]->agents()->syncWithoutDetaching([
+                $agent->id => ['proficiency' => 3],
+            ]);
         }
     }
 
