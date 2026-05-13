@@ -10,6 +10,7 @@ use Escalated\Laravel\Models\Tag;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
@@ -48,13 +49,15 @@ class SkillController extends Controller
     {
         $validated = $this->validatePayload($request);
 
-        $skill = Skill::create([
-            'name' => $validated['name'],
-            'routing_tag_ids' => $validated['routing_tag_ids'] ?? [],
-            'routing_department_ids' => $validated['routing_department_ids'] ?? [],
-        ]);
+        DB::transaction(function () use ($validated): void {
+            $skill = Skill::create([
+                'name' => $validated['name'],
+                'routing_tag_ids' => $validated['routing_tag_ids'] ?? [],
+                'routing_department_ids' => $validated['routing_department_ids'] ?? [],
+            ]);
 
-        $this->syncAgents($skill, $validated['agents'] ?? []);
+            $this->syncAgents($skill, $validated['agents'] ?? []);
+        });
 
         return redirect()->route('escalated.admin.skills.index')
             ->with('success', 'Skill created.');
@@ -86,13 +89,15 @@ class SkillController extends Controller
     {
         $validated = $this->validatePayload($request, $skill);
 
-        $skill->update([
-            'name' => $validated['name'],
-            'routing_tag_ids' => $validated['routing_tag_ids'] ?? [],
-            'routing_department_ids' => $validated['routing_department_ids'] ?? [],
-        ]);
+        DB::transaction(function () use ($skill, $validated): void {
+            $skill->update([
+                'name' => $validated['name'],
+                'routing_tag_ids' => $validated['routing_tag_ids'] ?? [],
+                'routing_department_ids' => $validated['routing_department_ids'] ?? [],
+            ]);
 
-        $this->syncAgents($skill, $validated['agents'] ?? []);
+            $this->syncAgents($skill, $validated['agents'] ?? []);
+        });
 
         return redirect()->route('escalated.admin.skills.index')
             ->with('success', 'Skill updated.');
@@ -109,8 +114,10 @@ class SkillController extends Controller
     protected function validatePayload(Request $request, ?Skill $skill = null): array
     {
         $userModel = Escalated::userModel();
-        $userTable = (new $userModel)->getTable();
-        $userKey = (new $userModel)->getKeyName();
+        $userInstance = new $userModel;
+        $userTable = $userInstance->getTable();
+        $userKey = $userInstance->getKeyName();
+        $roleColumns = $this->userRoleColumns($userTable);
 
         return $request->validate([
             'name' => ['required', 'string', 'max:255', Rule::unique(Skill::make()->getTable(), 'name')->ignore($skill?->id)],
@@ -119,9 +126,53 @@ class SkillController extends Controller
             'routing_department_ids' => ['sometimes', 'array'],
             'routing_department_ids.*' => ['integer', Rule::exists(Department::make()->getTable(), 'id')],
             'agents' => ['sometimes', 'array'],
-            'agents.*.user_id' => ['required', 'integer', 'distinct', Rule::exists($userTable, $userKey)],
+            'agents.*.user_id' => [
+                'required',
+                'integer',
+                'distinct',
+                Rule::exists($userTable, $userKey),
+                $this->agentRoleRule($userModel, $userKey, $roleColumns),
+            ],
             'agents.*.proficiency' => ['required', 'integer', 'between:1,5'],
         ]);
+    }
+
+    /**
+     * Closure rule asserting the user_id refers to a user who qualifies as an
+     * agent (`is_agent` or `is_admin` truthy on the host's User model). Skips
+     * the check when neither column exists, matching formPayload()'s fallback.
+     */
+    protected function agentRoleRule(string $userModel, string $userKey, array $roleColumns): \Closure
+    {
+        return function ($attribute, $value, $fail) use ($userModel, $userKey, $roleColumns): void {
+            if ($roleColumns === []) {
+                return;
+            }
+
+            $user = $userModel::query()->where($userKey, $value)->first();
+            if ($user === null) {
+                return; // Rule::exists already reports this; avoid duplicate failure.
+            }
+
+            foreach ($roleColumns as $column) {
+                if (! empty($user->{$column})) {
+                    return;
+                }
+            }
+
+            $fail('The selected '.$attribute.' is not an agent.');
+        };
+    }
+
+    /**
+     * Which user-role columns exist on the host's users table (intersection of
+     * what we recognise and what is present). Matches formPayload()'s probe.
+     */
+    protected function userRoleColumns(string $userTable): array
+    {
+        $columns = Schema::getColumnListing($userTable);
+
+        return array_values(array_intersect(['is_agent', 'is_admin'], $columns));
     }
 
     protected function syncAgents(Skill $skill, array $agents): void
