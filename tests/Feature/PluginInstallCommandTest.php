@@ -61,7 +61,7 @@ function makeRsaKeypair(string $dir): array
     $pubPem = openssl_pkey_get_details($resource)['key'];
 
     $privPath = $dir.'/rsa-'.Str::random(6).'.priv';
-    $pubPath  = $dir.'/rsa-'.Str::random(6).'.pub';
+    $pubPath = $dir.'/rsa-'.Str::random(6).'.pub';
 
     file_put_contents($privPath, $privPem);
     file_put_contents($pubPath, $pubPem);
