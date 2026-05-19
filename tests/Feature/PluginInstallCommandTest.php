@@ -28,6 +28,47 @@ afterEach(function (): void {
     }
 });
 
+/**
+ * Generate a fresh RSA-2048 keypair and persist both halves to temp
+ * files. Test caller is responsible for deleting them (or just lets
+ * afterEach scrub the workspace, since we drop them there).
+ *
+ * Inlined here so no key material lives in git. Replaces an earlier
+ * pair of fixture files (tests/Fixtures/rsa.priv + rsa.pub) that
+ * were committed to a public repo and treated as compromised.
+ */
+function makeRsaKeypair(string $dir): array
+{
+    // PHP on Windows/Herd ships no openssl.cnf on PATH; openssl_pkey_new
+    // needs one for key generation. Drop a minimal config alongside the
+    // generated keypair so this works without a system-wide install.
+    $confPath = $dir.'/openssl-'.Str::random(6).'.cnf';
+    file_put_contents($confPath, "[req]\ndistinguished_name = req\n");
+
+    $opts = [
+        'config' => $confPath,
+        'private_key_bits' => 2048,
+        'private_key_type' => OPENSSL_KEYTYPE_RSA,
+    ];
+
+    $resource = openssl_pkey_new($opts);
+
+    if ($resource === false) {
+        throw new RuntimeException('openssl_pkey_new failed: '.openssl_error_string());
+    }
+
+    openssl_pkey_export($resource, $privPem, null, $opts);
+    $pubPem = openssl_pkey_get_details($resource)['key'];
+
+    $privPath = $dir.'/rsa-'.Str::random(6).'.priv';
+    $pubPath  = $dir.'/rsa-'.Str::random(6).'.pub';
+
+    file_put_contents($privPath, $privPem);
+    file_put_contents($pubPath, $pubPem);
+
+    return ['priv' => $privPath, 'pub' => $pubPath];
+}
+
 function makePluginZip(string $slug, string $body = "<?php // hello\n"): array
 {
     $tempZip = storage_path('app/test-artifact-'.Str::random(6).'.zip');
@@ -174,8 +215,9 @@ it('rejects re-installing into an existing directory unless --force', function (
 
 it('verifies a valid RSA signature against a configured public key', function (): void {
     $artifact = makePluginZip('hello');
+    $keypair = makeRsaKeypair($this->workspace);
 
-    $privKey = openssl_pkey_get_private('file://'.__DIR__.'/../Fixtures/rsa.priv');
+    $privKey = openssl_pkey_get_private('file://'.$keypair['priv']);
     openssl_sign($artifact['bytes'], $signature, $privKey, OPENSSL_ALGO_SHA256);
     $signatureB64 = base64_encode($signature);
 
@@ -193,7 +235,7 @@ it('verifies a valid RSA signature against a configured public key', function ()
 
     $this->artisan('escalated:plugin:install', [
         'slug' => 'acme/hello',
-        '--public-key' => __DIR__.'/../Fixtures/rsa.pub',
+        '--public-key' => $keypair['pub'],
     ])->assertSuccessful();
 
     expect(File::exists($this->workspace.'/hello/Plugin.php'))->toBeTrue();
@@ -203,6 +245,7 @@ it('verifies a valid RSA signature against a configured public key', function ()
 
 it('rejects an artifact whose RSA signature does not match the public key', function (): void {
     $artifact = makePluginZip('hello');
+    $keypair = makeRsaKeypair($this->workspace);
     $bogusSignature = base64_encode(str_repeat('x', 256));
 
     Http::fake([
@@ -219,7 +262,7 @@ it('rejects an artifact whose RSA signature does not match the public key', func
 
     $this->artisan('escalated:plugin:install', [
         'slug' => 'acme/hello',
-        '--public-key' => __DIR__.'/../Fixtures/rsa.pub',
+        '--public-key' => $keypair['pub'],
     ])->assertFailed();
 
     expect(File::exists($this->workspace.'/hello/Plugin.php'))->toBeFalse();
