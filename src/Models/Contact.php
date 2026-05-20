@@ -20,6 +20,7 @@ class Contact extends Model
 
     protected $casts = [
         'metadata' => 'array',
+        'marketing_opt_out_at' => 'datetime',
     ];
 
     public function getTable(): string
