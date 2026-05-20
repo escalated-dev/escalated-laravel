@@ -304,4 +304,32 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Newsletter system
+    |--------------------------------------------------------------------------
+    |
+    | Disabled by default. When false, no newsletter routes, controllers,
+    | services, scheduler hooks, or admin UI are registered. Re-enabling
+    | resumes cleanly — all data (lists, templates, deliveries) is preserved
+    | when the flag is flipped off.
+    |
+    */
+    'enable_newsletters' => env('ESCALATED_ENABLE_NEWSLETTERS', false),
+
+    'newsletters' => [
+        'default_from' => env('ESCALATED_NEWSLETTER_DEFAULT_FROM'),
+        'default_reply_to' => env('ESCALATED_NEWSLETTER_DEFAULT_REPLY_TO'),
+        'default_theme' => env('ESCALATED_NEWSLETTER_DEFAULT_THEME', 'default'),
+        'rate_limit_per_minute' => (int) env('ESCALATED_NEWSLETTER_RATE_LIMIT', 60),
+        'batch_size' => (int) env('ESCALATED_NEWSLETTER_BATCH_SIZE', 50),
+        'tracking_enabled' => filter_var(env('ESCALATED_NEWSLETTER_TRACKING_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
+        'auto_pause_bounce_rate' => 0.05,
+        'auto_pause_threshold' => 100,
+        'claim_timeout_minutes' => 10,
+        'brand_accent' => env('ESCALATED_NEWSLETTER_BRAND_ACCENT', '#2563eb'),
+        'brand_logo_url' => env('ESCALATED_NEWSLETTER_BRAND_LOGO_URL'),
+        'brand_physical_address' => env('ESCALATED_NEWSLETTER_BRAND_PHYSICAL_ADDRESS'),
+    ],
+
 ];
