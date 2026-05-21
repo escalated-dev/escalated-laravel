@@ -98,6 +98,37 @@ class EscalatedServiceProvider extends ServiceProvider
             $this->registerUiRoutes();
             $this->shareInertiaData();
         }
+
+        $this->registerNewsletterRoutes();
+    }
+
+    /**
+     * Register newsletter admin, public tracking, and ESP webhook routes.
+     *
+     * Routes are always registered so the configured middleware
+     * (EnsureNewslettersEnabled) can return 404 per-request when the feature
+     * flag is off. Admin routes still require the existing EnsureIsAdmin
+     * middleware; tracking and webhook routes are public.
+     */
+    protected function registerNewsletterRoutes(): void
+    {
+        if (! config('escalated.enable_newsletters', false)) {
+            return;
+        }
+
+        Route::middleware(['web', \Escalated\Laravel\Http\Middleware\EnsureIsAdmin::class])
+            ->prefix('admin/newsletters')
+            ->name('escalated.admin.newsletters.')
+            ->group(__DIR__.'/../routes/newsletter-admin.php');
+
+        Route::middleware('web')
+            ->prefix('escalated/n')
+            ->name('escalated.newsletters.public.')
+            ->group(__DIR__.'/../routes/newsletter-public.php');
+
+        Route::middleware('api')
+            ->prefix('escalated/webhooks/newsletter')
+            ->group(__DIR__.'/../routes/newsletter-webhooks.php');
     }
 
     /**
@@ -348,6 +379,7 @@ class EscalatedServiceProvider extends ServiceProvider
             CloseIdleChatsCommand::class,
             CleanupAbandonedChatsCommand::class,
             ProcessDelayedActionsCommand::class,
+            \Escalated\Laravel\Console\Commands\DispatchNewslettersCommand::class,
         ]);
     }
 
@@ -398,6 +430,9 @@ class EscalatedServiceProvider extends ServiceProvider
                 'prefix' => config('escalated.routes.prefix', 'support'),
                 'is_agent' => $user ? Gate::allows('escalated-agent', $user) : false,
                 'is_admin' => $user ? Gate::allows('escalated-admin', $user) : false,
+                'features' => [
+                    'newsletters' => (bool) config('escalated.enable_newsletters', false),
+                ],
             ];
 
             // Share guest tickets setting for frontend (check table exists first)
