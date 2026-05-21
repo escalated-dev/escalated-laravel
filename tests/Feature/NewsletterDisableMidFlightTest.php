@@ -1,6 +1,5 @@
 <?php
 
-use Escalated\Laravel\Mail\NewsletterMail;
 use Escalated\Laravel\Models\Contact;
 use Escalated\Laravel\Models\Newsletter\Newsletter;
 use Escalated\Laravel\Models\Newsletter\NewsletterDelivery;

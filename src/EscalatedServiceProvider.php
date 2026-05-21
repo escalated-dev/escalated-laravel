@@ -7,6 +7,7 @@ use Escalated\Laravel\Console\Commands\CheckSlaCommand;
 use Escalated\Laravel\Console\Commands\CleanupAbandonedChatsCommand;
 use Escalated\Laravel\Console\Commands\CloseIdleChatsCommand;
 use Escalated\Laravel\Console\Commands\CloseResolvedCommand;
+use Escalated\Laravel\Console\Commands\DispatchNewslettersCommand;
 use Escalated\Laravel\Console\Commands\EvaluateEscalationsCommand;
 use Escalated\Laravel\Console\Commands\ImportCommand;
 use Escalated\Laravel\Console\Commands\InstallCommand;
@@ -116,7 +117,7 @@ class EscalatedServiceProvider extends ServiceProvider
             return;
         }
 
-        Route::middleware(['web', \Escalated\Laravel\Http\Middleware\EnsureIsAdmin::class])
+        Route::middleware(['web', EnsureIsAdmin::class])
             ->prefix('admin/newsletters')
             ->name('escalated.admin.newsletters.')
             ->group(__DIR__.'/../routes/newsletter-admin.php');
@@ -379,7 +380,7 @@ class EscalatedServiceProvider extends ServiceProvider
             CloseIdleChatsCommand::class,
             CleanupAbandonedChatsCommand::class,
             ProcessDelayedActionsCommand::class,
-            \Escalated\Laravel\Console\Commands\DispatchNewslettersCommand::class,
+            DispatchNewslettersCommand::class,
         ]);
     }
 

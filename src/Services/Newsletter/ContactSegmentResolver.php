@@ -64,6 +64,7 @@ class ContactSegmentResolver
             if (str_starts_with($field, 'metadata.')) {
                 $key = substr($field, strlen('metadata.'));
                 $query->whereJsonContains("metadata->{$key}", $value);
+
                 continue;
             }
             $query->where($field, $op, $value);

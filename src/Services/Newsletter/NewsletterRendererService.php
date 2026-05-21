@@ -112,7 +112,7 @@ class NewsletterRendererService
         $unsubPrefix = $this->unsubscribeUrl($delivery);
         $viewPrefix = $this->viewInBrowserUrl($delivery);
 
-        $dom = new \DOMDocument();
+        $dom = new \DOMDocument;
         libxml_use_internal_errors(true);
         $dom->loadHTML('<?xml encoding="utf-8" ?>'.$html, LIBXML_NOERROR | LIBXML_NOWARNING);
         libxml_clear_errors();
@@ -128,6 +128,7 @@ class NewsletterRendererService
             $scheme = strtolower(parse_url($href, PHP_URL_SCHEME) ?? '');
             if (! in_array($scheme, self::ALLOWED_SCHEMES, true)) {
                 $node->setAttribute('href', '#');
+
                 continue;
             }
             if (in_array($scheme, ['mailto', 'tel'], true)) {
