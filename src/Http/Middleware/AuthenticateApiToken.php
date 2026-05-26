@@ -56,16 +56,17 @@ class AuthenticateApiToken
             return response()->json(['message' => 'Token owner not found.'], 401);
         }
 
-        // Verify the user still has the required gate permission
-        $agentGate = config('escalated.authorization.agent_gate', 'escalated-agent');
-        if (! Gate::forUser($user)->allows($agentGate)) {
-            Log::warning('API authentication failed: user no longer has agent access', [
-                'token_id' => $apiToken->id,
-                'user_id' => $user->getKey(),
-                'ip' => $request->ip(),
-            ]);
+        if (in_array($ability, ['agent', 'admin'], true)) {
+            $agentGate = config('escalated.authorization.agent_gate', 'escalated-agent');
+            if (! Gate::forUser($user)->allows($agentGate)) {
+                Log::warning('API authentication failed: user no longer has agent access', [
+                    'token_id' => $apiToken->id,
+                    'user_id' => $user->getKey(),
+                    'ip' => $request->ip(),
+                ]);
 
-            return response()->json(['message' => 'User no longer has agent access.'], 403);
+                return response()->json(['message' => 'User no longer has agent access.'], 403);
+            }
         }
 
         if ($ability === 'admin') {

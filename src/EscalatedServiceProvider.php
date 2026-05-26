@@ -272,6 +272,7 @@ class EscalatedServiceProvider extends ServiceProvider
         // REST API routes (token auth, no session)
         if (config('escalated.api.enabled', false)) {
             $this->loadRoutesFrom(__DIR__.'/../routes/api.php');
+            $this->loadRoutesFrom(__DIR__.'/../routes/mobile-api.php');
             $this->registerApiTokenRoutes();
         }
 

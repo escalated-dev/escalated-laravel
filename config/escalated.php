@@ -242,6 +242,7 @@ return [
         'rate_limit' => env('ESCALATED_API_RATE_LIMIT', 60),
         'token_expiry_days' => null,
         'prefix' => 'support/api/v1',
+        'mobile_prefix' => 'support/api/v1/mobile',
     ],
 
     /*
