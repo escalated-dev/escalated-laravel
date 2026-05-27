@@ -18,7 +18,7 @@ return [
         'success' => 'Escalated instalado com sucesso!',
         'nextSteps' => 'Próximos passos:',
         'stepTicketable' => 'Implemente a interface Ticketable no seu modelo User:',
-        'stepGates' => 'Defina os gates de autorização no seu AuthServiceProvider:',
+        'stepGates' => 'Defina os gates de autorização no seu AppServiceProvider / AuthServiceProvider:',
         'stepMigrate' => 'Execute as migrações:',
         'stepTailwind' => 'Adicione as páginas do Escalated à configuração de conteúdo do Tailwind:',
         'stepInertia' => 'Adicione o resolver de páginas e o plugin do Inertia no seu app.ts:',

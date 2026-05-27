@@ -57,7 +57,7 @@ class User extends Authenticatable implements Ticketable
 
 ## Define Authorization Gates
 
-In your `AppServiceProvider` or `AuthServiceProvider`:
+In `App\Providers\AppServiceProvider::boot()` for Laravel 12+, or `App\Providers\AuthServiceProvider::boot()` for Laravel 11 and earlier:
 
 ```php
 use Illuminate\Support\Facades\Gate;
@@ -67,7 +67,7 @@ Gate::define('escalated-admin', function ($user) {
 });
 
 Gate::define('escalated-agent', function ($user) {
-    return $user->is_agent || $user->is_admin; // Your agent check
+    return $user->is_agent; // Your agent check
 });
 ```
 

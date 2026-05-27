@@ -18,7 +18,7 @@ return [
         'success' => 'تم تثبيت Escalated بنجاح!',
         'nextSteps' => 'الخطوات التالية:',
         'stepTicketable' => 'نفّذ واجهة Ticketable على نموذج المستخدم الخاص بك:',
-        'stepGates' => 'حدّد بوابات التفويض في AuthServiceProvider الخاص بك:',
+        'stepGates' => 'حدّد بوابات التفويض في AppServiceProvider / AuthServiceProvider الخاص بك:',
         'stepMigrate' => 'شغّل عمليات الترحيل:',
         'stepTailwind' => 'أضف صفحات Escalated إلى إعدادات محتوى Tailwind الخاصة بك:',
         'stepInertia' => 'أضف محلل صفحات Inertia والإضافة في ملف app.ts الخاص بك:',

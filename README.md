@@ -82,13 +82,13 @@ class User extends Authenticatable implements Ticketable
 }
 ```
 
-Define authorization gates in a service provider:
+Define authorization gates in `App\Providers\AppServiceProvider::boot()` for Laravel 12+, or `App\Providers\AuthServiceProvider::boot()` for Laravel 11 and earlier:
 
 ```php
 use Illuminate\Support\Facades\Gate;
 
 Gate::define('escalated-admin', fn ($user) => $user->is_admin);
-Gate::define('escalated-agent', fn ($user) => $user->is_agent || $user->is_admin);
+Gate::define('escalated-agent', fn ($user) => $user->is_agent);
 ```
 
 Visit `/support` — you're live.
@@ -99,7 +99,7 @@ Escalated ships a Vue component library and default pages via the [`@escalated-d
 
 ### 1. Tailwind Content
 
-Add the Escalated package to your Tailwind `content` config so its classes aren't purged:
+For Tailwind CSS v3 and earlier, add the Escalated package to your Tailwind `content` config so its classes aren't purged:
 
 ```js
 // tailwind.config.js
@@ -109,9 +109,18 @@ content: [
 ],
 ```
 
+For Tailwind CSS v4+, add Escalated as a source in your app CSS file instead:
+
+```css
+/* resources/css/app.css */
+@source '../../node_modules/@escalated-dev/escalated/src/**/*.vue';
+```
+
+Adjust the relative path if your CSS file lives somewhere else.
+
 ### 2. Page Resolver
 
-Add the Escalated page resolver to your `app.ts`:
+If your app already has Inertia and Vue configured, add the Escalated page resolver to your existing `app.ts`:
 
 ```ts
 import { createInertiaApp } from '@inertiajs/vue3';

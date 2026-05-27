@@ -18,7 +18,7 @@ return [
         'success' => 'Escalated başarıyla kuruldu!',
         'nextSteps' => 'Sonraki adımlar:',
         'stepTicketable' => 'User modelinize Ticketable arayüzünü uygulayın:',
-        'stepGates' => 'AuthServiceProvider içinde yetkilendirme kapılarını tanımlayın:',
+        'stepGates' => 'AppServiceProvider / AuthServiceProvider içinde yetkilendirme kapılarını tanımlayın:',
         'stepMigrate' => 'Geçişleri çalıştırın:',
         'stepTailwind' => 'Tailwind içerik yapılandırmanıza Escalated sayfalarını ekleyin:',
         'stepInertia' => 'app.ts dosyanıza Inertia sayfa çözümleyicisini ve eklentisini ekleyin:',
