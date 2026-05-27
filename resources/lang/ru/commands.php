@@ -18,7 +18,7 @@ return [
         'success' => 'Escalated успешно установлен!',
         'nextSteps' => 'Следующие шаги:',
         'stepTicketable' => 'Реализуйте интерфейс Ticketable в вашей модели User:',
-        'stepGates' => 'Определите шлюзы авторизации в вашем AuthServiceProvider:',
+        'stepGates' => 'Определите шлюзы авторизации в вашем AppServiceProvider / AuthServiceProvider:',
         'stepMigrate' => 'Запустите миграции:',
         'stepTailwind' => 'Добавьте страницы Escalated в конфигурацию содержимого Tailwind:',
         'stepInertia' => 'Добавьте резолвер страниц Inertia и плагин в ваш app.ts:',

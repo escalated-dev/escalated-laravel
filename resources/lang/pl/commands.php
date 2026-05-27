@@ -18,7 +18,7 @@ return [
         'success' => 'Escalated został pomyślnie zainstalowany!',
         'nextSteps' => 'Następne kroki:',
         'stepTicketable' => 'Zaimplementuj interfejs Ticketable w swoim modelu User:',
-        'stepGates' => 'Zdefiniuj bramki autoryzacji w swoim AuthServiceProvider:',
+        'stepGates' => 'Zdefiniuj bramki autoryzacji w swoim AppServiceProvider / AuthServiceProvider:',
         'stepMigrate' => 'Uruchom migracje:',
         'stepTailwind' => 'Dodaj strony Escalated do konfiguracji zawartości Tailwind:',
         'stepInertia' => 'Dodaj resolver stron Inertia i wtyczkę w swoim pliku app.ts:',

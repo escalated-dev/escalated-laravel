@@ -18,7 +18,7 @@ return [
         'success' => 'Escalated가 성공적으로 설치되었습니다!',
         'nextSteps' => '다음 단계:',
         'stepTicketable' => 'User 모델에 Ticketable 인터페이스를 구현하세요:',
-        'stepGates' => 'AuthServiceProvider에서 인가 게이트를 정의하세요:',
+        'stepGates' => 'AppServiceProvider / AuthServiceProvider에서 인가 게이트를 정의하세요:',
         'stepMigrate' => '마이그레이션을 실행하세요:',
         'stepTailwind' => 'Tailwind 콘텐츠 설정에 Escalated 페이지를 추가하세요:',
         'stepInertia' => 'app.ts에 Inertia 페이지 리졸버와 플러그인을 추가하세요:',
