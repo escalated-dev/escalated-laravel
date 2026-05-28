@@ -1,5 +1,6 @@
 <?php
 
+use Escalated\Laravel\Escalated;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -14,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('ticket_id');
             $table->string('customer_session_id', 64)->unique();
-            $table->unsignedBigInteger('agent_id')->nullable()->index();
+            Escalated::userForeignColumn($table, 'agent_id')->nullable()->index();
             $table->string('status')->default('waiting')->index();
             $table->timestamp('started_at');
             $table->timestamp('ended_at')->nullable();

@@ -1,5 +1,6 @@
 <?php
 
+use Escalated\Laravel\Escalated;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -12,7 +13,7 @@ return new class extends Migration
 
         Schema::create($prefix.'audit_logs', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id')->nullable();
+            Escalated::userForeignColumn($table, 'user_id')->nullable();
             $table->string('action');
             $table->string('auditable_type');
             $table->unsignedBigInteger('auditable_id');

@@ -1,5 +1,6 @@
 <?php
 
+use Escalated\Laravel\Escalated;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -16,7 +17,7 @@ return new class extends Migration
             $table->string('subject');
             $table->string('channel')->default('internal'); // internal, email
             $table->string('status')->default('open'); // open, closed
-            $table->unsignedBigInteger('created_by')->nullable();
+            Escalated::userForeignColumn($table, 'created_by')->nullable();
             $table->timestamps();
 
             $table->foreign('ticket_id')
@@ -31,7 +32,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('side_conversation_id');
             $table->text('body');
-            $table->unsignedBigInteger('author_id')->nullable();
+            Escalated::userForeignColumn($table, 'author_id')->nullable();
             $table->timestamps();
 
             $table->foreign('side_conversation_id')

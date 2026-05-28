@@ -20,7 +20,7 @@ return new class extends Migration
             $table->integer('position')->default(0);
             $table->timestamp('last_triggered_at')->nullable();
             $table->integer('trigger_count')->default(0);
-            $table->unsignedBigInteger('created_by')->nullable();
+            Escalated::userForeignColumn($table, 'created_by')->nullable();
             $table->timestamps();
 
             $table->index('trigger_event');

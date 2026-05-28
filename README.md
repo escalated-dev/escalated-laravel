@@ -95,15 +95,30 @@ Visit `/support` — you're live.
 
 ### UUID / string user keys
 
-Escalated accepts both integer and string (UUID/ULID) host-app user keys — every
-user-id parameter is typed `int|string` and incoming user ids are never cast to
-`int`. If your `User` model uses a non-integer primary key, also make sure the
-package's user-referencing columns match. The columns Escalated creates for host
-users (`escalated_ticket_followers.user_id`, `escalated_agent_profiles.user_id`,
-`escalated_tickets.assigned_to` / `requester_id`, the role and skill pivots, etc.)
-default to `unsignedBigInteger`. Publish the migrations
-(`php artisan vendor:publish --tag=escalated-migrations`) and change those columns
-to `uuid`/`string` to match your user table before migrating.
+Escalated supports both integer and string (UUID/ULID) host-app user keys out of
+the box — no code or migration edits required:
+
+- Every user-id parameter is typed `int|string`, and incoming user ids are never
+  cast to `int` (so UUIDs aren't corrupted).
+- The user-referencing columns Escalated creates (`ticket_followers.user_id`,
+  `agent_profiles.user_id`, `tickets.assigned_to`/`requester_id`, the polymorphic
+  requester/author/causer columns, the role and skill pivots, etc.) are typed to
+  **match your user model's key type automatically**. At migration time Escalated
+  reflects the configured `user_model`: an auto-incrementing integer key yields
+  `unsignedBigInteger` columns; a `HasUuids`/`HasUlids`/string key yields
+  string-compatible columns.
+
+Override the detection with the `user_key_type` config (`'auto'` by default;
+`'bigint'`, `'uuid'`, `'ulid'`, or `'string'`):
+
+```php
+// config/escalated.php
+'user_key_type' => 'uuid',
+```
+
+> **Existing installs:** the column type is chosen when a migration runs. Apps
+> already migrated (e.g. as `bigint`) keep their columns; switching your user key
+> type after installing requires a manual migration.
 
 ## Frontend Integration
 

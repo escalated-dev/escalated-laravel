@@ -1,5 +1,6 @@
 <?php
 
+use Escalated\Laravel\Escalated;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -15,7 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->json('filters');
             // No DB-level FK to host `users` — see #88 / macros migration for rationale.
-            $table->unsignedBigInteger('user_id')->nullable();
+            Escalated::userForeignColumn($table, 'user_id')->nullable();
             $table->boolean('is_shared')->default(false);
             $table->boolean('is_default')->default(false);
             $table->integer('position')->default(0);

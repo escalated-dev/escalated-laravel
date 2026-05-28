@@ -1,5 +1,6 @@
 <?php
 
+use Escalated\Laravel\Escalated;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -24,7 +25,7 @@ return new class extends Migration
             $table->id();
             $table->string('email', 320);
             $table->string('name')->nullable();
-            $table->unsignedBigInteger('user_id')->nullable()
+            Escalated::userForeignColumn($table, 'user_id')->nullable()
                 ->comment('Linked host-app user id once the contact creates an account');
             $table->json('metadata')->nullable();
             $table->timestamps();
