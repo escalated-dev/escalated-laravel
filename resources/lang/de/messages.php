@@ -11,6 +11,7 @@ return [
         'tags_updated' => 'Tags aktualisiert.',
         'department_updated' => 'Abteilung aktualisiert.',
         'macro_applied' => 'Makro „:name" angewendet.',
+        'custom_action_dispatched' => 'Benutzerdefinierte Aktion ausgelöst.',
         'following' => 'Ticket wird verfolgt.',
         'unfollowed' => 'Ticket wird nicht mehr verfolgt.',
         'only_internal_notes_pinned' => 'Nur interne Notizen können angeheftet werden.',

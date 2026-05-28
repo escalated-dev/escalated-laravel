@@ -11,6 +11,7 @@ return [
         'tags_updated' => '标签已更新。',
         'department_updated' => '部门已更新。',
         'macro_applied' => '宏":name"已应用。',
+        'custom_action_dispatched' => '自定义操作已触发。',
         'following' => '正在关注工单。',
         'unfollowed' => '已取消关注工单。',
         'only_internal_notes_pinned' => '仅内部备注可以置顶。',

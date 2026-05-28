@@ -11,6 +11,7 @@ return [
         'tags_updated' => 'Tags bijgewerkt.',
         'department_updated' => 'Afdeling bijgewerkt.',
         'macro_applied' => 'Macro ":name" toegepast.',
+        'custom_action_dispatched' => 'Aangepaste actie uitgevoerd.',
         'following' => 'U volgt dit ticket.',
         'unfollowed' => 'U volgt dit ticket niet meer.',
         'only_internal_notes_pinned' => 'Alleen interne notities kunnen worden vastgepind.',
