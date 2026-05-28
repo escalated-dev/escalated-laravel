@@ -11,6 +11,7 @@ return [
         'tags_updated' => 'Etiketler güncellendi.',
         'department_updated' => 'Departman güncellendi.',
         'macro_applied' => '":name" makrosu uygulandı.',
+        'custom_action_dispatched' => 'Özel eylem tetiklendi.',
         'following' => 'Talebi takip ediyorsunuz.',
         'unfollowed' => 'Talep takibi bırakıldı.',
         'only_internal_notes_pinned' => 'Yalnızca dahili notlar sabitlenebilir.',

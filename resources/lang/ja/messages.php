@@ -11,6 +11,7 @@ return [
         'tags_updated' => 'タグを更新しました。',
         'department_updated' => '部門を更新しました。',
         'macro_applied' => 'マクロ「:name」を適用しました。',
+        'custom_action_dispatched' => 'カスタムアクションを実行しました。',
         'following' => 'チケットをフォローしています。',
         'unfollowed' => 'チケットのフォローを解除しました。',
         'only_internal_notes_pinned' => '内部メモのみピン留めできます。',

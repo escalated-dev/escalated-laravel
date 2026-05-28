@@ -177,12 +177,12 @@ class TicketController extends Controller
 
         if ($request->expectsJson()) {
             return response()->json([
-                'message' => 'Custom action dispatched.',
+                'message' => __('escalated::messages.ticket.custom_action_dispatched'),
                 'action' => $ticketAction->key(),
             ]);
         }
 
-        return back()->with('success', 'Custom action dispatched.');
+        return back()->with('success', __('escalated::messages.ticket.custom_action_dispatched'));
     }
 
     public function follow(Ticket $ticket, Request $request): RedirectResponse

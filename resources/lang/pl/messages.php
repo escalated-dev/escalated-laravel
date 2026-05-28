@@ -11,6 +11,7 @@ return [
         'tags_updated' => 'Tagi zaktualizowane.',
         'department_updated' => 'Dział zaktualizowany.',
         'macro_applied' => 'Makro ":name" zastosowane.',
+        'custom_action_dispatched' => 'Wykonano akcję niestandardową.',
         'following' => 'Obserwujesz zgłoszenie.',
         'unfollowed' => 'Przestałeś obserwować zgłoszenie.',
         'only_internal_notes_pinned' => 'Tylko notatki wewnętrzne mogą być przypięte.',

@@ -193,7 +193,7 @@ class TicketController extends Controller
         );
 
         return response()->json([
-            'message' => 'Custom action dispatched.',
+            'message' => __('escalated::messages.ticket.custom_action_dispatched'),
             'action' => $ticketAction->key(),
         ]);
     }

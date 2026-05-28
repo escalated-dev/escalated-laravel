@@ -11,6 +11,7 @@ return [
         'tags_updated' => 'تم تحديث الوسوم.',
         'department_updated' => 'تم تحديث القسم.',
         'macro_applied' => 'تم تطبيق الماكرو ":name".',
+        'custom_action_dispatched' => 'تم تنفيذ الإجراء المخصص.',
         'following' => 'أنت تتابع التذكرة.',
         'unfollowed' => 'تم إلغاء متابعة التذكرة.',
         'only_internal_notes_pinned' => 'يمكن تثبيت الملاحظات الداخلية فقط.',

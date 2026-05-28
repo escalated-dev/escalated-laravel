@@ -11,6 +11,7 @@ return [
         'tags_updated' => '태그가 업데이트되었습니다.',
         'department_updated' => '부서가 업데이트되었습니다.',
         'macro_applied' => '매크로 ":name"이(가) 적용되었습니다.',
+        'custom_action_dispatched' => '맞춤 작업이 실행되었습니다.',
         'following' => '티켓을 팔로우합니다.',
         'unfollowed' => '티켓 팔로우를 해제했습니다.',
         'only_internal_notes_pinned' => '내부 메모만 고정할 수 있습니다.',
