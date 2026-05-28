@@ -93,6 +93,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Ticket Actions
+    |--------------------------------------------------------------------------
+    |
+    | Register host-application actions that should appear as buttons on the
+    | agent ticket screen. When clicked, Escalated dispatches the
+    | TicketCustomActionTriggered event so the host app can handle the work in
+    | a normal Laravel listener.
+    |
+    | Each action may be a class implementing TicketAction or an array with:
+    | key, label, variant, confirmation, visible, enabled, and metadata.
+    |
+    */
+    'ticket_actions' => [
+        'actions' => [],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Priorities
     |--------------------------------------------------------------------------
     */

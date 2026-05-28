@@ -2,8 +2,10 @@
 
 namespace Escalated\Laravel\Http\Resources;
 
+use Escalated\Laravel\Services\TicketActionRegistry;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Route;
 
 class TicketResource extends JsonResource
 {
@@ -55,6 +57,17 @@ class TicketResource extends JsonResource
             ],
             'is_following' => $this->when(isset($this->is_following), $this->is_following ?? false),
             'followers_count' => $this->when(isset($this->followers_count), $this->followers_count ?? 0),
+            'custom_actions' => $request->user()
+                ? collect(app(TicketActionRegistry::class)->forTicket($this->resource, $request->user()))
+                    ->map(fn (array $action) => array_merge($action, [
+                        'url' => Route::has('escalated.api.tickets.custom-action')
+                            ? route('escalated.api.tickets.custom-action', [$this->reference, $action['key']])
+                            : null,
+                        'method' => 'post',
+                    ]))
+                    ->values()
+                    ->all()
+                : [],
             'resolved_at' => $this->resolved_at?->toIso8601String(),
             'closed_at' => $this->closed_at?->toIso8601String(),
             'created_at' => $this->created_at->toIso8601String(),

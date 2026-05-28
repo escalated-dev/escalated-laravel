@@ -29,6 +29,7 @@ Route::middleware([AuthenticateApiToken::class.':agent', ApiRateLimit::class])
             Route::post('/tickets/{ticket}/assign', [TicketController::class, 'assign'])->name('escalated.api.tickets.assign');
             Route::post('/tickets/{ticket}/follow', [TicketController::class, 'follow'])->name('escalated.api.tickets.follow');
             Route::post('/tickets/{ticket}/macro', [TicketController::class, 'applyMacro'])->name('escalated.api.tickets.macro');
+            Route::post('/tickets/{ticket}/actions/{action}', [TicketController::class, 'customAction'])->name('escalated.api.tickets.custom-action');
             Route::post('/tickets/{ticket}/tags', [TicketController::class, 'tags'])->name('escalated.api.tickets.tags');
         });
 
