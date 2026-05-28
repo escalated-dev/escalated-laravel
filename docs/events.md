@@ -77,3 +77,6 @@ Event::listen(TicketCreated::class, function ($event) {
 - `$event->user` — Agent who clicked the action
 - `$event->payload` — Optional array submitted by the UI or API
 - `$event->metadata` — Metadata from the configured action
+
+Escalated also records an internal note on the ticket when this event is
+handled.

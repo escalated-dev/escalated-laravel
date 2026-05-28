@@ -471,6 +471,8 @@ class EscalatedServiceProvider extends ServiceProvider
 
         Event::listen(Events\TicketEscalated::class, Listeners\SendEscalationNotification::class);
 
+        Event::listen(Events\TicketCustomActionTriggered::class, Listeners\RecordCustomActionInternalNote::class);
+
         // Webhook dispatch for all events
         $webhookEvents = [
             Events\TicketCreated::class,

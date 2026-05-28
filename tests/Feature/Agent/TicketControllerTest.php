@@ -200,6 +200,33 @@ it('dispatches custom ticket action events for configured actions', function () 
     });
 });
 
+it('records an internal note when a custom ticket action is triggered', function () {
+    $agent = $this->createAgent(['name' => 'Action Agent']);
+    $ticket = Ticket::factory()->create();
+
+    app(TicketActionRegistry::class)->register([
+        'key' => 'sync-crm',
+        'label' => 'Sync CRM',
+    ]);
+
+    Event::fake([InternalNoteAdded::class]);
+
+    $this->actingAs($agent)
+        ->post(route('escalated.agent.tickets.custom-action', [$ticket->reference, 'sync-crm']))
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('escalated_replies', [
+        'ticket_id' => $ticket->id,
+        'author_type' => $agent->getMorphClass(),
+        'author_id' => $agent->getKey(),
+        'body' => 'Custom action "sync-crm" was triggered by Action Agent.',
+        'is_internal_note' => true,
+        'type' => 'note',
+    ]);
+
+    Event::assertDispatched(InternalNoteAdded::class);
+});
+
 it('does not dispatch disabled custom ticket actions', function () {
     $agent = $this->createAgent();
     $ticket = Ticket::factory()->create();
