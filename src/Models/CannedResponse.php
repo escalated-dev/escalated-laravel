@@ -36,7 +36,7 @@ class CannedResponse extends Model
         return $query->where('is_shared', true);
     }
 
-    public function scopeForAgent($query, int $agentId)
+    public function scopeForAgent($query, int|string $agentId)
     {
         return $query->where(function ($q) use ($agentId) {
             $q->where('is_shared', true)->orWhere('created_by', $agentId);

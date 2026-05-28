@@ -24,7 +24,7 @@ class MacroService
             match ($type) {
                 'status' => $this->ticketService->changeStatus($ticket, TicketStatus::from($value), $causer),
                 'priority' => $this->ticketService->changePriority($ticket, TicketPriority::from($value), $causer),
-                'assign' => $this->assignmentService->assign($ticket, (int) $value, $causer),
+                'assign' => $this->assignmentService->assign($ticket, $value, $causer),
                 'tags' => $this->ticketService->addTags($ticket, (array) $value, $causer),
                 'department' => $this->ticketService->changeDepartment($ticket, (int) $value, $causer),
                 'reply' => $this->ticketService->reply($ticket, $causer, $value),

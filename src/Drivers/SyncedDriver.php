@@ -49,7 +49,7 @@ class SyncedDriver extends LocalDriver
         return $ticket;
     }
 
-    public function assignTicket(Ticket $ticket, int $agentId, ?Ticketable $causer = null): Ticket
+    public function assignTicket(Ticket $ticket, int|string $agentId, ?Ticketable $causer = null): Ticket
     {
         $ticket = parent::assignTicket($ticket, $agentId, $causer);
         $this->syncEvent('ticket.assigned', ['ticket' => $ticket->toArray(), 'agent_id' => $agentId]);

@@ -64,7 +64,7 @@ class PublicTicketsSettingsController extends Controller
 
         return [
             'guest_policy_mode' => EscalatedSettings::get('guest_policy_mode', 'unassigned'),
-            'guest_policy_user_id' => $userIdRaw === '' ? null : (int) $userIdRaw,
+            'guest_policy_user_id' => $userIdRaw === '' ? null : $userIdRaw,
             'guest_policy_signup_url_template' => EscalatedSettings::get(
                 'guest_policy_signup_url_template',
                 ''

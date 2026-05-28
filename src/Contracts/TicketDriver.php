@@ -16,7 +16,7 @@ interface TicketDriver
 
     public function transitionStatus(Ticket $ticket, TicketStatus $status, ?Ticketable $causer = null): Ticket;
 
-    public function assignTicket(Ticket $ticket, int $agentId, ?Ticketable $causer = null): Ticket;
+    public function assignTicket(Ticket $ticket, int|string $agentId, ?Ticketable $causer = null): Ticket;
 
     public function unassignTicket(Ticket $ticket, ?Ticketable $causer = null): Ticket;
 

@@ -67,7 +67,7 @@ class ChatSessionService
     /**
      * Assign an agent to a chat session.
      */
-    public function assignAgent(ChatSession $session, int $agentId): void
+    public function assignAgent(ChatSession $session, int|string $agentId): void
     {
         $session->update([
             'agent_id' => $agentId,
@@ -138,7 +138,7 @@ class ChatSessionService
     /**
      * Send a message in a chat session (creates a reply on the ticket).
      */
-    public function sendMessage(ChatSession $session, string $body, ?int $userId, bool $isAgent): Reply
+    public function sendMessage(ChatSession $session, string $body, int|string|null $userId, bool $isAgent): Reply
     {
         $replyData = [
             'ticket_id' => $session->ticket_id,

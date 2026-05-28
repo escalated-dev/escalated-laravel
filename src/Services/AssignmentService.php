@@ -14,7 +14,7 @@ class AssignmentService
         protected SkillRoutingService $skillRoutingService,
     ) {}
 
-    public function assign(Ticket $ticket, int $agentId, ?Ticketable $causer = null): Ticket
+    public function assign(Ticket $ticket, int|string $agentId, ?Ticketable $causer = null): Ticket
     {
         return $this->manager->driver()->assignTicket($ticket, $agentId, $causer);
     }
@@ -24,7 +24,7 @@ class AssignmentService
         return $this->manager->driver()->unassignTicket($ticket, $causer);
     }
 
-    public function reassign(Ticket $ticket, int $agentId, ?Ticketable $causer = null): Ticket
+    public function reassign(Ticket $ticket, int|string $agentId, ?Ticketable $causer = null): Ticket
     {
         return $this->manager->driver()->assignTicket($ticket, $agentId, $causer);
     }
@@ -57,7 +57,7 @@ class AssignmentService
         return $this->assign($ticket, $agentId);
     }
 
-    public function getAgentWorkload(int $agentId): array
+    public function getAgentWorkload(int|string $agentId): array
     {
         return [
             'open' => Ticket::assignedTo($agentId)->open()->count(),

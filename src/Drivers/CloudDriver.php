@@ -45,7 +45,7 @@ class CloudDriver implements TicketDriver
         return $this->hydrateTicket($response);
     }
 
-    public function assignTicket(Ticket $ticket, int $agentId, ?Ticketable $causer = null): Ticket
+    public function assignTicket(Ticket $ticket, int|string $agentId, ?Ticketable $causer = null): Ticket
     {
         $response = $this->apiClient->sendCommand('tickets.assign', [
             'reference' => $ticket->reference,

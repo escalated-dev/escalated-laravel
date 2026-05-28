@@ -199,17 +199,17 @@ class Ticket extends Model
         return $this->hasMany(Reply::class, 'ticket_id')->where('is_internal_note', true)->where('is_pinned', true);
     }
 
-    public function isFollowedBy(int $userId): bool
+    public function isFollowedBy(int|string $userId): bool
     {
         return $this->followers()->where('user_id', $userId)->exists();
     }
 
-    public function follow(int $userId): void
+    public function follow(int|string $userId): void
     {
         $this->followers()->syncWithoutDetaching([$userId]);
     }
 
-    public function unfollow(int $userId): void
+    public function unfollow(int|string $userId): void
     {
         $this->followers()->detach($userId);
     }
@@ -226,7 +226,7 @@ class Ticket extends Model
         return $query->whereNull('assigned_to');
     }
 
-    public function scopeAssignedTo($query, int $agentId)
+    public function scopeAssignedTo($query, int|string $agentId)
     {
         return $query->where('assigned_to', $agentId);
     }
