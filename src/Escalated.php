@@ -3,6 +3,8 @@
 namespace Escalated\Laravel;
 
 use Illuminate\Contracts\Database\Query\Builder;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Schema\ColumnDefinition;
 use Illuminate\Support\Facades\Schema;
 
 class Escalated
@@ -49,6 +51,70 @@ class Escalated
         $model = static::userModel();
 
         return new $model;
+    }
+
+    /**
+     * Resolve the column type to use for host-user foreign-key columns.
+     *
+     * Returns one of 'bigint' | 'uuid' | 'ulid' | 'string'. The
+     * `escalated.user_key_type` config defaults to 'auto', which reflects
+     * the configured user model's key type so the package's user-referencing
+     * columns match the host's user primary key — UUID/ULID/string-keyed
+     * apps then migrate cleanly with no manual edits.
+     */
+    public static function userKeyType(): string
+    {
+        $configured = config('escalated.user_key_type', 'auto');
+
+        if ($configured !== 'auto') {
+            return $configured;
+        }
+
+        $instance = static::newUserModel();
+
+        // Non-incrementing or non-integer keys (HasUuids/HasUlids/custom string)
+        // get a string-compatible column; classic auto-increment ids stay bigint.
+        if ($instance->getKeyType() !== 'int' || ! $instance->getIncrementing()) {
+            return 'string';
+        }
+
+        return 'bigint';
+    }
+
+    /**
+     * Add a host-user foreign-key column to a migration blueprint, typed to
+     * match the host's user primary key (see {@see userKeyType()}). Returns the
+     * column definition so callers can chain ->nullable()/->index()/etc.
+     */
+    public static function userForeignColumn(Blueprint $table, string $column): ColumnDefinition
+    {
+        return match (static::userKeyType()) {
+            'uuid' => $table->uuid($column),
+            'ulid' => $table->ulid($column),
+            'string' => $table->string($column),
+            default => $table->unsignedBigInteger($column),
+        };
+    }
+
+    /**
+     * Add a polymorphic relationship whose related model may be the host user
+     * (e.g. ticket requester, reply author, activity causer). The `_id` column
+     * is typed to match the host user key (see {@see userForeignColumn()}) so a
+     * UUID/string user id can be stored alongside Escalated's own integer ids.
+     * Mirrors Blueprint::morphs()/nullableMorphs() (type column + id column +
+     * composite index).
+     */
+    public static function userMorphs(Blueprint $table, string $name, bool $nullable = false): void
+    {
+        $typeColumn = $table->string("{$name}_type");
+        $idColumn = static::userForeignColumn($table, "{$name}_id");
+
+        if ($nullable) {
+            $typeColumn->nullable();
+            $idColumn->nullable();
+        }
+
+        $table->index(["{$name}_type", "{$name}_id"]);
     }
 
     /**

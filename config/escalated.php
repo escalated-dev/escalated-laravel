@@ -37,6 +37,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | User Key Type
+    |--------------------------------------------------------------------------
+    |
+    | Column type for the user-referencing foreign keys Escalated creates
+    | (ticket_followers.user_id, agent_profiles.user_id, tickets.assigned_to,
+    | etc.). Defaults to 'auto', which reflects your user model's key type so
+    | UUID/ULID/string-keyed user tables migrate cleanly with no edits. Set
+    | explicitly to 'bigint', 'uuid', 'ulid', or 'string' to override.
+    |
+    | Note: this affects columns at migration time. Apps that already migrated
+    | (e.g. as 'bigint') keep their existing columns; switching key types after
+    | install requires a manual migration.
+    |
+    */
+    'user_key_type' => env('ESCALATED_USER_KEY_TYPE', 'auto'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Hosted / Cloud Configuration
     |--------------------------------------------------------------------------
     */

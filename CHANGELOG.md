@@ -5,9 +5,10 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Fixed
-- Support UUID/string host-app user keys throughout. `SavedView::scopeForUser()` (and every other user-id parameter) now accepts `int|string` instead of hard-typing `int`, fixing a `TypeError` 500 (`Argument #2 ($userId) must be of type int, string given`) that hit apps with non-integer user keys when opening `/support/admin/tickets`. Incoming user ids are no longer cast to `int` anywhere (which corrupted UUIDs). See the README "UUID / string user keys" note for matching the package's user-referencing columns. (#109)
+- Support UUID/string host-app user keys throughout. `SavedView::scopeForUser()` (and every other user-id parameter) now accepts `int|string` instead of hard-typing `int`, fixing a `TypeError` 500 (`Argument #2 ($userId) must be of type int, string given`) that hit apps with non-integer user keys when opening `/support/admin/tickets`. Incoming user ids are no longer cast to `int` anywhere (which corrupted UUIDs). (#109)
 
 ### Added
+- Auto-detect the host user key type for the package's user-referencing migration columns. `Escalated::userForeignColumn()`/`userMorphs()` now type `user_id`/`assigned_to`/`requester`/`author`/`causer`/pivot columns to match the configured `user_model` — `unsignedBigInteger` for integer keys, string-compatible columns for `HasUuids`/`HasUlids`/string keys — so UUID/string-keyed apps migrate cleanly with no manual edits. Override via the new `escalated.user_key_type` config (`auto` by default). (#109)
 - Consume translation strings from the shared `escalated-dev/locale` Composer package so wording stays consistent across every Escalated host plugin. The `EscalatedServiceProvider` now stitches three layers under the `escalated` namespace: the central package (canonical), `lang/vendor/escalated/` in this repository (Laravel-specific overrides), and the host app's `lang/vendor/escalated/` (consumer overrides via `php artisan vendor:publish --tag=escalated-lang`). The package's own `resources/lang/` is retained as a fallback for environments where the central package has not yet been composer-installed.
 
 ## [1.2.1] - 2026-04-18

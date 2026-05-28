@@ -1,5 +1,6 @@
 <?php
 
+use Escalated\Laravel\Escalated;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -15,7 +16,7 @@ return new class extends Migration
             $table->foreignId('ticket_id')->unique()->constrained($prefix.'tickets')->cascadeOnDelete();
             $table->tinyInteger('rating');
             $table->text('comment')->nullable();
-            $table->nullableMorphs('rated_by');
+            Escalated::userMorphs($table, 'rated_by', true);
             $table->timestamp('created_at')->nullable();
         });
     }
