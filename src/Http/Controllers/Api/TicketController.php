@@ -5,12 +5,14 @@ namespace Escalated\Laravel\Http\Controllers\Api;
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Escalated;
+use Escalated\Laravel\Events\TicketCustomActionTriggered;
 use Escalated\Laravel\Http\Resources\TicketCollectionResource;
 use Escalated\Laravel\Http\Resources\TicketResource;
 use Escalated\Laravel\Models\Macro;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\AssignmentService;
 use Escalated\Laravel\Services\MacroService;
+use Escalated\Laravel\Services\TicketActionRegistry;
 use Escalated\Laravel\Services\TicketService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,6 +24,7 @@ class TicketController extends Controller
     public function __construct(
         protected TicketService $ticketService,
         protected AssignmentService $assignmentService,
+        protected TicketActionRegistry $ticketActions,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -167,6 +170,32 @@ class TicketController extends Controller
         $macroService->apply($macro, $ticket, $request->user());
 
         return response()->json(['message' => "Macro \"{$macro->name}\" applied."]);
+    }
+
+    public function customAction(Ticket $ticket, string $action, Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'payload' => 'sometimes|array',
+        ]);
+
+        $ticketAction = $this->ticketActions->find($action);
+
+        abort_unless($ticketAction, 404);
+        abort_unless($ticketAction->visible($ticket, $request->user()), 404);
+        abort_unless($ticketAction->enabled($ticket, $request->user()), 403);
+
+        TicketCustomActionTriggered::dispatch(
+            $ticket,
+            $ticketAction->key(),
+            $request->user(),
+            $validated['payload'] ?? [],
+            $ticketAction->metadata($ticket, $request->user()),
+        );
+
+        return response()->json([
+            'message' => 'Custom action dispatched.',
+            'action' => $ticketAction->key(),
+        ]);
     }
 
     public function tags(Ticket $ticket, Request $request): JsonResponse

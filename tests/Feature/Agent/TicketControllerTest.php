@@ -1,10 +1,13 @@
 <?php
 
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Events\InternalNoteAdded;
 use Escalated\Laravel\Events\ReplyCreated;
+use Escalated\Laravel\Events\TicketCustomActionTriggered;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Services\TicketActionRegistry;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 
@@ -37,6 +40,37 @@ it('shows a ticket for agent', function () {
     $this->actingAs($agent)
         ->get(route('escalated.agent.tickets.show', $ticket->reference))
         ->assertOk();
+});
+
+it('exposes configured custom actions on agent ticket show', function () {
+    $this->app->bind(EscalatedUiRenderer::class, fn () => new class implements EscalatedUiRenderer
+    {
+        public function render(string $page, array $props = []): mixed
+        {
+            return response()->json($props);
+        }
+    });
+
+    $agent = $this->createAgent();
+    $ticket = Ticket::factory()->create();
+
+    app(TicketActionRegistry::class)->register([
+        'key' => 'sync-crm',
+        'label' => 'Sync CRM',
+        'variant' => 'primary',
+        'confirmation' => 'Sync this ticket to the CRM?',
+        'metadata' => ['icon' => 'refresh-cw'],
+    ]);
+
+    $this->actingAs($agent)
+        ->get(route('escalated.agent.tickets.show', $ticket->reference))
+        ->assertOk()
+        ->assertJsonPath('customActions.0.key', 'sync-crm')
+        ->assertJsonPath('customActions.0.label', 'Sync CRM')
+        ->assertJsonPath('customActions.0.variant', 'primary')
+        ->assertJsonPath('customActions.0.confirmation', 'Sync this ticket to the CRM?')
+        ->assertJsonPath('customActions.0.metadata.icon', 'refresh-cw')
+        ->assertJsonPath('customActions.0.method', 'post');
 });
 
 it('agent can reply to ticket', function () {
@@ -137,6 +171,52 @@ it('agent can change priority', function () {
 
     $ticket->refresh();
     expect($ticket->priority)->toBe(TicketPriority::High);
+});
+
+it('dispatches custom ticket action events for configured actions', function () {
+    $agent = $this->createAgent();
+    $ticket = Ticket::factory()->create();
+
+    app(TicketActionRegistry::class)->register([
+        'key' => 'sync-crm',
+        'label' => 'Sync CRM',
+        'metadata' => fn (Ticket $ticket) => ['reference' => $ticket->reference],
+    ]);
+
+    Event::fake([TicketCustomActionTriggered::class]);
+
+    $this->actingAs($agent)
+        ->post(route('escalated.agent.tickets.custom-action', [$ticket->reference, 'sync-crm']), [
+            'payload' => ['force' => true],
+        ])
+        ->assertRedirect();
+
+    Event::assertDispatched(TicketCustomActionTriggered::class, function (TicketCustomActionTriggered $event) use ($ticket, $agent) {
+        return $event->ticket->is($ticket)
+            && $event->action === 'sync-crm'
+            && $event->user->getKey() === $agent->getKey()
+            && $event->payload === ['force' => true]
+            && $event->metadata === ['reference' => $ticket->reference];
+    });
+});
+
+it('does not dispatch disabled custom ticket actions', function () {
+    $agent = $this->createAgent();
+    $ticket = Ticket::factory()->create();
+
+    app(TicketActionRegistry::class)->register([
+        'key' => 'sync-crm',
+        'label' => 'Sync CRM',
+        'enabled' => false,
+    ]);
+
+    Event::fake([TicketCustomActionTriggered::class]);
+
+    $this->actingAs($agent)
+        ->post(route('escalated.agent.tickets.custom-action', [$ticket->reference, 'sync-crm']))
+        ->assertForbidden();
+
+    Event::assertNotDispatched(TicketCustomActionTriggered::class);
 });
 
 it('denies non-agent access to agent routes', function () {
