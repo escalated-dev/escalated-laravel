@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-05-29
+
+### Fixed
+- Upgrade safety: add a dedicated migration (`add_routing_columns_to_escalated_skills_table`) that backfills the `routing_tag_ids`/`routing_department_ids` columns. v1.4.0 added them by editing the original `create_escalated_skills_table` migration, which never re-runs on an existing install — so apps upgraded from an earlier version were missing the columns and **every skill create/edit failed** (`Skill::saving()` always writes them). The new migration is guarded by `Schema::hasColumn`, so it is a no-op on fresh installs.
+- `AssignTicketRequest` (Admin/Agent assign endpoints) again validates that `agent_id` exists (against the host user key), so an unknown/garbage id returns a clean `422` instead of a `500`. The `integer` rule remains dropped so UUID/string keys are accepted (matching `Api\TicketController`).
+- `AssignmentService::__construct()` `$skillRoutingService` is now optional (resolved from the container when omitted), restoring the v1.3.0 `new AssignmentService($manager)` single-argument signature for direct instantiation / subclasses.
+
+### Notes (upgrading from < 1.4.0)
+- **`int` → `int|string` widening (UUID/string user-key support).** The `TicketDriver` contract's `assignTicket()` and several public `Ticket` methods (`assign`, `follow`, `unfollow`, `isFollowedBy`, `scopeAssignedTo`) now accept `int|string`. If your app **implements `TicketDriver`** or **subclasses `Ticket`** and type-hinted these parameters as `int`, widen them to `int|string` to avoid a PHP "must be compatible" fatal. Apps that only *call* these methods are unaffected.
+- The `TicketAssigned` event's `$agentId` is now `int|string`; for UUID/string-keyed apps the broadcast `agent_id` is a string. Integer-keyed apps are unchanged.
+
 ## [1.4.0] - 2026-05-29
 
 ### Added
