@@ -331,7 +331,7 @@ class WorkflowEngine
                 $ticket->update(['assigned_to' => $agentId]);
             }
         } else {
-            $ticket->update(['assigned_to' => (int) $value]);
+            $ticket->update(['assigned_to' => $value]);
         }
     }
 
@@ -533,7 +533,7 @@ class WorkflowEngine
             match ($type) {
                 'status' => $ticket->update(['status' => TicketStatus::tryFrom($actionValue) ?? $ticket->status]),
                 'priority' => $ticket->update(['priority' => TicketPriority::tryFrom($actionValue) ?? $ticket->priority]),
-                'assign' => $ticket->update(['assigned_to' => (int) $actionValue]),
+                'assign' => $ticket->update(['assigned_to' => $actionValue]),
                 'tags' => $ticket->tags()->syncWithoutDetaching(
                     Tag::whereIn('name', (array) $actionValue)->pluck('id')->toArray()
                 ),

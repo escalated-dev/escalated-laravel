@@ -460,12 +460,12 @@ class Ticket extends Model
         return $this->fresh();
     }
 
-    public function assign(Model|int $user, ?Ticketable $causer = null): self
+    public function assign(Model|int|string $user, ?Ticketable $causer = null): self
     {
         $userModel = Escalated::userModel();
 
-        // If an ID is provided, attempt to find the user
-        if (is_int($user)) {
+        // If a scalar id (int or string/UUID) is provided, attempt to find the user.
+        if (! $user instanceof Model) {
             $userId = $user;
             $user = $userModel::find($userId);
 
@@ -479,9 +479,9 @@ class Ticket extends Model
             throw new \InvalidArgumentException("Assigned user must be an instance of {$userModel}");
         }
 
-        $this->update(['assigned_to' => $user->id]);
+        $this->update(['assigned_to' => $user->getKey()]);
 
-        $this->logActivity(ActivityType::Assigned, $causer, ['agent_id' => $user->id]);
+        $this->logActivity(ActivityType::Assigned, $causer, ['agent_id' => $user->getKey()]);
 
         Events\TicketAssigned::dispatch($this, $user->id, $causer);
 

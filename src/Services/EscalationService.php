@@ -64,7 +64,7 @@ class EscalationService
                 'change_priority' => $this->ticketService->changePriority(
                     $ticket, TicketPriority::from($action['value'])
                 ),
-                'assign_to' => $this->assignmentService->assign($ticket, (int) $action['value']),
+                'assign_to' => $this->assignmentService->assign($ticket, $action['value']),
                 'change_department' => $this->ticketService->changeDepartment($ticket, (int) $action['value']),
                 default => null,
             };
