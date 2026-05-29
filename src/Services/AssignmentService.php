@@ -11,7 +11,7 @@ class AssignmentService
 {
     public function __construct(
         protected EscalatedManager $manager,
-        protected SkillRoutingService $skillRoutingService,
+        protected ?SkillRoutingService $skillRoutingService = null,
     ) {}
 
     public function assign(Ticket $ticket, int|string $agentId, ?Ticketable $causer = null): Ticket
@@ -31,7 +31,8 @@ class AssignmentService
 
     public function autoAssign(Ticket $ticket): ?Ticket
     {
-        $matchedAgent = $this->skillRoutingService->findMatchingAgents($ticket)->first();
+        $skillRouting = $this->skillRoutingService ??= app(SkillRoutingService::class);
+        $matchedAgent = $skillRouting->findMatchingAgents($ticket)->first();
         if ($matchedAgent) {
             return $this->assign($ticket, $matchedAgent->getKey());
         }
