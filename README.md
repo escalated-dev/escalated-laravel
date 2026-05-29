@@ -17,6 +17,7 @@
 
 # Escalated for Laravel
 
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/escalated-dev/escalated-laravel.svg)](https://packagist.org/packages/escalated-dev/escalated-laravel)
 [![Tests](https://github.com/escalated-dev/escalated-laravel/actions/workflows/laravel.yml/badge.svg)](https://github.com/escalated-dev/escalated-laravel/actions/workflows/laravel.yml)
 [![FOSSA Status](https://app.fossa.com/api/projects/custom%2B62107%2Fgithub.com%2Fescalated-dev%2Fescalated-laravel.svg?type=shield)](https://app.fossa.com/projects/custom%2B62107%2Fgithub.com%2Fescalated-dev%2Fescalated-laravel?ref=badge_shield)
 [![Laravel](https://img.shields.io/badge/laravel-11.x--13.x-FF2D20?logo=laravel&logoColor=white)](https://laravel.com/)
