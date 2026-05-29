@@ -14,7 +14,8 @@ class AssignTicketRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'agent_id' => ['required', 'integer'],
+            // Accept both integer and string/UUID host-app user keys.
+            'agent_id' => ['required'],
         ];
     }
 }

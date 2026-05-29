@@ -1,5 +1,6 @@
 <?php
 
+use Escalated\Laravel\Escalated;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -21,7 +22,7 @@ return new class extends Migration
 
         Schema::create($prefix.'agent_skill', function (Blueprint $table) use ($prefix) {
             $table->id();
-            $table->unsignedBigInteger('user_id');
+            Escalated::userForeignColumn($table, 'user_id');
             $table->unsignedBigInteger('skill_id');
             $table->unsignedInteger('proficiency')->default(1); // 1-5
 
