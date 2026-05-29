@@ -1,8 +1,21 @@
 <?php
 
+use Escalated\Laravel\Contracts\TicketAttachable;
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Models\TicketContext;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
+
+beforeEach(function () {
+    Schema::create('ticket_context_projects', function ($table) {
+        $table->id();
+        $table->string('name');
+        $table->string('code')->nullable();
+        $table->timestamps();
+    });
+});
 
 it('generates a reference from the ticket id', function () {
     $ticket = Ticket::factory()->create();
@@ -73,3 +86,87 @@ it('determines if ticket is open', function () {
     expect($open->isOpen())->toBeTrue();
     expect($resolved->isOpen())->toBeFalse();
 });
+
+it('attaches contextual models to tickets', function () {
+    $ticket = Ticket::factory()->create();
+    $project = TicketContextProject::create([
+        'name' => 'Website rebuild',
+        'code' => 'WEB-24',
+    ]);
+
+    $context = $ticket->attachContext($project, [
+        'label' => 'Affected project',
+        'metadata' => ['source' => 'test'],
+    ]);
+    $duplicate = $ticket->attachContext($project);
+
+    expect($context)->toBeInstanceOf(TicketContext::class);
+    expect($duplicate->id)->toBe($context->id);
+    expect($ticket->contexts()->count())->toBe(1);
+    expect($ticket->contexts()->first()->attachable)->toBeInstanceOf(TicketContextProject::class);
+
+    expect($ticket->detachContext($project))->toBe(1);
+    expect($ticket->contexts()->count())->toBe(0);
+});
+
+it('exposes ticket context display attributes from the attachable contract', function () {
+    $ticket = Ticket::factory()->create();
+    $project = TicketContextProject::create([
+        'name' => 'Billing migration',
+        'code' => 'BILL',
+    ]);
+
+    $context = $ticket->attachContext($project)->load('attachable');
+
+    expect($context->display)->toBe([
+        'url' => 'https://example.test/projects/'.$project->id,
+        'title' => 'Billing migration',
+        'subtitle' => 'Project BILL',
+        'color' => '#2563eb',
+        'icon' => 'folder-kanban',
+        'badge' => 'Project',
+        'metadata' => ['code' => 'BILL'],
+    ]);
+});
+
+class TicketContextProject extends Model implements TicketAttachable
+{
+    protected $table = 'ticket_context_projects';
+
+    protected $guarded = ['id'];
+
+    public function ticketAttachableUrl(): ?string
+    {
+        return 'https://example.test/projects/'.$this->id;
+    }
+
+    public function ticketAttachableTitle(): string
+    {
+        return $this->name;
+    }
+
+    public function ticketAttachableSubtitle(): ?string
+    {
+        return 'Project '.$this->code;
+    }
+
+    public function ticketAttachableColor(): string
+    {
+        return '#2563eb';
+    }
+
+    public function ticketAttachableIcon(): string
+    {
+        return 'folder-kanban';
+    }
+
+    public function ticketAttachableBadge(): ?string
+    {
+        return 'Project';
+    }
+
+    public function ticketAttachableMetadata(): array
+    {
+        return ['code' => $this->code];
+    }
+}

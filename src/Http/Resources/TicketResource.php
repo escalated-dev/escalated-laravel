@@ -48,6 +48,15 @@ class TicketResource extends JsonResource
                 'causer' => $a->causer ? ['id' => $a->causer->getKey(), 'name' => $a->causer->name] : null,
                 'created_at' => $a->created_at->toIso8601String(),
             ])),
+            'contexts' => $this->whenLoaded('contexts', fn () => $this->contexts->map(fn ($context) => [
+                'id' => $context->id,
+                'type' => $context->attachable_type,
+                'key' => $context->attachable_id,
+                'label' => $context->label,
+                'display' => $context->display,
+                'metadata' => $context->metadata ?? [],
+                'sort_order' => $context->sort_order,
+            ])),
             'sla' => [
                 'first_response_due_at' => $this->first_response_due_at?->toIso8601String(),
                 'first_response_at' => $this->first_response_at?->toIso8601String(),

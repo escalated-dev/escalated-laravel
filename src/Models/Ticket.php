@@ -3,6 +3,7 @@
 namespace Escalated\Laravel\Models;
 
 use Escalated\Laravel\Contracts\Ticketable;
+use Escalated\Laravel\Contracts\TicketAttachable;
 use Escalated\Laravel\Database\Factories\TicketFactory;
 use Escalated\Laravel\Enums\ActivityType;
 use Escalated\Laravel\Enums\TicketChannel;
@@ -152,6 +153,11 @@ class Ticket extends Model
     public function activities(): HasMany
     {
         return $this->hasMany(TicketActivity::class, 'ticket_id');
+    }
+
+    public function contexts(): HasMany
+    {
+        return $this->hasMany(TicketContext::class, 'ticket_id')->orderBy('sort_order')->orderBy('id');
     }
 
     public function latestReply(): HasOne
@@ -532,6 +538,22 @@ class Ticket extends Model
         // ReplyCreated / InternalNoteAdded events are automatically dispatched by Reply::booted()
 
         return $reply;
+    }
+
+    public function attachContext(TicketAttachable $attachable, array $attributes = []): TicketContext
+    {
+        return $this->contexts()->firstOrCreate([
+            'attachable_type' => $attachable->getMorphClass(),
+            'attachable_id' => (string) $attachable->getKey(),
+        ], $attributes);
+    }
+
+    public function detachContext(TicketAttachable $attachable): int
+    {
+        return $this->contexts()
+            ->where('attachable_type', $attachable->getMorphClass())
+            ->where('attachable_id', (string) $attachable->getKey())
+            ->delete();
     }
 
     public function markResolved(?Ticketable $causer = null): self
