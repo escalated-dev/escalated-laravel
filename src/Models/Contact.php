@@ -54,7 +54,7 @@ class Contact extends Model
         ]);
     }
 
-    public function linkToUser(int $userId): self
+    public function linkToUser(int|string $userId): self
     {
         $this->user_id = $userId;
         $this->save();
@@ -66,7 +66,7 @@ class Contact extends Model
      * Link to a host-app user and back-stamp requester_id on all
      * prior tickets owned by this contact.
      */
-    public function promoteToUser(int $userId, string $userType = 'App\\Models\\User'): self
+    public function promoteToUser(int|string $userId, string $userType = 'App\\Models\\User'): self
     {
         $this->linkToUser($userId);
         Ticket::where('contact_id', $this->id)->update([

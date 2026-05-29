@@ -119,7 +119,7 @@ class ChatRoutingService
     /**
      * Get the number of active chat sessions for a specific agent.
      */
-    public function getAgentChatCount(int $agentId): int
+    public function getAgentChatCount(int|string $agentId): int
     {
         return ChatSession::active()->forAgent($agentId)->count();
     }

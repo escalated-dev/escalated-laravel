@@ -93,6 +93,18 @@ Gate::define('escalated-agent', fn ($user) => $user->is_agent);
 
 Visit `/support` — you're live.
 
+### UUID / string user keys
+
+Escalated accepts both integer and string (UUID/ULID) host-app user keys — every
+user-id parameter is typed `int|string` and incoming user ids are never cast to
+`int`. If your `User` model uses a non-integer primary key, also make sure the
+package's user-referencing columns match. The columns Escalated creates for host
+users (`escalated_ticket_followers.user_id`, `escalated_agent_profiles.user_id`,
+`escalated_tickets.assigned_to` / `requester_id`, the role and skill pivots, etc.)
+default to `unsignedBigInteger`. Publish the migrations
+(`php artisan vendor:publish --tag=escalated-migrations`) and change those columns
+to `uuid`/`string` to match your user table before migrating.
+
 ## Frontend Integration
 
 Escalated ships a Vue component library and default pages via the [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated) npm package.

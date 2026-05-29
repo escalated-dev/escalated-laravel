@@ -42,7 +42,7 @@ class AgentProfile extends Model
     /**
      * Get or create a profile for a user.
      */
-    public static function forUser(int $userId): self
+    public static function forUser(int|string $userId): self
     {
         return static::firstOrCreate(
             ['user_id' => $userId],

@@ -60,7 +60,7 @@ class ChatSession extends Model
         return $query->where('status', ChatSessionStatus::Ended->value);
     }
 
-    public function scopeForAgent($query, int $agentId)
+    public function scopeForAgent($query, int|string $agentId)
     {
         return $query->where('agent_id', $agentId);
     }

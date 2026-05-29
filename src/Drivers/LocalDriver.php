@@ -81,7 +81,7 @@ class LocalDriver implements TicketDriver
         return $ticket->transitionTo($newStatus, $causer);
     }
 
-    public function assignTicket(Ticket $ticket, int $agentId, ?Ticketable $causer = null): Ticket
+    public function assignTicket(Ticket $ticket, int|string $agentId, ?Ticketable $causer = null): Ticket
     {
         return $ticket->assign($agentId, $causer);
     }
