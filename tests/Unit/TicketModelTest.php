@@ -129,6 +129,35 @@ it('exposes ticket context display attributes from the attachable contract', fun
     ]);
 });
 
+it('limits ticket context attachments when attachable models are configured', function () {
+    config()->set('escalated.ticket_contexts.attachables', [
+        TicketContextProject::class,
+    ]);
+
+    $ticket = Ticket::factory()->create();
+    $project = TicketContextProject::create([
+        'name' => 'Configured project',
+        'code' => 'CFG',
+    ]);
+
+    expect($ticket->attachContext($project))->toBeInstanceOf(TicketContext::class);
+});
+
+it('rejects ticket context attachments that are not configured', function () {
+    config()->set('escalated.ticket_contexts.attachables', [
+        'another-model',
+    ]);
+
+    $ticket = Ticket::factory()->create();
+    $project = TicketContextProject::create([
+        'name' => 'Blocked project',
+        'code' => 'BLK',
+    ]);
+
+    expect(fn () => $ticket->attachContext($project))
+        ->toThrow(InvalidArgumentException::class, TicketContextProject::class.' is not configured as a ticket context attachable.');
+});
+
 class TicketContextProject extends Model implements TicketAttachable
 {
     protected $table = 'ticket_context_projects';

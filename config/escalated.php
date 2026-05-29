@@ -111,6 +111,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Ticket Contexts
+    |--------------------------------------------------------------------------
+    |
+    | Host-application models that may be attached to tickets as supporting
+    | context, such as projects, computers, vehicles, orders, subscriptions,
+    | or assets. Models listed here must implement TicketAttachable.
+    |
+    | Leave empty to allow any TicketAttachable model to be attached.
+    |
+    */
+    'ticket_contexts' => [
+        'attachables' => [
+            // App\Models\Project::class,
+            // App\Models\Computer::class,
+            // App\Models\Vehicle::class,
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Ticket Actions
     |--------------------------------------------------------------------------
     |

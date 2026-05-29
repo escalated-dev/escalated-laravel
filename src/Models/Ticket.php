@@ -542,6 +542,8 @@ class Ticket extends Model
 
     public function attachContext(TicketAttachable $attachable, array $attributes = []): TicketContext
     {
+        $this->ensureContextAttachableIsAllowed($attachable);
+
         return $this->contexts()->firstOrCreate([
             'attachable_type' => $attachable->getMorphClass(),
             'attachable_id' => (string) $attachable->getKey(),
@@ -554,6 +556,24 @@ class Ticket extends Model
             ->where('attachable_type', $attachable->getMorphClass())
             ->where('attachable_id', (string) $attachable->getKey())
             ->delete();
+    }
+
+    protected function ensureContextAttachableIsAllowed(TicketAttachable $attachable): void
+    {
+        $allowed = array_values(array_filter(config('escalated.ticket_contexts.attachables', [])));
+
+        if ($allowed === []) {
+            return;
+        }
+
+        $attachableClass = $attachable::class;
+        $attachableMorphClass = $attachable->getMorphClass();
+
+        if (in_array($attachableClass, $allowed, true) || in_array($attachableMorphClass, $allowed, true)) {
+            return;
+        }
+
+        throw new \InvalidArgumentException("{$attachableClass} is not configured as a ticket context attachable.");
     }
 
     public function markResolved(?Ticketable $causer = null): self

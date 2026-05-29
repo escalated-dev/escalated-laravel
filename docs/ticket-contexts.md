@@ -19,6 +19,27 @@ $context->attachable(); // MorphTo
 The attachable id is stored as a string so host applications can attach models
 with integer, UUID, ULID, or custom string primary keys.
 
+## Configuring Attachable Models
+
+Host applications can define which model classes are attachable in
+`config/escalated.php`:
+
+```php
+'ticket_contexts' => [
+    'attachables' => [
+        App\Models\Project::class,
+        App\Models\Computer::class,
+        App\Models\Vehicle::class,
+    ],
+],
+```
+
+Every configured model must implement `TicketAttachable`.
+
+When `attachables` is empty, Escalated allows any model implementing
+`TicketAttachable` to be attached. When one or more attachables are configured,
+`Ticket::attachContext()` rejects models outside that list.
+
 ## Attachable Contract
 
 Any model that should appear as ticket context must implement
