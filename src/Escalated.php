@@ -3,6 +3,8 @@
 namespace Escalated\Laravel;
 
 use Illuminate\Contracts\Database\Query\Builder;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Schema\ColumnDefinition;
 use Illuminate\Support\Facades\Schema;
@@ -72,13 +74,24 @@ class Escalated
 
         $instance = static::newUserModel();
 
-        // Non-incrementing or non-integer keys (HasUuids/HasUlids/custom string)
-        // get a string-compatible column; classic auto-increment ids stay bigint.
-        if ($instance->getKeyType() !== 'int' || ! $instance->getIncrementing()) {
-            return 'string';
+        // Classic auto-incrementing integer key → bigint (unchanged behavior).
+        if ($instance->getKeyType() === 'int' && $instance->getIncrementing()) {
+            return 'bigint';
         }
 
-        return 'bigint';
+        // Non-incrementing / string keys: prefer a native uuid/ulid column when
+        // the model uses the matching trait, otherwise a generic string column.
+        $traits = class_uses_recursive($instance);
+
+        if (in_array(HasUlids::class, $traits, true)) {
+            return 'ulid';
+        }
+
+        if (in_array(HasUuids::class, $traits, true)) {
+            return 'uuid';
+        }
+
+        return 'string';
     }
 
     /**

@@ -8,6 +8,24 @@ use Escalated\Laravel\Models\Ticket;
 // Regression coverage for host apps whose User model uses a UUID/string primary
 // key. The package must accept string user ids throughout without a TypeError.
 
+it('assigns a ticket via a string user id without a type error', function () {
+    $agent = $this->createAgent();
+    $ticket = Ticket::factory()->create();
+
+    // Passing the id as a string (as a UUID host would) must route through the
+    // find path and assign, not throw a TypeError on Ticket::assign().
+    $ticket->assign((string) $agent->getKey());
+
+    expect($ticket->fresh()->assigned_to)->toEqual($agent->getKey());
+});
+
+it('rejects an unknown string user id with a clean exception, not a TypeError', function () {
+    $ticket = Ticket::factory()->create();
+
+    expect(fn () => $ticket->assign('9f1c2d3e-0000-0000-0000-000000000000'))
+        ->toThrow(InvalidArgumentException::class);
+});
+
 it('scopes saved views for a string/uuid user id without a type error', function () {
     $uuid = '9f1c2d3e-4a5b-6c7d-8e9f-0a1b2c3d4e5f';
     $otherUuid = '00000000-0000-0000-0000-000000000000';

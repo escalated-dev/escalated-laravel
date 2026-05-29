@@ -136,8 +136,12 @@ class TicketController extends Controller
 
     public function assign(Ticket $ticket, Request $request): JsonResponse
     {
+        $userModel = Escalated::newUserModel();
+
         $validated = $request->validate([
-            'agent_id' => 'required|integer|exists:users,id',
+            // Accept both integer and string/UUID host-app user keys, validated
+            // against the host's actual user table + key column.
+            'agent_id' => ['required', Rule::exists($userModel->getTable(), $userModel->getKeyName())],
         ]);
 
         $this->assignmentService->assign($ticket, $validated['agent_id'], $request->user());
