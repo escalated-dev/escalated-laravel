@@ -16,7 +16,7 @@ class NewsletterDelivery extends Model
         'newsletter_id', 'contact_id', 'email_at_send', 'status',
         'tracking_token', 'sent_at', 'opened_at', 'last_clicked_at',
         'clicks_count', 'bounce_reason', 'failure_reason',
-        'attempt_count', 'claimed_at', 'is_test',
+        'attempt_count', 'claimed_at', 'next_attempt_at', 'is_test',
     ];
 
     protected $casts = [
@@ -24,6 +24,7 @@ class NewsletterDelivery extends Model
         'opened_at' => 'datetime',
         'last_clicked_at' => 'datetime',
         'claimed_at' => 'datetime',
+        'next_attempt_at' => 'datetime',
         'is_test' => 'boolean',
         'clicks_count' => 'integer',
         'attempt_count' => 'integer',

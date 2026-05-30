@@ -23,6 +23,7 @@ return new class extends Migration
             $table->text('failure_reason')->nullable();
             $table->unsignedSmallInteger('attempt_count')->default(0);
             $table->timestamp('claimed_at')->nullable();
+            $table->timestamp('next_attempt_at')->nullable()->comment('Earliest time a retry may be dispatched (exponential backoff)');
             $table->boolean('is_test')->default(false);
             $table->timestamp('created_at')->useCurrent();
 
