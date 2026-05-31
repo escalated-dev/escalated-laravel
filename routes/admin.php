@@ -34,6 +34,7 @@ use Escalated\Laravel\Http\Controllers\Admin\TagController;
 use Escalated\Laravel\Http\Controllers\Admin\TicketController;
 use Escalated\Laravel\Http\Controllers\Admin\TicketLinkController;
 use Escalated\Laravel\Http\Controllers\Admin\TicketMergeController;
+use Escalated\Laravel\Http\Controllers\Admin\TicketSubjectController;
 use Escalated\Laravel\Http\Controllers\Admin\TwoFactorController;
 use Escalated\Laravel\Http\Controllers\Admin\UserController;
 use Escalated\Laravel\Http\Controllers\Admin\WebhookController;
@@ -63,6 +64,8 @@ Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web'
             Route::post('/tickets/{ticket}/status', [TicketController::class, 'status'])->name('escalated.admin.tickets.status');
             Route::post('/tickets/{ticket}/priority', [TicketController::class, 'priority'])->name('escalated.admin.tickets.priority');
             Route::post('/tickets/{ticket}/tags', [TicketController::class, 'tags'])->name('escalated.admin.tickets.tags');
+            Route::post('/tickets/{ticket}/subjects', [TicketSubjectController::class, 'store'])->name('escalated.admin.tickets.subjects.store');
+            Route::delete('/tickets/{ticket}/subjects/{subject}', [TicketSubjectController::class, 'destroy'])->name('escalated.admin.tickets.subjects.destroy');
             Route::post('/tickets/{ticket}/department', [TicketController::class, 'department'])->name('escalated.admin.tickets.department');
             Route::post('/tickets/{ticket}/macro', [TicketController::class, 'applyMacro'])->name('escalated.admin.tickets.macro');
             Route::post('/tickets/{ticket}/follow', [TicketController::class, 'follow'])->name('escalated.admin.tickets.follow');

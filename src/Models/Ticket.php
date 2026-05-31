@@ -144,6 +144,62 @@ class Ticket extends Model
         return $this->morphMany(Attachment::class, 'attachable');
     }
 
+    /**
+     * The host-app entities this ticket is about (Project, Customer, …),
+     * each resolvable via `$link->subject`.
+     */
+    public function subjects(): HasMany
+    {
+        return $this->hasMany(TicketSubjectLink::class, 'ticket_id')->orderBy('position');
+    }
+
+    /**
+     * Attach a host model as a subject of this ticket (idempotent on the
+     * ticket+type+id key). Rejects types outside the configured allowlist when
+     * one is set (see config `escalated.ticket_subjects.types`).
+     */
+    public function attachSubject(Model $subject, ?string $role = null, ?int $position = null): TicketSubjectLink
+    {
+        $type = $subject->getMorphClass();
+
+        $allowed = (array) config('escalated.ticket_subjects.types', []);
+        if ($allowed !== [] && ! in_array($type, $allowed, true)) {
+            throw new \InvalidArgumentException("Subject type [{$type}] is not an allowed ticket subject.");
+        }
+
+        return $this->subjects()->updateOrCreate(
+            ['subject_type' => $type, 'subject_id' => (string) $subject->getKey()],
+            ['role' => $role, 'position' => $position ?? ($this->subjects()->max('position') + 1)],
+        );
+    }
+
+    /**
+     * Detach a host model from this ticket's subjects. Returns the number of
+     * links removed (0 or 1).
+     */
+    public function detachSubject(Model $subject): int
+    {
+        return $this->subjects()
+            ->where('subject_type', $subject->getMorphClass())
+            ->where('subject_id', (string) $subject->getKey())
+            ->delete();
+    }
+
+    /**
+     * Replace this ticket's subjects with the given host models, preserving
+     * order. Accepts an iterable of Models or [Model, role] pairs.
+     */
+    public function syncSubjects(iterable $subjects): void
+    {
+        $this->subjects()->delete();
+
+        $position = 0;
+        foreach ($subjects as $entry) {
+            [$subject, $role] = is_array($entry) ? [$entry[0], $entry[1] ?? null] : [$entry, null];
+            $this->attachSubject($subject, $role, $position++);
+        }
+    }
+
     public function tags(): BelongsToMany
     {
         return $this->belongsToMany(Tag::class, Escalated::table('ticket_tag'), 'ticket_id', 'tag_id');

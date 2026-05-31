@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- Ticket subjects: attach host-app entities (Project, Customer, asset, …) that a ticket is *about*, distinct from the requester. Models implement the new `Escalated\Laravel\Contracts\TicketSubject` contract (or use the `PresentsAsTicketSubject` trait) to expose a title/subtitle/url/color/icon for the ticket UI. A ticket can reference several subjects via `attachSubject()`/`detachSubject()`/`syncSubjects()`; they're serialized on `TicketResource` as a `subjects[]` array. Agent attach/detach endpoints resolve types strictly against the new `escalated.ticket_subjects.types` allowlist. `subject_id` is stored as a string so integer/UUID/string-keyed host models all work. (#89)
+
 ## [1.4.1] - 2026-05-29
 
 ### Fixed

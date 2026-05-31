@@ -341,4 +341,27 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Ticket subjects
+    |--------------------------------------------------------------------------
+    |
+    | Host-app models a ticket can be *about* (a Project, Customer, asset, …),
+    | distinct from the requester. Attached models should implement
+    | Escalated\Laravel\Contracts\TicketSubject (or use the
+    | PresentsAsTicketSubject trait) so they render in the ticket UI.
+    |
+    | `types` is the allowlist of morph types (class names or morph-map
+    | aliases) the agent API is permitted to attach — this prevents arbitrary
+    | class resolution from request input. Leave empty to disable attaching via
+    | the API; programmatic $ticket->attachSubject($model) still works.
+    |
+    */
+    'ticket_subjects' => [
+        'types' => [
+            // \App\Models\Project::class,
+            // 'project' => \App\Models\Project::class,
+        ],
+    ],
+
 ];

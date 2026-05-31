@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Http\Resources;
 
+use Escalated\Laravel\Contracts\TicketSubject;
 use Escalated\Laravel\Services\TicketActionRegistry;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -40,6 +41,24 @@ class TicketResource extends JsonResource
                 'name' => $tag->name,
                 'color' => $tag->color,
             ])),
+            'subjects' => $this->whenLoaded('subjects', fn () => $this->subjects->map(function ($link) {
+                $subject = $link->subject;
+                $presents = $subject instanceof TicketSubject;
+
+                return [
+                    'type' => $link->subject_type,
+                    'id' => $link->subject_id,
+                    'role' => $link->role,
+                    'title' => $presents
+                        ? $subject->ticketSubjectTitle()
+                        : (is_string($subject?->name ?? null) ? $subject->name : class_basename($link->subject_type).' #'.$link->subject_id),
+                    'subtitle' => $presents ? $subject->ticketSubjectSubtitle() : null,
+                    'url' => $presents ? $subject->ticketSubjectUrl() : null,
+                    'color' => $presents ? $subject->ticketSubjectColor() : null,
+                    'icon' => $presents ? $subject->ticketSubjectIcon() : null,
+                    'missing' => $subject === null,
+                ];
+            })->values()),
             'replies' => $this->whenLoaded('replies', fn () => ReplyResource::collection($this->replies)),
             'activities' => $this->whenLoaded('activities', fn () => $this->activities->map(fn ($a) => [
                 'id' => $a->id,
