@@ -29,13 +29,26 @@ class ReplyCreated implements ShouldBroadcastNow
 
     public function broadcastWith(): array
     {
+        // The author is a polymorphic Ticketable (author_type/author_id), not a
+        // `user` — read it from the `author` relation. Prefer the Ticketable
+        // display name so both Users and Contacts resolve, falling back to a
+        // plain `name` attribute.
+        $author = $this->reply->author;
+        $authorName = $author?->ticketable_name ?? $author?->name;
+
         return [
             'reply_id' => $this->reply->id,
             'ticket_id' => $this->reply->ticket_id,
             'body' => $this->reply->body,
             'is_internal_note' => (bool) $this->reply->is_internal_note,
-            'author_id' => $this->reply->user_id,
-            'author_name' => $this->reply->user?->name ?? null,
+            'author_id' => $author?->getKey(),
+            'author_name' => $authorName,
+            // Nested shape mirrors ReplyResource so a real-time consumer can
+            // render reply.author.name without a server round-trip.
+            'author' => $author ? [
+                'id' => $author->getKey(),
+                'name' => $authorName,
+            ] : null,
             'created_at' => $this->reply->created_at?->toISOString(),
         ];
     }
