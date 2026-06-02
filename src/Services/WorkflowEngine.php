@@ -308,6 +308,7 @@ class WorkflowEngine
             'apply_macro' => $this->actionApplyMacro($ticket, $value),
             'close_ticket' => $this->actionCloseTicket($ticket),
             'snooze_ticket' => $this->actionSnoozeTicket($ticket, $value),
+            'add_follower' => $this->actionAddFollower($ticket, $value),
             default => Log::warning("Escalated workflow: unknown action type '{$type}'", [
                 'workflow_id' => $workflow->id,
                 'ticket_id' => $ticket->id,
@@ -333,6 +334,24 @@ class WorkflowEngine
         } else {
             $ticket->update(['assigned_to' => $value]);
         }
+    }
+
+    /**
+     * Add a host-app user as a follower of the ticket. The value is a host
+     * user key; it is trimmed and skipped when empty/"0", mirroring
+     * assign_agent. Ticket::follow() uses syncWithoutDetaching, so adding the
+     * same follower twice is a harmless no-op.
+     */
+    protected function actionAddFollower(Ticket $ticket, mixed $value): void
+    {
+        $userId = is_array($value) ? ($value['user_id'] ?? null) : $value;
+        $userId = is_string($userId) ? trim($userId) : $userId;
+
+        if ($userId === null || $userId === '' || $userId === '0' || $userId === 0) {
+            return;
+        }
+
+        $ticket->follow($userId);
     }
 
     protected function findLeastBusyAgent(): ?int

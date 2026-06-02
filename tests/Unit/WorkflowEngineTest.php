@@ -273,6 +273,51 @@ it('executes add_tag action', function () {
     expect($ticket->fresh()->tags->pluck('name')->toArray())->toContain('escalated-billing');
 });
 
+it('executes add_follower action', function () {
+    $ticket = Ticket::factory()->create();
+    $follower = $this->createTestUser();
+    $workflow = Workflow::create([
+        'name' => 'Test',
+        'trigger_event' => 'ticket.created',
+        'conditions' => [],
+        'actions' => [],
+        'is_active' => true,
+        'position' => 0,
+    ]);
+
+    $this->engine->executeAction($workflow, $ticket, [
+        'type' => 'add_follower',
+        'value' => $follower->getKey(),
+    ]);
+
+    expect($ticket->fresh()->isFollowedBy($follower->getKey()))->toBeTrue();
+
+    // Idempotent: following again must not create a duplicate pivot row.
+    $this->engine->executeAction($workflow, $ticket, [
+        'type' => 'add_follower',
+        'value' => $follower->getKey(),
+    ]);
+
+    expect($ticket->followers()->count())->toBe(1);
+});
+
+it('skips add_follower with an empty user id', function () {
+    $ticket = Ticket::factory()->create();
+    $workflow = Workflow::create([
+        'name' => 'Test',
+        'trigger_event' => 'ticket.created',
+        'conditions' => [],
+        'actions' => [],
+        'is_active' => true,
+        'position' => 0,
+    ]);
+
+    $this->engine->executeAction($workflow, $ticket, ['type' => 'add_follower', 'value' => '']);
+    $this->engine->executeAction($workflow, $ticket, ['type' => 'add_follower', 'value' => '0']);
+
+    expect($ticket->followers()->count())->toBe(0);
+});
+
 it('executes remove_tag action', function () {
     $ticket = Ticket::factory()->create();
     $tag = Tag::create(['name' => 'remove-me', 'color' => '#000']);
