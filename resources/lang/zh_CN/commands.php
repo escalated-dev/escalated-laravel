@@ -18,7 +18,7 @@ return [
         'success' => 'Escalated 安装成功！',
         'nextSteps' => '后续步骤：',
         'stepTicketable' => '在 User 模型上实现 Ticketable 接口：',
-        'stepGates' => '在 AuthServiceProvider 中定义授权门：',
+        'stepGates' => '在 AppServiceProvider / AuthServiceProvider 中定义授权门：',
         'stepMigrate' => '运行数据库迁移：',
         'stepTailwind' => '将 Escalated 页面添加到 Tailwind 内容配置中：',
         'stepInertia' => '在 app.ts 中添加 Inertia 页面解析器和插件：',

@@ -41,7 +41,7 @@ class WorkflowController extends Controller
             'trigger_event' => 'required|string',
             'conditions' => 'required|array',
             'actions' => 'required|array|min:1',
-            'actions.*.type' => 'required|string|in:assign_agent,change_status,change_priority,add_tag,remove_tag,move_department,add_internal_note,send_notification,send_webhook,apply_macro,close_ticket,snooze_ticket,delay',
+            'actions.*.type' => 'required|string|in:assign_agent,change_status,change_priority,add_tag,remove_tag,move_department,add_internal_note,send_notification,send_webhook,apply_macro,close_ticket,snooze_ticket,delay,add_follower',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
@@ -84,7 +84,7 @@ class WorkflowController extends Controller
             'trigger_event' => 'required|string',
             'conditions' => 'required|array',
             'actions' => 'required|array|min:1',
-            'actions.*.type' => 'required|string|in:assign_agent,change_status,change_priority,add_tag,remove_tag,move_department,add_internal_note,send_notification,send_webhook,apply_macro,close_ticket,snooze_ticket,delay',
+            'actions.*.type' => 'required|string|in:assign_agent,change_status,change_priority,add_tag,remove_tag,move_department,add_internal_note,send_notification,send_webhook,apply_macro,close_ticket,snooze_ticket,delay,add_follower',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
         ]);

@@ -10,7 +10,7 @@ class CapacityService
     /**
      * Check if an agent can accept a new ticket.
      */
-    public function canAcceptTicket(int $userId, string $channel = 'default'): bool
+    public function canAcceptTicket(int|string $userId, string $channel = 'default'): bool
     {
         $capacity = AgentCapacity::firstOrCreate(
             ['user_id' => $userId, 'channel' => $channel],
@@ -23,7 +23,7 @@ class CapacityService
     /**
      * Increment the agent's current load.
      */
-    public function incrementLoad(int $userId, string $channel = 'default'): void
+    public function incrementLoad(int|string $userId, string $channel = 'default'): void
     {
         $capacity = AgentCapacity::firstOrCreate(
             ['user_id' => $userId, 'channel' => $channel],
@@ -36,7 +36,7 @@ class CapacityService
     /**
      * Decrement the agent's current load.
      */
-    public function decrementLoad(int $userId, string $channel = 'default'): void
+    public function decrementLoad(int|string $userId, string $channel = 'default'): void
     {
         $capacity = AgentCapacity::firstOrCreate(
             ['user_id' => $userId, 'channel' => $channel],

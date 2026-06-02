@@ -1,5 +1,6 @@
 <?php
 
+use Escalated\Laravel\Escalated;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -12,7 +13,7 @@ return new class extends Migration
 
         Schema::create($prefix.'agent_capacity', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id');
+            Escalated::userForeignColumn($table, 'user_id');
             $table->string('channel')->default('default');
             $table->unsignedInteger('max_concurrent')->default(10);
             $table->unsignedInteger('current_count')->default(0);

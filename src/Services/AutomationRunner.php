@@ -108,7 +108,7 @@ class AutomationRunner
                         break;
 
                     case 'assign':
-                        $ticket->update(['assigned_to' => (int) $value]);
+                        $ticket->update(['assigned_to' => $value]);
                         break;
 
                     case 'add_tag':

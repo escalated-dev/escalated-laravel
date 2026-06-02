@@ -1,5 +1,6 @@
 <?php
 
+use Escalated\Laravel\Escalated;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -32,7 +33,7 @@ return new class extends Migration
             $table->string('slug')->unique();
             $table->longText('body')->nullable();
             $table->string('status')->default('draft');
-            $table->unsignedBigInteger('author_id')->nullable();
+            Escalated::userForeignColumn($table, 'author_id')->nullable();
             $table->unsignedInteger('view_count')->default(0);
             $table->unsignedInteger('helpful_count')->default(0);
             $table->unsignedInteger('not_helpful_count')->default(0);

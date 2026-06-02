@@ -15,7 +15,7 @@ class TicketAssigned implements ShouldBroadcastNow
 
     public function __construct(
         public Ticket $ticket,
-        public int $agentId,
+        public int|string $agentId,
         public mixed $causer = null,
     ) {}
 

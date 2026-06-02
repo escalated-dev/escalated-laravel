@@ -11,6 +11,7 @@ return [
         'tags_updated' => 'Étiquettes mises à jour.',
         'department_updated' => 'Département mis à jour.',
         'macro_applied' => 'Macro « :name » appliquée.',
+        'custom_action_dispatched' => 'Action personnalisée déclenchée.',
         'following' => 'Vous suivez le ticket.',
         'unfollowed' => 'Vous ne suivez plus le ticket.',
         'only_internal_notes_pinned' => 'Seules les notes internes peuvent être épinglées.',

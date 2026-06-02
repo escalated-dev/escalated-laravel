@@ -145,7 +145,7 @@ class ReportingService
     /**
      * Get detailed agent metrics for a specific agent.
      */
-    public function getAgentMetrics(int $agentId, Carbon $startDate, Carbon $endDate): array
+    public function getAgentMetrics(int|string $agentId, Carbon $startDate, Carbon $endDate): array
     {
         $avgResponseRaw = $this->avgHoursDiffExpression('created_at', 'first_response_at');
         $avgResolutionRaw = $this->avgHoursDiffExpression('created_at', 'resolved_at');
@@ -667,7 +667,7 @@ class ReportingService
     /**
      * p50, p75, p90, p95, p99 response time percentiles for a specific agent.
      */
-    public function agentResponseTimePercentiles(int $agentId, int $days): array
+    public function agentResponseTimePercentiles(int|string $agentId, int $days): array
     {
         $since = now()->subDays($days);
         $hoursDiff = $this->hoursDiffExpression('created_at', 'first_response_at');

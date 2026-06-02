@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: ["main"]
 
+# Least-privilege GITHUB_TOKEN: the test job only needs to read the repo.
+permissions:
+  contents: read
+
 jobs:
   tests:
     runs-on: ubuntu-latest

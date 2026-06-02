@@ -18,7 +18,7 @@ return [
         'success' => 'Escalated のインストールが完了しました！',
         'nextSteps' => '次のステップ:',
         'stepTicketable' => 'User モデルに Ticketable インターフェースを実装してください:',
-        'stepGates' => 'AuthServiceProvider で認可ゲートを定義してください:',
+        'stepGates' => 'AppServiceProvider / AuthServiceProvider で認可ゲートを定義してください:',
         'stepMigrate' => 'マイグレーションを実行してください:',
         'stepTailwind' => 'Tailwind のコンテンツ設定に Escalated のページを追加してください:',
         'stepInertia' => 'app.ts に Inertia のページリゾルバーとプラグインを追加してください:',

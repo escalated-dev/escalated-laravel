@@ -5,6 +5,7 @@ namespace Escalated\Laravel\Http\Controllers\Agent;
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
+use Escalated\Laravel\Events\TicketCustomActionTriggered;
 use Escalated\Laravel\Http\Requests\AssignTicketRequest;
 use Escalated\Laravel\Http\Requests\ChangePriorityRequest;
 use Escalated\Laravel\Http\Requests\ChangeStatusRequest;
@@ -19,6 +20,7 @@ use Escalated\Laravel\Models\Tag;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\AssignmentService;
 use Escalated\Laravel\Services\MacroService;
+use Escalated\Laravel\Services\TicketActionRegistry;
 use Escalated\Laravel\Services\TicketService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -32,6 +34,7 @@ class TicketController extends Controller
         protected TicketService $ticketService,
         protected AssignmentService $assignmentService,
         protected EscalatedUiRenderer $renderer,
+        protected TicketActionRegistry $ticketActions,
     ) {}
 
     public function index(Request $request): mixed
@@ -69,6 +72,7 @@ class TicketController extends Controller
             'macros' => Macro::forAgent($request->user()->getKey())->orderBy('order')->get(),
             'is_following' => $ticket->isFollowedBy($request->user()->getKey()),
             'followers_count' => $ticket->followers()->count(),
+            'customActions' => $this->customActionsForTicket($ticket, $request),
         ]);
     }
 
@@ -151,6 +155,36 @@ class TicketController extends Controller
         return back()->with('success', __('escalated::messages.ticket.macro_applied', ['name' => $macro->name]));
     }
 
+    public function customAction(Ticket $ticket, string $action, Request $request): RedirectResponse|JsonResponse
+    {
+        $validated = $request->validate([
+            'payload' => 'sometimes|array',
+        ]);
+
+        $ticketAction = $this->ticketActions->find($action);
+
+        abort_unless($ticketAction, 404);
+        abort_unless($ticketAction->visible($ticket, $request->user()), 404);
+        abort_unless($ticketAction->enabled($ticket, $request->user()), 403);
+
+        TicketCustomActionTriggered::dispatch(
+            $ticket,
+            $ticketAction->key(),
+            $request->user(),
+            $validated['payload'] ?? [],
+            $ticketAction->metadata($ticket, $request->user()),
+        );
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => __('escalated::messages.ticket.custom_action_dispatched'),
+                'action' => $ticketAction->key(),
+            ]);
+        }
+
+        return back()->with('success', __('escalated::messages.ticket.custom_action_dispatched'));
+    }
+
     public function follow(Ticket $ticket, Request $request): RedirectResponse
     {
         $userId = $request->user()->getKey();
@@ -203,5 +237,16 @@ class TicketController extends Controller
         $reply->update(['is_pinned' => ! $reply->is_pinned]);
 
         return back()->with('success', $reply->is_pinned ? 'Note pinned.' : 'Note unpinned.');
+    }
+
+    protected function customActionsForTicket(Ticket $ticket, Request $request): array
+    {
+        return collect($this->ticketActions->forTicket($ticket, $request->user()))
+            ->map(fn (array $action) => array_merge($action, [
+                'url' => route('escalated.agent.tickets.custom-action', [$ticket->reference, $action['key']]),
+                'method' => 'post',
+            ]))
+            ->values()
+            ->all();
     }
 }

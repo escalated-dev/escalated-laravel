@@ -27,6 +27,7 @@ use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Services\ImportService;
 use Escalated\Laravel\Services\PluginService;
 use Escalated\Laravel\Services\PluginUIService;
+use Escalated\Laravel\Services\TicketActionRegistry;
 use Escalated\Laravel\Support\HookManager;
 use Escalated\Laravel\UI\InertiaUiRenderer;
 use Illuminate\Support\Arr;
@@ -60,6 +61,16 @@ class EscalatedServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(ImportService::class);
+
+        $this->app->singleton(TicketActionRegistry::class, function ($app) {
+            $registry = new TicketActionRegistry($app);
+
+            foreach (config('escalated.ticket_actions.actions', []) as $action) {
+                $registry->register($action);
+            }
+
+            return $registry;
+        });
 
         // Register the plugin bridge as a singleton.
         // The bridge manages the Node.js plugin runtime subprocess and is
@@ -304,6 +315,7 @@ class EscalatedServiceProvider extends ServiceProvider
         // REST API routes (token auth, no session)
         if (config('escalated.api.enabled', false)) {
             $this->loadRoutesFrom(__DIR__.'/../routes/api.php');
+            $this->loadRoutesFrom(__DIR__.'/../routes/mobile-api.php');
             $this->registerApiTokenRoutes();
         }
 
@@ -494,6 +506,8 @@ class EscalatedServiceProvider extends ServiceProvider
         Event::listen(Events\SlaBreached::class, Listeners\SendSlaBreachNotification::class);
 
         Event::listen(Events\TicketEscalated::class, Listeners\SendEscalationNotification::class);
+
+        Event::listen(Events\TicketCustomActionTriggered::class, Listeners\RecordCustomActionInternalNote::class);
 
         // Webhook dispatch for all events
         $webhookEvents = [

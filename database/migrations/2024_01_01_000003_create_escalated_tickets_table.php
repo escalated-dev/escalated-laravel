@@ -1,5 +1,6 @@
 <?php
 
+use Escalated\Laravel\Escalated;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -13,8 +14,8 @@ return new class extends Migration
         Schema::create($prefix.'tickets', function (Blueprint $table) {
             $table->id();
             $table->string('reference')->unique();
-            $table->morphs('requester');
-            $table->unsignedBigInteger('assigned_to')->nullable()->index();
+            Escalated::userMorphs($table, 'requester');
+            Escalated::userForeignColumn($table, 'assigned_to')->nullable()->index();
             $table->string('subject');
             $table->text('description');
             $table->string('status')->default('open')->index();

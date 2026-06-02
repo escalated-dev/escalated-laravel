@@ -23,6 +23,7 @@ Escalated dispatches events for every ticket action. You can listen to these in 
 | `TagAddedToTicket` | Tag is added |
 | `TagRemovedFromTicket` | Tag is removed |
 | `DepartmentChanged` | Department is changed |
+| `TicketCustomActionTriggered` | Agent clicks a configured custom ticket action |
 
 ## Listening to Events
 
@@ -69,3 +70,13 @@ Event::listen(TicketCreated::class, function ($event) {
 
 ### ReplyCreated
 - `$event->reply` — The Reply model (with `ticket` relationship)
+
+### TicketCustomActionTriggered
+- `$event->ticket` — The Ticket model
+- `$event->action` — Configured action key, such as `sync-crm`
+- `$event->user` — Agent who clicked the action
+- `$event->payload` — Optional array submitted by the UI or API
+- `$event->metadata` — Metadata from the configured action
+
+Escalated also records an internal note on the ticket when this event is
+handled.

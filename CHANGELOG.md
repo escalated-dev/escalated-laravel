@@ -5,7 +5,36 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Ticket subjects: attach host-app entities (Project, Customer, asset, …) that a ticket is *about*, distinct from the requester. Models implement the new `Escalated\Laravel\Contracts\TicketSubject` contract (or use the `PresentsAsTicketSubject` trait) to expose a title/subtitle/url/color/icon for the ticket UI. A ticket can reference several subjects via `attachSubject()`/`detachSubject()`/`syncSubjects()`; they're serialized on `TicketResource` as a `subjects[]` array. Agent attach/detach endpoints resolve types strictly against the new `escalated.ticket_subjects.types` allowlist. `subject_id` is stored as a string so integer/UUID/string-keyed host models all work. (#89)
+
+## [1.4.1] - 2026-05-29
+
+### Fixed
+- Upgrade safety: add a dedicated migration (`add_routing_columns_to_escalated_skills_table`) that backfills the `routing_tag_ids`/`routing_department_ids` columns. v1.4.0 added them by editing the original `create_escalated_skills_table` migration, which never re-runs on an existing install — so apps upgraded from an earlier version were missing the columns and **every skill create/edit failed** (`Skill::saving()` always writes them). The new migration is guarded by `Schema::hasColumn`, so it is a no-op on fresh installs.
+- `AssignTicketRequest` (Admin/Agent assign endpoints) again validates that `agent_id` exists (against the host user key), so an unknown/garbage id returns a clean `422` instead of a `500`. The `integer` rule remains dropped so UUID/string keys are accepted (matching `Api\TicketController`).
+- `AssignmentService::__construct()` `$skillRoutingService` is now optional (resolved from the container when omitted), restoring the v1.3.0 `new AssignmentService($manager)` single-argument signature for direct instantiation / subclasses.
+
+### Notes (upgrading from < 1.4.0)
+- **`int` → `int|string` widening (UUID/string user-key support).** The `TicketDriver` contract's `assignTicket()` and several public `Ticket` methods (`assign`, `follow`, `unfollow`, `isFollowedBy`, `scopeAssignedTo`) now accept `int|string`. If your app **implements `TicketDriver`** or **subclasses `Ticket`** and type-hinted these parameters as `int`, widen them to `int|string` to avoid a PHP "must be compatible" fatal. Apps that only *call* these methods are unaffected.
+- The `TicketAssigned` event's `$agentId` is now `int|string`; for UUID/string-keyed apps the broadcast `agent_id` is a string. Integer-keyed apps are unchanged.
+
+## [1.4.0] - 2026-05-29
+
+### Added
+- Custom Ticket Actions: host apps can register agent ticket buttons that dispatch a `TicketCustomActionTriggered` event (with an audit internal note) when clicked, exposed to the agent UI as `customActions` and to the API as `custom_actions`. (#107, #108)
+- Auto-detect the host user key type for the package's user-referencing migration columns. `Escalated::userForeignColumn()`/`userMorphs()` now type `user_id`/`assigned_to`/`requester`/`author`/`causer`/pivot columns to match the configured `user_model` — `unsignedBigInteger` for integer keys, string-compatible columns for `HasUuids`/`HasUlids`/string keys — so UUID/string-keyed apps migrate cleanly with no manual edits. Override via the new `escalated.user_key_type` config (`auto` by default). (#112)
+- Skills-based ticket routing: assign tickets to agents by matching required skills. (#95)
+- Mobile customer and guest support API endpoints. (#104)
+- Expanded SSO provider configuration surface. (#96)
 - Consume translation strings from the shared `escalated-dev/locale` Composer package so wording stays consistent across every Escalated host plugin. The `EscalatedServiceProvider` now stitches three layers under the `escalated` namespace: the central package (canonical), `lang/vendor/escalated/` in this repository (Laravel-specific overrides), and the host app's `lang/vendor/escalated/` (consumer overrides via `php artisan vendor:publish --tag=escalated-lang`). The package's own `resources/lang/` is retained as a fallback for environments where the central package has not yet been composer-installed.
+
+### Fixed
+- Support UUID/string host-app user keys throughout. `SavedView::scopeForUser()` (and every other user-id parameter) now accepts `int|string` instead of hard-typing `int`, fixing a `TypeError` 500 (`Argument #2 ($userId) must be of type int, string given`) that hit apps with non-integer user keys when opening `/support/admin/tickets`. Incoming user ids are no longer cast to `int` anywhere (which corrupted UUIDs). (#110)
+- Restrict agent skill assignment to role-bearing users and wrap skill store/update in transactions. (#100)
+- Show 2FA recovery codes after successful confirmation. (#97)
+
+### Security
+- Bump the transitive `qs` dependency in the demo host-app from 6.15.1 to 6.15.2 to remediate CVE-2026-8723 (NULL pointer dereference). (#113)
 
 ## [1.2.1] - 2026-04-18
 

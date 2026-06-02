@@ -460,6 +460,8 @@ class InstallCommand extends Command
 
         $this->line('  '.$step.'. '.__('escalated::commands.install.stepGates'));
         $this->newLine();
+        $this->line('     // Laravel 12+: App\Providers\AppServiceProvider::boot()');
+        $this->line('     // Laravel 11 and earlier: App\Providers\AuthServiceProvider::boot()');
         $this->line('     Gate::define(\'escalated-admin\', fn ($user) => $user->is_admin);');
         $this->line('     Gate::define(\'escalated-agent\', fn ($user) => $user->is_agent);');
         $this->newLine();
@@ -483,35 +485,22 @@ class InstallCommand extends Command
 
         $this->line('  '.$step.'. '.__('escalated::commands.install.stepTailwind'));
         $this->newLine();
-        $this->line('     // tailwind.config.js');
+        $this->line('     // Tailwind CSS v3 and earlier: tailwind.config.js');
         $this->line('     content: [');
         $this->line('         // ...existing paths,');
         $this->line('         \'./node_modules/@escalated-dev/escalated/src/**/*.vue\',');
         $this->line('     ]');
         $this->newLine();
+        $this->line('     // Tailwind CSS v4+: resources/css/app.css');
+        $this->line('     @source \'../../node_modules/@escalated-dev/escalated/src/**/*.vue\';');
+        $this->newLine();
         $step++;
 
         $this->line('  '.$step.'. '.__('escalated::commands.install.stepInertia'));
         $this->newLine();
-        $this->line('     import { EscalatedPlugin } from \'@escalated-dev/escalated\';');
-        $this->newLine();
-        $this->line('     // In createInertiaApp resolve:');
-        $this->line('     const escalatedPages = import.meta.glob(');
-        $this->line('         \'../../node_modules/@escalated-dev/escalated/src/pages/**/*.vue\'');
-        $this->line('     );');
-        $this->line('     resolve: (name) => {');
-        $this->line('         if (name.startsWith(\'Escalated/\')) {');
-        $this->line('             const path = name.replace(\'Escalated/\', \'\');');
-        $this->line('             return resolvePageComponent(');
-        $this->line('                 `../../node_modules/@escalated-dev/escalated/src/pages/${path}.vue`,');
-        $this->line('                 escalatedPages');
-        $this->line('             );');
-        $this->line('         }');
-        $this->line('         // ...existing resolver');
-        $this->line('     }');
-        $this->newLine();
-        $this->line('     // In setup:');
-        $this->line('     app.use(EscalatedPlugin, { layout: YourAppLayout })');
+        $this->line('     This assumes Inertia and Vue are already installed and configured.');
+        $this->line('     Merge the resolver from the README Frontend Integration section into your existing app.ts.');
+        $this->line('     Optionally register EscalatedPlugin there to render Escalated inside your app layout.');
         $this->newLine();
         $step++;
 

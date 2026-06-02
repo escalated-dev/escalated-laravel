@@ -144,6 +144,62 @@ class Ticket extends Model
         return $this->morphMany(Attachment::class, 'attachable');
     }
 
+    /**
+     * The host-app entities this ticket is about (Project, Customer, …),
+     * each resolvable via `$link->subject`.
+     */
+    public function subjects(): HasMany
+    {
+        return $this->hasMany(TicketSubjectLink::class, 'ticket_id')->orderBy('position');
+    }
+
+    /**
+     * Attach a host model as a subject of this ticket (idempotent on the
+     * ticket+type+id key). Rejects types outside the configured allowlist when
+     * one is set (see config `escalated.ticket_subjects.types`).
+     */
+    public function attachSubject(Model $subject, ?string $role = null, ?int $position = null): TicketSubjectLink
+    {
+        $type = $subject->getMorphClass();
+
+        $allowed = (array) config('escalated.ticket_subjects.types', []);
+        if ($allowed !== [] && ! in_array($type, $allowed, true)) {
+            throw new \InvalidArgumentException("Subject type [{$type}] is not an allowed ticket subject.");
+        }
+
+        return $this->subjects()->updateOrCreate(
+            ['subject_type' => $type, 'subject_id' => (string) $subject->getKey()],
+            ['role' => $role, 'position' => $position ?? ($this->subjects()->max('position') + 1)],
+        );
+    }
+
+    /**
+     * Detach a host model from this ticket's subjects. Returns the number of
+     * links removed (0 or 1).
+     */
+    public function detachSubject(Model $subject): int
+    {
+        return $this->subjects()
+            ->where('subject_type', $subject->getMorphClass())
+            ->where('subject_id', (string) $subject->getKey())
+            ->delete();
+    }
+
+    /**
+     * Replace this ticket's subjects with the given host models, preserving
+     * order. Accepts an iterable of Models or [Model, role] pairs.
+     */
+    public function syncSubjects(iterable $subjects): void
+    {
+        $this->subjects()->delete();
+
+        $position = 0;
+        foreach ($subjects as $entry) {
+            [$subject, $role] = is_array($entry) ? [$entry[0], $entry[1] ?? null] : [$entry, null];
+            $this->attachSubject($subject, $role, $position++);
+        }
+    }
+
     public function tags(): BelongsToMany
     {
         return $this->belongsToMany(Tag::class, Escalated::table('ticket_tag'), 'ticket_id', 'tag_id');
@@ -199,17 +255,17 @@ class Ticket extends Model
         return $this->hasMany(Reply::class, 'ticket_id')->where('is_internal_note', true)->where('is_pinned', true);
     }
 
-    public function isFollowedBy(int $userId): bool
+    public function isFollowedBy(int|string $userId): bool
     {
         return $this->followers()->where('user_id', $userId)->exists();
     }
 
-    public function follow(int $userId): void
+    public function follow(int|string $userId): void
     {
         $this->followers()->syncWithoutDetaching([$userId]);
     }
 
-    public function unfollow(int $userId): void
+    public function unfollow(int|string $userId): void
     {
         $this->followers()->detach($userId);
     }
@@ -226,7 +282,7 @@ class Ticket extends Model
         return $query->whereNull('assigned_to');
     }
 
-    public function scopeAssignedTo($query, int $agentId)
+    public function scopeAssignedTo($query, int|string $agentId)
     {
         return $query->where('assigned_to', $agentId);
     }
@@ -460,12 +516,12 @@ class Ticket extends Model
         return $this->fresh();
     }
 
-    public function assign(Model|int $user, ?Ticketable $causer = null): self
+    public function assign(Model|int|string $user, ?Ticketable $causer = null): self
     {
         $userModel = Escalated::userModel();
 
-        // If an ID is provided, attempt to find the user
-        if (is_int($user)) {
+        // If a scalar id (int or string/UUID) is provided, attempt to find the user.
+        if (! $user instanceof Model) {
             $userId = $user;
             $user = $userModel::find($userId);
 
@@ -479,9 +535,9 @@ class Ticket extends Model
             throw new \InvalidArgumentException("Assigned user must be an instance of {$userModel}");
         }
 
-        $this->update(['assigned_to' => $user->id]);
+        $this->update(['assigned_to' => $user->getKey()]);
 
-        $this->logActivity(ActivityType::Assigned, $causer, ['agent_id' => $user->id]);
+        $this->logActivity(ActivityType::Assigned, $causer, ['agent_id' => $user->getKey()]);
 
         Events\TicketAssigned::dispatch($this, $user->id, $causer);
 

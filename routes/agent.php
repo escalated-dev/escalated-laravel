@@ -26,6 +26,7 @@ Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web'
             Route::post('/tickets/{ticket}/tags', [TicketController::class, 'tags'])->name('escalated.agent.tickets.tags');
             Route::post('/tickets/{ticket}/department', [TicketController::class, 'department'])->name('escalated.agent.tickets.department');
             Route::post('/tickets/{ticket}/macro', [TicketController::class, 'applyMacro'])->name('escalated.agent.tickets.macro');
+            Route::post('/tickets/{ticket}/actions/{action}', [TicketController::class, 'customAction'])->name('escalated.agent.tickets.custom-action');
             Route::post('/tickets/{ticket}/follow', [TicketController::class, 'follow'])->name('escalated.agent.tickets.follow');
             Route::post('/tickets/{ticket}/presence', [TicketController::class, 'presence'])->name('escalated.agent.tickets.presence');
             Route::post('/tickets/{ticket}/replies/{reply}/pin', [TicketController::class, 'pin'])->name('escalated.agent.tickets.pin');

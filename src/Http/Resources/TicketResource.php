@@ -2,8 +2,11 @@
 
 namespace Escalated\Laravel\Http\Resources;
 
+use Escalated\Laravel\Contracts\TicketSubject;
+use Escalated\Laravel\Services\TicketActionRegistry;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Route;
 
 class TicketResource extends JsonResource
 {
@@ -38,6 +41,24 @@ class TicketResource extends JsonResource
                 'name' => $tag->name,
                 'color' => $tag->color,
             ])),
+            'subjects' => $this->whenLoaded('subjects', fn () => $this->subjects->map(function ($link) {
+                $subject = $link->subject;
+                $presents = $subject instanceof TicketSubject;
+
+                return [
+                    'type' => $link->subject_type,
+                    'id' => $link->subject_id,
+                    'role' => $link->role,
+                    'title' => $presents
+                        ? $subject->ticketSubjectTitle()
+                        : (is_string($subject?->name ?? null) ? $subject->name : class_basename($link->subject_type).' #'.$link->subject_id),
+                    'subtitle' => $presents ? $subject->ticketSubjectSubtitle() : null,
+                    'url' => $presents ? $subject->ticketSubjectUrl() : null,
+                    'color' => $presents ? $subject->ticketSubjectColor() : null,
+                    'icon' => $presents ? $subject->ticketSubjectIcon() : null,
+                    'missing' => $subject === null,
+                ];
+            })->values()),
             'replies' => $this->whenLoaded('replies', fn () => ReplyResource::collection($this->replies)),
             'activities' => $this->whenLoaded('activities', fn () => $this->activities->map(fn ($a) => [
                 'id' => $a->id,
@@ -55,6 +76,17 @@ class TicketResource extends JsonResource
             ],
             'is_following' => $this->when(isset($this->is_following), $this->is_following ?? false),
             'followers_count' => $this->when(isset($this->followers_count), $this->followers_count ?? 0),
+            'custom_actions' => $request->user()
+                ? collect(app(TicketActionRegistry::class)->forTicket($this->resource, $request->user()))
+                    ->map(fn (array $action) => array_merge($action, [
+                        'url' => Route::has('escalated.api.tickets.custom-action')
+                            ? route('escalated.api.tickets.custom-action', [$this->reference, $action['key']])
+                            : null,
+                        'method' => 'post',
+                    ]))
+                    ->values()
+                    ->all()
+                : [],
             'resolved_at' => $this->resolved_at?->toIso8601String(),
             'closed_at' => $this->closed_at?->toIso8601String(),
             'created_at' => $this->created_at->toIso8601String(),

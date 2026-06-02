@@ -37,6 +37,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | User Key Type
+    |--------------------------------------------------------------------------
+    |
+    | Column type for the user-referencing foreign keys Escalated creates
+    | (ticket_followers.user_id, agent_profiles.user_id, tickets.assigned_to,
+    | etc.). Defaults to 'auto', which reflects your user model's key type so
+    | UUID/ULID/string-keyed user tables migrate cleanly with no edits. Set
+    | explicitly to 'bigint', 'uuid', 'ulid', or 'string' to override.
+    |
+    | Note: this affects columns at migration time. Apps that already migrated
+    | (e.g. as 'bigint') keep their existing columns; switching key types after
+    | install requires a manual migration.
+    |
+    */
+    'user_key_type' => env('ESCALATED_USER_KEY_TYPE', 'auto'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Hosted / Cloud Configuration
     |--------------------------------------------------------------------------
     */
@@ -89,6 +107,24 @@ return [
         'auto_close_resolved_after_days' => 7,
         'max_attachments_per_reply' => 5,
         'max_attachment_size_kb' => 10240,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Ticket Actions
+    |--------------------------------------------------------------------------
+    |
+    | Register host-application actions that should appear as buttons on the
+    | agent ticket screen. When clicked, Escalated dispatches the
+    | TicketCustomActionTriggered event so the host app can handle the work in
+    | a normal Laravel listener.
+    |
+    | Each action may be a class implementing TicketAction or an array with:
+    | key, label, variant, confirmation, visible, enabled, and metadata.
+    |
+    */
+    'ticket_actions' => [
+        'actions' => [],
     ],
 
     /*
@@ -242,6 +278,7 @@ return [
         'rate_limit' => env('ESCALATED_API_RATE_LIMIT', 60),
         'token_expiry_days' => null,
         'prefix' => 'support/api/v1',
+        'mobile_prefix' => 'support/api/v1/mobile',
     ],
 
     /*
@@ -330,6 +367,29 @@ return [
         'brand_accent' => env('ESCALATED_NEWSLETTER_BRAND_ACCENT', '#2563eb'),
         'brand_logo_url' => env('ESCALATED_NEWSLETTER_BRAND_LOGO_URL'),
         'brand_physical_address' => env('ESCALATED_NEWSLETTER_BRAND_PHYSICAL_ADDRESS'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Ticket subjects
+    |--------------------------------------------------------------------------
+    |
+    | Host-app models a ticket can be *about* (a Project, Customer, asset, …),
+    | distinct from the requester. Attached models should implement
+    | Escalated\Laravel\Contracts\TicketSubject (or use the
+    | PresentsAsTicketSubject trait) so they render in the ticket UI.
+    |
+    | `types` is the allowlist of morph types (class names or morph-map
+    | aliases) the agent API is permitted to attach — this prevents arbitrary
+    | class resolution from request input. Leave empty to disable attaching via
+    | the API; programmatic $ticket->attachSubject($model) still works.
+    |
+    */
+    'ticket_subjects' => [
+        'types' => [
+            // \App\Models\Project::class,
+            // 'project' => \App\Models\Project::class,
+        ],
     ],
 
 ];

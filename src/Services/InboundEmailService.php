@@ -281,8 +281,8 @@ class InboundEmailService
 
         $mode = EscalatedSettings::get('guest_policy_mode', 'unassigned');
         if ($mode === 'guest_user') {
-            $guestUserId = (int) EscalatedSettings::get('guest_policy_user_id', 0);
-            if ($guestUserId > 0) {
+            $guestUserId = EscalatedSettings::get('guest_policy_user_id');
+            if (! empty($guestUserId)) {
                 $attrs['requester_type'] = config('escalated.user_model', 'App\\Models\\User');
                 $attrs['requester_id'] = $guestUserId;
             } else {

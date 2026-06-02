@@ -179,7 +179,7 @@ class SkillController extends Controller
     {
         $payload = collect($agents)
             ->mapWithKeys(fn (array $agent) => [
-                (int) $agent['user_id'] => ['proficiency' => (int) $agent['proficiency']],
+                $agent['user_id'] => ['proficiency' => (int) $agent['proficiency']],
             ])
             ->all();
 

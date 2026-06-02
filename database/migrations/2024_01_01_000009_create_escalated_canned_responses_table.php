@@ -1,5 +1,6 @@
 <?php
 
+use Escalated\Laravel\Escalated;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -15,7 +16,7 @@ return new class extends Migration
             $table->string('title');
             $table->text('body');
             $table->string('category')->nullable();
-            $table->unsignedBigInteger('created_by')->nullable();
+            Escalated::userForeignColumn($table, 'created_by')->nullable();
             $table->boolean('is_shared')->default(true);
             $table->timestamps();
         });

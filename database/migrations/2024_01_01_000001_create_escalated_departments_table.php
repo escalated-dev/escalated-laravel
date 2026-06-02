@@ -1,5 +1,6 @@
 <?php
 
+use Escalated\Laravel\Escalated;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -21,7 +22,7 @@ return new class extends Migration
 
         Schema::create($prefix.'department_agent', function (Blueprint $table) use ($prefix) {
             $table->foreignId('department_id')->constrained($prefix.'departments')->cascadeOnDelete();
-            $table->unsignedBigInteger('agent_id');
+            Escalated::userForeignColumn($table, 'agent_id');
             $table->primary(['department_id', 'agent_id']);
         });
     }

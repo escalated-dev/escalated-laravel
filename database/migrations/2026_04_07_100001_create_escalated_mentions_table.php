@@ -1,5 +1,6 @@
 <?php
 
+use Escalated\Laravel\Escalated;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -14,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('reply_id')->constrained($prefix.'replies')->cascadeOnDelete();
             // No DB-level FK to host `users` — see #88 / macros migration for rationale.
-            $table->unsignedBigInteger('user_id');
+            Escalated::userForeignColumn($table, 'user_id');
             $table->datetime('read_at')->nullable();
             $table->timestamps();
 

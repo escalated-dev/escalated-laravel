@@ -11,6 +11,7 @@ return [
         'tags_updated' => 'Теги обновлены.',
         'department_updated' => 'Отдел обновлён.',
         'macro_applied' => 'Макрос «:name» применён.',
+        'custom_action_dispatched' => 'Пользовательское действие выполнено.',
         'following' => 'Вы следите за тикетом.',
         'unfollowed' => 'Вы перестали следить за тикетом.',
         'only_internal_notes_pinned' => 'Закреплять можно только внутренние заметки.',
