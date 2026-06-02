@@ -1,5 +1,6 @@
 <?php
 
+use Escalated\Laravel\Escalated;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -14,7 +15,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->enum('kind', ['static', 'dynamic']);
             $table->json('filter_json')->nullable();
-            $table->unsignedBigInteger('created_by')->nullable();
+            Escalated::userForeignColumn($table, 'created_by')->nullable();
             $table->timestamps();
 
             $table->index('kind');

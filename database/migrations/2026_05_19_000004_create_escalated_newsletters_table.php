@@ -1,5 +1,6 @@
 <?php
 
+use Escalated\Laravel\Escalated;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -21,8 +22,8 @@ return new class extends Migration
             $table->enum('status', ['draft', 'scheduled', 'sending', 'sent', 'paused', 'failed'])->default('draft');
             $table->timestamp('scheduled_at')->nullable();
             $table->timestamp('sent_at')->nullable();
-            $table->unsignedBigInteger('created_by')->nullable();
-            $table->unsignedBigInteger('sent_by')->nullable();
+            Escalated::userForeignColumn($table, 'created_by')->nullable();
+            Escalated::userForeignColumn($table, 'sent_by')->nullable();
             $table->unsignedInteger('summary_total')->default(0);
             $table->unsignedInteger('summary_sent')->default(0);
             $table->unsignedInteger('summary_opened')->default(0);

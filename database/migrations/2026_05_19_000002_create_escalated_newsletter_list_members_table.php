@@ -1,5 +1,6 @@
 <?php
 
+use Escalated\Laravel\Escalated;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -13,7 +14,7 @@ return new class extends Migration
             $table->unsignedBigInteger('list_id');
             $table->unsignedBigInteger('contact_id');
             $table->timestamp('added_at')->useCurrent();
-            $table->unsignedBigInteger('added_by')->nullable();
+            Escalated::userForeignColumn($table, 'added_by')->nullable();
 
             $table->unique(['list_id', 'contact_id']);
             $table->index('contact_id');
