@@ -11,7 +11,9 @@ class InstallCommand extends Command
     protected $signature = 'escalated:install
         {--force : Overwrite existing files}
         {--config : Only publish configuration}
-        {--migrations : Only publish migrations}';
+        {--migrations : Only publish migrations}
+        {--with-newsletters : Enable the newsletter system non-interactively}
+        {--no-newsletters : Disable the newsletter system non-interactively}';
 
     protected $description = 'Install the Escalated support ticket system';
 
@@ -52,6 +54,14 @@ class InstallCommand extends Command
 
             $this->installNpmPackage();
             $userModelConfigured = $this->configureUserModel();
+
+            $enableNewsletters = $this->resolveNewsletterChoice();
+            $this->writeEnv('ESCALATED_ENABLE_NEWSLETTERS', $enableNewsletters ? 'true' : 'false');
+            if ($enableNewsletters) {
+                $this->components->task('Seeding newsletter permissions on Admin role', function () {
+                    $this->call('db:seed', ['--class' => PermissionSeeder::class, '--force' => true]);
+                });
+            }
         }
 
         $this->newLine();
@@ -62,6 +72,40 @@ class InstallCommand extends Command
         );
 
         return self::SUCCESS;
+    }
+
+    protected function resolveNewsletterChoice(): bool
+    {
+        if ($this->option('with-newsletters')) {
+            return true;
+        }
+        if ($this->option('no-newsletters')) {
+            return false;
+        }
+        if (! $this->input->isInteractive()) {
+            return false;
+        }
+
+        return $this->confirm(
+            'Enable newsletter system? (admins-only feature for sending broadcasts to contacts)',
+            false,
+        );
+    }
+
+    protected function writeEnv(string $key, string $value): void
+    {
+        $envPath = base_path('.env');
+        if (! is_file($envPath)) {
+            return;
+        }
+        $contents = file_get_contents($envPath);
+        $line = "{$key}={$value}";
+        if (preg_match("/^{$key}=.*/m", $contents)) {
+            $contents = preg_replace("/^{$key}=.*/m", $line, $contents);
+        } else {
+            $contents = rtrim($contents, "\n")."\n{$line}\n";
+        }
+        file_put_contents($envPath, $contents);
     }
 
     protected function publishConfig(bool $force): void

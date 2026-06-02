@@ -192,6 +192,10 @@ class PermissionSeeder extends Seeder
             ['slug' => 'custom_object.view', 'name' => 'View custom objects', 'group' => 'Custom Objects', 'description' => 'View custom objects'],
             ['slug' => 'custom_object.manage', 'name' => 'Manage custom objects', 'group' => 'Custom Objects', 'description' => 'Create, edit, delete custom object schemas'],
             ['slug' => 'custom_object.data', 'name' => 'Manage custom object data', 'group' => 'Custom Objects', 'description' => 'Manage custom object records'],
+
+            // Newsletters
+            ['slug' => 'newsletters.manage', 'name' => 'Manage newsletters', 'group' => 'Newsletters', 'description' => 'Create, edit, delete drafts and lists/templates; send test emails.'],
+            ['slug' => 'newsletters.send', 'name' => 'Send newsletters', 'group' => 'Newsletters', 'description' => 'Schedule or send newsletters now.'],
         ];
     }
 
