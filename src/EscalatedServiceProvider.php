@@ -444,6 +444,7 @@ class EscalatedServiceProvider extends ServiceProvider
                 'prefix' => config('escalated.routes.prefix', 'support'),
                 'is_agent' => $user ? Gate::allows('escalated-agent', $user) : false,
                 'is_admin' => $user ? Gate::allows('escalated-admin', $user) : false,
+                'permissions' => $user ? CheckPermission::userPermissions($user->getKey()) : [],
                 'features' => [
                     'newsletters' => (bool) config('escalated.enable_newsletters', false),
                 ],
