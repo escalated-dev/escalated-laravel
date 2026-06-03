@@ -21,6 +21,7 @@ use Escalated\Laravel\Console\Commands\RunAutomationsCommand;
 use Escalated\Laravel\Console\Commands\WakeSnoozedTicketsCommand;
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Http\Controllers\Admin\ApiTokenController;
+use Escalated\Laravel\Http\Middleware\CheckPermission;
 use Escalated\Laravel\Http\Middleware\EnsureIsAdmin;
 use Escalated\Laravel\Models\AgentProfile;
 use Escalated\Laravel\Models\EscalatedSettings;
@@ -128,7 +129,7 @@ class EscalatedServiceProvider extends ServiceProvider
             return;
         }
 
-        Route::middleware(['web', EnsureIsAdmin::class])
+        Route::middleware(['web', EnsureIsAdmin::class, CheckPermission::class.':newsletters.manage'])
             ->prefix('admin/newsletters')
             ->name('escalated.admin.newsletters.')
             ->group(__DIR__.'/../routes/newsletter-admin.php');

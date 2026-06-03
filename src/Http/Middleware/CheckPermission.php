@@ -18,14 +18,14 @@ class CheckPermission
             abort(403, 'Unauthorized.');
         }
 
-        if ($this->userHasPermission($user->id, $permission)) {
+        if (self::userHasPermission($user->id, $permission)) {
             return $next($request);
         }
 
         abort(403, 'You do not have the required permission: '.$permission);
     }
 
-    protected function userHasPermission(int|string $userId, string $permissionSlug): bool
+    public static function userHasPermission(int|string $userId, string $permissionSlug): bool
     {
         return DB::table(Escalated::table('role_user'))
             ->join(Escalated::table('role_permission'), Escalated::table('role_user').'.role_id', '=', Escalated::table('role_permission').'.role_id')
