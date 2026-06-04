@@ -4,8 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-06-04
+
 ### Added
-- Ticket subjects: attach host-app entities (Project, Customer, asset, …) that a ticket is *about*, distinct from the requester. Models implement the new `Escalated\Laravel\Contracts\TicketSubject` contract (or use the `PresentsAsTicketSubject` trait) to expose a title/subtitle/url/color/icon for the ticket UI. A ticket can reference several subjects via `attachSubject()`/`detachSubject()`/`syncSubjects()`; they're serialized on `TicketResource` as a `subjects[]` array. Agent attach/detach endpoints resolve types strictly against the new `escalated.ticket_subjects.types` allowlist. `subject_id` is stored as a string so integer/UUID/string-keyed host models all work. (#89)
+- **Newsletter system** — admin-only broadcast feature: campaigns, recipient lists (static + dynamic segments), reusable templates, and per-recipient deliveries with open/click tracking, one-click unsubscribe, view-in-browser, and ESP bounce/complaint webhooks (Postmark/Mailgun/SES/SendGrid). Sending is driven by the `escalated:newsletters:dispatch` scheduled command, with per-minute rate limiting, retry backoff, and auto-pause on high bounce rates. Disabled by default behind `escalated.enable_newsletters`. The `created_by`/`sent_by`/`added_by` columns are stored UUID-safe so integer/UUID/string-keyed host users all work. (#103, #128)
+- **`add_follower` workflow action** — auto-subscribe a host user as a ticket follower from a workflow rule. (#127)
+- **Ticket subjects**: attach host-app entities (Project, Customer, asset, …) that a ticket is *about*, distinct from the requester. Models implement the new `Escalated\Laravel\Contracts\TicketSubject` contract (or use the `PresentsAsTicketSubject` trait) to expose a title/subtitle/url/color/icon for the ticket UI. A ticket can reference several subjects via `attachSubject()`/`detachSubject()`/`syncSubjects()`; they're serialized on `TicketResource` as a `subjects[]` array. Agent attach/detach endpoints resolve types strictly against the new `escalated.ticket_subjects.types` allowlist. `subject_id` is stored as a string so integer/UUID/string-keyed host models all work. (#89)
+- The current user's permission slugs are now shared with the Inertia frontend as `escalated.permissions` (alongside `is_admin`/`features`), so the UI can gate navigation per-permission. (#129)
+
+### Security
+- Newsletter admin routes now **enforce** the seeded permissions: every admin action requires `newsletters.manage`, and send-class actions (saving/updating with a `scheduled`/`sending` status, and test-send) additionally require `newsletters.send`. Previously the permissions were seeded but never checked, so any admin-role user could perform every newsletter action. (#129)
 
 ## [1.4.1] - 2026-05-29
 
