@@ -54,7 +54,12 @@
         "audit": {
             "ignore": {
                 "PKSA-5jz8-6tcw-pbk4": "phpunit advisory; dev-only test runner. pest 3.8.6 pins phpunit ^11.5.50 with conflict >11.5.50, leaving no advisory-clean version selectable until pest releases a new pin.",
-                "PKSA-z3gr-8qht-p93v": "phpunit advisory; dev-only test runner. Same constraint as above."
+                "PKSA-z3gr-8qht-p93v": "phpunit advisory; dev-only test runner. Same constraint as above.",
+                "PKSA-mdq4-51ck-6kdq": "laravel/framework 11.x advisory; affects all released 11.x with no advisory-clean version, which blocks the L^11 compatibility matrix in Composer 2.9+. Ignored only in this root config (does NOT propagate to host apps); CI test-matrix only.",
+                "PKSA-8qx3-n5y5-vvnd": "laravel/framework 11.x advisory; CI compat matrix only (see above).",
+                "PKSA-q46n-4fdk-zjr4": "laravel/framework 11.x advisory; CI compat matrix only (see above).",
+                "PKSA-qzrn-rnz3-85w1": "laravel/framework 11.x advisory; CI compat matrix only (see above).",
+                "PKSA-w7xr-vk7n-rstm": "laravel/framework 11.x advisory; CI compat matrix only (see above)."
             }
         }
     },
