@@ -3,6 +3,7 @@
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
+use Escalated\Laravel\Http\Middleware\CheckPermission;
 use Escalated\Laravel\Models\Contact;
 use Escalated\Laravel\Models\Newsletter\Newsletter;
 use Escalated\Laravel\Models\Newsletter\NewsletterDelivery;
@@ -19,6 +20,19 @@ use Illuminate\Support\Str;
 class NewsletterController extends Controller
 {
     public function __construct(protected EscalatedUiRenderer $ui) {}
+
+    /**
+     * Gate send-class actions behind the newsletters.send permission.
+     * (newsletters.manage is enforced on the whole admin route group.)
+     */
+    private function requireSendPermission(): void
+    {
+        abort_unless(
+            CheckPermission::userHasPermission(Auth::id(), 'newsletters.send'),
+            403,
+            'You do not have the required permission: newsletters.send'
+        );
+    }
 
     public function index(Request $request): mixed
     {
@@ -42,6 +56,9 @@ class NewsletterController extends Controller
     {
         $data = $this->validateForm($request);
         $isSend = in_array($data['status'] ?? 'draft', ['scheduled', 'sending'], true);
+        if ($isSend) {
+            $this->requireSendPermission();
+        }
         if ($isSend && ! $this->mailConfigured()) {
             return back()->withErrors(['from_email' => 'Outbound mail is not configured.']);
         }
@@ -82,6 +99,9 @@ class NewsletterController extends Controller
     public function update(Newsletter $newsletter, Request $request, NewsletterPlannerService $planner): mixed
     {
         $data = $this->validateForm($request);
+        if (in_array($data['status'] ?? 'draft', ['scheduled', 'sending'], true)) {
+            $this->requireSendPermission();
+        }
         $newsletter->update($data);
         if (($data['status'] ?? null) === 'sending') {
             $planner->plan($newsletter);
@@ -123,6 +143,7 @@ class NewsletterController extends Controller
 
     public function testSend(Request $request, NewsletterRendererService $renderer): mixed
     {
+        $this->requireSendPermission();
         $data = $this->validateForm($request);
         $n = new Newsletter($data);
         $n->id = 0;
