@@ -5,6 +5,10 @@ FROM node:22-alpine AS assets
 
 WORKDIR /host
 
+# @escalated-dev/escalated declares @escalated-dev/locale as a github: dependency
+# (github:escalated-dev/escalated-locale#vX.Y.Z), so npm needs git to resolve it.
+RUN apk add --no-cache git
+
 COPY docker/host-app/package.json docker/host-app/package-lock.json* ./
 RUN npm install --no-audit --no-fund
 
