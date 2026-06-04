@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-06-04
+
+### Fixed
+- CI/build: ignore the `laravel/framework` 11.x security advisories that Composer 2.9+ now excludes during dependency resolution (all released 11.x are affected with no advisory-clean version yet), which was breaking the Laravel 11 compatibility test matrix. Added to this package's root `config.audit.ignore` only — it does **not** propagate to host applications, which govern their own audit policy. No runtime/code changes.
+
 ## [1.5.0] - 2026-06-04
 
 ### Added
