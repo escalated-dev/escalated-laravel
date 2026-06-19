@@ -55,6 +55,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Database Connection
+    |--------------------------------------------------------------------------
+    |
+    | The Laravel database connection Escalated models should query. Leave
+    | null to use the application's default connection (no behavior change
+    | from previous versions). Set to a named connection — most commonly
+    | useful for multi-database tenant setups where each tenant has its
+    | own database and Escalated's tables live there alongside other
+    | tenant-scoped data.
+    |
+    | Per-model `$connection` overrides still take precedence, so a host
+    | app or a subclass can pin individual models independently.
+    |
+    */
+    'database_connection' => env('ESCALATED_DB_CONNECTION'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Hosted / Cloud Configuration
     |--------------------------------------------------------------------------
     */

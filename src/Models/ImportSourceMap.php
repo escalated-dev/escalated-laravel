@@ -2,12 +2,15 @@
 
 namespace Escalated\Laravel\Models;
 
+use Escalated\Laravel\Concerns\UsesEscalatedConnection;
 use Escalated\Laravel\Escalated;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ImportSourceMap extends Model
 {
+    use UsesEscalatedConnection;
+
     const UPDATED_AT = null;
 
     protected $guarded = ['id'];

@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Models;
 
+use Escalated\Laravel\Concerns\UsesEscalatedConnection;
 use Escalated\Laravel\Contracts\Ticketable;
 use Escalated\Laravel\Database\Factories\TicketFactory;
 use Escalated\Laravel\Enums\ActivityType;
@@ -23,7 +24,7 @@ use Illuminate\Support\Str;
 
 class Ticket extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, UsesEscalatedConnection;
 
     public const TYPES = ['question', 'problem', 'incident', 'task'];
 

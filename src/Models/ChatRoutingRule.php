@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Models;
 
+use Escalated\Laravel\Concerns\UsesEscalatedConnection;
 use Escalated\Laravel\Enums\OfflineBehavior;
 use Escalated\Laravel\Enums\RoutingStrategy;
 use Escalated\Laravel\Escalated;
@@ -10,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ChatRoutingRule extends Model
 {
+    use UsesEscalatedConnection;
+
     protected $guarded = ['id'];
 
     public function getTable(): string

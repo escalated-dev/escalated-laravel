@@ -417,6 +417,7 @@ All config lives in `config/escalated.php`. Key options:
 ```php
 'mode' => 'self-hosted',              // self-hosted | synced | cloud
 'user_model' => App\Models\User::class,
+'database_connection' => null,        // Route Escalated models to a non-default DB connection
 'table_prefix' => 'escalated_',
 'default_priority' => 'medium',
 
@@ -443,6 +444,22 @@ All config lives in `config/escalated.php`. Key options:
 ```
 
 See the [full configuration reference](docs/configuration.md).
+
+### Multi-database tenant apps
+
+Set `escalated.database_connection` (or `ESCALATED_DB_CONNECTION`) to the
+Laravel connection name where Escalated's tables live. All Escalated
+models will route their queries through it. Useful when each tenant has
+its own database and Escalated's tables ship in the per-tenant DB
+alongside the rest of the tenant-scoped data.
+
+```env
+ESCALATED_DB_CONNECTION=tenant
+```
+
+Per-model `$connection` overrides still take precedence, so a host app
+or subclass can pin individual models independently. Leave the config
+unset to keep Laravel's default behavior.
 
 ## Events
 

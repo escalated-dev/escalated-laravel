@@ -2,11 +2,14 @@
 
 namespace Escalated\Laravel\Models;
 
+use Escalated\Laravel\Concerns\UsesEscalatedConnection;
 use Escalated\Laravel\Escalated;
 use Illuminate\Database\Eloquent\Model;
 
 class Plugin extends Model
 {
+    use UsesEscalatedConnection;
+
     protected $fillable = [
         'slug',
         'is_active',

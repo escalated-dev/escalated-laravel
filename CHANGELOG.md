@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- `escalated.database_connection` config (env: `ESCALATED_DB_CONNECTION`) — routes every Escalated Eloquent model to a named Laravel connection. Useful for multi-database tenant apps where Escalated's tables live in a per-tenant DB. Per-model `$connection` overrides still take precedence; leaving the config unset preserves prior behavior.
+
 ## [1.5.1] - 2026-06-04
 
 ### Fixed

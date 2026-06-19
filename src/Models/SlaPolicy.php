@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Models;
 
+use Escalated\Laravel\Concerns\UsesEscalatedConnection;
 use Escalated\Laravel\Database\Factories\SlaPolicyFactory;
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Escalated;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SlaPolicy extends Model
 {
-    use HasFactory;
+    use HasFactory, UsesEscalatedConnection;
 
     protected $guarded = ['id'];
 

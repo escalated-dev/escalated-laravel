@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Models;
 
+use Escalated\Laravel\Concerns\UsesEscalatedConnection;
 use Escalated\Laravel\Enums\ActivityType;
 use Escalated\Laravel\Escalated;
 use Illuminate\Database\Eloquent\Model;
@@ -10,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class TicketActivity extends Model
 {
+    use UsesEscalatedConnection;
+
     protected $guarded = ['id'];
 
     protected $appends = ['created_at_human'];

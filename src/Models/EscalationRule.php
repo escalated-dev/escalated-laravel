@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Models;
 
+use Escalated\Laravel\Concerns\UsesEscalatedConnection;
 use Escalated\Laravel\Database\Factories\EscalationRuleFactory;
 use Escalated\Laravel\Escalated;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class EscalationRule extends Model
 {
-    use HasFactory;
+    use HasFactory, UsesEscalatedConnection;
 
     protected $guarded = ['id'];
 

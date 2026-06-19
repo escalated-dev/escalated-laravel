@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Models;
 
+use Escalated\Laravel\Concerns\UsesEscalatedConnection;
 use Escalated\Laravel\Escalated;
 use Illuminate\Database\Eloquent\Model;
 
@@ -18,6 +19,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class PluginStoreRecord extends Model
 {
+    use UsesEscalatedConnection;
+
     protected $guarded = ['id'];
 
     protected function casts(): array

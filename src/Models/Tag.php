@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Models;
 
+use Escalated\Laravel\Concerns\UsesEscalatedConnection;
 use Escalated\Laravel\Database\Factories\TagFactory;
 use Escalated\Laravel\Escalated;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,7 +12,7 @@ use Illuminate\Support\Str;
 
 class Tag extends Model
 {
-    use HasFactory;
+    use HasFactory, UsesEscalatedConnection;
 
     protected $guarded = ['id'];
 

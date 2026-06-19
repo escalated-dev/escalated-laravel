@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Models;
 
+use Escalated\Laravel\Concerns\UsesEscalatedConnection;
 use Escalated\Laravel\Contracts\TicketSubject;
 use Escalated\Laravel\Escalated;
 use Illuminate\Database\Eloquent\Model;
@@ -16,6 +17,8 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  */
 class TicketSubjectLink extends Model
 {
+    use UsesEscalatedConnection;
+
     protected $guarded = ['id'];
 
     protected function casts(): array
