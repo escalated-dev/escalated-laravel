@@ -216,7 +216,9 @@ class PluginCommand extends Command
         $this->info("Installing \"{$package}\" via Composer...");
 
         $this->components->task('Running composer require', function () use ($package) {
-            $result = Process::run("composer require {$package}");
+            // composer require hits the network and resolves the dependency graph,
+            // which regularly exceeds Laravel's default 60s Process timeout.
+            $result = Process::timeout(300)->run("composer require {$package}");
 
             if (! $result->successful()) {
                 throw new \RuntimeException('Composer install failed: '.$result->errorOutput());
