@@ -59,7 +59,9 @@
                 "PKSA-8qx3-n5y5-vvnd": "laravel/framework 11.x advisory; CI compat matrix only (see above).",
                 "PKSA-q46n-4fdk-zjr4": "laravel/framework 11.x advisory; CI compat matrix only (see above).",
                 "PKSA-qzrn-rnz3-85w1": "laravel/framework 11.x advisory; CI compat matrix only (see above).",
-                "PKSA-w7xr-vk7n-rstm": "laravel/framework 11.x advisory; CI compat matrix only (see above)."
+                "PKSA-w7xr-vk7n-rstm": "laravel/framework 11.x advisory; CI compat matrix only (see above).",
+                "PKSA-m5cs-t1y6-qpcs": "laravel/framework 11.x advisory; CI compat matrix only (see above).",
+                "PKSA-3r5d-mb8f-1qw9": "laravel/framework 11.x advisory; CI compat matrix only (see above)."
             }
         }
     },
