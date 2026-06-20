@@ -243,14 +243,24 @@ class InstallCommand extends Command
     protected function installNpmPackage(): void
     {
         $this->components->task(__('escalated::commands.install.installingNpm'), function () {
-            $result = Process::run('npm install @escalated-dev/escalated');
+            try {
+                // npm install is a network + dependency-resolution operation that
+                // routinely exceeds Laravel's default 60s Process timeout. Give it
+                // headroom, and catch the timeout (and a missing/offline npm) so the
+                // whole installer degrades to manual instructions instead of aborting.
+                $result = Process::timeout(300)->run('npm install @escalated-dev/escalated');
 
-            if (! $result->successful()) {
-                $this->components->warn(__('escalated::commands.install.npmManual'));
-                $this->line('  npm install @escalated-dev/escalated');
-
-                return false;
+                if ($result->successful()) {
+                    return true;
+                }
+            } catch (\Throwable $e) {
+                // Fall through to the manual-instructions path below.
             }
+
+            $this->components->warn(__('escalated::commands.install.npmManual'));
+            $this->line('  npm install @escalated-dev/escalated');
+
+            return false;
         });
     }
 

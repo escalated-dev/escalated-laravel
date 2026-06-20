@@ -3,8 +3,11 @@
 use Escalated\Laravel\Console\Commands\InstallCommand;
 use Illuminate\Console\OutputStyle;
 use Illuminate\Console\View\Components\Factory as ComponentsFactory;
+use Illuminate\Support\Facades\Process;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\NullOutput;
+use Symfony\Component\Process\Exception\ProcessTimedOutException;
+use Symfony\Component\Process\Process as SymfonyProcess;
 
 function callMethod(object $object, string $method, array $args = []): mixed
 {
@@ -418,4 +421,49 @@ it('returns empty array when migrations directory does not exist', function () {
     $result = callMethod(makeCommand(), 'existingPublishedMigrations');
 
     expect($result)->toBe([]);
+});
+
+// --- installNpmPackage ---
+
+it('does not abort the installer when npm install times out', function () {
+    // Reproduces the reported failure: `npm install` exceeds the Process timeout,
+    // which throws ProcessTimedOutException. The installer must degrade to manual
+    // instructions rather than letting the exception crash escalated:install.
+    Process::preventStrayProcesses();
+    Process::fake([
+        'npm install*' => function () {
+            $process = SymfonyProcess::fromShellCommandline('npm install @escalated-dev/escalated');
+            $process->setTimeout(300);
+
+            throw new ProcessTimedOutException($process, ProcessTimedOutException::TYPE_GENERAL);
+        },
+    ]);
+
+    // Pre-fix, installNpmPackage lets the Illuminate ProcessTimedOutException
+    // propagate and aborts escalated:install. The installer must instead swallow
+    // it and degrade to manual instructions.
+    $thrown = null;
+    try {
+        callMethod(makeCommand(true), 'installNpmPackage');
+    } catch (Throwable $e) {
+        $thrown = $e;
+    }
+
+    expect($thrown)->toBeNull();
+});
+
+it('shows manual instructions when npm install exits non-zero', function () {
+    Process::preventStrayProcesses();
+    Process::fake([
+        'npm install*' => Process::result(output: '', errorOutput: 'E404 not found', exitCode: 1),
+    ]);
+
+    $thrown = null;
+    try {
+        callMethod(makeCommand(true), 'installNpmPackage');
+    } catch (Throwable $e) {
+        $thrown = $e;
+    }
+
+    expect($thrown)->toBeNull();
 });
