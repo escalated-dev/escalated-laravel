@@ -14,6 +14,7 @@ use Escalated\Laravel\Http\Controllers\Admin\ChatSettingsController;
 use Escalated\Laravel\Http\Controllers\Admin\CsatSettingsController;
 use Escalated\Laravel\Http\Controllers\Admin\CustomFieldController;
 use Escalated\Laravel\Http\Controllers\Admin\CustomObjectController;
+use Escalated\Laravel\Http\Controllers\Admin\DatabaseConnectionController;
 use Escalated\Laravel\Http\Controllers\Admin\DataRetentionController;
 use Escalated\Laravel\Http\Controllers\Admin\DepartmentController;
 use Escalated\Laravel\Http\Controllers\Admin\EmailSettingsController;
@@ -215,6 +216,13 @@ Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web'
         Route::post('/settings/two-factor/setup', [TwoFactorController::class, 'setup'])->name('escalated.admin.two-factor.setup');
         Route::post('/settings/two-factor/confirm', [TwoFactorController::class, 'confirm'])->name('escalated.admin.two-factor.confirm');
         Route::post('/settings/two-factor/disable', [TwoFactorController::class, 'disable'])->name('escalated.admin.two-factor.disable');
+
+        // Database connection. Read-only when escalated.connection pins it in
+        // config; see DatabaseConnectionController for why the choice is stored
+        // in a file rather than in the database it selects.
+        Route::get('/settings/database', [DatabaseConnectionController::class, 'index'])->name('escalated.admin.settings.database');
+        Route::post('/settings/database/test', [DatabaseConnectionController::class, 'test'])->name('escalated.admin.settings.database.test');
+        Route::post('/settings/database', [DatabaseConnectionController::class, 'update'])->name('escalated.admin.settings.database.update');
 
         // Data Retention
         Route::get('/settings/data-retention', [DataRetentionController::class, 'index'])->name('escalated.admin.settings.data-retention');

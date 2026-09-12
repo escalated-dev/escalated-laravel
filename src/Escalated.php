@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel;
 
+use Escalated\Laravel\Support\ConnectionStore;
 use Illuminate\Contracts\Database\Query\Builder;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -31,6 +32,12 @@ class Escalated
      * @var array<string,bool>
      */
     private static array $columnExistsCache = [];
+
+    /**
+     * Runtime connection override. `false` means none is set -- distinct from
+     * null, which means "force the host's default connection".
+     */
+    protected static string|null|false $connectionOverride = false;
 
     /**
      * Set the user model class.
@@ -270,9 +277,60 @@ class Escalated
      */
     public static function connection(): ?string
     {
+        // Precedence, strongest first:
+        //
+        //   1. useConnection() -- an explicit runtime override, for code that
+        //      needs to reach another database for the length of a job or a
+        //      test without touching anything persistent.
+        //   2. config('escalated.connection') -- the deploy-time setting. A
+        //      host that puts this in config or .env means it, so the admin
+        //      screen must not be able to quietly contradict it.
+        //   3. The admin's stored choice, for hosts that would rather manage
+        //      this from the panel than from a deploy.
+        //
+        // Config outranking the stored choice is the important one: it keeps
+        // infrastructure-as-code authoritative, and it is why the admin screen
+        // shows the setting as locked rather than pretending to accept a
+        // change it would then ignore.
+        if (static::$connectionOverride !== false) {
+            return static::$connectionOverride;
+        }
+
         $connection = config('escalated.connection');
 
-        return is_string($connection) && $connection !== '' ? $connection : null;
+        if (is_string($connection) && $connection !== '') {
+            return $connection;
+        }
+
+        return ConnectionStore::get();
+    }
+
+    /**
+     * Whether `config('escalated.connection')` pins the connection.
+     *
+     * When it does, the admin screen is read-only: a value set in config or
+     * .env is deployed infrastructure, and an admin toggling a database from
+     * a web form must not be able to silently disagree with it.
+     */
+    public static function connectionIsPinnedByConfig(): bool
+    {
+        $connection = config('escalated.connection');
+
+        return is_string($connection) && $connection !== '';
+    }
+
+    /**
+     * Force a connection for the rest of the process, or pass null to force
+     * the host's default. Returns the previous override so callers can restore
+     * it. Pass no argument to clear the override entirely.
+     */
+    public static function useConnection(string|null|false $connection = false): string|null|false
+    {
+        $previous = static::$connectionOverride;
+
+        static::$connectionOverride = $connection;
+
+        return $previous;
     }
 
     /**
