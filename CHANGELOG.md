@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-09-11
+
 ### Added
 - **Admin screen for the database connection** at `/admin/settings/database`. Shows which database Escalated is reading and writing (driver, database, ticket count), lists the connections it could use, lets each be probed without committing to it, and switches between them.
 
