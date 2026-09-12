@@ -164,7 +164,13 @@ it('filters JSON is properly stored and retrieved', function () {
     ]);
 
     $retrieved = SavedView::find($view->id);
-    expect($retrieved->filters)->toBe($filters);
+
+    // toEqual, not toBe: MySQL's native JSON type stores objects as a sorted
+    // binary structure, so keys come back in a different order than they went
+    // in. The values surviving the round trip is the contract; the order they
+    // sit in inside the column is the engine's business.
+    expect($retrieved->filters)->toEqual($filters);
+    expect($retrieved->filters['tags'])->toBe([1, 2, 3]);
 });
 
 it('reorder updates positions', function () {

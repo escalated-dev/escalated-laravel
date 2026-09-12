@@ -149,7 +149,7 @@ class ChatSessionService
 
         if ($userId) {
             $userModel = Escalated::userModel();
-            $user = $userModel::find($userId);
+            $user = Escalated::findUser($userId);
 
             if ($user) {
                 $replyData['author_type'] = $user->getMorphClass();

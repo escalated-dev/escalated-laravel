@@ -1,6 +1,7 @@
 <?php
 
 use Escalated\Laravel\Console\Commands\InstallCommand;
+use Escalated\Laravel\Tests\Fixtures\TestUser;
 use Illuminate\Console\OutputStyle;
 use Illuminate\Console\View\Components\Factory as ComponentsFactory;
 use Illuminate\Support\Facades\Process;
@@ -8,6 +9,16 @@ use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Component\Process\Process as SymfonyProcess;
+
+// Several cases here point escalated.user_model at classes that do not exist,
+// which is the point -- resolveUserModelPath() works from the name alone. The
+// config outlives the test body though, and Testbench rolls the migrations back
+// on teardown: the down migrations ask for the user key type, which
+// instantiates the model. On SQLite the rollback does little enough to get away
+// with it; on PostgreSQL and MySQL it fails with "Class not found".
+afterEach(function () {
+    config(['escalated.user_model' => TestUser::class]);
+});
 
 function callMethod(object $object, string $method, array $args = []): mixed
 {

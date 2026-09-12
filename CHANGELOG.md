@@ -4,6 +4,51 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- **The test suite runs on MySQL and PostgreSQL as well as SQLite.** It had only
+  ever seen SQLite, which is the one driver no host deploys on and the one that
+  enforces the least. `tests/TestDatabase.php` reads `ESCALATED_TEST_DRIVER`,
+  defaulting to SQLite so running the suite locally still needs nothing
+  installed; an unrecognised value throws rather than falling back, because a CI
+  leg that quietly ran SQLite would report green having tested nothing the
+  matrix exists for. `tests/Integration/TestDatabaseDriverTest.php` is the one
+  test that notices.
+
+  The `tests/Connection` suite stays on two in-memory SQLite databases whatever
+  the driver: what it exercises is Eloquent's connection resolution, which has
+  no dialect content, and two empty schemas per test is the only way to tell
+  connection routing from schema drift.
+
+### Fixed
+- **Every SLA report was a 500 on PostgreSQL.** Eight raw-SQL expressions in
+  `ReportingService` compared the boolean columns `sla_first_response_breached`
+  and `sla_resolution_breached` against the integer `1`. PostgreSQL rejects
+  that outright ("operator does not exist: boolean = integer"); MySQL and SQLite
+  store the columns as integers, so neither noticed. A boolean column is already
+  a predicate and is now used as one, which every driver accepts.
+
+- **An unknown user id could escape as a `QueryException` instead of the
+  documented `InvalidArgumentException`.** `Ticket::assign()`, mention
+  resolution, chat assignment and the assignment notification all passed
+  whatever id they were given straight to `find()`. An id that cannot be the
+  host user's key — a UUID against an integer key, say, or anything else from a
+  request — made PostgreSQL and MySQL raise a driver error where SQLite quietly
+  returned nothing. A host that handled "not found" would instead surface a 500
+  with SQL in it. Lookups now go through `Escalated::findUser()`, which treats an
+  impossible id as not found.
+
+- **Three migrations could not be rolled back.**
+  - `2026_03_21_000001` passed a complete index name inside the array form of
+    `dropIndex()`, which asks Laravel to build a name from it — producing
+    `escalated_tickets_escalated_tickets_ticket_type_index`, which no database
+    has.
+  - `2024_01_01_000011` restored `NOT NULL` on `requester_type` and
+    `requester_id` while guest tickets — rows with neither — were still present.
+    PostgreSQL and MySQL refuse; SQLite rebuilds the table and lets the nulls
+    through. The rows a pre-guest schema cannot hold are now removed first.
+  - The same migration dropped `guest_token` while its unique index still named
+    it, which SQLite rejects. The index is dropped first.
+
 ## [1.7.0] - 2026-09-11
 
 ### Added

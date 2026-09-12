@@ -293,8 +293,8 @@ class ReportingService
                     ->orWhere('sla_resolution_breached', true);
             })
             ->selectRaw("{$dateExpr} as period")
-            ->selectRaw('SUM(CASE WHEN sla_first_response_breached = 1 THEN 1 ELSE 0 END) as first_response_breaches')
-            ->selectRaw('SUM(CASE WHEN sla_resolution_breached = 1 THEN 1 ELSE 0 END) as resolution_breaches')
+            ->selectRaw('SUM(CASE WHEN sla_first_response_breached THEN 1 ELSE 0 END) as first_response_breaches')
+            ->selectRaw('SUM(CASE WHEN sla_resolution_breached THEN 1 ELSE 0 END) as resolution_breaches')
             ->selectRaw('COUNT(*) as total_breaches')
             ->groupBy('period')
             ->orderBy('period')
@@ -325,7 +325,7 @@ class ReportingService
             ->select([
                 "{$departmentsTable}.name as department",
                 DB::raw('COUNT(*) as total'),
-                DB::raw("SUM(CASE WHEN {$ticketsTable}.sla_first_response_breached = 1 OR {$ticketsTable}.sla_resolution_breached = 1 THEN 1 ELSE 0 END) as breached"),
+                DB::raw("SUM(CASE WHEN {$ticketsTable}.sla_first_response_breached OR {$ticketsTable}.sla_resolution_breached THEN 1 ELSE 0 END) as breached"),
             ])
             ->get()
             ->map(fn ($row) => [
@@ -350,7 +350,7 @@ class ReportingService
             ->select([
                 'priority',
                 DB::raw('COUNT(*) as total'),
-                DB::raw('SUM(CASE WHEN sla_first_response_breached = 1 OR sla_resolution_breached = 1 THEN 1 ELSE 0 END) as breached'),
+                DB::raw('SUM(CASE WHEN sla_first_response_breached OR sla_resolution_breached THEN 1 ELSE 0 END) as breached'),
             ])
             ->get()
             ->map(fn ($row) => [
@@ -777,7 +777,7 @@ class ReportingService
                 "{$tagsTable}.name as tag",
                 DB::raw('COUNT(*) as volume'),
                 DB::raw("ROUND({$hoursDiff}, 1) as avg_resolution_hours"),
-                DB::raw("SUM(CASE WHEN {$ticketsTable}.sla_first_response_breached = 1 OR {$ticketsTable}.sla_resolution_breached = 1 THEN 1 ELSE 0 END) as breached"),
+                DB::raw("SUM(CASE WHEN {$ticketsTable}.sla_first_response_breached OR {$ticketsTable}.sla_resolution_breached THEN 1 ELSE 0 END) as breached"),
             ])
             ->get()
             ->map(fn ($row) => [
@@ -808,7 +808,7 @@ class ReportingService
                 "{$departmentsTable}.name as department",
                 DB::raw('COUNT(*) as volume'),
                 DB::raw("ROUND({$hoursDiff}, 1) as avg_resolution_hours"),
-                DB::raw("SUM(CASE WHEN {$ticketsTable}.sla_first_response_breached = 1 OR {$ticketsTable}.sla_resolution_breached = 1 THEN 1 ELSE 0 END) as breached"),
+                DB::raw("SUM(CASE WHEN {$ticketsTable}.sla_first_response_breached OR {$ticketsTable}.sla_resolution_breached THEN 1 ELSE 0 END) as breached"),
                 DB::raw("SUM(CASE WHEN {$ticketsTable}.resolved_at IS NOT NULL THEN 1 ELSE 0 END) as resolved"),
             ])
             ->get()
@@ -837,7 +837,7 @@ class ReportingService
                 'channel',
                 DB::raw('COUNT(*) as volume'),
                 DB::raw("ROUND({$hoursDiff}, 1) as avg_resolution_hours"),
-                DB::raw('SUM(CASE WHEN sla_first_response_breached = 1 OR sla_resolution_breached = 1 THEN 1 ELSE 0 END) as breached'),
+                DB::raw('SUM(CASE WHEN sla_first_response_breached OR sla_resolution_breached THEN 1 ELSE 0 END) as breached'),
                 DB::raw('SUM(CASE WHEN resolved_at IS NOT NULL THEN 1 ELSE 0 END) as resolved'),
             ])
             ->get()
@@ -866,7 +866,7 @@ class ReportingService
                 'ticket_type',
                 DB::raw('COUNT(*) as volume'),
                 DB::raw("ROUND({$hoursDiff}, 1) as avg_resolution_hours"),
-                DB::raw('SUM(CASE WHEN sla_first_response_breached = 1 OR sla_resolution_breached = 1 THEN 1 ELSE 0 END) as breached'),
+                DB::raw('SUM(CASE WHEN sla_first_response_breached OR sla_resolution_breached THEN 1 ELSE 0 END) as breached'),
                 DB::raw('SUM(CASE WHEN resolved_at IS NOT NULL THEN 1 ELSE 0 END) as resolved'),
             ])
             ->get()

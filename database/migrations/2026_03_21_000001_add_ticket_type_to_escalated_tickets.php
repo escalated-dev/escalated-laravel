@@ -20,7 +20,11 @@ return new class extends Migration
         $prefix = config('escalated.table_prefix', 'escalated_');
 
         Schema::table($prefix.'tickets', function (Blueprint $table) use ($prefix) {
-            $table->dropIndex([$prefix.'tickets_ticket_type_index']);
+            // A string names the index; an array names the columns Laravel should
+            // build a name from. Passing a full name inside an array asked for
+            // escalated_tickets_escalated_tickets_ticket_type_index, which no
+            // database has.
+            $table->dropIndex($prefix.'tickets_ticket_type_index');
             $table->dropColumn('ticket_type');
         });
     }

@@ -16,7 +16,7 @@ class SendAssignmentNotification
         }
 
         $userModel = Escalated::userModel();
-        $agent = $userModel::find($event->agentId);
+        $agent = Escalated::findUser($event->agentId);
 
         if ($agent) {
             $agent->notify(new TicketAssignedNotification($event->ticket));

@@ -105,6 +105,30 @@ class Escalated
     }
 
     /**
+     * Find a host user by id, returning null when the id cannot be one.
+     *
+     * `find()` hands whatever it is given straight to the database. SQLite
+     * compares a UUID against an integer key and returns nothing; PostgreSQL
+     * and MySQL raise a driver error instead. Callers that take an id from a
+     * request would then see a QueryException with SQL in it rather than the
+     * "not found" they are written to handle.
+     */
+    public static function findUser(mixed $id): mixed
+    {
+        $model = static::userModel();
+
+        if ($id === null || $id === '') {
+            return null;
+        }
+
+        if (static::newUserModel()->getKeyType() === 'int' && ! ctype_digit(ltrim((string) $id, '-'))) {
+            return null;
+        }
+
+        return $model::find($id);
+    }
+
+    /**
      * Add a host-user foreign-key column to a migration blueprint, typed to
      * match the host's user primary key (see {@see userKeyType()}). Returns the
      * column definition so callers can chain ->nullable()/->index()/etc.

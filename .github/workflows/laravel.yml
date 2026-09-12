@@ -24,7 +24,7 @@ jobs:
           - laravel: ^11.0
             testbench: 9.*
 
-    name: P${{ matrix.php }} - L${{ matrix.laravel }}
+    name: P${{ matrix.php }} - L${{ matrix.laravel }} - sqlite
 
     steps:
       - name: Checkout code
@@ -43,4 +43,86 @@ jobs:
           composer update --prefer-stable --prefer-dist --no-interaction
 
       - name: Execute tests
+        run: vendor/bin/pest
+
+  # The version matrix above runs on SQLite. These two legs run the same suite
+  # against the engines hosts actually deploy on. The three disagree about
+  # enough to matter -- LIKE case sensitivity, aggregate return types, and
+  # SQLite's habit of reading an unknown double-quoted column as a string
+  # literal instead of failing -- so a suite that has only ever seen SQLite has
+  # never tested any of it.
+  #
+  # Both service containers start on both legs. GitHub Actions cannot make a
+  # service conditional, and an empty `image:` is an error rather than a skip;
+  # a spare container is cheaper than the confusion of working around it.
+  databases:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        db: [mysql, pgsql]
+
+    name: pest - ${{ matrix.db }}
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+          MYSQL_DATABASE: escalated_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: escalated_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd=pg_isready
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: dom, curl, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, pdo_mysql, pdo_pgsql
+          coverage: none
+
+      - name: Install dependencies
+        run: composer update --prefer-stable --prefer-dist --no-interaction
+
+      # The package can be pointed at a connection of its own, and the suite
+      # covers that with a second database rather than a second name for the
+      # first.
+      - name: Create the secondary database
+        if: matrix.db == 'mysql'
+        run: mysql -h 127.0.0.1 -u root -e 'CREATE DATABASE IF NOT EXISTS escalated_test_secondary'
+
+      - name: Create the secondary database
+        if: matrix.db == 'pgsql'
+        env:
+          PGPASSWORD: postgres
+        run: psql -h 127.0.0.1 -U postgres -c 'CREATE DATABASE escalated_test_secondary'
+
+      - name: Execute tests
+        env:
+          # Read by tests/TestDatabase.php. An unrecognised value throws rather
+          # than falling back, so a broken leg fails instead of quietly running
+          # SQLite and reporting green.
+          ESCALATED_TEST_DRIVER: ${{ matrix.db }}
+          ESCALATED_TEST_PASSWORD: ${{ matrix.db == 'pgsql' && 'postgres' || '' }}
         run: vendor/bin/pest

@@ -7,6 +7,19 @@ use Escalated\Laravel\Models\Ticket;
 
 // Regression coverage for host apps whose User model uses a UUID/string primary
 // key. The package must accept string user ids throughout without a TypeError.
+//
+// The ids below are strings, not UUID literals. This suite's host user model is
+// integer-keyed, so `Escalated::userKeyType()` resolves to bigint and the
+// package's user columns are bigints -- writing a UUID into one is invalid.
+// PostgreSQL says so; SQLite stores it anyway and MySQL silently truncates it
+// to 9, which is how these cases passed while asserting something that cannot
+// happen. What is actually under test is the PHP type: a string reaching a
+// scope or a fill must not raise a TypeError. UUID-typed columns are covered by
+// UserKeyTypeTest.
+function stringUserId(int $id): string
+{
+    return (string) $id;
+}
 
 it('assigns a ticket via a string user id without a type error', function () {
     $agent = $this->createAgent();
@@ -27,8 +40,8 @@ it('rejects an unknown string user id with a clean exception, not a TypeError', 
 });
 
 it('scopes saved views for a string/uuid user id without a type error', function () {
-    $uuid = '9f1c2d3e-4a5b-6c7d-8e9f-0a1b2c3d4e5f';
-    $otherUuid = '00000000-0000-0000-0000-000000000000';
+    $uuid = stringUserId(987654321);
+    $otherUuid = stringUserId(123456789);
 
     $mine = SavedView::create([
         'name' => 'Mine',
@@ -60,7 +73,7 @@ it('scopes saved views for a string/uuid user id without a type error', function
 });
 
 it('scopes mentions for a string/uuid user id without a type error', function () {
-    $uuid = 'abcdef01-2345-6789-abcd-ef0123456789';
+    $uuid = stringUserId(555000111);
 
     $ticket = Ticket::factory()->create();
     $reply = Reply::create([
@@ -78,5 +91,5 @@ it('scopes mentions for a string/uuid user id without a type error', function ()
     $found = Mention::forUser($uuid)->pluck('id')->all();
 
     expect($found)->toContain($mention->id)
-        ->and(Mention::forUser('11111111-1111-1111-1111-111111111111')->count())->toBe(0);
+        ->and(Mention::forUser(stringUserId(222000333))->count())->toBe(0);
 });

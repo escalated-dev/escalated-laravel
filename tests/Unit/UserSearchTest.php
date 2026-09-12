@@ -103,9 +103,14 @@ class UserSearchTest extends TestCase
         $builder = TestUser::query()->getQuery();
         Escalated::applyUserSearch($builder, 'test');
 
+        // Each driver quotes identifiers its own way -- "email" on SQLite and
+        // PostgreSQL, `email` on MySQL -- so ask the grammar rather than
+        // hardcoding one of them.
+        $grammar = TestUser::query()->getQuery()->getGrammar();
+
         $sql = $builder->toSql();
-        $this->assertStringNotContainsString('"name"', $sql);
-        $this->assertStringContainsString('"email"', $sql);
+        $this->assertStringNotContainsString($grammar->wrap('name'), $sql);
+        $this->assertStringContainsString($grammar->wrap('email'), $sql);
     }
 
     public function test_user_options_falls_back_to_email_when_column_missing(): void

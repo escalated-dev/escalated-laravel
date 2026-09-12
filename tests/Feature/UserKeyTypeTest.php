@@ -36,13 +36,21 @@ it('honors an explicit user_key_type override', function () {
     expect(Escalated::userKeyType())->toBe('string');
 });
 
+// Each driver names the same column differently: SQLite says "integer",
+// PostgreSQL "int8", MySQL "bigint". What matters is that the column holds
+// integers, not what the driver calls them.
+function isIntegerColumn(string $type): bool
+{
+    return in_array($type, ['integer', 'int8', 'bigint', 'bigserial'], true);
+}
+
 it('creates an integer column for bigint keys', function () {
-    expect(probeUserColumnType('bigint'))->toBe('integer');
+    expect(isIntegerColumn(probeUserColumnType('bigint')))->toBeTrue();
 });
 
 it('creates a string-compatible column for uuid and string keys', function () {
-    expect(probeUserColumnType('uuid'))->not->toBe('integer')
-        ->and(probeUserColumnType('string'))->not->toBe('integer');
+    expect(isIntegerColumn(probeUserColumnType('uuid')))->toBeFalse()
+        ->and(isIntegerColumn(probeUserColumnType('string')))->toBeFalse();
 });
 
 it('builds user morph columns sized to the key type', function () {
@@ -55,5 +63,5 @@ it('builds user morph columns sized to the key type', function () {
 
     expect(Schema::hasColumn('escalated_ukt_probe', 'requester_type'))->toBeTrue()
         ->and(Schema::hasColumn('escalated_ukt_probe', 'requester_id'))->toBeTrue()
-        ->and(Schema::getColumnType('escalated_ukt_probe', 'requester_id'))->not->toBe('integer');
+        ->and(isIntegerColumn(Schema::getColumnType('escalated_ukt_probe', 'requester_id')))->toBeFalse();
 });
