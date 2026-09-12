@@ -6,8 +6,6 @@ use Carbon\Carbon;
 use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Models\EscalatedSettings;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 class PurgeExpiredDataCommand extends Command
 {
@@ -64,7 +62,7 @@ class PurgeExpiredDataCommand extends Command
         $cutoff = Carbon::now()->subDays($days);
         $table = Escalated::table('tickets');
 
-        $query = DB::table($table)
+        $query = Escalated::db()->table($table)
             ->where('status', 'closed')
             ->where('closed_at', '<', $cutoff)
             ->whereNull('deleted_at');
@@ -74,14 +72,14 @@ class PurgeExpiredDataCommand extends Command
 
         if (! $dryRun && $count > 0) {
             if ($force) {
-                DB::table($table)
+                Escalated::db()->table($table)
                     ->where('status', 'closed')
                     ->where('closed_at', '<', $cutoff)
                     ->whereNull('deleted_at')
                     ->delete();
                 $this->info("Permanently deleted {$count} closed tickets.");
             } else {
-                DB::table($table)
+                Escalated::db()->table($table)
                     ->where('status', 'closed')
                     ->where('closed_at', '<', $cutoff)
                     ->whereNull('deleted_at')
@@ -105,20 +103,20 @@ class PurgeExpiredDataCommand extends Command
         $cutoff = Carbon::now()->subDays($days);
         $table = Escalated::table('attachments');
 
-        if (! Schema::hasTable($table)) {
+        if (! Escalated::schema()->hasTable($table)) {
             $this->line('Attachments table not found, skipping.');
 
             return;
         }
 
-        $count = DB::table($table)
+        $count = Escalated::db()->table($table)
             ->where('created_at', '<', $cutoff)
             ->count();
 
         $this->line("Attachments: {$count} records older than {$days} days.");
 
         if (! $dryRun && $count > 0) {
-            DB::table($table)
+            Escalated::db()->table($table)
                 ->where('created_at', '<', $cutoff)
                 ->delete();
             $this->info("Deleted {$count} attachments.");
@@ -139,20 +137,20 @@ class PurgeExpiredDataCommand extends Command
         $cutoff = Carbon::now()->subDays($days);
         $table = Escalated::table('audit_logs');
 
-        if (! Schema::hasTable($table)) {
+        if (! Escalated::schema()->hasTable($table)) {
             $this->line('Audit logs table not found, skipping.');
 
             return;
         }
 
-        $count = DB::table($table)
+        $count = Escalated::db()->table($table)
             ->where('created_at', '<', $cutoff)
             ->count();
 
         $this->line("Audit logs: {$count} records older than {$days} days.");
 
         if (! $dryRun && $count > 0) {
-            DB::table($table)
+            Escalated::db()->table($table)
                 ->where('created_at', '<', $cutoff)
                 ->delete();
             $this->info("Deleted {$count} audit log entries.");
@@ -167,7 +165,7 @@ class PurgeExpiredDataCommand extends Command
         $gracePeriod = Carbon::now()->subDays(30);
         $table = Escalated::table('tickets');
 
-        $count = DB::table($table)
+        $count = Escalated::db()->table($table)
             ->whereNotNull('deleted_at')
             ->where('deleted_at', '<', $gracePeriod)
             ->count();
@@ -181,7 +179,7 @@ class PurgeExpiredDataCommand extends Command
         $this->line("Grace period expired: {$count} soft-deleted tickets for permanent removal.");
 
         if (! $dryRun) {
-            DB::table($table)
+            Escalated::db()->table($table)
                 ->whereNotNull('deleted_at')
                 ->where('deleted_at', '<', $gracePeriod)
                 ->delete();

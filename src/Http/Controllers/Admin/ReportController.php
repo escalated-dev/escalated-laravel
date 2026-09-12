@@ -3,6 +3,7 @@
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
+use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Models\AuditLog;
 use Escalated\Laravel\Models\SatisfactionRating;
 use Escalated\Laravel\Models\Ticket;
@@ -266,7 +267,7 @@ class ReportController extends Controller
 
     protected function avgFirstResponseHours($since): float
     {
-        $driver = DB::connection()->getDriverName();
+        $driver = Escalated::db()->getDriverName();
 
         $expr = match ($driver) {
             'sqlite' => '(julianday(first_response_at) - julianday(created_at)) * 24',

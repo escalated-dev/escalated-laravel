@@ -92,7 +92,7 @@ class ReportingService
         $avgResponseRaw = $this->avgHoursDiffRaw("{$ticketsTable}.created_at", "{$ticketsTable}.first_response_at");
         $avgResolutionRaw = $this->avgHoursDiffRaw("{$ticketsTable}.created_at", "{$ticketsTable}.resolved_at");
 
-        return DB::table($ticketsTable)
+        return Escalated::db()->table($ticketsTable)
             ->join($usersTable, "{$ticketsTable}.assigned_to", '=', "{$usersTable}.id")
             ->whereBetween("{$ticketsTable}.created_at", [$startDate, $endDate])
             ->whereNotNull("{$ticketsTable}.assigned_to")
@@ -244,7 +244,7 @@ class ReportingService
         $ticketsTable = Escalated::table('tickets');
         $ratingsTable = Escalated::table('satisfaction_ratings');
 
-        return DB::table($ratingsTable)
+        return Escalated::db()->table($ratingsTable)
             ->join($ticketsTable, "{$ratingsTable}.ticket_id", '=', "{$ticketsTable}.id")
             ->join($usersTable, "{$ticketsTable}.assigned_to", '=', "{$usersTable}.id")
             ->whereBetween("{$ratingsTable}.created_at", [$startDate, $endDate])
@@ -317,7 +317,7 @@ class ReportingService
         $ticketsTable = Escalated::table('tickets');
         $departmentsTable = Escalated::table('departments');
 
-        return DB::table($ticketsTable)
+        return Escalated::db()->table($ticketsTable)
             ->leftJoin($departmentsTable, "{$ticketsTable}.department_id", '=', "{$departmentsTable}.id")
             ->where("{$ticketsTable}.created_at", '>=', $since)
             ->whereNotNull("{$ticketsTable}.sla_policy_id")
@@ -590,7 +590,7 @@ class ReportingService
             $resolutionRate = $totalTickets > 0 ? ($resolvedTickets / $totalTickets) * 100 : 0;
 
             // Get CSAT for this agent
-            $csatAvg = (float) DB::table($ratingsTable)
+            $csatAvg = (float) Escalated::db()->table($ratingsTable)
                 ->join($ticketsTable, "{$ratingsTable}.ticket_id", '=', "{$ticketsTable}.id")
                 ->where("{$ticketsTable}.assigned_to", $agentId)
                 ->where("{$ratingsTable}.created_at", '>=', $since)
@@ -641,7 +641,7 @@ class ReportingService
         $usersTable = $userModel->getTable();
         $ticketsTable = Escalated::table('tickets');
 
-        return DB::table($ticketsTable)
+        return Escalated::db()->table($ticketsTable)
             ->join($usersTable, "{$ticketsTable}.assigned_to", '=', "{$usersTable}.id")
             ->where("{$ticketsTable}.created_at", '>=', $since)
             ->whereNotNull("{$ticketsTable}.assigned_to")
@@ -707,7 +707,7 @@ class ReportingService
         $usersTable = $userModel->getTable();
 
         // Replies per agent
-        $replies = DB::table($repliesTable)
+        $replies = Escalated::db()->table($repliesTable)
             ->join($usersTable, "{$repliesTable}.author_id", '=', "{$usersTable}.id")
             ->where("{$repliesTable}.created_at", '>=', $since)
             ->where("{$repliesTable}.author_type", $userModel::class)
@@ -768,7 +768,7 @@ class ReportingService
         $pivotTable = Escalated::table('ticket_tag');
         $hoursDiff = $this->avgHoursDiffRaw("{$ticketsTable}.created_at", "{$ticketsTable}.resolved_at");
 
-        return DB::table($pivotTable)
+        return Escalated::db()->table($pivotTable)
             ->join($ticketsTable, "{$pivotTable}.ticket_id", '=', "{$ticketsTable}.id")
             ->join($tagsTable, "{$pivotTable}.tag_id", '=', "{$tagsTable}.id")
             ->where("{$ticketsTable}.created_at", '>=', $since)
@@ -800,7 +800,7 @@ class ReportingService
         $departmentsTable = Escalated::table('departments');
         $hoursDiff = $this->avgHoursDiffRaw("{$ticketsTable}.created_at", "{$ticketsTable}.resolved_at");
 
-        return DB::table($ticketsTable)
+        return Escalated::db()->table($ticketsTable)
             ->leftJoin($departmentsTable, "{$ticketsTable}.department_id", '=', "{$departmentsTable}.id")
             ->where("{$ticketsTable}.created_at", '>=', $since)
             ->groupBy("{$ticketsTable}.department_id", "{$departmentsTable}.name")
@@ -1044,7 +1044,7 @@ class ReportingService
 
     protected function driver(): string
     {
-        return DB::connection()->getDriverName();
+        return Escalated::db()->getDriverName();
     }
 
     protected function isSqlite(): bool

@@ -2,12 +2,15 @@
 
 namespace Escalated\Laravel\Models\Newsletter;
 
+use Escalated\Laravel\Concerns\UsesEscalatedConnection;
 use Escalated\Laravel\Models\Contact;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class NewsletterListMember extends Model
 {
+    use UsesEscalatedConnection;
+
     protected $table = 'escalated_newsletter_list_members';
 
     public $timestamps = false;

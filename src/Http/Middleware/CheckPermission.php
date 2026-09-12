@@ -5,7 +5,6 @@ namespace Escalated\Laravel\Http\Middleware;
 use Closure;
 use Escalated\Laravel\Escalated;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
 class CheckPermission
@@ -27,7 +26,7 @@ class CheckPermission
 
     public static function userHasPermission(int|string $userId, string $permissionSlug): bool
     {
-        return DB::table(Escalated::table('role_user'))
+        return Escalated::db()->table(Escalated::table('role_user'))
             ->join(Escalated::table('role_permission'), Escalated::table('role_user').'.role_id', '=', Escalated::table('role_permission').'.role_id')
             ->join(Escalated::table('permissions'), Escalated::table('role_permission').'.permission_id', '=', Escalated::table('permissions').'.id')
             ->where(Escalated::table('role_user').'.user_id', $userId)
@@ -44,7 +43,7 @@ class CheckPermission
     public static function userPermissions(int|string $userId): array
     {
         try {
-            return DB::table(Escalated::table('role_user'))
+            return Escalated::db()->table(Escalated::table('role_user'))
                 ->join(Escalated::table('role_permission'), Escalated::table('role_user').'.role_id', '=', Escalated::table('role_permission').'.role_id')
                 ->join(Escalated::table('permissions'), Escalated::table('role_permission').'.permission_id', '=', Escalated::table('permissions').'.id')
                 ->where(Escalated::table('role_user').'.user_id', $userId)

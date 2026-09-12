@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Models;
 
+use Escalated\Laravel\Concerns\UsesEscalatedConnection;
 use Escalated\Laravel\Database\Factories\ChatSessionFactory;
 use Escalated\Laravel\Enums\ChatSessionStatus;
 use Escalated\Laravel\Escalated;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ChatSession extends Model
 {
-    use HasFactory;
+    use HasFactory, UsesEscalatedConnection;
 
     protected $guarded = ['id'];
 

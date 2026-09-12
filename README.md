@@ -416,6 +416,7 @@ All config lives in `config/escalated.php`. Key options:
 'mode' => 'self-hosted',              // self-hosted | synced | cloud
 'user_model' => App\Models\User::class,
 'table_prefix' => 'escalated_',
+'connection' => null,                 // null = your app's default connection
 'default_priority' => 'medium',
 
 'routes' => [

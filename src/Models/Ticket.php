@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Models;
 
+use Escalated\Laravel\Concerns\UsesEscalatedConnection;
 use Escalated\Laravel\Contracts\Ticketable;
 use Escalated\Laravel\Database\Factories\TicketFactory;
 use Escalated\Laravel\Enums\ActivityType;
@@ -23,7 +24,7 @@ use Illuminate\Support\Str;
 
 class Ticket extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, UsesEscalatedConnection;
 
     public const TYPES = ['question', 'problem', 'incident', 'task'];
 
@@ -257,7 +258,14 @@ class Ticket extends Model
 
     public function isFollowedBy(int|string $userId): bool
     {
-        return $this->followers()->where('user_id', $userId)->exists();
+        // Asked of the pivot rather than through the relation: `where('user_id',
+        // ...)` would land on the host's users table, which has no such column,
+        // and cannot be joined to the pivot at all once Escalated is on its own
+        // connection. The pivot alone answers this, on either arrangement.
+        return $this->followers()->newPivotStatement()
+            ->where('ticket_id', $this->getKey())
+            ->where('user_id', $userId)
+            ->exists();
     }
 
     public function follow(int|string $userId): void

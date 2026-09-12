@@ -99,6 +99,35 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Database Connection
+    |--------------------------------------------------------------------------
+    |
+    | The connection Escalated's own tables live on, named as in your
+    | `config/database.php`. `null` means "whatever the application's default
+    | connection is", which is the historical behaviour and what almost every
+    | host wants.
+    |
+    | Set it when the support tables belong somewhere other than your primary
+    | database: a schema shared with a legacy system, a separate reporting or
+    | archive store, or simply a host that would rather keep ticketing data out
+    | of the application database entirely.
+    |
+    | This governs Escalated's models, migrations, query-builder reads and
+    | transactions. It deliberately does NOT move your users table: the host
+    | owns that, and Escalated follows your user model to wherever it already
+    | lives. Escalated stores host user ids as plain unconstrained columns, so
+    | the two can sit on different connections — or different servers — without
+    | a foreign key that could not span them.
+    |
+    | Changing this after install does not move existing data. Migrate the
+    | tables yourself, or run the package migrations against the new connection
+    | and copy the rows across.
+    |
+    */
+    'connection' => env('ESCALATED_DB_CONNECTION'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Tickets
     |--------------------------------------------------------------------------
     */

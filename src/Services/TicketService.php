@@ -7,12 +7,12 @@ use Escalated\Laravel\Contracts\Ticketable;
 use Escalated\Laravel\Enums\ActivityType;
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
+use Escalated\Laravel\Escalated;
 use Escalated\Laravel\EscalatedManager;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Models\TicketLink;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
 
 class TicketService
 {
@@ -130,7 +130,7 @@ class TicketService
      */
     public function splitTicket(Ticket $source, Reply $reply, array $data = []): Ticket
     {
-        return DB::transaction(function () use ($source, $reply, $data) {
+        return Escalated::db()->transaction(function () use ($source, $reply, $data) {
             $subject = $data['subject'] ?? 'Split from '.$source->reference.': '.$source->subject;
 
             $newTicket = Ticket::create([

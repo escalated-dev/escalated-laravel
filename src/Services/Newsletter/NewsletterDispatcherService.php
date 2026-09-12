@@ -2,11 +2,11 @@
 
 namespace Escalated\Laravel\Services\Newsletter;
 
+use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Mail\NewsletterMail;
 use Escalated\Laravel\Models\Newsletter\Newsletter;
 use Escalated\Laravel\Models\Newsletter\NewsletterDelivery;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
@@ -37,7 +37,7 @@ class NewsletterDispatcherService
         if ($allowance > 0) {
             $claimLimit = min($batchSize, $allowance);
 
-            $ids = DB::transaction(function () use ($claimLimit) {
+            $ids = Escalated::db()->transaction(function () use ($claimLimit) {
                 $rowIds = NewsletterDelivery::query()
                     ->where('status', 'pending')
                     ->where(function ($q) {

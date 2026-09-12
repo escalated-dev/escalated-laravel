@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Models;
 
+use Escalated\Laravel\Concerns\UsesEscalatedConnection;
 use Escalated\Laravel\Database\Factories\ReplyFactory;
 use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Events\InternalNoteAdded;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Reply extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, UsesEscalatedConnection;
 
     protected $guarded = ['id'];
 

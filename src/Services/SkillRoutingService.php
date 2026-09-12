@@ -6,7 +6,6 @@ use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Models\Skill;
 use Escalated\Laravel\Models\Ticket;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
 class SkillRoutingService
 {
@@ -52,7 +51,7 @@ class SkillRoutingService
         $agentSkillTable = Escalated::table('agent_skill');
         $skillIds = $matchingSkills->pluck('id')->all();
 
-        $agentSkillRows = DB::table($agentSkillTable)
+        $agentSkillRows = Escalated::db()->table($agentSkillTable)
             ->whereIn('skill_id', $skillIds)
             ->get(['user_id', 'skill_id', 'proficiency']);
 

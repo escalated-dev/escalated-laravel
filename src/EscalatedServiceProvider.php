@@ -36,7 +36,6 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Translation\Translator;
 use Inertia\Inertia;
@@ -452,7 +451,7 @@ class EscalatedServiceProvider extends ServiceProvider
 
             // Share guest tickets setting for frontend (check table exists first)
             try {
-                if (Schema::hasTable(Escalated::table('settings'))) {
+                if (Escalated::schema()->hasTable(Escalated::table('settings'))) {
                     $data['guest_tickets_enabled'] = EscalatedSettings::guestTicketsEnabled();
                     $data['show_powered_by'] = EscalatedSettings::getBool('show_powered_by', true);
                     $data['knowledge_base_enabled'] = EscalatedSettings::knowledgeBaseEnabled();
@@ -466,7 +465,7 @@ class EscalatedServiceProvider extends ServiceProvider
             // Share agent type (full/light) for light agent restrictions
             if ($user) {
                 try {
-                    if (Schema::hasTable(Escalated::table('agent_profiles'))) {
+                    if (Escalated::schema()->hasTable(Escalated::table('agent_profiles'))) {
                         $profile = AgentProfile::where('user_id', $user->getKey())->first();
                         $data['agent_type'] = $profile?->agent_type ?? 'full';
                     }

@@ -8,8 +8,6 @@ use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Models\EscalatedSettings;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 class DataRetentionController extends Controller
 {
@@ -71,7 +69,7 @@ class DataRetentionController extends Controller
             $ticketDays = $this->retentionDaysMap[$ticketSetting] ?? null;
             if ($ticketDays !== null) {
                 $cutoff = Carbon::now()->subDays($ticketDays);
-                $preview['tickets'] = DB::table(Escalated::table('tickets'))
+                $preview['tickets'] = Escalated::db()->table(Escalated::table('tickets'))
                     ->where('status', 'closed')
                     ->where('closed_at', '<', $cutoff)
                     ->whereNull('deleted_at')
@@ -81,9 +79,9 @@ class DataRetentionController extends Controller
             // Attachments preview
             $attachSetting = EscalatedSettings::get('retention_attachments', 'never');
             $attachDays = $this->retentionDaysMap[$attachSetting] ?? null;
-            if ($attachDays !== null && Schema::hasTable(Escalated::table('attachments'))) {
+            if ($attachDays !== null && Escalated::schema()->hasTable(Escalated::table('attachments'))) {
                 $cutoff = Carbon::now()->subDays($attachDays);
-                $preview['attachments'] = DB::table(Escalated::table('attachments'))
+                $preview['attachments'] = Escalated::db()->table(Escalated::table('attachments'))
                     ->where('created_at', '<', $cutoff)
                     ->count();
             }
@@ -91,9 +89,9 @@ class DataRetentionController extends Controller
             // Audit logs preview
             $auditSetting = EscalatedSettings::get('retention_audit_logs', 'never');
             $auditDays = $this->retentionDaysMap[$auditSetting] ?? null;
-            if ($auditDays !== null && Schema::hasTable(Escalated::table('audit_logs'))) {
+            if ($auditDays !== null && Escalated::schema()->hasTable(Escalated::table('audit_logs'))) {
                 $cutoff = Carbon::now()->subDays($auditDays);
-                $preview['audit_logs'] = DB::table(Escalated::table('audit_logs'))
+                $preview['audit_logs'] = Escalated::db()->table(Escalated::table('audit_logs'))
                     ->where('created_at', '<', $cutoff)
                     ->count();
             }
