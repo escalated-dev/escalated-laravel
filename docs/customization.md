@@ -104,6 +104,48 @@ pivot, then load the users by key — so `->agents`, `->followers`,
 as before. On a single connection nothing changes: the ordinary join is still
 issued.
 
+### Changing it from the admin panel
+
+Since 1.7.0 there is a settings screen at `/admin/settings/database` that shows
+which database Escalated is reading and writing, lists the connections it could
+use, and lets an admin switch between them.
+
+Two rules make that safe enough to expose in a web panel:
+
+**A connection with no Escalated tables cannot be selected.** Pointing Escalated
+at an unmigrated database does not error — the panel comes up with no tickets,
+no departments and no settings, which reads exactly like data loss. Every
+candidate is probed first, and an unmigrated or unreachable one is refused by
+the server and disabled in the UI.
+
+**`escalated.connection` wins.** If you set it in config or `.env`, that is
+deployed infrastructure, and the screen becomes read-only rather than accepting
+a change it would then ignore. Precedence is: `Escalated::useConnection()`
+(runtime, for a job or a test) → config → the admin's stored choice.
+
+The admin's choice is stored in a **file**, not in `escalated_settings`. It has
+to be: the name of the connection cannot live in the database it selects, or
+reading it back would mean already knowing it — and pointing Escalated at an
+empty database would destroy the only record of how to point it back. The file
+is `storage/app/escalated/connection.php`, and deleting it returns Escalated to
+whatever config says.
+
+### Changing it in code
+
+```php
+use Escalated\Laravel\Escalated;
+
+// For the rest of this process -- a queued job, a console command, a test.
+$previous = Escalated::useConnection('archive');
+
+// ... work against the archive database ...
+
+Escalated::useConnection($previous);
+```
+
+Pass `null` to force the host's default, or call it with no argument to drop the
+override entirely.
+
 ### Changing it later
 
 Setting this on an existing install does not move any data. Migrate the tables

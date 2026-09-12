@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- **Admin screen for the database connection** at `/admin/settings/database`. Shows which database Escalated is reading and writing (driver, database, ticket count), lists the connections it could use, lets each be probed without committing to it, and switches between them.
+
+  A connection with no Escalated tables cannot be selected. Pointing Escalated at an unmigrated database does not error — the panel comes up with no tickets, no departments and no settings, which reads exactly like data loss — so the server refuses it and the UI disables it with the reason shown.
+
+  `escalated.connection` still wins. Set in config or `.env` it is deployed infrastructure, and the screen is read-only rather than accepting a change the backend would ignore. Precedence: `Escalated::useConnection()` → config → the admin's stored choice.
+
+  The stored choice is a file (`storage/app/escalated/connection.php`), not a settings row. It cannot be a row: the name of the connection cannot live in the database it selects, and an admin pointing Escalated at an empty database would otherwise destroy the only record of how to point it back.
+
+- **`Escalated::useConnection()`** — force a connection for the rest of the process (a queued job, a console command, a test) and restore the previous value. `Escalated::connectionIsPinnedByConfig()` reports whether config has the final say.
+
 ## [1.6.0] - 2026-09-11
 
 ### Added
