@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- **Configurable database connection.** `escalated.connection` (env `ESCALATED_DB_CONNECTION`) names the connection Escalated's own tables live on. `null` keeps the host application's default connection, which is the historical behaviour and leaves an unconfigured host byte-identical. Every model, migration, query-builder read and transaction in the package follows it.
+
+  Your users table is deliberately not moved: it belongs to the host, and Escalated follows the user model to wherever it already lives. Host user ids were already stored as plain unconstrained columns, so no foreign key has to span the boundary.
+
+  Relations between an Escalated pivot table and the host's users table (department agents, role members, skill agents, ticket followers) cannot be a SQL join once the two are on different connections. They are resolved in two steps when that happens — read the pivot, then load the users by key — so `->agents`, `->followers`, `withCount('agents')`, `attach()`, `sync()` and `detach()` behave the same either way. On a single connection the ordinary join is still issued and nothing changes.
+
+  Setting this on an existing install does not move existing data; migrate the tables first.
+
 ## [1.5.1] - 2026-06-04
 
 ### Fixed

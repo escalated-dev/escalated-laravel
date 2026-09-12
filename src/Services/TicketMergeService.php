@@ -3,9 +3,9 @@
 namespace Escalated\Laravel\Services;
 
 use Escalated\Laravel\Enums\TicketStatus;
+use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Ticket;
-use Illuminate\Support\Facades\DB;
 
 class TicketMergeService
 {
@@ -17,7 +17,7 @@ class TicketMergeService
      */
     public function merge(Ticket $source, Ticket $target, ?int $mergedByUserId = null): void
     {
-        DB::transaction(function () use ($source, $target, $mergedByUserId) {
+        Escalated::db()->transaction(function () use ($source, $target, $mergedByUserId) {
             // Move all replies from source to target
             Reply::where('ticket_id', $source->id)->update(['ticket_id' => $target->id]);
 

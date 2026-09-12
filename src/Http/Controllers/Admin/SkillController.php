@@ -10,8 +10,6 @@ use Escalated\Laravel\Models\Tag;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
 class SkillController extends Controller
@@ -49,7 +47,7 @@ class SkillController extends Controller
     {
         $validated = $this->validatePayload($request);
 
-        DB::transaction(function () use ($validated): void {
+        Escalated::db()->transaction(function () use ($validated): void {
             $skill = Skill::create([
                 'name' => $validated['name'],
                 'routing_tag_ids' => $validated['routing_tag_ids'] ?? [],
@@ -89,7 +87,7 @@ class SkillController extends Controller
     {
         $validated = $this->validatePayload($request, $skill);
 
-        DB::transaction(function () use ($skill, $validated): void {
+        Escalated::db()->transaction(function () use ($skill, $validated): void {
             $skill->update([
                 'name' => $validated['name'],
                 'routing_tag_ids' => $validated['routing_tag_ids'] ?? [],
@@ -170,7 +168,7 @@ class SkillController extends Controller
      */
     protected function userRoleColumns(string $userTable): array
     {
-        $columns = Schema::getColumnListing($userTable);
+        $columns = Escalated::userSchema()->getColumnListing($userTable);
 
         return array_values(array_intersect(['is_agent', 'is_admin'], $columns));
     }
@@ -194,7 +192,7 @@ class SkillController extends Controller
         $userKey = $userInstance->getKeyName();
 
         $agentQuery = $userModel::query()->orderBy('name');
-        $columns = Schema::getColumnListing($userTable);
+        $columns = Escalated::userSchema()->getColumnListing($userTable);
         if (in_array('is_agent', $columns, true) || in_array('is_admin', $columns, true)) {
             $agentQuery->where(function ($query) use ($columns) {
                 if (in_array('is_agent', $columns, true)) {

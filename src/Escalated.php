@@ -3,10 +3,13 @@
 namespace Escalated\Laravel;
 
 use Illuminate\Contracts\Database\Query\Builder;
+use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Schema\Builder as SchemaBuilder;
 use Illuminate\Database\Schema\ColumnDefinition;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class Escalated
@@ -216,7 +219,10 @@ class Escalated
         $key = "{$table}.{$column}";
 
         if (! array_key_exists($key, static::$columnExistsCache)) {
-            static::$columnExistsCache[$key] = Schema::hasColumn($table, $column);
+            // Deliberately the user model's connection, not Escalated's. The
+            // users table is the host's; moving Escalated onto a separate
+            // connection must not send this lookup somewhere users never lived.
+            static::$columnExistsCache[$key] = static::userSchema()->hasColumn($table, $column);
         }
 
         return static::$columnExistsCache[$key];
@@ -245,5 +251,63 @@ class Escalated
     public static function table(string $name): string
     {
         return static::tablePrefix().$name;
+    }
+
+    /**
+     * The connection Escalated's own tables live on, or null for the host
+     * application's default connection.
+     *
+     * Null is the historical behaviour and stays the default: every model,
+     * migration and query resolves whatever `database.default` resolves, so a
+     * host that never sets this sees no change at all. Hosts that partition
+     * their database — a schema shared with a legacy system, a separate
+     * reporting store, or simply keeping support data out of the application
+     * database — name a connection here instead.
+     *
+     * An empty string is treated as unset. `ESCALATED_DB_CONNECTION=` in a
+     * .env file reads as `''`, not null, and an empty connection name is not a
+     * connection the host meant to configure.
+     */
+    public static function connection(): ?string
+    {
+        $connection = config('escalated.connection');
+
+        return is_string($connection) && $connection !== '' ? $connection : null;
+    }
+
+    /**
+     * The resolved database connection for Escalated's own tables.
+     *
+     * Use this anywhere the query builder is reached for directly —
+     * `Escalated::db()->table(...)` rather than `DB::table(...)` — so raw
+     * queries follow the package's tables instead of the host's default.
+     */
+    public static function db(): ConnectionInterface
+    {
+        return DB::connection(static::connection());
+    }
+
+    /**
+     * A schema builder scoped to Escalated's own tables.
+     *
+     * Note this is NOT the right tool for inspecting the host's users table;
+     * that belongs to the host and may live on a different connection again.
+     * Use {@see userSchema()} for those lookups.
+     */
+    public static function schema(): SchemaBuilder
+    {
+        return Schema::connection(static::connection());
+    }
+
+    /**
+     * A schema builder scoped to wherever the host's user model lives.
+     *
+     * The user table is the host's, not ours. It follows the user model's own
+     * connection, which is the default one unless the host has moved it —
+     * and which is unrelated to where Escalated keeps its tables.
+     */
+    public static function userSchema(): SchemaBuilder
+    {
+        return Schema::connection(static::newUserModel()->getConnectionName());
     }
 }

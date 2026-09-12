@@ -64,6 +64,52 @@ Change the database table prefix:
 'table_prefix' => 'support_', // Default: 'escalated_'
 ```
 
+## Database Connection
+
+By default Escalated's tables live on whatever your application's default
+connection is. Name a different one to keep them somewhere else — a schema
+shared with a legacy system, a multi-tenant split, a separate reporting store,
+or simply out of your primary database:
+
+```php
+'connection' => 'support', // Default: null (your app's default connection)
+```
+
+or in `.env`:
+
+```dotenv
+ESCALATED_DB_CONNECTION=support
+```
+
+The connection name is whatever you called it in `config/database.php`.
+
+This moves Escalated's models, migrations, query-builder reads and
+transactions together. It deliberately does **not** move your users table:
+that belongs to your application, and Escalated follows your user model to
+wherever it already lives.
+
+### How the two sides stay connected
+
+Escalated stores host user ids as plain, unconstrained columns, so there is no
+foreign key that would have to span the boundary. Relations that point at a
+single host user — a ticket's requester, its assignee, a reply's author, a
+ticket subject — are two queries either way and work unchanged.
+
+The four relations where an Escalated pivot table joins your users table
+(department agents, role members, skill agents, ticket followers) are the one
+shape that a single SQL statement cannot express across two connections.
+Escalated resolves those in two steps when the connections differ — read the
+pivot, then load the users by key — so `->agents`, `->followers`,
+`withCount('agents')`, `attach()`, `sync()` and `detach()` all behave the same
+as before. On a single connection nothing changes: the ordinary join is still
+issued.
+
+### Changing it later
+
+Setting this on an existing install does not move any data. Migrate the tables
+yourself, or run the package migrations against the new connection and copy the
+rows across, before pointing Escalated at it.
+
 ## Custom Notification Channels
 
 Override which channels notifications use:
