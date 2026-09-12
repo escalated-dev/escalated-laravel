@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-09-12
+
 ### Changed
 - **The test suite runs on MySQL and PostgreSQL as well as SQLite.** It had only
   ever seen SQLite, which is the one driver no host deploys on and the one that
