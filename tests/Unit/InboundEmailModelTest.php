@@ -1,7 +1,13 @@
 <?php
 
 use Escalated\Laravel\Models\InboundEmail;
+use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Ticket;
+
+// ticket_id and reply_id are foreign keys. SQLite does not enforce them unless
+// asked to, so these cases used to pass with ids nothing pointed at; MySQL and
+// PostgreSQL both reject that. Real rows cost one insert and make the
+// assertions mean what they say.
 
 it('marks inbound email as processed', function () {
     $inbound = InboundEmail::create([
@@ -14,12 +20,19 @@ it('marks inbound email as processed', function () {
 
     expect($inbound->isPending())->toBeTrue();
 
-    $inbound->markProcessed(99, 42);
+    $ticket = Ticket::factory()->create();
+    $reply = Reply::create([
+        'ticket_id' => $ticket->id,
+        'body' => 'Thanks for getting in touch',
+        'type' => 'reply',
+    ]);
+
+    $inbound->markProcessed($ticket->id, $reply->id);
 
     $inbound->refresh();
     expect($inbound->status)->toBe('processed');
-    expect($inbound->ticket_id)->toBe(99);
-    expect($inbound->reply_id)->toBe(42);
+    expect($inbound->ticket_id)->toBe($ticket->id);
+    expect($inbound->reply_id)->toBe($reply->id);
     expect($inbound->processed_at)->not->toBeNull();
     expect($inbound->isProcessed())->toBeTrue();
 });
@@ -140,9 +153,11 @@ it('marks processed with ticket id only', function () {
         'adapter' => 'mailgun',
     ]);
 
-    $inbound->markProcessed(55);
+    $ticket = Ticket::factory()->create();
+
+    $inbound->markProcessed($ticket->id);
 
     $inbound->refresh();
-    expect($inbound->ticket_id)->toBe(55);
+    expect($inbound->ticket_id)->toBe($ticket->id);
     expect($inbound->reply_id)->toBeNull();
 });

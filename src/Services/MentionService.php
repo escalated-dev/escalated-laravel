@@ -84,7 +84,7 @@ class MentionService
                 'user_id' => $userId,
             ]);
 
-            $user = $userModel::find($userId);
+            $user = Escalated::findUser($userId);
 
             if ($user) {
                 $user->notify(new MentionNotification($reply));

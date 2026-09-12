@@ -531,7 +531,7 @@ class Ticket extends Model
         // If a scalar id (int or string/UUID) is provided, attempt to find the user.
         if (! $user instanceof Model) {
             $userId = $user;
-            $user = $userModel::find($userId);
+            $user = Escalated::findUser($userId);
 
             if (! $user) {
                 throw new \InvalidArgumentException("No user found with ID {$userId}");

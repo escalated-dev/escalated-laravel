@@ -25,15 +25,29 @@ abstract class SeparateConnectionTestCase extends TestCase
      */
     protected array $connectionsToTransact = ['testing', 'escalated'];
 
+    /** @var array<string, mixed> */
+    private const PRIMARY = ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => ''];
+
+    /** @var array<string, mixed> */
+    private const SECONDARY = ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => ''];
+
     protected function defineEnvironment($app): void
     {
         parent::defineEnvironment($app);
 
-        $app['config']->set('database.connections.escalated', [
-            'driver' => 'sqlite',
-            'database' => ':memory:',
-            'prefix' => '',
-        ]);
+        // Pinned to SQLite whatever ESCALATED_TEST_DRIVER says. The driver
+        // matrix exists to catch dialect differences -- LIKE case sensitivity,
+        // aggregate return types -- and there is none of that here: what these
+        // tests exercise is Eloquent's connection resolution, which is the same
+        // code on every driver.
+        //
+        // Two in-memory SQLite databases are also the only way to get two
+        // genuinely empty schemas per test. A server-backed database outlives
+        // the run, and Testbench migrates and rolls back per test, so the two
+        // would drift apart in ways that say nothing about connection routing.
+        $app['config']->set('database.connections.testing', self::PRIMARY);
+
+        $app['config']->set('database.connections.escalated', self::SECONDARY);
 
         $app['config']->set('escalated.connection', 'escalated');
     }
