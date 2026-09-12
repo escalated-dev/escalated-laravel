@@ -144,7 +144,7 @@ class ReportController extends Controller
     {
         $days = $this->periodDays($request);
 
-        return $this->renderer->render('Escalated/Admin/Reports/FirstResponseTime', [
+        return $this->renderer->render('Escalated/Admin/Reports/ResponseTimes', [
             'period_days' => $days,
             'distribution' => $this->reporting->firstResponseTimeDistribution($days),
             'trend' => $this->reporting->firstResponseTimeTrend($days),
@@ -161,7 +161,7 @@ class ReportController extends Controller
     {
         $days = $this->periodDays($request);
 
-        return $this->renderer->render('Escalated/Admin/Reports/ResolutionTime', [
+        return $this->renderer->render('Escalated/Admin/Reports/ResolutionTimes', [
             'period_days' => $days,
             'distribution' => $this->reporting->resolutionTimeDistribution($days),
             'trend' => $this->reporting->resolutionTimeTrend($days),
@@ -210,7 +210,7 @@ class ReportController extends Controller
     {
         $days = $this->periodDays($request);
 
-        return $this->renderer->render('Escalated/Admin/Reports/CohortAnalysis', [
+        return $this->renderer->render('Escalated/Admin/Reports/Cohorts', [
             'period_days' => $days,
             'by_tag' => $this->reporting->ticketsByTag($days),
             'by_department' => $this->reporting->ticketsByDepartment($days),
@@ -228,7 +228,7 @@ class ReportController extends Controller
     {
         $days = $this->periodDays($request);
 
-        return $this->renderer->render('Escalated/Admin/Reports/PeriodComparison', [
+        return $this->renderer->render('Escalated/Admin/Reports/Comparison', [
             'period_days' => $days,
             'comparison' => $this->reporting->periodComparison($days),
             'forecast' => $this->reporting->ticketVolumeForecast($days),

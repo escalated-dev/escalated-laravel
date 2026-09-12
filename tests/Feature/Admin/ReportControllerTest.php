@@ -134,3 +134,31 @@ it('defaults to 30 day period when not specified', function () {
         ->get(route('escalated.admin.reports.frt'))
         ->assertOk();
 });
+
+/**
+ * Inertia resolves a page name to a component in the frontend package. A name
+ * with nothing behind it is not an error -- the response is a 200 and the
+ * screen is blank -- so asserting the status proves only that the controller
+ * ran.
+ *
+ * These four asked for names the frontend has never shipped: FirstResponseTime,
+ * ResolutionTime, CohortAnalysis and PeriodComparison, against components
+ * called ResponseTimes, ResolutionTimes, Cohorts and Comparison. All four
+ * reports rendered empty.
+ */
+it('renders report pages the frontend package actually ships', function (string $routeName, string $component) {
+    $admin = $this->createAdmin();
+
+    $response = $this->actingAs($admin)
+        ->withHeaders(['X-Inertia' => 'true', 'X-Inertia-Version' => ''])
+        ->get(route($routeName, ['period' => 30]));
+
+    $response->assertOk();
+
+    expect($response->json('component'))->toBe($component);
+})->with([
+    ['escalated.admin.reports.frt', 'Escalated/Admin/Reports/ResponseTimes'],
+    ['escalated.admin.reports.resolution', 'Escalated/Admin/Reports/ResolutionTimes'],
+    ['escalated.admin.reports.cohorts', 'Escalated/Admin/Reports/Cohorts'],
+    ['escalated.admin.reports.comparison', 'Escalated/Admin/Reports/Comparison'],
+]);

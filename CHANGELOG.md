@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- **Four report screens were blank.** `ReportController` rendered
+  `Escalated/Admin/Reports/FirstResponseTime`, `ResolutionTime`,
+  `CohortAnalysis` and `PeriodComparison`; the frontend package ships those
+  components as `ResponseTimes`, `ResolutionTimes`, `Cohorts` and `Comparison`.
+  Inertia resolves a page name with nothing behind it to nothing rather than to
+  an error, so all four returned 200 and rendered an empty panel.
+
+  The existing tests asserted only the status, which is why this survived. They
+  now assert the component name as well.
+
 ## [1.8.0] - 2026-09-12
 
 ### Changed
