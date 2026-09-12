@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-09-11
+
 ### Added
 - **Configurable database connection.** `escalated.connection` (env `ESCALATED_DB_CONNECTION`) names the connection Escalated's own tables live on. `null` keeps the host application's default connection, which is the historical behaviour and leaves an unconfigured host byte-identical. Every model, migration, query-builder read and transaction in the package follows it.
 
