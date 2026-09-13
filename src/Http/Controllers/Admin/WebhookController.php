@@ -2,10 +2,12 @@
 
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
+use Closure;
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Models\Webhook;
 use Escalated\Laravel\Models\WebhookDelivery;
 use Escalated\Laravel\Services\WebhookDispatcher;
+use Escalated\Laravel\Support\OutboundUrlGuard;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -38,7 +40,7 @@ class WebhookController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'url' => 'required|url|max:500',
+            'url' => ['bail', 'required', 'url', 'max:500', $this->publicUrl()],
             'events' => 'required|array|min:1',
             'events.*' => 'string',
             'secret' => 'nullable|string|max:255',
@@ -53,6 +55,10 @@ class WebhookController extends Controller
 
     public function edit(Webhook $webhook): mixed
     {
+        // Show a subscription saved under a legacy name as its current name,
+        // so the form ticks it and saving keeps it.
+        $webhook->events = $webhook->subscribedEvents();
+
         return $this->renderer->render('Escalated/Admin/Webhooks/Form', [
             'webhook' => $webhook,
             'availableEvents' => $this->availableEvents(),
@@ -62,7 +68,7 @@ class WebhookController extends Controller
     public function update(Request $request, Webhook $webhook): RedirectResponse
     {
         $request->validate([
-            'url' => 'required|url|max:500',
+            'url' => ['bail', 'required', 'url', 'max:500', $this->publicUrl()],
             'events' => 'required|array|min:1',
             'events.*' => 'string',
             'secret' => 'nullable|string|max:255',
@@ -102,6 +108,23 @@ class WebhookController extends Controller
         return back()->with('success', 'Webhook delivery retried.');
     }
 
+    /**
+     * Refuses a URL the dispatcher would refuse to send to, so the admin
+     * learns about it when saving rather than from a log of failed deliveries.
+     */
+    protected function publicUrl(): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail): void {
+            if (! is_string($value) || ! app(OutboundUrlGuard::class)->allows($value)) {
+                $fail('The webhook URL must use http or https and resolve to a public address.');
+            }
+        };
+    }
+
+    /**
+     * The names DispatchWebhook sends events under. Anything else here is a
+     * checkbox that never fires.
+     */
     protected function availableEvents(): array
     {
         return [
@@ -117,11 +140,11 @@ class WebhookController extends Controller
             'ticket.priority_changed',
             'ticket.department_changed',
             'reply.created',
-            'internal_note.added',
+            'note.created',
             'sla.breached',
             'sla.warning',
-            'tag.added',
-            'tag.removed',
+            'ticket.tag_added',
+            'ticket.tag_removed',
         ];
     }
 }
