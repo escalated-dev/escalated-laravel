@@ -4,11 +4,15 @@ namespace Escalated\Laravel\Listeners;
 
 use Escalated\Laravel\Events;
 use Escalated\Laravel\Services\NotificationService;
+use Escalated\Laravel\Services\WebhookDispatcher;
 use Escalated\Laravel\Support\ImportContext;
 
 class DispatchWebhook
 {
-    public function __construct(protected NotificationService $notificationService) {}
+    public function __construct(
+        protected NotificationService $notificationService,
+        protected WebhookDispatcher $webhookDispatcher,
+    ) {}
 
     public function handle(object $event): void
     {
@@ -41,7 +45,13 @@ class DispatchWebhook
             return;
         }
 
-        $this->notificationService->sendWebhook($eventName, $this->buildPayload($event));
+        $payload = $this->buildPayload($event);
+
+        // The webhooks admins create under Admin > Webhooks.
+        $this->webhookDispatcher->dispatch($eventName, $payload);
+
+        // The single endpoint set by escalated.notifications.webhook_url.
+        $this->notificationService->sendWebhook($eventName, $payload);
     }
 
     protected function buildPayload(object $event): array

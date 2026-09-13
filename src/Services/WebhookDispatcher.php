@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Services;
 
 use Escalated\Laravel\Models\Webhook;
 use Escalated\Laravel\Models\WebhookDelivery;
+use Escalated\Laravel\Support\OutboundUrlGuard;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -54,9 +55,33 @@ class WebhookDispatcher
             'attempts' => $attempt,
         ]);
 
+        // Checked on every attempt, not only when the URL is saved: a row can
+        // predate the check, and a host name can be re-pointed at an internal
+        // address after it passed.
+        $address = app(OutboundUrlGuard::class)->publicAddressFor((string) $webhook->url);
+
+        if ($address === null) {
+            $delivery->update([
+                'response_code' => 0,
+                'response_body' => 'Not sent: the URL must use http or https and resolve to a public address.',
+                'attempts' => $attempt,
+            ]);
+
+            Log::warning('Escalated webhook not sent: URL does not resolve to a public address', [
+                'webhook_id' => $webhook->id,
+                'event' => $event,
+            ]);
+
+            return;
+        }
+
         try {
             $response = Http::withHeaders($headers)
                 ->timeout(10)
+                // A redirect would carry the request, and the response body an
+                // admin can read back, to an address the check above refused.
+                ->withoutRedirecting()
+                ->withOptions($this->connectTo($webhook->url, $address))
                 ->withBody($body, 'application/json')
                 ->post($webhook->url);
 
@@ -89,6 +114,27 @@ class WebhookDispatcher
                 $this->retryLater($webhook, $event, $payload, $attempt + 1);
             }
         }
+    }
+
+    /**
+     * Pins the connection to the address that was checked, so a DNS answer
+     * that changes between the check and the request cannot substitute a
+     * private one. Not needed when the URL's host is already an IP.
+     *
+     * @return array<string, mixed>
+     */
+    protected function connectTo(string $url, string $address): array
+    {
+        $host = (string) parse_url($url, PHP_URL_HOST);
+
+        if (! defined('CURLOPT_RESOLVE') || filter_var(trim($host, '[]'), FILTER_VALIDATE_IP) !== false) {
+            return [];
+        }
+
+        $port = parse_url($url, PHP_URL_PORT)
+            ?: (strtolower((string) parse_url($url, PHP_URL_SCHEME)) === 'https' ? 443 : 80);
+
+        return ['curl' => [CURLOPT_RESOLVE => ["{$host}:{$port}:{$address}"]]];
     }
 
     /**

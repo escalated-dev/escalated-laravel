@@ -13,6 +13,7 @@ use Escalated\Laravel\Models\Tag;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Models\Workflow;
 use Escalated\Laravel\Models\WorkflowLog;
+use Escalated\Laravel\Support\OutboundUrlGuard;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -542,25 +543,13 @@ class WorkflowEngine
 
         $url = $value['url'] ?? null;
 
-        if (! $url || ! filter_var($url, FILTER_VALIDATE_URL)) {
+        if (! is_string($url) || $url === '') {
             return;
         }
 
-        // Block non-HTTP(S) schemes
-        if (! in_array(parse_url($url, PHP_URL_SCHEME), ['https', 'http'])) {
-            return;
-        }
-
-        // Block private/reserved IPs to prevent SSRF
-        $host = parse_url($url, PHP_URL_HOST);
-        $ip = $this->resolveHost((string) $host);
-
-        if ($ip === $host) {
-            return; // DNS resolution failed
-        }
-
-        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
-            Log::warning('Escalated workflow: webhook blocked - resolves to private IP', ['url' => $url, 'ip' => $ip]);
+        // http(s) to a public address only, to prevent SSRF.
+        if (! app(OutboundUrlGuard::class)->allows($url, fn (string $host) => $this->resolveHost($host))) {
+            Log::warning('Escalated workflow: webhook blocked - URL does not resolve to a public address', ['url' => $url]);
 
             return;
         }
@@ -569,7 +558,7 @@ class WorkflowEngine
         $payload = $this->interpolateVariables($payload, $ticket);
 
         try {
-            Http::timeout(10)->post($url, $payload);
+            Http::timeout(10)->withoutRedirecting()->post($url, $payload);
         } catch (\Throwable $e) {
             Log::warning('Escalated workflow webhook failed', [
                 'url' => $url,
