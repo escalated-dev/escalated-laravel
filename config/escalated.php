@@ -55,6 +55,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | App Name
+    |--------------------------------------------------------------------------
+    |
+    | The brand name newsletters are sent under. `null` uses `app.name`.
+    |
+    */
+    'app_name' => env('ESCALATED_APP_NAME'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Hosted / Cloud Configuration
     |--------------------------------------------------------------------------
     */
@@ -206,10 +216,16 @@ return [
     |--------------------------------------------------------------------------
     | Notifications
     |--------------------------------------------------------------------------
+    |
+    | `webhook_url` receives every ticket event. When `webhook_secret` is set,
+    | each request carries an `X-Escalated-Signature` header: the hex
+    | HMAC-SHA256 of the JSON body, keyed with the secret.
+    |
     */
     'notifications' => [
         'channels' => ['mail', 'database'],
         'webhook_url' => env('ESCALATED_WEBHOOK_URL'),
+        'webhook_secret' => env('ESCALATED_WEBHOOK_SECRET'),
     ],
 
     /*
@@ -244,12 +260,35 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Imported Attachments
+    |--------------------------------------------------------------------------
+    |
+    | The disk recorded on attachments created by `escalated:import`. The
+    | importer stores the path the import source gives and does not copy the
+    | file, so this names the disk those paths live on.
+    |
+    */
+    'attachments' => [
+        'disk' => env('ESCALATED_IMPORT_ATTACHMENTS_DISK', 'local'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Authorization
     |--------------------------------------------------------------------------
+    |
+    | `agent_scope` is an optional callable that receives a user query builder
+    | and returns it narrowed to agents. The agent pickers use it instead of
+    | checking the agent gate against the first 500 users. A closure cannot be
+    | cached with `config:cache`, so set it at runtime, for example
+    | `config(['escalated.authorization.agent_scope' => [AgentScope::class, 'apply']])`
+    | in a service provider.
+    |
     */
     'authorization' => [
         'admin_gate' => 'escalated-admin',
         'agent_gate' => 'escalated-agent',
+        'agent_scope' => null,
     ],
 
     /*
@@ -282,7 +321,36 @@ return [
     'plugins' => [
         'enabled' => env('ESCALATED_PLUGINS_ENABLED', true),
         'path' => app_path('Plugins/Escalated'),
+
+        // SDK plugins run in a Node.js subprocess.
+        'sdk_enabled' => env('ESCALATED_PLUGINS_SDK_ENABLED', true),
+        'runtime_command' => env('ESCALATED_PLUGINS_RUNTIME_COMMAND', 'node node_modules/@escalated-dev/plugin-runtime/dist/index.js'),
+        // Working directory for the subprocess. `null` uses base_path().
+        'runtime_cwd' => env('ESCALATED_PLUGINS_RUNTIME_CWD'),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Plugin Marketplace
+    |--------------------------------------------------------------------------
+    |
+    | `url` overrides the marketplace API base. `null` uses each command's
+    | default: `escalated:plugin` calls marketplace.escalated.dev, and
+    | `escalated:plugin:install` calls `hosted.api_url`.
+    |
+    | `public_key_path` is the key `escalated:plugin:install` verifies artifact
+    | signatures with. Without one, verification is skipped with a warning.
+    |
+    | `version` is sent as the `X-Escalated-Version` header. `null` sends the
+    | built-in default.
+    |
+    */
+    'marketplace' => [
+        'url' => env('ESCALATED_MARKETPLACE_URL'),
+        'public_key_path' => env('ESCALATED_MARKETPLACE_PUBLIC_KEY_PATH'),
+    ],
+
+    'version' => env('ESCALATED_VERSION'),
 
     /*
     |--------------------------------------------------------------------------

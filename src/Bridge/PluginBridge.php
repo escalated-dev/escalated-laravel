@@ -293,14 +293,12 @@ class PluginBridge
      */
     private function spawn(): void
     {
-        $command = config(
-            'escalated.plugins.runtime_command',
-            'node node_modules/@escalated-dev/plugin-runtime/dist/index.js'
-        );
+        $command = config('escalated.plugins.runtime_command')
+            ?: 'node node_modules/@escalated-dev/plugin-runtime/dist/index.js';
 
         // Determine the working directory for the subprocess — default to the
         // Laravel base_path() so Node can resolve node_modules.
-        $cwd = config('escalated.plugins.runtime_cwd', base_path());
+        $cwd = config('escalated.plugins.runtime_cwd') ?: base_path();
 
         $descriptorSpec = [
             0 => ['pipe', 'r'],  // stdin  (we write to it)

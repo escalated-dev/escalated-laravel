@@ -162,7 +162,7 @@ class NewsletterRendererService
     private function brand(): array
     {
         return [
-            'name' => config('escalated.app_name', config('app.name', 'Support')),
+            'name' => config('escalated.app_name') ?: config('app.name', 'Support'),
             'accent' => config('escalated.newsletters.brand_accent', '#2563eb'),
             'logo_url' => config('escalated.newsletters.brand_logo_url'),
             'physical_address' => config('escalated.newsletters.brand_physical_address'),
