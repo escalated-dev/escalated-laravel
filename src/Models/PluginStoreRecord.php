@@ -15,7 +15,8 @@ use Illuminate\Database\Eloquent\Model;
  * JSON.
  *
  * Query operators ($gt, $gte, $lt, $lte, $ne, $in, $nin) are applied by the
- * ContextHandler using raw JSON_EXTRACT expressions.
+ * ContextHandler, which writes its JSON expressions for each supported
+ * database driver (SQLite, MySQL, MariaDB, PostgreSQL).
  */
 class PluginStoreRecord extends Model
 {

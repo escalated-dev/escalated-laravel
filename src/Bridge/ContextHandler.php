@@ -12,7 +12,6 @@ use Escalated\Laravel\Models\Ticket;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Broadcast;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -34,6 +33,17 @@ class ContextHandler
     ];
 
     private const PLUGIN_CONTACT_FILLABLE = ['name', 'email'];
+
+    /**
+     * ctx.store.query comparison operators and the SQL operator for each.
+     */
+    private const STORE_COMPARISONS = [
+        '$gt' => '>',
+        '$gte' => '>=',
+        '$lt' => '<',
+        '$lte' => '<=',
+        '$ne' => '!=',
+    ];
 
     /**
      * The plugin name that is currently executing (set before each dispatch).
@@ -220,21 +230,29 @@ class ContextHandler
             ->where('collection', $collection);
 
         foreach ($filter as $field => $condition) {
+            $field = (string) $field;
+            $this->validateFieldName($field);
+
             if (is_array($condition)) {
                 // Operator conditions: { $gt: 10 }, { $in: [1,2,3] }, etc.
                 foreach ($condition as $op => $val) {
                     $this->applyJsonOperator($query, $field, $op, $val);
                 }
             } else {
-                // Simple equality
-                $query->whereJsonContains("data->{$field}", $condition);
+                // Simple equality. A dotted field is a nested path, as it is
+                // for the operators.
+                $query->whereJsonContains('data->'.str_replace('.', '->', $field), $condition);
             }
         }
 
         if (isset($options['orderBy'])) {
-            $this->validateFieldName($options['orderBy']);
-            $direction = in_array(strtolower($options['order'] ?? 'asc'), ['asc', 'desc']) ? strtolower($options['order']) : 'asc';
-            $query->orderByRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '$.{$options['orderBy']}')) {$direction}");
+            $field = (string) $options['orderBy'];
+            $this->validateFieldName($field);
+            $direction = strtolower((string) ($options['order'] ?? 'asc')) === 'desc' ? 'desc' : 'asc';
+
+            // Numbers by value, then strings as text, so 10 sorts after 9.
+            $query->orderByRaw($this->jsonValue($query, $field, 'number').' '.$direction)
+                ->orderByRaw($this->jsonValue($query, $field, 'string').' '.$direction);
         }
 
         if (isset($options['limit'])) {
@@ -293,29 +311,163 @@ class ContextHandler
     }
 
     /**
-     * Apply a MongoDB-style query operator to a JSON column query.
+     * A store field name is a dotted path of letters, digits and underscores.
+     * It is written into SQL, so nothing else is allowed.
      */
     private function validateFieldName(string $field): void
     {
-        if (! preg_match('/^[a-zA-Z_][a-zA-Z0-9_.]*$/', $field)) {
+        if (! preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z0-9_]+)*$/', $field)) {
             throw new \InvalidArgumentException("Invalid store field name: {$field}");
         }
     }
 
+    /**
+     * Apply a MongoDB-style query operator to a JSON column query.
+     */
     private function applyJsonOperator(Builder $query, string $field, string $op, mixed $value): void
     {
         $this->validateFieldName($field);
-        $extract = "JSON_UNQUOTE(JSON_EXTRACT(data, '$.{$field}'))";
+
+        if (isset(self::STORE_COMPARISONS[$op])) {
+            $type = $this->jsonTypeOf($value);
+
+            $query->whereRaw(
+                $this->jsonValue($query, $field, $type).' '.self::STORE_COMPARISONS[$op].' '.$this->jsonPlaceholder($query, $type),
+                [$this->jsonBinding($value)],
+            );
+
+            return;
+        }
 
         match ($op) {
-            '$gt' => $query->whereRaw("{$extract} > ?", [$value]),
-            '$gte' => $query->whereRaw("{$extract} >= ?", [$value]),
-            '$lt' => $query->whereRaw("{$extract} < ?", [$value]),
-            '$lte' => $query->whereRaw("{$extract} <= ?", [$value]),
-            '$ne' => $query->whereRaw("{$extract} != ?", [$value]),
-            '$in' => $query->whereIn(DB::raw($extract), (array) $value),
-            '$nin' => $query->whereNotIn(DB::raw($extract), (array) $value),
+            '$in' => $this->whereJsonIn($query, $field, (array) $value, false),
+            '$nin' => $this->whereJsonIn($query, $field, (array) $value, true),
             default => throw new \InvalidArgumentException("Unsupported store query operator: {$op}"),
+        };
+    }
+
+    /**
+     * $in and $nin. The values are grouped by JSON type so each group compares
+     * like with like. A document without the field is in no list, so $nin
+     * matches it, as it does in MongoDB.
+     */
+    private function whereJsonIn(Builder $query, string $field, array $values, bool $negate): void
+    {
+        $clauses = [];
+        $bindings = [];
+
+        foreach (collect($values)->groupBy(fn ($value) => $this->jsonTypeOf($value)) as $type => $group) {
+            $placeholders = implode(', ', array_fill(0, $group->count(), $this->jsonPlaceholder($query, $type)));
+            $clauses[] = 'coalesce('.$this->jsonValue($query, $field, $type).' in ('.$placeholders.'), false)';
+            array_push($bindings, ...$group->map(fn ($value) => $this->jsonBinding($value))->all());
+        }
+
+        if ($clauses === []) {
+            if (! $negate) {
+                $query->whereRaw('1 = 0');
+            }
+
+            return;
+        }
+
+        $sql = '('.implode(' or ', $clauses).')';
+        $query->whereRaw($negate ? 'not '.$sql : $sql, $bindings);
+    }
+
+    /**
+     * SQL for the value at $field in the data column, read as the given JSON
+     * type: NULL where the value is missing or is another type. Reading it as
+     * a type is what makes a comparison mean the same on every driver, so that
+     * 10 > 9 compares numbers and "b" > "a" compares text.
+     *
+     * $field has passed validateFieldName(), so its segments are safe to write
+     * into a JSON path.
+     *
+     * @param  'number'|'string'|'boolean'  $type
+     */
+    private function jsonValue(Builder $query, string $field, string $type): string
+    {
+        $column = $query->getQuery()->getGrammar()->wrap('data');
+        $segments = explode('.', $field);
+        $driver = $query->getConnection()->getDriverName();
+
+        if ($driver === 'pgsql') {
+            $path = "'{".implode(',', $segments)."}'";
+            $jsonType = "json_typeof({$column}#>{$path})";
+            $text = "({$column}#>>{$path})";
+
+            return match ($type) {
+                'number' => "(case when {$jsonType} = 'number' then {$text}::numeric end)",
+                'string' => "(case when {$jsonType} = 'string' then {$text} end)",
+                'boolean' => "(case when {$jsonType} = 'boolean' then {$text} end)",
+            };
+        }
+
+        $path = "'\$".implode('', array_map(fn (string $segment) => '."'.$segment.'"', $segments))."'";
+
+        if ($driver === 'sqlite') {
+            $jsonType = "json_type({$column}, {$path})";
+            $value = "json_extract({$column}, {$path})";
+
+            return match ($type) {
+                'number' => "(case when {$jsonType} in ('integer', 'real') then {$value} end)",
+                'string' => "(case when {$jsonType} = 'text' then {$value} end)",
+                'boolean' => "(case when {$jsonType} in ('true', 'false') then {$jsonType} end)",
+            };
+        }
+
+        if (in_array($driver, ['mysql', 'mariadb'], true)) {
+            $extract = "json_extract({$column}, {$path})";
+            $jsonType = "json_type({$extract})";
+            $text = "json_unquote({$extract})";
+
+            return match ($type) {
+                'number' => "(case when {$jsonType} in ('INTEGER', 'UNSIGNED INTEGER', 'DOUBLE', 'DECIMAL') then cast({$text} as decimal(65, 30)) end)",
+                'string' => "(case when {$jsonType} = 'STRING' then {$text} end)",
+                'boolean' => "(case when {$jsonType} = 'BOOLEAN' then {$text} end)",
+            };
+        }
+
+        throw new \RuntimeException("ctx.store.query does not support the [{$driver}] database driver.");
+    }
+
+    /**
+     * The placeholder for a bound value of the given type. A number is cast in
+     * SQL because PDO binds a float as text, and SQLite never finds a number
+     * equal to text.
+     */
+    private function jsonPlaceholder(Builder $query, string $type): string
+    {
+        if ($type !== 'number') {
+            return '?';
+        }
+
+        return match ($query->getConnection()->getDriverName()) {
+            'sqlite' => 'cast(? as real)',
+            'pgsql' => 'cast(? as numeric)',
+            default => 'cast(? as decimal(65, 30))',
+        };
+    }
+
+    /**
+     * @return 'number'|'string'|'boolean'
+     */
+    private function jsonTypeOf(mixed $value): string
+    {
+        return match (true) {
+            is_bool($value) => 'boolean',
+            is_int($value), is_float($value) => 'number',
+            default => 'string',
+        };
+    }
+
+    private function jsonBinding(mixed $value): int|float|string
+    {
+        return match (true) {
+            is_bool($value) => $value ? 'true' : 'false',
+            is_int($value), is_float($value) => $value,
+            is_scalar($value), $value === null => (string) $value,
+            default => (string) json_encode($value),
         };
     }
 
