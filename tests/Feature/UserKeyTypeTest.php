@@ -8,7 +8,15 @@ use Illuminate\Support\Facades\Schema;
 // configured user model key type (auto-detected), so UUID/string-keyed apps
 // migrate cleanly. Column types are probed through the real schema builder.
 
-afterEach(fn () => Schema::dropIfExists('escalated_ukt_probe'));
+afterEach(function () {
+    Schema::dropIfExists('escalated_ukt_probe');
+
+    // Testbench rolls the package migrations back after some tests, and their
+    // down() methods retype user columns from this setting. Left at uuid,
+    // PostgreSQL refuses to cast the bigint requester_id and the rollback
+    // fails, so which test fails depends only on how many tests ran before.
+    config()->set('escalated.user_key_type', 'auto');
+});
 
 function probeUserColumnType(string $keyType): string
 {
