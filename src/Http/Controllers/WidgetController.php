@@ -19,7 +19,7 @@ class WidgetController extends Controller
     /**
      * Return widget configuration (branding, KB enabled, etc.)
      */
-    public function config(): JsonResponse
+    public function config(Request $request): JsonResponse
     {
         if (! EscalatedSettings::getBool('widget_enabled', false)) {
             return response()->json(['enabled' => false], 403);
@@ -39,7 +39,7 @@ class WidgetController extends Controller
             'position' => EscalatedSettings::get('widget_position', 'bottom-right'),
             'greeting' => EscalatedSettings::get('widget_greeting', 'Hi there! How can we help?'),
             'departments' => $departments,
-            'kb_enabled' => config('escalated.knowledge_base.enabled', true),
+            'kb_enabled' => $this->knowledgeBaseAvailable($request),
             'guest_tickets_enabled' => EscalatedSettings::guestTicketsEnabled(),
         ]);
     }
@@ -52,6 +52,8 @@ class WidgetController extends Controller
         if (! EscalatedSettings::getBool('widget_enabled', false)) {
             abort(403);
         }
+
+        $this->ensureKnowledgeBaseAvailable($request);
 
         $request->validate([
             'q' => ['required', 'string', 'min:2', 'max:200'],
@@ -73,11 +75,13 @@ class WidgetController extends Controller
     /**
      * Get full article content by slug.
      */
-    public function showArticle(string $slug): JsonResponse
+    public function showArticle(Request $request, string $slug): JsonResponse
     {
         if (! EscalatedSettings::getBool('widget_enabled', false)) {
             abort(403);
         }
+
+        $this->ensureKnowledgeBaseAvailable($request);
 
         $article = Article::published()->where('slug', $slug)->firstOrFail();
         $article->incrementViews();
@@ -88,6 +92,28 @@ class WidgetController extends Controller
             'body' => $article->body,
             'category' => $article->category?->name,
         ]);
+    }
+
+    /**
+     * Whether the widget may offer knowledge-base articles to this visitor.
+     * It follows the customer knowledge base's two admin settings: the
+     * knowledge base is on, and it is public or the visitor is signed in.
+     */
+    protected function knowledgeBaseAvailable(Request $request): bool
+    {
+        return EscalatedSettings::knowledgeBaseEnabled()
+            && (EscalatedSettings::knowledgeBasePublic() || $request->user() !== null);
+    }
+
+    /**
+     * Stops an article request the same way the customer knowledge base does:
+     * 404 when it is off, 403 when it is not public and the visitor is not
+     * signed in.
+     */
+    protected function ensureKnowledgeBaseAvailable(Request $request): void
+    {
+        abort_unless(EscalatedSettings::knowledgeBaseEnabled(), 404);
+        abort_if(! EscalatedSettings::knowledgeBasePublic() && $request->user() === null, 403);
     }
 
     /**
