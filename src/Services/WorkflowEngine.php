@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Services;
 
+use Escalated\Laravel\Enums\ActivityType;
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Escalated;
@@ -77,19 +78,20 @@ class WorkflowEngine
      */
     public function evaluateConditions(array $conditions, Ticket $ticket): bool
     {
-        if (empty($conditions)) {
-            return true;
+        $group = $this->normalizeConditions($conditions);
+
+        if ($group === null) {
+            return false;
         }
 
-        $match = $conditions['match'] ?? 'all';
-        $rules = $conditions['rules'] ?? [];
+        [$match, $rules] = $group;
 
         if (empty($rules)) {
             return true;
         }
 
         foreach ($rules as $rule) {
-            $result = $this->evaluateRule($rule, $ticket);
+            $result = is_array($rule) && $this->evaluateRule($rule, $ticket);
 
             if ($match === 'any' && $result) {
                 return true;
@@ -101,6 +103,41 @@ class WorkflowEngine
         }
 
         return $match === 'all';
+    }
+
+    /**
+     * Read stored conditions as [match, rules].
+     *
+     * The canonical shape (workflow-admin-contract) is `{"all": [...]}` or
+     * `{"any": [...]}`. Also read: a flat list, treated as all, and the legacy
+     * Laravel `{"match": "all"|"any", "rules": [...]}`.
+     *
+     * Any other non-empty object returns null and matches no ticket. Reading an
+     * unrecognised shape as "no rules" would run the workflow on every ticket.
+     *
+     * @return array{0: string, 1: array}|null
+     */
+    protected function normalizeConditions(array $conditions): ?array
+    {
+        if (array_is_list($conditions)) {
+            return ['all', $conditions];
+        }
+
+        if (array_key_exists('all', $conditions)) {
+            return ['all', (array) ($conditions['all'] ?? [])];
+        }
+
+        if (array_key_exists('any', $conditions)) {
+            return ['any', (array) ($conditions['any'] ?? [])];
+        }
+
+        if (array_key_exists('rules', $conditions) || array_keys($conditions) === ['match']) {
+            $match = ($conditions['match'] ?? 'all') === 'any' ? 'any' : 'all';
+
+            return [$match, (array) ($conditions['rules'] ?? [])];
+        }
+
+        return null;
     }
 
     /**
@@ -171,6 +208,7 @@ class WorkflowEngine
             'channel' => $ticket->channel?->value ?? $ticket->channel,
             'tags' => $ticket->tags->pluck('name')->toArray(),
             'assigned_to' => $ticket->assigned_to,
+            'department_id' => $ticket->department_id,
             'subject' => $ticket->subject,
             'hours_since_created' => $ticket->created_at ? $ticket->created_at->diffInHours(now()) : 0,
             'hours_since_updated' => $ticket->updated_at ? $ticket->updated_at->diffInHours(now()) : 0,
@@ -207,12 +245,15 @@ class WorkflowEngine
             'not_equals' => ! $this->looseEquals($actual, $expected),
             'contains' => $this->valueContains($actual, $expected),
             'not_contains' => ! $this->valueContains($actual, $expected),
+            'starts_with' => is_string($actual) && is_string($expected) && str_starts_with($actual, $expected),
+            'ends_with' => is_string($actual) && is_string($expected) && str_ends_with($actual, $expected),
             'in' => is_array($expected) && in_array($actual, $expected, false),
             'not_in' => is_array($expected) && ! in_array($actual, $expected, false),
             'greater_than' => is_numeric($actual) && is_numeric($expected) && $actual > $expected,
             'less_than' => is_numeric($actual) && is_numeric($expected) && $actual < $expected,
-            'greater_than_or_equal' => is_numeric($actual) && is_numeric($expected) && $actual >= $expected,
-            'less_than_or_equal' => is_numeric($actual) && is_numeric($expected) && $actual <= $expected,
+            // greater_than_or_equal / less_than_or_equal are the legacy names.
+            'greater_or_equal', 'greater_than_or_equal' => is_numeric($actual) && is_numeric($expected) && $actual >= $expected,
+            'less_or_equal', 'less_than_or_equal' => is_numeric($actual) && is_numeric($expected) && $actual <= $expected,
             'is_empty' => empty($actual),
             'is_not_empty' => ! empty($actual),
             'matches' => is_string($actual) && is_string($expected) && $this->safeRegexMatch($expected, $actual),
@@ -268,7 +309,7 @@ class WorkflowEngine
     {
         foreach ($actions as $index => $action) {
             if (($action['type'] ?? '') === 'delay') {
-                $minutes = $action['value']['minutes'] ?? 0;
+                $minutes = $this->delayMinutes($action['value'] ?? null);
                 $remaining = array_slice($actions, $index + 1);
 
                 DelayedAction::create([
@@ -288,6 +329,17 @@ class WorkflowEngine
     }
 
     /**
+     * The builder sends delay minutes as a scalar; older workflows stored
+     * `{"minutes": n}`.
+     */
+    protected function delayMinutes(mixed $value): int
+    {
+        $minutes = is_array($value) ? ($value['minutes'] ?? 0) : $value;
+
+        return is_numeric($minutes) ? max(0, (int) $minutes) : 0;
+    }
+
+    /**
      * Execute a single action on a ticket.
      */
     public function executeAction(Workflow $workflow, Ticket $ticket, array $action): void
@@ -301,8 +353,10 @@ class WorkflowEngine
             'change_priority' => $this->actionChangePriority($ticket, $value),
             'add_tag' => $this->actionAddTag($ticket, $value),
             'remove_tag' => $this->actionRemoveTag($ticket, $value),
-            'move_department' => $this->actionMoveDepartment($ticket, $value),
-            'add_internal_note' => $this->actionAddInternalNote($ticket, $value, $workflow),
+            // move_department and add_internal_note are the legacy names.
+            'set_department', 'move_department' => $this->actionMoveDepartment($ticket, $value),
+            'add_note', 'add_internal_note' => $this->actionAddInternalNote($ticket, $value, $workflow),
+            'insert_canned_reply' => $this->actionInsertCannedReply($ticket, $value, $workflow),
             'send_notification' => $this->actionSendNotification($ticket, $value, $workflow),
             'send_webhook' => $this->actionSendWebhook($ticket, $value),
             'apply_macro' => $this->actionApplyMacro($ticket, $value),
@@ -417,9 +471,10 @@ class WorkflowEngine
 
     protected function actionMoveDepartment(Ticket $ticket, mixed $value): void
     {
+        // The builder sends the id as a string, e.g. "4".
         $departmentId = is_array($value) ? ($value['department_id'] ?? null) : $value;
 
-        if ($departmentId) {
+        if (is_numeric($departmentId) && (int) $departmentId > 0) {
             $ticket->update(['department_id' => (int) $departmentId]);
         }
     }
@@ -429,11 +484,39 @@ class WorkflowEngine
         $body = is_string($value) ? $value : ($value['body'] ?? '');
 
         $ticket->replies()->create([
-            'body' => $body,
+            'body' => $this->interpolateVariables($body, $ticket),
             'is_internal_note' => true,
             'is_pinned' => false,
             'metadata' => ['system_note' => true, 'workflow_id' => $workflow->id],
         ]);
+    }
+
+    /**
+     * Post a public reply with `{{field}}` templates filled in.
+     *
+     * A workflow has no author, so, like add_note, the reply has none and
+     * records the workflow in its metadata. ProcessWorkflows reads that marker
+     * so the reply does not trigger ticket.replied workflows, which could
+     * otherwise answer their own reply forever.
+     */
+    protected function actionInsertCannedReply(Ticket $ticket, mixed $value, Workflow $workflow): void
+    {
+        $body = is_string($value) ? $value : (is_array($value) ? (string) ($value['body'] ?? '') : '');
+        $body = $this->interpolateVariables($body, $ticket);
+
+        if (trim($body) === '') {
+            return;
+        }
+
+        $ticket->replies()->create([
+            'body' => $body,
+            'is_internal_note' => false,
+            'is_pinned' => false,
+            'type' => 'reply',
+            'metadata' => ['workflow_id' => $workflow->id],
+        ]);
+
+        $ticket->logActivity(ActivityType::Replied, null, ['workflow_id' => $workflow->id]);
     }
 
     protected function actionSendNotification(Ticket $ticket, mixed $value, Workflow $workflow): void
@@ -447,6 +530,12 @@ class WorkflowEngine
 
     protected function actionSendWebhook(Ticket $ticket, mixed $value): void
     {
+        // The builder sends the URL as a scalar; older workflows stored
+        // `{"url", "payload"}`.
+        if (is_string($value)) {
+            $value = ['url' => trim($value), 'payload' => $this->defaultWebhookPayload($ticket)];
+        }
+
         if (! is_array($value)) {
             return;
         }
@@ -464,7 +553,7 @@ class WorkflowEngine
 
         // Block private/reserved IPs to prevent SSRF
         $host = parse_url($url, PHP_URL_HOST);
-        $ip = gethostbyname($host);
+        $ip = $this->resolveHost((string) $host);
 
         if ($ip === $host) {
             return; // DNS resolution failed
@@ -495,7 +584,14 @@ class WorkflowEngine
     public function interpolateVariables(mixed $data, Ticket $ticket): mixed
     {
         if (is_string($data)) {
-            return preg_replace_callback('/\{\{(\w+)\.(\w+)\}\}/', function ($matches) use ($ticket) {
+            // `{{entity.field}}` (ticket, agent, department), plus the contract's
+            // `{{field}}` for a ticket field. One pass, so substituted text is
+            // never itself read as a template.
+            return preg_replace_callback('/\{\{(\w+)(?:\.(\w+))?\}\}/', function ($matches) use ($ticket) {
+                if (! isset($matches[2])) {
+                    return $this->templateFieldValue($matches[1], $ticket) ?? $matches[0];
+                }
+
                 $entity = $matches[1];
                 $field = $matches[2];
 
@@ -529,6 +625,52 @@ class WorkflowEngine
         }
 
         return $data;
+    }
+
+    /**
+     * The value of a `{{field}}` placeholder: a condition field, or the
+     * ticket's id or reference. Unknown names return null, so the placeholder
+     * is left as written.
+     */
+    protected function templateFieldValue(string $field, Ticket $ticket): ?string
+    {
+        if (in_array($field, ['id', 'reference'], true)) {
+            return (string) ($ticket->{$field} ?? '');
+        }
+
+        $fields = ['status', 'priority', 'ticket_type', 'channel', 'subject', 'description', 'tags', 'department_id', 'assigned_to'];
+
+        if (! in_array($field, $fields, true)) {
+            return null;
+        }
+
+        $value = $this->resolveFieldValue($field, $ticket);
+
+        return is_array($value) ? implode(', ', $value) : (string) ($value ?? '');
+    }
+
+    /**
+     * What a scalar-URL send_webhook posts: enough for the receiver to find the ticket.
+     */
+    protected function defaultWebhookPayload(Ticket $ticket): array
+    {
+        return [
+            'ticket' => [
+                'id' => $ticket->id,
+                'reference' => $ticket->reference,
+                'subject' => $ticket->subject,
+                'status' => $this->resolveFieldValue('status', $ticket),
+                'priority' => $this->resolveFieldValue('priority', $ticket),
+            ],
+        ];
+    }
+
+    /**
+     * Resolve a webhook host for the SSRF check. Separate so tests need not hit DNS.
+     */
+    protected function resolveHost(string $host): string
+    {
+        return gethostbyname($host);
     }
 
     protected function actionApplyMacro(Ticket $ticket, mixed $value): void
@@ -601,10 +743,14 @@ class WorkflowEngine
 
     protected function evaluateConditionDetails(array $conditions, Ticket $ticket): array
     {
-        $rules = $conditions['rules'] ?? [];
+        $rules = $this->normalizeConditions($conditions)[1] ?? [];
         $details = [];
 
         foreach ($rules as $rule) {
+            if (! is_array($rule)) {
+                continue;
+            }
+
             $field = $rule['field'] ?? '';
             $actual = $this->resolveFieldValue($field, $ticket);
             $passed = $this->evaluateRule($rule, $ticket);

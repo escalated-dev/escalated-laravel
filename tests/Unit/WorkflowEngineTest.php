@@ -9,10 +9,25 @@ use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Models\Workflow;
 use Escalated\Laravel\Models\WorkflowLog;
 use Escalated\Laravel\Services\WorkflowEngine;
+use Illuminate\Http\Client\Request as HttpRequest;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
     $this->engine = app(WorkflowEngine::class);
 });
+
+function engineTestWorkflow(array $attributes = []): Workflow
+{
+    return Workflow::create(array_merge([
+        'name' => 'Test',
+        'trigger_event' => 'ticket.created',
+        'conditions' => [],
+        'actions' => [],
+        'is_active' => true,
+        'position' => 0,
+    ], $attributes));
+}
 
 // --- Condition Evaluation ---
 
@@ -687,6 +702,254 @@ it('handles unknown action types gracefully', function () {
 
     // Should not throw
     $this->engine->executeActions($workflow, $ticket, $workflow->actions);
+});
+
+// --- workflow-admin-contract: canonical conditions ---
+
+it('matches a canonical all group only when every condition matches', function () {
+    $ticket = Ticket::factory()->create(['subject' => 'Refund for order 42', 'priority' => TicketPriority::High]);
+
+    expect($this->engine->evaluateConditions(['all' => [
+        ['field' => 'subject', 'operator' => 'contains', 'value' => 'Refund'],
+        ['field' => 'priority', 'operator' => 'equals', 'value' => 'high'],
+    ]], $ticket))->toBeTrue();
+
+    expect($this->engine->evaluateConditions(['all' => [
+        ['field' => 'subject', 'operator' => 'contains', 'value' => 'Refund'],
+        ['field' => 'priority', 'operator' => 'equals', 'value' => 'low'],
+    ]], $ticket))->toBeFalse();
+});
+
+it('matches a canonical any group when at least one condition matches', function () {
+    $ticket = Ticket::factory()->create(['subject' => 'Refund for order 42', 'priority' => TicketPriority::High]);
+
+    expect($this->engine->evaluateConditions(['any' => [
+        ['field' => 'subject', 'operator' => 'contains', 'value' => 'password'],
+        ['field' => 'priority', 'operator' => 'equals', 'value' => 'high'],
+    ]], $ticket))->toBeTrue();
+
+    expect($this->engine->evaluateConditions(['any' => [
+        ['field' => 'subject', 'operator' => 'contains', 'value' => 'password'],
+        ['field' => 'priority', 'operator' => 'equals', 'value' => 'low'],
+    ]], $ticket))->toBeFalse();
+});
+
+it('treats a flat list of conditions as all', function () {
+    $ticket = Ticket::factory()->create(['subject' => 'Refund for order 42', 'priority' => TicketPriority::High]);
+
+    expect($this->engine->evaluateConditions([
+        ['field' => 'subject', 'operator' => 'contains', 'value' => 'Refund'],
+        ['field' => 'priority', 'operator' => 'equals', 'value' => 'low'],
+    ], $ticket))->toBeFalse();
+
+    expect($this->engine->evaluateConditions([
+        ['field' => 'priority', 'operator' => 'equals', 'value' => 'high'],
+    ], $ticket))->toBeTrue();
+});
+
+it('treats an empty canonical group as matching every ticket', function () {
+    $ticket = Ticket::factory()->create();
+
+    expect($this->engine->evaluateConditions(['all' => []], $ticket))->toBeTrue()
+        ->and($this->engine->evaluateConditions(['any' => []], $ticket))->toBeTrue();
+});
+
+it('does not match a conditions object in a shape it does not recognise', function () {
+    $ticket = Ticket::factory()->create(['priority' => TicketPriority::Low]);
+
+    // The builder's pre-contract shape. Reading it as "no rules" would run the
+    // workflow's actions on every ticket.
+    expect($this->engine->evaluateConditions([
+        'match' => 'all',
+        'conditions' => [['field' => 'priority', 'operator' => 'equals', 'value' => 'high']],
+    ], $ticket))->toBeFalse();
+});
+
+it('does not run actions when a canonical all condition does not match', function () {
+    $ticket = Ticket::factory()->create(['subject' => 'Cannot log in', 'priority' => TicketPriority::Low]);
+
+    engineTestWorkflow([
+        'conditions' => ['all' => [['field' => 'subject', 'operator' => 'contains', 'value' => 'refund']]],
+        'actions' => [['type' => 'change_priority', 'value' => 'urgent']],
+    ]);
+
+    $this->engine->processEvent('ticket.created', $ticket);
+
+    expect(WorkflowLog::sole()->conditions_matched)->toBeFalse()
+        ->and($ticket->fresh()->priority)->toBe(TicketPriority::Low);
+});
+
+it('reports condition details in a dry run of canonical conditions', function () {
+    $ticket = Ticket::factory()->create(['priority' => TicketPriority::High]);
+    $workflow = engineTestWorkflow([
+        'conditions' => ['all' => [['field' => 'priority', 'operator' => 'equals', 'value' => 'high']]],
+        'actions' => [['type' => 'add_tag', 'value' => 'x']],
+    ]);
+
+    $result = $this->engine->dryRun($workflow, $ticket);
+
+    expect($result['conditions_matched'])->toBeTrue()
+        ->and($result['condition_details'])->toHaveCount(1)
+        ->and($result['condition_details'][0]['passed'])->toBeTrue();
+});
+
+// --- workflow-admin-contract: operators and fields ---
+
+it('supports starts_with and ends_with operators', function () {
+    expect($this->engine->compareValues('Refund request', 'starts_with', 'Refund'))->toBeTrue()
+        ->and($this->engine->compareValues('Refund request', 'starts_with', 'request'))->toBeFalse()
+        ->and($this->engine->compareValues('Refund request', 'ends_with', 'request'))->toBeTrue()
+        ->and($this->engine->compareValues('Refund request', 'ends_with', 'Refund'))->toBeFalse()
+        ->and($this->engine->compareValues(null, 'starts_with', 'Refund'))->toBeFalse();
+});
+
+it('supports greater_or_equal and less_or_equal operators', function () {
+    // The builder sends every value as a string.
+    expect($this->engine->compareValues(24, 'greater_or_equal', '24'))->toBeTrue()
+        ->and($this->engine->compareValues(25, 'greater_or_equal', '24'))->toBeTrue()
+        ->and($this->engine->compareValues(23, 'greater_or_equal', '24'))->toBeFalse()
+        ->and($this->engine->compareValues(24, 'less_or_equal', '24'))->toBeTrue()
+        ->and($this->engine->compareValues(23, 'less_or_equal', '24'))->toBeTrue()
+        ->and($this->engine->compareValues(25, 'less_or_equal', '24'))->toBeFalse();
+});
+
+it('resolves the department_id, ticket_type and description fields', function () {
+    $department = Department::create(['name' => 'Billing', 'description' => '']);
+    $ticket = Ticket::factory()->create([
+        'department_id' => $department->id,
+        'ticket_type' => 'incident',
+        'description' => 'The printer is on fire',
+    ]);
+
+    expect($this->engine->resolveFieldValue('department_id', $ticket))->toEqual($department->id)
+        ->and($this->engine->resolveFieldValue('ticket_type', $ticket))->toBe('incident')
+        ->and($this->engine->resolveFieldValue('description', $ticket))->toBe('The printer is on fire')
+        ->and($this->engine->evaluateConditions(['all' => [
+            ['field' => 'department_id', 'operator' => 'equals', 'value' => (string) $department->id],
+        ]], $ticket))->toBeTrue();
+});
+
+// --- workflow-admin-contract: actions ---
+
+it('executes set_department with the scalar department id the builder sends', function () {
+    $department = Department::create(['name' => 'Billing', 'description' => '']);
+    $ticket = Ticket::factory()->create();
+
+    $this->engine->executeAction(engineTestWorkflow(), $ticket, [
+        'type' => 'set_department',
+        'value' => (string) $department->id,
+    ]);
+
+    expect($ticket->fresh()->department_id)->toEqual($department->id);
+});
+
+it('executes add_note as an internal note with field templates filled in', function () {
+    $ticket = Ticket::factory()->create(['subject' => 'Refund for order 42', 'priority' => TicketPriority::High]);
+    $workflow = engineTestWorkflow();
+
+    $this->engine->executeAction($workflow, $ticket, [
+        'type' => 'add_note',
+        'value' => 'Routed "{{subject}}" at {{priority}} priority; {{nonsense}} stays',
+    ]);
+
+    $note = $ticket->replies()->sole();
+    expect($note->is_internal_note)->toBeTrue()
+        ->and($note->body)->toBe('Routed "Refund for order 42" at high priority; {{nonsense}} stays')
+        ->and($note->metadata['workflow_id'])->toEqual($workflow->id);
+});
+
+it('executes insert_canned_reply as a public reply', function () {
+    $ticket = Ticket::factory()->create(['subject' => 'Refund for order 42']);
+    $workflow = engineTestWorkflow();
+
+    $this->engine->executeAction($workflow, $ticket, [
+        'type' => 'insert_canned_reply',
+        'value' => 'Thanks, we have your request about {{subject}}.',
+    ]);
+
+    $reply = $ticket->replies()->sole();
+    expect($reply->is_internal_note)->toBeFalse()
+        ->and($reply->type)->toBe('reply')
+        ->and($reply->body)->toBe('Thanks, we have your request about Refund for order 42.')
+        ->and($reply->metadata['workflow_id'])->toEqual($workflow->id)
+        ->and($ticket->activities()->where('type', 'replied')->count())->toBe(1);
+});
+
+it('skips insert_canned_reply with an empty body', function () {
+    $ticket = Ticket::factory()->create();
+
+    $this->engine->executeAction(engineTestWorkflow(), $ticket, ['type' => 'insert_canned_reply', 'value' => '  ']);
+
+    expect($ticket->replies()->count())->toBe(0);
+});
+
+it('does not re-run workflows for a reply that a workflow wrote', function () {
+    $ticket = Ticket::factory()->create();
+    engineTestWorkflow([
+        'trigger_event' => 'ticket.replied',
+        'conditions' => ['all' => []],
+        'actions' => [['type' => 'insert_canned_reply', 'value' => 'We got your message.']],
+    ]);
+
+    // A customer reply fires ReplyCreated -> ticket.replied. The canned reply
+    // the workflow writes must not fire the same workflow again.
+    $ticket->replies()->create(['body' => 'Any update?', 'is_internal_note' => false]);
+
+    expect($ticket->replies()->count())->toBe(2)
+        ->and($ticket->replies()->where('body', 'We got your message.')->count())->toBe(1);
+});
+
+it('reads delay minutes from the scalar value the builder sends', function () {
+    $this->travelTo(Carbon::parse('2026-09-13 10:00:00'));
+    $ticket = Ticket::factory()->create();
+
+    $this->engine->executeActions(engineTestWorkflow(), $ticket, [
+        ['type' => 'delay', 'value' => '90'],
+        ['type' => 'add_tag', 'value' => 'later'],
+    ]);
+
+    $delayed = DelayedAction::sole();
+    expect($delayed->execute_at->toDateTimeString())->toBe('2026-09-13 11:30:00')
+        ->and($delayed->remaining_actions)->toHaveCount(1)
+        ->and($ticket->fresh()->tags)->toHaveCount(0);
+});
+
+it('posts send_webhook to the scalar URL the builder sends', function () {
+    Http::fake();
+    $engine = new class extends WorkflowEngine
+    {
+        protected function resolveHost(string $host): string
+        {
+            return '93.184.215.14';
+        }
+    };
+    $ticket = Ticket::factory()->create();
+
+    $engine->executeAction(engineTestWorkflow(), $ticket, [
+        'type' => 'send_webhook',
+        'value' => 'https://hooks.example.com/escalated',
+    ]);
+
+    Http::assertSent(fn (HttpRequest $request) => $request->url() === 'https://hooks.example.com/escalated'
+        && $request['ticket']['id'] === $ticket->id);
+});
+
+it('still blocks a scalar send_webhook URL that resolves to a private address', function () {
+    Http::fake();
+    $engine = new class extends WorkflowEngine
+    {
+        protected function resolveHost(string $host): string
+        {
+            return '10.0.0.5';
+        }
+    };
+
+    $engine->executeAction(engineTestWorkflow(), Ticket::factory()->create(), [
+        'type' => 'send_webhook',
+        'value' => 'https://intranet.example.com/hook',
+    ]);
+
+    Http::assertNothingSent();
 });
 
 it('processes workflows in position order', function () {

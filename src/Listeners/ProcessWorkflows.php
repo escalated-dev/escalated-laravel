@@ -3,6 +3,7 @@
 namespace Escalated\Laravel\Listeners;
 
 use Escalated\Laravel\Events;
+use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Services\WorkflowEngine;
 use Escalated\Laravel\Support\ImportContext;
 
@@ -32,7 +33,9 @@ class ProcessWorkflows
         return match (true) {
             $event instanceof Events\TicketCreated => ['ticket.created', $event->ticket],
             $event instanceof Events\TicketUpdated => ['ticket.updated', $event->ticket],
-            $event instanceof Events\ReplyCreated => ['ticket.replied', $event->reply->ticket],
+            $event instanceof Events\ReplyCreated => $this->isWorkflowReply($event->reply)
+                ? null
+                : ['ticket.replied', $event->reply->ticket],
             $event instanceof Events\TicketStatusChanged => ['ticket.status_changed', $event->ticket],
             $event instanceof Events\TicketAssigned => ['ticket.assigned', $event->ticket],
             $event instanceof Events\TicketEscalated => ['ticket.escalated', $event->ticket],
@@ -46,5 +49,15 @@ class ProcessWorkflows
                 : null,
             default => null,
         };
+    }
+
+    /**
+     * A reply written by a workflow (insert_canned_reply) carries the workflow
+     * id in its metadata. It does not trigger workflows: a ticket.replied
+     * workflow would otherwise answer its own reply without end.
+     */
+    protected function isWorkflowReply(Reply $reply): bool
+    {
+        return isset($reply->metadata['workflow_id']);
     }
 }
