@@ -2,6 +2,8 @@
 
 use Escalated\Laravel\Models\ChatSession;
 use Escalated\Laravel\Models\Ticket;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Gate;
 
@@ -16,6 +18,25 @@ use Illuminate\Support\Facades\Gate;
 |
 */
 
+// Whether $id is the user's id. Compared as strings: a host user may be keyed
+// by UUID or ULID, and an (int) cast turns every ULID into 1.
+$isUser = static fn ($user, mixed $id): bool => $id !== null
+    && $id !== ''
+    && (string) $user->getAuthIdentifier() === (string) $id;
+
+// Whether the user raised the ticket. The requester is polymorphic, so the id
+// identifies the user only together with the type.
+$isRequester = static function ($user, Ticket $ticket) use ($isUser): bool {
+    if (! $user instanceof Model || $ticket->requester_type === null) {
+        return false;
+    }
+
+    $class = static fn (string $type): string => Relation::getMorphedModel($type) ?? $type;
+
+    return $class($ticket->requester_type) === $class($user->getMorphClass())
+        && $isUser($user, $ticket->requester_id);
+};
+
 // All tickets channel - agents and admins only
 Broadcast::channel('escalated.tickets', function ($user) {
     return Gate::allows(config('escalated.authorization.agent_gate', 'escalated-agent'))
@@ -23,7 +44,7 @@ Broadcast::channel('escalated.tickets', function ($user) {
 });
 
 // Individual ticket channel - agent/admin or the ticket requester
-Broadcast::channel('escalated.tickets.{ticketId}', function ($user, $ticketId) {
+Broadcast::channel('escalated.tickets.{ticketId}', function ($user, $ticketId) use ($isRequester) {
     if (Gate::allows(config('escalated.authorization.agent_gate', 'escalated-agent'))
         || Gate::allows(config('escalated.authorization.admin_gate', 'escalated-admin'))) {
         return true;
@@ -31,16 +52,16 @@ Broadcast::channel('escalated.tickets.{ticketId}', function ($user, $ticketId) {
 
     $ticket = Ticket::find($ticketId);
 
-    return $ticket && (int) $ticket->requester_id === (int) $user->id;
+    return $ticket !== null && $isRequester($user, $ticket);
 });
 
 // Agent-specific channel - only the agent themselves
-Broadcast::channel('escalated.agents.{agentId}', function ($user, $agentId) {
-    return (int) $user->id === (int) $agentId;
+Broadcast::channel('escalated.agents.{agentId}', function ($user, $agentId) use ($isUser) {
+    return $isUser($user, $agentId);
 });
 
 // Chat session channel - assigned agent only (customer auth is handled via session token)
-Broadcast::channel('escalated.chat.{sessionId}', function ($user, $sessionId) {
+Broadcast::channel('escalated.chat.{sessionId}', function ($user, $sessionId) use ($isUser) {
     $session = ChatSession::find($sessionId);
 
     if (! $session) {
@@ -48,7 +69,7 @@ Broadcast::channel('escalated.chat.{sessionId}', function ($user, $sessionId) {
     }
 
     // Agent assigned to the session
-    if ($session->agent_id && (int) $session->agent_id === (int) $user->id) {
+    if ($isUser($user, $session->agent_id)) {
         return true;
     }
 
