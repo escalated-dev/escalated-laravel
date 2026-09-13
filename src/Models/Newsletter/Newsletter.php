@@ -3,6 +3,7 @@
 namespace Escalated\Laravel\Models\Newsletter;
 
 use Escalated\Laravel\Concerns\UsesEscalatedConnection;
+use Escalated\Laravel\Escalated;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,8 +11,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Newsletter extends Model
 {
     use UsesEscalatedConnection;
-
-    protected $table = 'escalated_newsletters';
 
     protected $fillable = [
         'subject', 'from_email', 'from_name', 'reply_to',
@@ -31,6 +30,11 @@ class Newsletter extends Model
         'summary_bounced' => 'integer',
         'summary_complained' => 'integer',
     ];
+
+    public function getTable(): string
+    {
+        return Escalated::table('newsletters');
+    }
 
     public function targetList(): BelongsTo
     {

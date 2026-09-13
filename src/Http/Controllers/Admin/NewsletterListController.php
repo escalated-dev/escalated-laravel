@@ -11,6 +11,7 @@ use Escalated\Laravel\Services\Newsletter\ContactSegmentResolver;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class NewsletterListController extends Controller
 {
@@ -22,8 +23,8 @@ class NewsletterListController extends Controller
             ->withCount('members as member_count')
             ->get()
             ->map(function ($l) {
-                $l->opted_out_count = Escalated::db()->table('escalated_newsletter_list_members')
-                    ->join('escalated_contacts', 'escalated_contacts.id', '=', 'escalated_newsletter_list_members.contact_id')
+                $l->opted_out_count = Escalated::db()->table(Escalated::table('newsletter_list_members'))
+                    ->join(Escalated::table('contacts'), Escalated::table('contacts').'.id', '=', Escalated::table('newsletter_list_members').'.contact_id')
                     ->where('list_id', $l->id)
                     ->whereNotNull('marketing_opt_out_at')
                     ->count();
@@ -57,8 +58,8 @@ class NewsletterListController extends Controller
         $members = $list->members()->with('contact:id,name,email')->paginate(100);
         $matchCount = $list->kind === 'dynamic' ? $segments->countMatches($list->filter_json ?? ['rules' => []]) : 0;
         $list->member_count = $list->members()->count();
-        $list->opted_out_count = Escalated::db()->table('escalated_newsletter_list_members')
-            ->join('escalated_contacts', 'escalated_contacts.id', '=', 'escalated_newsletter_list_members.contact_id')
+        $list->opted_out_count = Escalated::db()->table(Escalated::table('newsletter_list_members'))
+            ->join(Escalated::table('contacts'), Escalated::table('contacts').'.id', '=', Escalated::table('newsletter_list_members').'.contact_id')
             ->where('list_id', $list->id)
             ->whereNotNull('marketing_opt_out_at')
             ->count();
@@ -88,7 +89,7 @@ class NewsletterListController extends Controller
     public function addMember(NewsletterList $list, Request $request): mixed
     {
         abort_unless($list->kind === 'static', 422, 'Dynamic lists are filter-driven');
-        $data = $request->validate(['contact_id' => 'required|integer|exists:escalated_contacts,id']);
+        $data = $request->validate(['contact_id' => ['required', 'integer', Rule::exists(Contact::class, 'id')]]);
         NewsletterListMember::firstOrCreate(
             ['list_id' => $list->id, 'contact_id' => $data['contact_id']],
             ['added_by' => Auth::id()],

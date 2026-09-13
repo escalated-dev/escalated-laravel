@@ -2,7 +2,9 @@
 
 namespace Escalated\Laravel\Http\Requests;
 
+use Escalated\Laravel\Models\Department;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class CreateTicketRequest extends FormRequest
 {
@@ -20,7 +22,7 @@ class CreateTicketRequest extends FormRequest
             'subject' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
             'priority' => ['nullable', 'in:low,medium,high,urgent,critical'],
-            'department_id' => ['nullable', 'exists:escalated_departments,id'],
+            'department_id' => ['nullable', Rule::exists(Department::class, 'id')],
             'attachments' => ['nullable', 'array'],
             'attachments.*' => ['file', 'max:'.$maxSize, 'mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,csv,txt,zip,mp4,mp3'],
         ];

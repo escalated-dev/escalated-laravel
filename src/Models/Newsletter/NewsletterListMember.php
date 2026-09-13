@@ -3,6 +3,7 @@
 namespace Escalated\Laravel\Models\Newsletter;
 
 use Escalated\Laravel\Concerns\UsesEscalatedConnection;
+use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Models\Contact;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,8 +12,6 @@ class NewsletterListMember extends Model
 {
     use UsesEscalatedConnection;
 
-    protected $table = 'escalated_newsletter_list_members';
-
     public $timestamps = false;
 
     protected $fillable = ['list_id', 'contact_id', 'added_at', 'added_by'];
@@ -20,6 +19,11 @@ class NewsletterListMember extends Model
     protected $casts = [
         'added_at' => 'datetime',
     ];
+
+    public function getTable(): string
+    {
+        return Escalated::table('newsletter_list_members');
+    }
 
     public function list(): BelongsTo
     {

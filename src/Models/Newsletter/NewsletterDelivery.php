@@ -3,6 +3,7 @@
 namespace Escalated\Laravel\Models\Newsletter;
 
 use Escalated\Laravel\Concerns\UsesEscalatedConnection;
+use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Models\Contact;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,8 +11,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class NewsletterDelivery extends Model
 {
     use UsesEscalatedConnection;
-
-    protected $table = 'escalated_newsletter_deliveries';
 
     const UPDATED_AT = null;
 
@@ -32,6 +31,11 @@ class NewsletterDelivery extends Model
         'clicks_count' => 'integer',
         'attempt_count' => 'integer',
     ];
+
+    public function getTable(): string
+    {
+        return Escalated::table('newsletter_deliveries');
+    }
 
     public function newsletter(): BelongsTo
     {

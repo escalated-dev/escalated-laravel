@@ -9,7 +9,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('escalated_newsletter_lists', function (Blueprint $table) {
+        Schema::create(Escalated::table('newsletter_lists'), function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->text('description')->nullable();
@@ -25,6 +25,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('escalated_newsletter_lists');
+        Schema::dropIfExists(Escalated::table('newsletter_lists'));
     }
 };

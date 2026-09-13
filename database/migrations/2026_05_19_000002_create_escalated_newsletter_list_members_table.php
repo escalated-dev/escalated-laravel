@@ -9,7 +9,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('escalated_newsletter_list_members', function (Blueprint $table) {
+        Schema::create(Escalated::table('newsletter_list_members'), function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('list_id');
             $table->unsignedBigInteger('contact_id');
@@ -19,13 +19,13 @@ return new class extends Migration
             $table->unique(['list_id', 'contact_id']);
             $table->index('contact_id');
 
-            $table->foreign('list_id')->references('id')->on('escalated_newsletter_lists')->cascadeOnDelete();
-            $table->foreign('contact_id')->references('id')->on('escalated_contacts')->cascadeOnDelete();
+            $table->foreign('list_id')->references('id')->on(Escalated::table('newsletter_lists'))->cascadeOnDelete();
+            $table->foreign('contact_id')->references('id')->on(Escalated::table('contacts'))->cascadeOnDelete();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('escalated_newsletter_list_members');
+        Schema::dropIfExists(Escalated::table('newsletter_list_members'));
     }
 };

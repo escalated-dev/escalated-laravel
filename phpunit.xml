@@ -16,6 +16,9 @@
         <testsuite name="Connection">
             <directory>tests/Connection</directory>
         </testsuite>
+        <testsuite name="Prefix">
+            <directory>tests/Prefix</directory>
+        </testsuite>
     </testsuites>
     <source>
         <include>
