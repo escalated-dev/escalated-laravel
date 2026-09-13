@@ -140,7 +140,7 @@ class PluginInstallCommand extends Command
      */
     private function fetchManifest(string $publisher, string $slug, ?string $version): ?array
     {
-        $base = rtrim((string) config('escalated.marketplace.url', config('escalated.hosted.api_url', 'https://cloud.escalated.dev/api/v1')), '/');
+        $base = rtrim((string) (config('escalated.marketplace.url') ?: config('escalated.hosted.api_url', 'https://cloud.escalated.dev/api/v1')), '/');
         $path = $version
             ? "/marketplace/publishers/{$publisher}/plugins/{$slug}/versions/{$version}"
             : "/marketplace/publishers/{$publisher}/plugins/{$slug}/versions/latest";
@@ -182,7 +182,7 @@ class PluginInstallCommand extends Command
         $client = Http::acceptJson()
             ->timeout(20)
             ->withHeaders([
-                'X-Escalated-Version' => (string) config('escalated.version', '0.6.0'),
+                'X-Escalated-Version' => (string) (config('escalated.version') ?: '0.6.0'),
             ]);
 
         $token = (string) config('escalated.hosted.api_key', '');

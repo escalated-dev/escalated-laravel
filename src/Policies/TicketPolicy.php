@@ -61,6 +61,6 @@ class TicketPolicy
         $isRequester = $ticket->requester_id === $user->getKey()
             && $ticket->requester_type === $user->getMorphClass();
 
-        return $isRequester && config('escalated.allow_customer_close', false);
+        return $isRequester && config('escalated.tickets.allow_customer_close', false);
     }
 }

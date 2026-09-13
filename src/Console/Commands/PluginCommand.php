@@ -356,13 +356,13 @@ class PluginCommand extends Command
      */
     protected function marketplaceRequest(string $method, string $path, array $query = []): ?array
     {
-        $baseUrl = config('escalated.marketplace.url', 'https://marketplace.escalated.dev/api/v1');
+        $baseUrl = config('escalated.marketplace.url') ?: 'https://marketplace.escalated.dev/api/v1';
 
         try {
             $response = Http::timeout(15)
                 ->acceptJson()
                 ->withHeaders([
-                    'X-Escalated-Version' => config('escalated.version', '0.6.0'),
+                    'X-Escalated-Version' => config('escalated.version') ?: '0.6.0',
                 ])
                 ->{strtolower($method)}($baseUrl.$path, $query);
 
