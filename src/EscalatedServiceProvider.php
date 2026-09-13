@@ -31,6 +31,7 @@ use Escalated\Laravel\Services\PluginUIService;
 use Escalated\Laravel\Services\TicketActionRegistry;
 use Escalated\Laravel\Support\HookManager;
 use Escalated\Laravel\UI\InertiaUiRenderer;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -102,6 +103,7 @@ class EscalatedServiceProvider extends ServiceProvider
         $this->registerPublishing();
         $this->registerCoreRoutes();
         $this->registerCommands();
+        $this->registerSchedule();
         $this->registerEvents();
         $this->loadPlugins();
         $this->bootPluginBridge();
@@ -112,6 +114,45 @@ class EscalatedServiceProvider extends ServiceProvider
         }
 
         $this->registerNewsletterRoutes();
+    }
+
+    /**
+     * Schedule the package's recurring commands when
+     * escalated.scheduling.auto_register is on, so the host does not have to
+     * list them itself.
+     *
+     * The config is read when the Schedule is built (by schedule:run or
+     * schedule:list), not at boot.
+     */
+    protected function registerSchedule(): void
+    {
+        $this->callAfterResolving(Schedule::class, function (Schedule $schedule): void {
+            if (! config('escalated.scheduling.auto_register', false)) {
+                return;
+            }
+
+            $schedule->command('escalated:check-sla')->everyMinute();
+            $schedule->command('escalated:evaluate-escalations')->everyFiveMinutes();
+            $schedule->command('escalated:run-automations')->everyFiveMinutes();
+            $schedule->command('escalated:process-delayed-actions')->everyMinute();
+            $schedule->command('escalated:wake-snoozed-tickets')->everyMinute();
+            $schedule->command('escalated:close-resolved')->daily();
+            $schedule->command('escalated:purge-activities')->weekly();
+
+            if (config('escalated.chat.enabled', false)) {
+                $schedule->command('escalated:close-idle-chats')->everyMinute();
+                $schedule->command('escalated:cleanup-abandoned-chats')->everyMinute();
+            }
+
+            if (config('escalated.enable_newsletters', false)) {
+                $schedule->command('escalated:newsletters:dispatch')->everyMinute()->withoutOverlapping();
+            }
+
+            if (config('escalated.inbound_email.enabled', false)
+                && config('escalated.inbound_email.adapter') === 'imap') {
+                $schedule->command('escalated:poll-imap')->everyMinute();
+            }
+        });
     }
 
     /**
