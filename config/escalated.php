@@ -256,6 +256,21 @@ return [
     |--------------------------------------------------------------------------
     | Scheduling
     |--------------------------------------------------------------------------
+    |
+    | With auto_register on, the package adds its recurring commands to the
+    | Laravel scheduler, so only `schedule:run` needs a cron entry:
+    |
+    |   escalated:check-sla, process-delayed-actions,
+    |   wake-snoozed-tickets                          every minute
+    |   escalated:evaluate-escalations, run-automations  every five minutes
+    |   escalated:close-resolved                      daily
+    |   escalated:purge-activities                    weekly
+    |
+    | Commands for optional features are added only while the feature is on:
+    | close-idle-chats and cleanup-abandoned-chats (chat.enabled),
+    | newsletters:dispatch (enable_newsletters), and poll-imap (inbound email
+    | on the imap adapter).
+    |
     */
     'scheduling' => [
         'auto_register' => false,
