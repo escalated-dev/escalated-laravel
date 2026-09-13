@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.8.1] - 2026-09-13
+
 ### Fixed
 - **Four report screens were blank.** `ReportController` rendered
   `Escalated/Admin/Reports/FirstResponseTime`, `ResolutionTime`,
@@ -14,6 +16,35 @@ All notable changes to this project will be documented in this file.
 
   The existing tests asserted only the status, which is why this survived. They
   now assert the component name as well.
+
+- **The shared workflow builder could not save a workflow, and a saved one ran
+  on every ticket.** The builder posts the body fixed in
+  escalated-developer-context `domain-model/workflow-admin-contract.md`, and
+  `WorkflowController` refused it: `set_department`, `add_note` and
+  `insert_canned_reply` failed validation, omitting `conditions` was an error,
+  and reorder required `ids`. Worse, `WorkflowEngine` read only the legacy
+  `{match, rules}` shape, so a workflow stored as `{"all": [...]}` found no
+  rules and matched every ticket it saw.
+
+  Conditions are now read as `{all}`, `{any}`, a flat list or `{match, rules}`,
+  and any other non-empty object matches nothing. The engine gains the
+  `starts_with`, `ends_with`, `greater_or_equal` and `less_or_equal` operators,
+  the `department_id` field, and the `set_department`, `add_note` and
+  `insert_canned_reply` actions; `delay` also takes a plain number of minutes
+  and `send_webhook` a plain URL. The Form page sends `workflow`,
+  `trigger_events`, `action_types` and `operators`, and reorder accepts
+  `workflow_ids`. A reply posted by a workflow no longer triggers workflows
+  itself, so a canned reply on `ticket.replied` cannot answer itself forever.
+  Stored `{match, rules}` workflows and the old action and operator names keep
+  working.
+
+### Added
+- **`tests/Unit/PageNameParityTest.php`**, asserting every page name this
+  package renders resolves to a component. It diffs them against the manifest
+  the frontend publishes, vendored at `tests/Fixtures/escalated-pages.json`, and
+  names the file each failing name came from. No single repo's tests can see a
+  blank screen like the four above on their own: a controller test asserts a
+  status, and the frontend never hears the name.
 
 ## [1.8.0] - 2026-09-12
 
