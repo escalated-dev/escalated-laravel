@@ -1,6 +1,7 @@
 <?php
 
 use Escalated\Laravel\Database\Migration;
+use Escalated\Laravel\Escalated;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
@@ -8,7 +9,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('escalated_newsletter_deliveries', function (Blueprint $table) {
+        Schema::create(Escalated::table('newsletter_deliveries'), function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('newsletter_id');
             $table->unsignedBigInteger('contact_id');
@@ -31,13 +32,13 @@ return new class extends Migration
             $table->index('contact_id');
             $table->index(['status', 'claimed_at']);
 
-            $table->foreign('newsletter_id')->references('id')->on('escalated_newsletters')->cascadeOnDelete();
-            $table->foreign('contact_id')->references('id')->on('escalated_contacts')->cascadeOnDelete();
+            $table->foreign('newsletter_id')->references('id')->on(Escalated::table('newsletters'))->cascadeOnDelete();
+            $table->foreign('contact_id')->references('id')->on(Escalated::table('contacts'))->cascadeOnDelete();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('escalated_newsletter_deliveries');
+        Schema::dropIfExists(Escalated::table('newsletter_deliveries'));
     }
 };

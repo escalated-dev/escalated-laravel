@@ -16,6 +16,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class NewsletterController extends Controller
 {
@@ -209,8 +210,8 @@ class NewsletterController extends Controller
             'from_email' => 'required|email|max:320',
             'from_name' => 'nullable|string|max:255',
             'reply_to' => 'nullable|email|max:320',
-            'target_list_id' => 'required|integer|exists:escalated_newsletter_lists,id',
-            'template_id' => 'nullable|integer|exists:escalated_newsletter_templates,id',
+            'target_list_id' => ['required', 'integer', Rule::exists(NewsletterList::class, 'id')],
+            'template_id' => ['nullable', 'integer', Rule::exists(NewsletterTemplate::class, 'id')],
             'theme' => 'nullable|string|max:64',
             'body_markdown' => 'nullable|string',
             'status' => 'in:draft,scheduled,sending',

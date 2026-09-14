@@ -9,7 +9,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('escalated_newsletters', function (Blueprint $table) {
+        Schema::create(Escalated::table('newsletters'), function (Blueprint $table) {
             $table->id();
             $table->string('subject', 998);
             $table->string('from_email', 320);
@@ -37,13 +37,13 @@ return new class extends Migration
             $table->index(['status', 'scheduled_at']);
             $table->index('created_by');
 
-            $table->foreign('target_list_id')->references('id')->on('escalated_newsletter_lists')->restrictOnDelete();
-            $table->foreign('template_id')->references('id')->on('escalated_newsletter_templates')->nullOnDelete();
+            $table->foreign('target_list_id')->references('id')->on(Escalated::table('newsletter_lists'))->restrictOnDelete();
+            $table->foreign('template_id')->references('id')->on(Escalated::table('newsletter_templates'))->nullOnDelete();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('escalated_newsletters');
+        Schema::dropIfExists(Escalated::table('newsletters'));
     }
 };

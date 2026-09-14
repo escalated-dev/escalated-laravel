@@ -9,7 +9,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('escalated_newsletter_templates', function (Blueprint $table) {
+        Schema::create(Escalated::table('newsletter_templates'), function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('theme', 64)->default('default');
@@ -26,6 +26,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('escalated_newsletter_templates');
+        Schema::dropIfExists(Escalated::table('newsletter_templates'));
     }
 };
