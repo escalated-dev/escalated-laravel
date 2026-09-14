@@ -4,6 +4,58 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.8.2] - 2026-09-13
+
+### Security
+- **Webhook URLs could point at internal addresses.** An admin could save a
+  webhook for loopback, a private network or the cloud metadata address, and
+  the delivery log showed whatever answered. URLs must now be http(s) and
+  resolve only to public addresses. The check runs when a webhook is saved and
+  again before every delivery. Delivery connects to the address that was
+  checked and does not follow redirects. The workflow `send_webhook` action
+  uses the same guard (#183).
+- **A customer could subscribe to another customer's ticket channel.** Channel
+  authorization compared user ids with `(int)` casts, which turns every ULID
+  into `1` and every UUID into `0`, and ignored the requester's type. Ids are
+  now compared as strings, and the requester's morph type must match (#185).
+
+### Fixed
+- **Webhooks created on the admin Webhooks page never received an event.**
+  `DispatchWebhook` sent events only to `notifications.webhook_url`, and the
+  dispatcher that fans out to the saved webhooks ran only when a delivery was
+  retried by hand. Every event now goes to the active webhooks subscribed to it
+  as well as to `webhook_url`. The form's `internal_note.added`, `tag.added` and
+  `tag.removed` never matched the names events are sent under. They are now
+  `note.created`, `ticket.tag_added` and `ticket.tag_removed`, and webhooks
+  saved with the old names still receive them (#183).
+- **A custom `table_prefix` broke a fresh install.** The newsletter migrations,
+  models and validation rules named `escalated_*` tables directly, so any other
+  prefix failed at the newsletter migrations. They now use the configured
+  prefix (#184).
+- **`scheduling.auto_register` did nothing.** The documented option was never
+  read, so SLA checks, delayed workflow actions, snooze wake-ups and the rest
+  never ran unless the host scheduled each command by hand. With it on, the
+  package adds its recurring commands to the scheduler, and the optional ones
+  only when their feature is enabled (#186).
+- **Plugin `ctx.store.query` failed outside MySQL.** Filters and `orderBy` used
+  `JSON_UNQUOTE(JSON_EXTRACT(...))`, which SQLite and PostgreSQL don't have, and
+  MySQL sorted numbers as text. Queries are now written for each driver: SQLite,
+  MySQL, MariaDB and PostgreSQL. Numbers compare as numbers, and field names are
+  validated before they reach SQL (#187).
+- **The widget ignored the knowledge base settings.** It reported the knowledge
+  base as enabled and served articles when the admin had turned it off or made
+  it private. It now follows both settings, like the customer knowledge base
+  (#188).
+- **The package read config keys the published config didn't define.**
+  - `notifications.webhook_secret` was never set, so requests to `webhook_url`
+    went unsigned. It is now `ESCALATED_WEBHOOK_SECRET`.
+  - The ticket policy read `escalated.allow_customer_close` instead of
+    `escalated.tickets.allow_customer_close`, so customers could never close a
+    ticket.
+  - `app_name`, `attachments.disk`, `authorization.agent_scope`, the plugin
+    runtime options, `marketplace.*` and `version` are now defined, and a
+    `null` value falls back to the default instead of being used as is (#189).
+
 ## [1.8.1] - 2026-09-13
 
 ### Fixed
