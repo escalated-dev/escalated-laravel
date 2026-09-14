@@ -116,9 +116,14 @@ it('supports guest ticket creation and guest replies in the mobile api', functio
 
     $guestToken = $created['data']['guest_access_token'];
 
+    // The reference is derived from the ticket's id, so a literal ESC-00001
+    // only holds while nothing has created a ticket earlier in the process.
+    // PostgreSQL does not roll sequences back with the transaction, so any
+    // preceding test that made one leaves this off by however many -- which is
+    // a property of the test order, not of the endpoint.
     $this->getJson("/support/api/v1/mobile/guest/tickets/{$guestToken}")
         ->assertOk()
-        ->assertJsonPath('data.reference', 'ESC-00001');
+        ->assertJsonPath('data.reference', $created['data']['reference']);
 
     $this->postJson("/support/api/v1/mobile/guest/tickets/{$guestToken}/replies", [
         'email' => 'guest@example.com',
