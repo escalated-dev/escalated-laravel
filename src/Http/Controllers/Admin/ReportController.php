@@ -15,6 +15,15 @@ use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
 {
+    /**
+     * What the response-time and resolution screens measure "on target"
+     * against. The screens show the share met inside it, so it has to be stated
+     * somewhere; these are the defaults the components themselves assume.
+     */
+    private const FIRST_RESPONSE_TARGET_HOURS = 4;
+
+    private const RESOLUTION_TARGET_HOURS = 24;
+
     public function __construct(
         protected ReportingService $reporting,
         protected ReportExportService $exportService,
@@ -128,12 +137,22 @@ class ReportController extends Controller
         $days = $this->periodDays($request);
         $groupBy = $request->input('group_by', 'day');
 
+        $counts = $this->reporting->slaBreachCounts($days);
+
+        // The prop names are the component's, not this service's. Sent under
+        // any other name they are not passed at all: the screen renders its
+        // defaults, which is an empty report on a 200.
         return $this->renderer->render('Escalated/Admin/Reports/SlaTrends', [
             'period_days' => $days,
-            'trends' => $this->reporting->slaBreachTrends($days, $groupBy),
-            'by_department' => $this->reporting->slaBreachByDepartment($days),
-            'by_priority' => $this->reporting->slaBreachByPriority($days),
-            'risk_forecast' => $this->reporting->slaRiskForecast(),
+            'breach_trend' => $this->reporting->slaBreachTrends($days, $groupBy),
+            'breach_by_type_trend' => $this->reporting->slaBreachTrends($days, $groupBy),
+            'breach_by_department' => $this->reporting->slaBreachByDepartment($days),
+            'breach_by_priority' => $this->reporting->slaBreachByPriority($days),
+            'at_risk_tickets' => $this->reporting->slaRiskForecast(),
+            'total_breaches' => $counts['total'],
+            'breach_rate' => $counts['rate'],
+            'first_response_breaches' => $counts['first_response'],
+            'resolution_breaches' => $counts['resolution'],
         ]);
     }
 
@@ -144,8 +163,15 @@ class ReportController extends Controller
     {
         $days = $this->periodDays($request);
 
+        $summary = $this->reporting->firstResponseTimeSummary($days, self::FIRST_RESPONSE_TARGET_HOURS);
+
         return $this->renderer->render('Escalated/Admin/Reports/ResponseTimes', [
             'period_days' => $days,
+            'avg_frt' => $summary['avg'],
+            'median_frt' => $summary['median'],
+            'p90_frt' => $summary['p90'],
+            'pct_under_target' => $summary['pct_under_target'],
+            'target_hours' => self::FIRST_RESPONSE_TARGET_HOURS,
             'distribution' => $this->reporting->firstResponseTimeDistribution($days),
             'trend' => $this->reporting->firstResponseTimeTrend($days),
             'by_agent' => $this->reporting->firstResponseTimeByAgent($days),
@@ -161,8 +187,15 @@ class ReportController extends Controller
     {
         $days = $this->periodDays($request);
 
+        $summary = $this->reporting->resolutionTimeSummary($days, self::RESOLUTION_TARGET_HOURS);
+
         return $this->renderer->render('Escalated/Admin/Reports/ResolutionTimes', [
             'period_days' => $days,
+            'avg_resolution' => $summary['avg'],
+            'median_resolution' => $summary['median'],
+            'p90_resolution' => $summary['p90'],
+            'pct_under_target' => $summary['pct_under_target'],
+            'target_hours' => self::RESOLUTION_TARGET_HOURS,
             'distribution' => $this->reporting->resolutionTimeDistribution($days),
             'trend' => $this->reporting->resolutionTimeTrend($days),
             'by_agent' => $this->reporting->resolutionTimeByAgent($days),
@@ -178,11 +211,13 @@ class ReportController extends Controller
     {
         $days = $this->periodDays($request);
 
+        // One list, under the one name the component reads. The workload and
+        // productivity breakdowns have no place on this screen -- it charts the
+        // ranking itself -- and passing them under names it does not declare
+        // only dropped them on the root element.
         return $this->renderer->render('Escalated/Admin/Reports/AgentRanking', [
             'period_days' => $days,
-            'ranking' => $this->reporting->agentPerformanceRanking($days),
-            'workload' => $this->reporting->agentWorkloadDistribution($days),
-            'productivity' => $this->reporting->agentProductivity($days),
+            'agents' => $this->reporting->agentPerformanceRanking($days),
         ]);
     }
 
@@ -217,7 +252,6 @@ class ReportController extends Controller
             'by_channel' => $this->reporting->ticketsByChannel($days),
             'by_type' => $this->reporting->ticketsByType($days),
             'by_priority' => $this->reporting->ticketsByPriority($days),
-            'requester_analysis' => $this->reporting->requesterAnalysis($days),
         ]);
     }
 
@@ -228,10 +262,32 @@ class ReportController extends Controller
     {
         $days = $this->periodDays($request);
 
+        // periodComparison() is keyed by metric, with current and previous
+        // inside each. The screen is the other way round -- two periods, each a
+        // full set of figures -- so it is pivoted here rather than in the
+        // service, which also answers the API in the shape it already returns.
+        $comparison = $this->reporting->periodComparison($days);
+        $currentStart = now()->subDays($days);
+        $previousStart = now()->subDays($days * 2);
+
+        $side = fn (string $side) => [
+            'total_tickets' => $comparison['total_tickets'][$side] ?? 0,
+            'resolved_tickets' => $comparison['resolved_tickets'][$side] ?? 0,
+            'avg_frt' => $comparison['avg_first_response_hours'][$side] ?? 0,
+            'avg_resolution' => $comparison['avg_resolution_hours'][$side] ?? 0,
+            'sla_compliance' => $comparison['sla_compliance_rate'][$side] ?? 0,
+            'csat' => $comparison['csat_average'][$side] ?? 0,
+            'breach_count' => $comparison['breach_count'][$side] ?? 0,
+        ];
+
         return $this->renderer->render('Escalated/Admin/Reports/Comparison', [
             'period_days' => $days,
-            'comparison' => $this->reporting->periodComparison($days),
-            'forecast' => $this->reporting->ticketVolumeForecast($days),
+            'current' => $side('current') + [
+                'volume_trend' => $this->reporting->getTicketVolumeByDate($currentStart, now()),
+            ],
+            'previous' => $side('previous') + [
+                'volume_trend' => $this->reporting->getTicketVolumeByDate($previousStart, $currentStart),
+            ],
         ]);
     }
 
