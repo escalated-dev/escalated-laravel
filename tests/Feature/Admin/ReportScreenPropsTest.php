@@ -16,7 +16,6 @@
  * component declares. This asserts the response against it.
  */
 
-use Escalated\Laravel\Models\Ticket;
 use Illuminate\Support\Facades\Gate;
 
 beforeEach(function () {
@@ -42,8 +41,9 @@ function declaredProps(string $page): array
 it('sends report screens every prop they declare, and nothing they do not', function (string $routeName, string $page) {
     $admin = $this->createAdmin();
 
-    Ticket::factory()->count(3)->create();
-
+    // No fixtures. Which props a screen sends is not a function of how much
+    // data there is, and creating tickets here moved the reference sequence
+    // under a mobile-API test that asserts on one.
     $response = $this->actingAs($admin)
         ->withHeaders(['X-Inertia' => 'true', 'X-Inertia-Version' => ''])
         ->get(route($routeName, ['days' => 30]));
