@@ -1181,6 +1181,94 @@ class ReportingService
     }
 
     /**
+     * Headline figures for the first-response report.
+     *
+     * The distribution and the trends are the body of that screen; these are
+     * the tiles above them, and without them the screen renders four zeroes
+     * over a chart that is plainly not describing zero.
+     *
+     * @return array{avg: float, median: float, p90: float, pct_under_target: float}
+     */
+    public function firstResponseTimeSummary(int $days, float $targetHours = 4): array
+    {
+        return $this->hoursSummary('first_response_at', $days, $targetHours);
+    }
+
+    /**
+     * The same figures for the resolution-time report.
+     *
+     * @return array{avg: float, median: float, p90: float, pct_under_target: float}
+     */
+    public function resolutionTimeSummary(int $days, float $targetHours = 24): array
+    {
+        return $this->hoursSummary('resolved_at', $days, $targetHours);
+    }
+
+    /**
+     * Counts for the SLA trends report, over the same window as the trends.
+     *
+     * @return array{total: int, rate: float, first_response: int, resolution: int}
+     */
+    public function slaBreachCounts(int $days): array
+    {
+        $since = now()->subDays($days);
+        $total = Ticket::where('created_at', '>=', $since)->count();
+
+        $firstResponse = Ticket::where('created_at', '>=', $since)
+            ->where('sla_first_response_breached', true)->count();
+
+        $resolution = Ticket::where('created_at', '>=', $since)
+            ->where('sla_resolution_breached', true)->count();
+
+        $breached = Ticket::where('created_at', '>=', $since)
+            ->where(function ($q) {
+                $q->where('sla_first_response_breached', true)
+                    ->orWhere('sla_resolution_breached', true);
+            })
+            ->count();
+
+        return [
+            'total' => $breached,
+            'rate' => $total > 0 ? round(($breached / $total) * 100, 1) : 0.0,
+            'first_response' => $firstResponse,
+            'resolution' => $resolution,
+        ];
+    }
+
+    /**
+     * Average, median, 90th percentile and the share met inside the target, for
+     * the hours between a ticket being raised and $column being stamped.
+     *
+     * @return array{avg: float, median: float, p90: float, pct_under_target: float}
+     */
+    protected function hoursSummary(string $column, int $days, float $targetHours): array
+    {
+        $hoursDiff = $this->hoursDiffExpression('created_at', $column);
+
+        $hours = Ticket::where('created_at', '>=', now()->subDays($days))
+            ->whereNotNull($column)
+            ->selectRaw("{$hoursDiff} as hours_diff")
+            ->get()
+            ->pluck('hours_diff')
+            ->map(fn ($value) => (float) $value)
+            ->sort()
+            ->values();
+
+        if ($hours->isEmpty()) {
+            return ['avg' => 0.0, 'median' => 0.0, 'p90' => 0.0, 'pct_under_target' => 0.0];
+        }
+
+        $withinTarget = $hours->filter(fn ($value) => $value <= $targetHours)->count();
+
+        return [
+            'avg' => round($hours->avg(), 1),
+            'median' => round($this->percentile($hours, 50), 1),
+            'p90' => round($this->percentile($hours, 90), 1),
+            'pct_under_target' => round(($withinTarget / $hours->count()) * 100, 1),
+        ];
+    }
+
+    /**
      * Build key metrics for a period (used by periodComparison).
      */
     protected function buildPeriodMetrics(Carbon $start, Carbon $end): array
@@ -1193,6 +1281,12 @@ class ReportingService
             'avg_resolution_hours' => $this->getAverageResolutionTime($start, $end),
             'sla_compliance_rate' => $this->getSlaComplianceRate($start, $end),
             'csat_average' => $this->getCsatAverage($start, $end),
+            'breach_count' => Ticket::whereBetween('created_at', [$start, $end])
+                ->where(function ($q) {
+                    $q->where('sla_first_response_breached', true)
+                        ->orWhere('sla_resolution_breached', true);
+                })
+                ->count(),
         ];
     }
 }
