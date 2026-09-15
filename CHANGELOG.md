@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.8.4] - 2026-09-15
+
 ### Added
 - **Synced mode delivers events through the queue.** `SyncedDriver` dispatches
   `SyncEventToCloud` (5 tries, exponential backoff, `ESCALATED_SYNC_QUEUE` to pick a
