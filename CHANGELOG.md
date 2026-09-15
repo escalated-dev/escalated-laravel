@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- **Cloud mode failed on every call.** `CloudDriver` handed the HTTP response object to
+  `hydrateTicket(array)`, so `ESCALATED_MODE=cloud` threw a TypeError before any ticket was
+  created, and `HostedApiClient` joined the base URL and endpoint without a slash
+  (`/api/v1tickets/7`). The driver now decodes the JSON body, raises a `RequestException` on
+  non-2xx responses, translates the cloud vocabulary both ways (`medium`/`critical` ↔
+  `normal`/`urgent`, `waiting_on_*` ↔ `waiting`, `ticket_number` → `reference`), reads
+  pagination from `meta`, and carries the host requester through `metadata.host_requester_*`
+  so `requester_name` resolves to the local user. Cloud mode now has integration tests.
+
 ## [1.8.2] - 2026-09-13
 
 ### Security

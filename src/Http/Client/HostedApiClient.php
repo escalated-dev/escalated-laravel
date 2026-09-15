@@ -43,14 +43,23 @@ class HostedApiClient
     {
         return Http::withHeaders($this->headers())
             ->timeout(15)
-            ->post($this->baseUrl.$endpoint, $data);
+            ->post($this->url($endpoint), $data);
     }
 
     protected function get(string $endpoint, array $params = []): ?Response
     {
         return Http::withHeaders($this->headers())
             ->timeout(15)
-            ->get($this->baseUrl.$endpoint, $params);
+            ->get($this->url($endpoint), $params);
+    }
+
+    /**
+     * Join the base URL and an endpoint whether or not the endpoint carries
+     * a leading slash ("/events" and "tickets/7" are both valid callers).
+     */
+    protected function url(string $endpoint): string
+    {
+        return $this->baseUrl.'/'.ltrim($endpoint, '/');
     }
 
     protected function headers(): array
