@@ -63,7 +63,9 @@ it('rejects a missing or wrong signature', function () {
 });
 
 it('applies a cloud status change through the local driver with the package vocabulary', function () {
-    $ticket = Ticket::factory()->create(['status' => TicketStatus::Open]);
+    // The factory picks a random priority; pin it so the projection's
+    // `normal` (→ medium) does not register as a second change.
+    $ticket = Ticket::factory()->create(['status' => TicketStatus::Open, 'priority' => TicketPriority::Medium]);
 
     cloudWebhook($this, cloudEvent('ticket.status_changed', projectedTicket($ticket, ['status' => 'waiting'])))
         ->assertOk()
@@ -104,7 +106,7 @@ it('ignores events that carry no site changes and tickets that did not originate
 });
 
 it('treats a redelivered event id as a replay', function () {
-    $ticket = Ticket::factory()->create(['status' => TicketStatus::Open]);
+    $ticket = Ticket::factory()->create(['status' => TicketStatus::Open, 'priority' => TicketPriority::Medium]);
     $event = cloudEvent('ticket.status_changed', projectedTicket($ticket, ['status' => 'in_progress']), 'evt-replay');
 
     cloudWebhook($this, $event)->assertOk()->assertJsonPath('applied', true);
