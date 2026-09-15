@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- **Synced mode delivers events through the queue.** `SyncedDriver` dispatches
+  `SyncEventToCloud` (5 tries, exponential backoff, `ESCALATED_SYNC_QUEUE` to pick a
+  queue) instead of calling the cloud inline with a 15-second timeout, and every event
+  carries a stable `event_id` so cloud.escalated.dev ignores redeliveries. A cloud outage
+  no longer slows or blocks ticket writes.
+- **Cloud to site webhook receiver.** `POST /escalated/cloud/webhook` verifies
+  `X-Escalated-Signature` with `ESCALATED_CLOUD_SIGNING_SECRET` and applies
+  `ticket.updated` / `ticket.status_changed` from the cloud projection to the local
+  ticket through `LocalDriver`, so agent actions taken in the cloud portal reach the
+  site. Synced mode is now two-way. The route answers 503 until the secret is set.
+
+### Changed
+- The cloud vocabulary translation lives in `Escalated\Laravel\Support\CloudVocabulary`,
+  shared by `CloudDriver` and the receiver.
+
 ## [1.8.3] - 2026-09-14
 
 ### Fixed
