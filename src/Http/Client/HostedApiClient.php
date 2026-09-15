@@ -17,13 +17,23 @@ class HostedApiClient
         $this->apiKey = config('escalated.hosted.api_key', '');
     }
 
-    public function emit(string $event, array $payload): ?Response
+    /**
+     * Emit a Synced-mode event. `eventId` is echoed by the cloud and lets it
+     * ignore a redelivery; pass the same id on every retry of one event.
+     */
+    public function emit(string $event, array $payload, ?string $eventId = null, ?string $timestamp = null): ?Response
     {
-        return $this->post('/events', [
+        $body = [
             'event' => $event,
             'payload' => $payload,
-            'timestamp' => now()->toISOString(),
-        ]);
+            'timestamp' => $timestamp ?? now()->toISOString(),
+        ];
+
+        if ($eventId !== null && $eventId !== '') {
+            $body['event_id'] = $eventId;
+        }
+
+        return $this->post('/events', $body);
     }
 
     public function sendCommand(string $command, array $payload): ?Response

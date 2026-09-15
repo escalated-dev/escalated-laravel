@@ -6,11 +6,13 @@ use Escalated\Laravel\Contracts\Ticketable;
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Http\Client\HostedApiClient;
+use Escalated\Laravel\Jobs\SyncEventToCloud;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\AttachmentService;
 use Escalated\Laravel\Services\MentionService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class SyncedDriver extends LocalDriver
 {
@@ -105,10 +107,15 @@ class SyncedDriver extends LocalDriver
         return $ticket;
     }
 
+    /**
+     * Queue the event for delivery. On a real queue the job retries with
+     * backoff; on the sync driver it runs inline and any failure is logged
+     * so the local write is never rolled back by an unreachable cloud.
+     */
     protected function syncEvent(string $event, array $payload): void
     {
         try {
-            $this->apiClient->emit($event, $payload);
+            SyncEventToCloud::dispatch($event, $payload, (string) Str::uuid(), now()->toISOString());
         } catch (\Throwable $e) {
             Log::warning("Escalated sync failed for {$event}: {$e->getMessage()}");
         }

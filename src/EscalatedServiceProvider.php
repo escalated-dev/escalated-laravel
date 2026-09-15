@@ -377,6 +377,10 @@ class EscalatedServiceProvider extends ServiceProvider
 
         // Widget routes (public, rate-limited)
         $this->loadRoutesFrom(__DIR__.'/../routes/widget.php');
+
+        // Cloud -> site webhook receiver (signature-authenticated; 503 until
+        // escalated.hosted.signing_secret is set)
+        $this->loadRoutesFrom(__DIR__.'/../routes/cloud.php');
     }
 
     /**

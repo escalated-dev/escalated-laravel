@@ -9,6 +9,7 @@ use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Http\Client\HostedApiClient;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Support\CloudVocabulary;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Client\Response;
 use RuntimeException;
@@ -25,32 +26,6 @@ use RuntimeException;
  */
 class CloudDriver implements TicketDriver
 {
-    /** Package priority → cloud priority. Identity when not listed. */
-    private const PRIORITY_TO_CLOUD = [
-        'medium' => 'normal',
-        'critical' => 'urgent',
-    ];
-
-    /** Cloud priority → package priority. Identity when not listed. */
-    private const PRIORITY_FROM_CLOUD = [
-        'normal' => 'medium',
-    ];
-
-    /** Package status → cloud status. Identity when not listed. */
-    private const STATUS_TO_CLOUD = [
-        'waiting_on_customer' => 'waiting',
-        'waiting_on_agent' => 'waiting',
-        'escalated' => 'open',
-        'reopened' => 'open',
-        'live' => 'open',
-    ];
-
-    /** Cloud status → package status. Identity when not listed. */
-    private const STATUS_FROM_CLOUD = [
-        'waiting' => 'waiting_on_customer',
-        'snoozed' => 'open',
-    ];
-
     /** Cloud-only keys that must not be forced onto the local model. */
     private const CLOUD_ONLY_TICKET_KEYS = [
         'account_id', 'assignee', 'sla', 'ticket_number', 'requester_name', 'requester_email',
@@ -88,7 +63,7 @@ class CloudDriver implements TicketDriver
     {
         return $this->hydrateTicket($this->data($this->apiClient->sendCommand('tickets.transition', [
             'reference' => $ticket->reference,
-            'status' => self::STATUS_TO_CLOUD[$status->value] ?? $status->value,
+            'status' => CloudVocabulary::statusToCloud($status->value),
         ])));
     }
 
@@ -171,7 +146,7 @@ class CloudDriver implements TicketDriver
     {
         return $this->hydrateTicket($this->data($this->apiClient->sendCommand('tickets.change_priority', [
             'reference' => $ticket->reference,
-            'priority' => self::PRIORITY_TO_CLOUD[$priority->value] ?? $priority->value,
+            'priority' => CloudVocabulary::priorityToCloud($priority->value),
         ])));
     }
 
@@ -205,12 +180,12 @@ class CloudDriver implements TicketDriver
     {
         if (isset($data['priority'])) {
             $value = $data['priority'] instanceof TicketPriority ? $data['priority']->value : (string) $data['priority'];
-            $data['priority'] = self::PRIORITY_TO_CLOUD[$value] ?? $value;
+            $data['priority'] = CloudVocabulary::priorityToCloud($value);
         }
 
         if (isset($data['status'])) {
             $value = $data['status'] instanceof TicketStatus ? $data['status']->value : (string) $data['status'];
-            $data['status'] = self::STATUS_TO_CLOUD[$value] ?? $value;
+            $data['status'] = CloudVocabulary::statusToCloud($value);
         }
 
         return $data;
@@ -226,11 +201,11 @@ class CloudDriver implements TicketDriver
         $attributes['reference'] = (string) ($data['reference'] ?? $data['ticket_number'] ?? $data['id'] ?? '');
 
         if (isset($data['priority'])) {
-            $attributes['priority'] = self::PRIORITY_FROM_CLOUD[$data['priority']] ?? $data['priority'];
+            $attributes['priority'] = CloudVocabulary::priorityFromCloud((string) $data['priority']);
         }
 
         if (isset($data['status'])) {
-            $attributes['status'] = self::STATUS_FROM_CLOUD[$data['status']] ?? $data['status'];
+            $attributes['status'] = CloudVocabulary::statusFromCloud((string) $data['status']);
         }
 
         if (isset($metadata['host_requester_type'], $metadata['host_requester_id'])) {

@@ -71,6 +71,15 @@ return [
     'hosted' => [
         'api_url' => env('ESCALATED_API_URL', 'https://cloud.escalated.dev/api/v1'),
         'api_key' => env('ESCALATED_API_KEY'),
+
+        // Queue name for Synced-mode event delivery (SyncEventToCloud).
+        // null uses the default queue of the default connection.
+        'queue' => env('ESCALATED_SYNC_QUEUE'),
+
+        // Webhook signing secret minted on the cloud for this connected
+        // site. Required for the cloud -> site receiver at
+        // POST /escalated/cloud/webhook; the route answers 503 without it.
+        'signing_secret' => env('ESCALATED_CLOUD_SIGNING_SECRET'),
     ],
 
     /*
