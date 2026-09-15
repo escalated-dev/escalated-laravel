@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.8.3] - 2026-09-14
+
 ### Fixed
 - **Cloud mode failed on every call.** `CloudDriver` handed the HTTP response object to
   `hydrateTicket(array)`, so `ESCALATED_MODE=cloud` threw a TypeError before any ticket was
