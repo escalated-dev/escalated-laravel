@@ -29,7 +29,17 @@ Extends self-hosted. After every write operation, events are synced server-to-se
 - Advanced SLA tracking
 - Cloud-based agent portal
 
-If the cloud is unreachable, the app continues working normally. Events queue and retry.
+If the cloud is unreachable, the app continues working normally. Events are delivered by the `SyncEventToCloud` queued job (5 attempts with exponential backoff, `ESCALATED_SYNC_QUEUE` picks a queue) and each carries a stable `event_id` so the cloud ignores redeliveries.
+
+Sync is two-way. Agent actions taken in the cloud portal come back as signed webhooks to `POST /escalated/cloud/webhook`; set `ESCALATED_CLOUD_SIGNING_SECRET` to the signing secret minted for the connected site on cloud.escalated.dev (Sites → Generate Secret). The receiver applies `ticket.updated` and `ticket.status_changed` to the local ticket through the normal driver, so listeners, notifications and workflows fire as for a local edit.
+
+```bash
+# .env
+ESCALATED_MODE=synced
+ESCALATED_API_URL=https://cloud.escalated.dev/api/v1
+ESCALATED_API_KEY=your-sync-token
+ESCALATED_CLOUD_SIGNING_SECRET=your-webhook-signing-secret
+```
 
 **Best for:** Companies with multiple apps wanting a unified support view.
 
