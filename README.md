@@ -18,6 +18,7 @@
 # Escalated for Laravel
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/escalated-dev/escalated-laravel.svg)](https://packagist.org/packages/escalated-dev/escalated-laravel)
+[![Total Downloads](https://img.shields.io/packagist/dt/escalated-dev/escalated-laravel.svg)](https://packagist.org/packages/escalated-dev/escalated-laravel/stats)
 [![Tests](https://github.com/escalated-dev/escalated-laravel/actions/workflows/laravel.yml/badge.svg)](https://github.com/escalated-dev/escalated-laravel/actions/workflows/laravel.yml)[![Laravel](https://img.shields.io/badge/laravel-11.x--13.x-FF2D20?logo=laravel&logoColor=white)](https://laravel.com/)
 [![PHP](https://img.shields.io/badge/php-8.2+-777BB4?logo=php&logoColor=white)](https://www.php.net/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
