@@ -886,4 +886,4 @@ Same architecture, same Vue UI, same three hosting modes — for every major bac
 
 ## License
 
-MIT
+MIT - Copyright (c) Escalated.dev. See [LICENSE](LICENSE).
