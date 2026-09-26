@@ -561,3 +561,29 @@ it('requires ticket_id for dry-run test', function () {
 
     $response->assertStatus(422);
 });
+
+/*
+ * The Logs table's "Actions" column prints `actions_executed` as a count, as
+ * the NestJS reference sends it; the list itself is `action_details`. The
+ * page was handed the stored array there and rendered it raw.
+ */
+it('sends the Logs page an action count, with the actions as details', function () {
+    $workflow = loggedWorkflow('Refunds', 0);
+    $ticket = Ticket::factory()->create();
+    WorkflowLog::create([
+        'workflow_id' => $workflow->id,
+        'ticket_id' => $ticket->id,
+        'trigger_event' => 'ticket.created',
+        'conditions_matched' => true,
+        'actions_executed' => [['type' => 'add_tag', 'value' => 'vip'], ['type' => 'assign', 'value' => 3]],
+        'started_at' => now(),
+        'completed_at' => now(),
+    ]);
+
+    $log = $this->withHeaders(inertiaVisitHeaders())
+        ->get(route('escalated.admin.workflows.logs'))
+        ->json('props.logs.0');
+
+    expect($log['actions_executed'])->toBe(2)
+        ->and($log['action_details'])->toHaveCount(2);
+});
