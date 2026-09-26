@@ -22,6 +22,22 @@ All notable changes to this project will be documented in this file.
   was reached. `?workflow=<id>` narrows it to one workflow, and the per-workflow
   `/workflows/{workflow}/logs` URL of earlier releases redirects there. That route
   is now named `escalated.admin.workflows.workflow-logs`.
+- **The advanced report charts drew nothing and the SLA screen threw.** Every chart
+  on the report screens reads a list of `{label, value}`; these screens were sent
+  ReportingService rows as they are (`bucket`/`count`, `date`/`avg_hours`,
+  `period`/`total_breaches`, `group`/`avg`), so each bar was NaN high and the browser
+  logged an SVG error per bar. The SLA screen's `at_risk_tickets` was a keyed count
+  forecast where the screen filters a list of tickets, which threw and took the screen
+  down once it rendered. The agent tables read `agent_id`/`agent_name`, the ranking
+  reads `volume`, `avg_frt`, `avg_resolution` and `csat`, and the cohort tabs read
+  `name`, `volume`, `avg_resolution`, `breach_rate` and `csat`; none of those were
+  sent, and the priority tab was a volume time series. `Support\ReportScreens` now maps
+  each screen's data to what it reads, as the Adonis and Django ports already do, and
+  the SLA screen lists the open tickets whose next deadline falls in the next 8 hours.
+  ReportingService keeps its shapes for the export and API, and gains
+  `avg_resolution_hours` on `agentPerformanceRanking()` and
+  `ticketCohortsByPriority()`. `tests/Feature/Admin/ReportScreenShapesTest.php` checks
+  the shapes with data present.
 - **The report period selector did nothing on the advanced reports.** The frontend
   sends the period as `days`; response times, resolution times, SLA trends, agent
   ranking, agent detail, cohorts, comparison and export read only `period`, so choosing 7 days reloaded
