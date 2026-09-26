@@ -586,6 +586,7 @@ class ReportingService
             $totalTickets = (int) ($agent->total_tickets ?? $agent['total_tickets'] ?? 0);
             $resolvedTickets = (int) ($agent->resolved_tickets ?? $agent['resolved_tickets'] ?? 0);
             $avgResponseHours = (float) ($agent->avg_response_hours ?? $agent['avg_response_hours'] ?? 0);
+            $avgResolutionHours = (float) ($agent->avg_resolution_hours ?? $agent['avg_resolution_hours'] ?? 0);
 
             $resolutionRate = $totalTickets > 0 ? ($resolvedTickets / $totalTickets) * 100 : 0;
 
@@ -613,6 +614,7 @@ class ReportingService
                 'resolved_tickets' => $resolvedTickets,
                 'resolution_rate' => round($resolutionRate, 1),
                 'avg_response_hours' => $avgResponseHours,
+                'avg_resolution_hours' => $avgResolutionHours,
                 'csat_average' => round($csatAvg, 1),
                 'composite_score' => $compositeScore,
             ];
@@ -872,6 +874,36 @@ class ReportingService
             ->get()
             ->map(fn ($row) => [
                 'type' => $row->ticket_type ?? 'unspecified',
+                'volume' => (int) $row->volume,
+                'resolved' => (int) $row->resolved,
+                'avg_resolution_hours' => (float) ($row->avg_resolution_hours ?? 0),
+                'breached' => (int) $row->breached,
+                'breach_rate' => $row->volume > 0 ? round(($row->breached / $row->volume) * 100, 1) : 0,
+            ])
+            ->toArray();
+    }
+
+    /**
+     * The cohort metrics of ticketsByType(), per priority.
+     */
+    public function ticketCohortsByPriority(int $days): array
+    {
+        $since = now()->subDays($days);
+        $hoursDiff = $this->avgHoursDiffExpression('created_at', 'resolved_at');
+
+        return Ticket::where('created_at', '>=', $since)
+            ->groupBy('priority')
+            ->select([
+                'priority',
+                DB::raw('COUNT(*) as volume'),
+                DB::raw("ROUND({$hoursDiff}, 1) as avg_resolution_hours"),
+                DB::raw('SUM(CASE WHEN sla_first_response_breached OR sla_resolution_breached THEN 1 ELSE 0 END) as breached'),
+                DB::raw('SUM(CASE WHEN resolved_at IS NOT NULL THEN 1 ELSE 0 END) as resolved'),
+            ])
+            ->toBase()
+            ->get()
+            ->map(fn ($row) => [
+                'priority' => $row->priority ?? 'unspecified',
                 'volume' => (int) $row->volume,
                 'resolved' => (int) $row->resolved,
                 'avg_resolution_hours' => (float) ($row->avg_resolution_hours ?? 0),

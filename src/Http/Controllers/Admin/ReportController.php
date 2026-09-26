@@ -9,6 +9,7 @@ use Escalated\Laravel\Models\SatisfactionRating;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\ReportExportService;
 use Escalated\Laravel\Services\ReportingService;
+use Escalated\Laravel\Support\ReportScreens;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
@@ -138,17 +139,18 @@ class ReportController extends Controller
         $groupBy = $request->input('group_by', 'day');
 
         $counts = $this->reporting->slaBreachCounts($days);
+        $trends = ReportScreens::breachTrends($this->reporting->slaBreachTrends($days, $groupBy));
 
         // The prop names are the component's, not this service's. Sent under
         // any other name they are not passed at all: the screen renders its
         // defaults, which is an empty report on a 200.
         return $this->renderer->render('Escalated/Admin/Reports/SlaTrends', [
             'period_days' => $days,
-            'breach_trend' => $this->reporting->slaBreachTrends($days, $groupBy),
-            'breach_by_type_trend' => $this->reporting->slaBreachTrends($days, $groupBy),
-            'breach_by_department' => $this->reporting->slaBreachByDepartment($days),
-            'breach_by_priority' => $this->reporting->slaBreachByPriority($days),
-            'at_risk_tickets' => $this->reporting->slaRiskForecast(),
+            'breach_trend' => $trends['total'],
+            'breach_by_type_trend' => $trends['by_type'],
+            'breach_by_department' => ReportScreens::series($this->reporting->slaBreachByDepartment($days), 'department', 'breach_rate'),
+            'breach_by_priority' => ReportScreens::series($this->reporting->slaBreachByPriority($days), 'priority', 'breach_rate'),
+            'at_risk_tickets' => ReportScreens::atRiskTickets(),
             'total_breaches' => $counts['total'],
             'breach_rate' => $counts['rate'],
             'first_response_breaches' => $counts['first_response'],
@@ -172,11 +174,11 @@ class ReportController extends Controller
             'p90_frt' => $summary['p90'],
             'pct_under_target' => $summary['pct_under_target'],
             'target_hours' => self::FIRST_RESPONSE_TARGET_HOURS,
-            'distribution' => $this->reporting->firstResponseTimeDistribution($days),
-            'trend' => $this->reporting->firstResponseTimeTrend($days),
-            'by_agent' => $this->reporting->firstResponseTimeByAgent($days),
-            'by_department' => $this->reporting->firstResponseTimeByDepartment($days),
-            'by_priority' => $this->reporting->firstResponseTimeByPriority($days),
+            'distribution' => ReportScreens::distribution($this->reporting->firstResponseTimeDistribution($days)),
+            'trend' => ReportScreens::series($this->reporting->firstResponseTimeTrend($days), 'date', 'avg_hours'),
+            'by_agent' => ReportScreens::agentTimes($this->reporting->firstResponseTimeByAgent($days)),
+            'by_department' => ReportScreens::averageByDepartment($this->reporting->firstResponseTimeByDepartment($days)),
+            'by_priority' => ReportScreens::averageBy($this->reporting->firstResponseTimeByPriority($days)),
         ]);
     }
 
@@ -196,11 +198,11 @@ class ReportController extends Controller
             'p90_resolution' => $summary['p90'],
             'pct_under_target' => $summary['pct_under_target'],
             'target_hours' => self::RESOLUTION_TARGET_HOURS,
-            'distribution' => $this->reporting->resolutionTimeDistribution($days),
-            'trend' => $this->reporting->resolutionTimeTrend($days),
-            'by_agent' => $this->reporting->resolutionTimeByAgent($days),
-            'by_department' => $this->reporting->resolutionTimeByDepartment($days),
-            'by_channel' => $this->reporting->resolutionTimeByChannel($days),
+            'distribution' => ReportScreens::distribution($this->reporting->resolutionTimeDistribution($days)),
+            'trend' => ReportScreens::series($this->reporting->resolutionTimeTrend($days), 'date', 'avg_hours'),
+            'by_agent' => ReportScreens::agentTimes($this->reporting->resolutionTimeByAgent($days)),
+            'by_department' => ReportScreens::averageByDepartment($this->reporting->resolutionTimeByDepartment($days)),
+            'by_channel' => ReportScreens::averageBy($this->reporting->resolutionTimeByChannel($days)),
         ]);
     }
 
@@ -217,7 +219,7 @@ class ReportController extends Controller
         // only dropped them on the root element.
         return $this->renderer->render('Escalated/Admin/Reports/AgentRanking', [
             'period_days' => $days,
-            'agents' => $this->reporting->agentPerformanceRanking($days),
+            'agents' => ReportScreens::agentRanking($this->reporting->agentPerformanceRanking($days)),
         ]);
     }
 
@@ -247,11 +249,11 @@ class ReportController extends Controller
 
         return $this->renderer->render('Escalated/Admin/Reports/Cohorts', [
             'period_days' => $days,
-            'by_tag' => $this->reporting->ticketsByTag($days),
-            'by_department' => $this->reporting->ticketsByDepartment($days),
-            'by_channel' => $this->reporting->ticketsByChannel($days),
-            'by_type' => $this->reporting->ticketsByType($days),
-            'by_priority' => $this->reporting->ticketsByPriority($days),
+            'by_tag' => ReportScreens::cohorts($this->reporting->ticketsByTag($days), 'tag'),
+            'by_department' => ReportScreens::cohorts($this->reporting->ticketsByDepartment($days), 'department'),
+            'by_channel' => ReportScreens::cohorts($this->reporting->ticketsByChannel($days), 'channel'),
+            'by_type' => ReportScreens::cohorts($this->reporting->ticketsByType($days), 'type'),
+            'by_priority' => ReportScreens::cohorts($this->reporting->ticketCohortsByPriority($days), 'priority'),
         ]);
     }
 
