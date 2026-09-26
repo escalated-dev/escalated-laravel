@@ -4,6 +4,7 @@ use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Models\Workflow;
+use Escalated\Laravel\Models\WorkflowLog;
 use Illuminate\Support\Facades\Gate;
 
 /**
@@ -181,19 +182,98 @@ it('reorders workflows', function () {
     expect($w2->fresh()->position)->toBe(0);
 });
 
-it('shows workflow logs', function () {
-    $workflow = Workflow::create([
-        'name' => 'Logged',
+/**
+ * Inactive, so creating the ticket for a log row does not run it and add rows
+ * of its own.
+ */
+function loggedWorkflow(string $name, int $position = 0): Workflow
+{
+    return Workflow::create([
+        'name' => $name,
         'trigger_event' => 'ticket.created',
         'conditions' => [],
         'actions' => [],
-        'is_active' => true,
-        'position' => 0,
+        'is_active' => false,
+        'position' => $position,
     ]);
+}
 
-    $response = $this->get(route('escalated.admin.workflows.logs', $workflow));
+function logRun(Workflow $workflow, Ticket $ticket, ?string $error = null): WorkflowLog
+{
+    return WorkflowLog::create([
+        'workflow_id' => $workflow->id,
+        'ticket_id' => $ticket->id,
+        'trigger_event' => 'ticket.created',
+        'conditions_matched' => true,
+        'actions_executed' => [['type' => 'add_tag', 'value' => 'vip']],
+        'error' => $error,
+        'started_at' => now(),
+        'completed_at' => now()->addMilliseconds(40),
+    ]);
+}
 
-    $response->assertStatus(200);
+/**
+ * The shared Logs page lists recent runs across every workflow, and the
+ * Workflows index links to it with no workflow in the URL. The route used to
+ * need one, so building that link threw and the index never rendered.
+ */
+it('lists recent runs across every workflow as the shared Logs page reads them', function () {
+    $refunds = loggedWorkflow('Refunds', 0);
+    $vip = loggedWorkflow('VIP', 1);
+    $ticket = Ticket::factory()->create();
+
+    logRun($refunds, $ticket);
+    logRun($vip, $ticket, 'webhook timed out');
+
+    $response = $this->withHeaders(inertiaVisitHeaders())
+        ->get(route('escalated.admin.workflows.logs'));
+
+    $response->assertOk();
+    $page = $response->json();
+
+    expect($page['component'])->toBe('Escalated/Admin/Workflows/Logs')
+        ->and($page['props']['logs'])->toBeList()->toHaveCount(2)
+        ->and($page['props']['workflows'])->toBe([
+            ['id' => $refunds->id, 'name' => 'Refunds'],
+            ['id' => $vip->id, 'name' => 'VIP'],
+        ])
+        ->and(array_keys($page['props']))->not->toContain('workflow_id', 'workflow');
+
+    $failed = collect($page['props']['logs'])->firstWhere('workflow_name', 'VIP');
+
+    expect($failed)
+        ->toMatchArray([
+            'ticket_reference' => $ticket->reference,
+            'event' => 'ticket.created',
+            'matched' => true,
+            'status' => 'failed',
+            'action_details' => [['type' => 'add_tag', 'value' => 'vip']],
+        ])
+        ->not->toHaveKeys(['workflow', 'ticket']);
+});
+
+it('narrows the Logs page to one workflow', function () {
+    $refunds = loggedWorkflow('Refunds', 0);
+    $vip = loggedWorkflow('VIP', 1);
+    $ticket = Ticket::factory()->create();
+
+    logRun($refunds, $ticket);
+    logRun($vip, $ticket);
+
+    $page = $this->withHeaders(inertiaVisitHeaders())
+        ->get(route('escalated.admin.workflows.logs', ['workflow' => $vip->id]))
+        ->assertOk()
+        ->json();
+
+    expect($page['props']['logs'])->toHaveCount(1)
+        ->and($page['props']['logs'][0]['workflow_name'])->toBe('VIP');
+});
+
+it('sends the per-workflow logs URL of earlier releases to the filtered Logs page', function () {
+    $workflow = loggedWorkflow('Logged');
+
+    $this->get(route('escalated.admin.workflows.workflow-logs', $workflow))
+        ->assertRedirect(route('escalated.admin.workflows.logs', ['workflow' => $workflow->id]));
 });
 
 it('performs dry-run test against a ticket', function () {

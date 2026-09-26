@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- **The Reports dashboard and the Workflows index failed to render.** The shared
+  frontend builds links with Ziggy's `route()`, which throws on a name it does not
+  know or a missing required parameter, and the throw takes the whole screen down.
+  The Reports dashboard linked to `escalated.admin.reports.response-times` and
+  `escalated.admin.reports.resolution-times`; this package registered those
+  screens as `reports.frt` and `reports.resolution`. Both names now exist, at
+  `/reports/response-times` and `/reports/resolution-times`, and the old names and
+  URLs keep working.
+
+  The Workflows index linked to `escalated.admin.workflows.logs` with no workflow,
+  and the route required one. `GET /workflows/logs` now serves the shared Logs page
+  across every workflow, in the shape it reads: `logs` as a list of runs (newest
+  100) and `workflows` as `{id, name}` for its filter. It used to be sent a
+  paginator and a single workflow, so the page listed nothing useful even when it
+  was reached. `?workflow=<id>` narrows it to one workflow, and the per-workflow
+  `/workflows/{workflow}/logs` URL of earlier releases redirects there. That route
+  is now named `escalated.admin.workflows.workflow-logs`.
+- **The report period selector did nothing on the advanced reports.** The frontend
+  sends the period as `days`; response times, resolution times, SLA trends, agent
+  ranking, agent detail, cohorts, comparison and export read only `period`, so choosing 7 days reloaded
+  the 30-day report. They now read `days` too, and `period` still wins.
+
+### Added
+- **`tests/Feature/RouteNameParityTest.php`**, asserting every route name the
+  frontend passes to `route()` is registered, against the list vendored at
+  `tests/Fixtures/escalated-route-names.json`. It is the route counterpart of
+  `PageNameParityTest`: a controller test that asserts a 200 cannot see a link
+  that throws in the browser.
+
 ## [1.8.4] - 2026-09-15
 
 ### Added
