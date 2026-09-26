@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.8.5] - 2026-09-26
+
 ### Fixed
 - **The Reports dashboard and the Workflows index failed to render.** The shared
   frontend builds links with Ziggy's `route()`, which throws on a name it does not
