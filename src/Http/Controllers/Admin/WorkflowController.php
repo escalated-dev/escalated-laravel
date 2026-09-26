@@ -188,7 +188,14 @@ class WorkflowController extends Controller
             ->latest('id')
             ->limit(self::LOGS_LIMIT)
             ->get()
-            ->makeHidden(['workflow', 'ticket']);
+            ->makeHidden(['workflow', 'ticket'])
+            // The page's "Actions" column is a count, as the NestJS reference
+            // sends it; the actions themselves go out as action_details.
+            ->map(fn (WorkflowLog $log) => [
+                ...$log->toArray(),
+                'actions_executed' => count($log->action_details),
+            ])
+            ->values();
 
         return $this->renderer->render('Escalated/Admin/Workflows/Logs', [
             'logs' => $logs,
