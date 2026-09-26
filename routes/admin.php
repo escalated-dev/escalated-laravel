@@ -191,6 +191,9 @@ Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web'
         Route::get('/reports/sla-trends', [ReportController::class, 'slaTrends'])->name('escalated.admin.reports.sla-trends');
         Route::get('/reports/frt', [ReportController::class, 'firstResponseTime'])->name('escalated.admin.reports.frt');
         Route::get('/reports/resolution', [ReportController::class, 'resolutionTime'])->name('escalated.admin.reports.resolution');
+        // The names the shared frontend links to. frt/resolution above stay for existing links.
+        Route::get('/reports/response-times', [ReportController::class, 'firstResponseTime'])->name('escalated.admin.reports.response-times');
+        Route::get('/reports/resolution-times', [ReportController::class, 'resolutionTime'])->name('escalated.admin.reports.resolution-times');
         Route::get('/reports/agent-ranking', [ReportController::class, 'agentRanking'])->name('escalated.admin.reports.agent-ranking');
         Route::get('/reports/agent/{id}/detail', [ReportController::class, 'agentDetail'])->name('escalated.admin.reports.agent-detail');
         Route::get('/reports/cohorts', [ReportController::class, 'cohortAnalysis'])->name('escalated.admin.reports.cohorts');
@@ -271,13 +274,15 @@ Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web'
         // Workflows
         Route::get('/workflows', [WorkflowController::class, 'index'])->name('escalated.admin.workflows.index');
         Route::get('/workflows/create', [WorkflowController::class, 'create'])->name('escalated.admin.workflows.create');
+        // Registered before /workflows/{workflow}, which would otherwise read "logs" as a workflow id.
+        Route::get('/workflows/logs', [WorkflowController::class, 'logs'])->name('escalated.admin.workflows.logs');
         Route::post('/workflows', [WorkflowController::class, 'store'])->name('escalated.admin.workflows.store');
         Route::get('/workflows/{workflow}', [WorkflowController::class, 'edit'])->name('escalated.admin.workflows.edit');
         Route::put('/workflows/{workflow}', [WorkflowController::class, 'update'])->name('escalated.admin.workflows.update');
         Route::delete('/workflows/{workflow}', [WorkflowController::class, 'destroy'])->name('escalated.admin.workflows.destroy');
         Route::post('/workflows/{workflow}/toggle', [WorkflowController::class, 'toggle'])->name('escalated.admin.workflows.toggle');
         Route::post('/workflows/reorder', [WorkflowController::class, 'reorder'])->name('escalated.admin.workflows.reorder');
-        Route::get('/workflows/{workflow}/logs', [WorkflowController::class, 'logs'])->name('escalated.admin.workflows.logs');
+        Route::get('/workflows/{workflow}/logs', [WorkflowController::class, 'workflowLogs'])->name('escalated.admin.workflows.workflow-logs');
         Route::post('/workflows/{workflow}/test', [WorkflowController::class, 'test'])->name('escalated.admin.workflows.test');
 
         // Import (admin-only — inherits EnsureIsAdmin middleware from parent group)

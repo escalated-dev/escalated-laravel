@@ -316,9 +316,14 @@ class ReportController extends Controller
         return $this->exportService->exportToCsv($type, $filters);
     }
 
+    /**
+     * The shared frontend's period selector and report links send `days`,
+     * like the basic report screens above read. `period` still wins so
+     * existing links keep working.
+     */
     protected function periodDays(Request $request): int
     {
-        return $request->integer('period', 30);
+        return $request->integer('period', $request->integer('days', 30));
     }
 
     protected function avgFirstResponseHours($since): float

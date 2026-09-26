@@ -159,6 +159,29 @@ it('renders report pages the frontend package actually ships', function (string 
 })->with([
     ['escalated.admin.reports.frt', 'Escalated/Admin/Reports/ResponseTimes'],
     ['escalated.admin.reports.resolution', 'Escalated/Admin/Reports/ResolutionTimes'],
+    ['escalated.admin.reports.response-times', 'Escalated/Admin/Reports/ResponseTimes'],
+    ['escalated.admin.reports.resolution-times', 'Escalated/Admin/Reports/ResolutionTimes'],
     ['escalated.admin.reports.cohorts', 'Escalated/Admin/Reports/Cohorts'],
     ['escalated.admin.reports.comparison', 'Escalated/Admin/Reports/Comparison'],
+]);
+
+/**
+ * The frontend's period selector and report links send `days`. These screens
+ * read only `period`, so choosing 7 days reloaded the 30-day report.
+ */
+it('reads the period the frontend sends as days', function (string $routeName) {
+    $admin = $this->createAdmin();
+
+    $response = $this->actingAs($admin)
+        ->withHeaders(['X-Inertia' => 'true', 'X-Inertia-Version' => ''])
+        ->get(route($routeName, ['days' => 7]));
+
+    $response->assertOk();
+
+    expect($response->json('props.period_days'))->toBe(7);
+})->with([
+    'escalated.admin.reports.response-times',
+    'escalated.admin.reports.resolution-times',
+    'escalated.admin.reports.cohorts',
+    'escalated.admin.reports.comparison',
 ]);

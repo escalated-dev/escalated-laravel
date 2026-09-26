@@ -6,6 +6,7 @@ use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Models\AuditLog;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Models\Workflow;
+use Escalated\Laravel\Models\WorkflowLog;
 use Escalated\Laravel\Services\WorkflowEngine;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -31,6 +32,9 @@ class WorkflowController extends Controller
         'move_department', 'add_internal_note',
         'send_notification', 'apply_macro', 'close_ticket', 'snooze_ticket',
     ];
+
+    /** How many executions the Logs page shows, newest first. */
+    protected const LOGS_LIMIT = 100;
 
     public function __construct(
         protected EscalatedUiRenderer $renderer,
@@ -168,17 +172,42 @@ class WorkflowController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function logs(Workflow $workflow): mixed
+    /**
+     * Recent executions across every workflow, which is what the shared Logs
+     * page lists: `logs` is an array of log rows and `workflows` feeds its
+     * workflow filter. `?workflow=<id>` narrows the list to one workflow.
+     */
+    public function logs(Request $request): mixed
     {
-        $logs = $workflow->workflowLogs()
+        $workflowId = $request->integer('workflow') ?: null;
+
+        $logs = WorkflowLog::query()
             ->with('workflow', 'ticket')
+            ->when($workflowId, fn ($query) => $query->where('workflow_id', $workflowId))
             ->latest()
-            ->paginate(25);
+            ->latest('id')
+            ->limit(self::LOGS_LIMIT)
+            ->get()
+            ->makeHidden(['workflow', 'ticket']);
 
         return $this->renderer->render('Escalated/Admin/Workflows/Logs', [
-            'workflow' => $workflow,
             'logs' => $logs,
+            'workflows' => Workflow::query()
+                ->orderBy('position')
+                ->orderBy('id')
+                ->get(['id', 'name'])
+                ->map(fn (Workflow $workflow) => ['id' => $workflow->id, 'name' => $workflow->name])
+                ->values(),
         ]);
+    }
+
+    /**
+     * The per-workflow URL earlier releases served. It now opens the shared
+     * Logs page filtered to that workflow.
+     */
+    public function workflowLogs(Workflow $workflow): RedirectResponse
+    {
+        return redirect()->route('escalated.admin.workflows.logs', ['workflow' => $workflow->getKey()]);
     }
 
     public function test(Request $request, Workflow $workflow, WorkflowEngine $engine): JsonResponse

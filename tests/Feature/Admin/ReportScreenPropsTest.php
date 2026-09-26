@@ -77,6 +77,8 @@ it('sends report screens every prop they declare, and nothing they do not', func
     ['escalated.admin.reports.sla-trends', 'Escalated/Admin/Reports/SlaTrends'],
     ['escalated.admin.reports.frt', 'Escalated/Admin/Reports/ResponseTimes'],
     ['escalated.admin.reports.resolution', 'Escalated/Admin/Reports/ResolutionTimes'],
+    ['escalated.admin.reports.response-times', 'Escalated/Admin/Reports/ResponseTimes'],
+    ['escalated.admin.reports.resolution-times', 'Escalated/Admin/Reports/ResolutionTimes'],
     ['escalated.admin.reports.agent-ranking', 'Escalated/Admin/Reports/AgentRanking'],
     ['escalated.admin.reports.cohorts', 'Escalated/Admin/Reports/Cohorts'],
     ['escalated.admin.reports.comparison', 'Escalated/Admin/Reports/Comparison'],
