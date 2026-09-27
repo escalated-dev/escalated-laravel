@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.8.6] - 2026-09-27
+
 ### Fixed
 - **The workflow Logs page printed each run's actions as raw data.** The shared
   Logs page reads `actions_executed` as a count, as the NestJS reference sends
