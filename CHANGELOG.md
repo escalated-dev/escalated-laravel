@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- **The workflow Logs page printed each run's actions as raw data.** The shared
+  Logs page reads `actions_executed` as a count, as the NestJS reference sends
+  it; this package passed the stored array through. `WorkflowController::logs`
+  now sends the count, with the list still in `action_details`. (#206)
+
+### Changed
+- **The shared frontend is now `@escalated-dev/escalated` ^0.11.9**, whose admin
+  and agent panels work on narrow screens: below 1024px the admin sidebar folds
+  into a drawer behind a menu button, the agent nav folds into a menu, and
+  tables scroll inside their cards instead of widening the page. It also adds
+  optional panel theme hooks (`activeText`, `headerBg`, `headerText`,
+  `logoTileBg`, `logoTileFg`), set in the host's `EscalatedPlugin` options. No
+  backend change is needed; the page-name fixture is refreshed to 0.11.9.
+
 ## [1.8.5] - 2026-09-26
 
 ### Fixed
