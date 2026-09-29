@@ -4,11 +4,11 @@ namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Models\TicketSubjectLink;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\Relation;
+use Escalated\Laravel\Services\TicketSubjectResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -20,21 +20,14 @@ class TicketSubjectController extends Controller
 {
     public function store(Ticket $ticket, Request $request): RedirectResponse
     {
+        Gate::forUser($request->user())->authorize('update', $ticket);
         $validated = $request->validate([
-            'type' => ['required', 'string'],
+            'type' => ['required', 'string', 'max:255'],
             'id' => ['required'],
             'role' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $class = $this->resolveAllowedModelClass($validated['type']);
-
-        $subject = $class::query()->find($validated['id']);
-
-        if ($subject === null) {
-            throw ValidationException::withMessages([
-                'id' => 'No matching subject was found.',
-            ]);
-        }
+        $subject = app(TicketSubjectResolver::class)->resolve($validated, $request->user(), $ticket, '');
 
         $ticket->attachSubject($subject, $validated['role'] ?? null);
 
@@ -43,6 +36,7 @@ class TicketSubjectController extends Controller
 
     public function destroy(Ticket $ticket, TicketSubjectLink $subject): RedirectResponse
     {
+        Gate::forUser(request()->user())->authorize('update', $ticket);
         abort_unless((int) $subject->ticket_id === (int) $ticket->getKey(), 404);
 
         $subject->delete();
@@ -56,21 +50,10 @@ class TicketSubjectController extends Controller
      */
     protected function resolveAllowedModelClass(string $type): string
     {
-        $allowed = collect((array) config('escalated.ticket_subjects.types', []))
-            ->flatMap(fn ($value, $key) => is_string($key) ? [$key, $value] : [$value])
-            ->all();
-
-        if (! in_array($type, $allowed, true)) {
+        $class = app(TicketSubjectResolver::class)->allowedTypes()[$type] ?? null;
+        if (! $class) {
             throw ValidationException::withMessages([
                 'type' => "Subject type [{$type}] is not an allowed ticket subject.",
-            ]);
-        }
-
-        $class = Relation::getMorphedModel($type) ?? $type;
-
-        if (! is_string($class) || ! class_exists($class) || ! is_subclass_of($class, Model::class)) {
-            throw ValidationException::withMessages([
-                'type' => "Subject type [{$type}] could not be resolved to a model.",
             ]);
         }
 
