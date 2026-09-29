@@ -186,7 +186,7 @@ it('restores each failed job tenant before retry deserialization and retains fai
     {
         public array $pushed = [];
 
-        public function pushRaw($payload, $queue, $options)
+        public function pushRaw($payload, $queue, $options = [])
         {
             $this->pushed[] = [app(TenantContext::class)->id(), json_decode($payload, true)['escalated_tenant']];
         }
