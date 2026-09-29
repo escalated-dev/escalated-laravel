@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Bridge;
 
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Http\Middleware\EnsureIsAdmin;
+use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
@@ -43,6 +44,7 @@ class RouteRegistrar
      */
     public function registerPlugin(string $pluginName, array $manifest): void
     {
+        app(TenantContext::class)->assertPluginRuntimeSupported();
         $prefix = config('escalated.routes.prefix', 'support');
 
         $this->registerPages($pluginName, $manifest['pages'] ?? [], $prefix);
@@ -148,7 +150,7 @@ class RouteRegistrar
             ->prefix("{$prefix}/api/plugins/{$pluginName}")
             ->group(function () use ($pluginName, $endpoints) {
                 foreach ($endpoints as $signature => $definition) {
-                    [$httpMethod, $path] = $this->parseSignature($signature);
+                    [$httpMethod, $path] = $this->routeDefinition($signature, $definition);
 
                     if ($httpMethod === null) {
                         continue;
@@ -172,14 +174,10 @@ class RouteRegistrar
                                 $pluginName,
                                 $httpMethod,
                                 $path,
-                                [
-                                    'body' => $request->all(),
-                                    'params' => $request->query(),
-                                    'headers' => $request->headers->all(),
-                                ]
+                                PluginHttp::request($request)
                             );
 
-                            return response()->json($result);
+                            return PluginHttp::response($result);
                         }
                     )->name($routeName);
                 }
@@ -208,7 +206,7 @@ class RouteRegistrar
             ->prefix("{$prefix}/webhooks/plugins/{$pluginName}")
             ->group(function () use ($pluginName, $webhooks) {
                 foreach ($webhooks as $signature => $definition) {
-                    [$httpMethod, $path] = $this->parseSignature($signature);
+                    [$httpMethod, $path] = $this->routeDefinition($signature, $definition);
 
                     if ($httpMethod === null) {
                         continue;
@@ -220,15 +218,17 @@ class RouteRegistrar
                         [strtolower($httpMethod)],
                         ltrim($path, '/'),
                         function (Request $request) use ($pluginName, $httpMethod, $path) {
+                            $transport = PluginHttp::request($request);
                             $result = $this->bridge->callWebhook(
                                 $pluginName,
                                 $httpMethod,
                                 $path,
-                                $request->all(),
-                                $request->headers->all()
+                                $transport['body'],
+                                $transport['headers'],
+                                $transport
                             );
 
-                            return response()->json($result ?? []);
+                            return PluginHttp::response($result);
                         }
                     )->name($routeName);
                 }
@@ -244,6 +244,18 @@ class RouteRegistrar
      *
      * @return array{string|null, string}
      */
+    private function routeDefinition(int|string $key, mixed $definition): array
+    {
+        // SDK manifests contain arrays of {method, path, capability}; older
+        // bridges used a map keyed by "METHOD /path". Accept both formats.
+        if (is_array($definition) && isset($definition['method'], $definition['path'])
+            && is_string($definition['method']) && is_string($definition['path'])) {
+            return $this->parseSignature($definition['method'].' '.$definition['path']);
+        }
+
+        return is_string($key) ? $this->parseSignature($key) : [null, '/'];
+    }
+
     private function parseSignature(string $signature): array
     {
         $parts = explode(' ', trim($signature), 2);
@@ -257,12 +269,17 @@ class RouteRegistrar
         $method = strtoupper($parts[0]);
         $path = $parts[1];
 
-        $valid = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+        $valid = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'];
 
         if (! in_array($method, $valid, true)) {
             Log::warning("Escalated PluginBridge: unsupported HTTP method '{$method}' in '{$signature}'");
 
             return [null, $path];
+        }
+
+        if (! str_starts_with($path, '/') || preg_match('/[\x00-\x20\x7f?#\\\\]/', $path)
+            || in_array('..', explode('/', $path), true)) {
+            return [null, '/'];
         }
 
         return [$method, $path];
