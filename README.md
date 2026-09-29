@@ -427,6 +427,21 @@ Schedule::command('escalated:purge-activities')->weekly();
 Schedule::command('escalated:poll-imap')->everyMinute(); // Only if using IMAP adapter
 ```
 
+## Public request limits
+
+Guest ticket and widget routes share IP-based request budgets:
+60 requests, 5 new tickets/chats, and 30 replies/ratings per minute. Configure
+`escalated.guest_rate_limits.requests_per_minute`, `submissions_per_minute`, and
+`replies_per_minute` for your deployment (minimum 1). Exceeding a budget returns
+HTTP 429 with `Retry-After`. Reading ticket status does not spend the submission
+budget. Changing transport, guest token, email or selected merchant does not
+reset an IP's budget.
+
+Configure Laravel's trusted proxies correctly so `Request::ip()` identifies the
+client, and use a shared cache store for a deployment with multiple nodes. These
+limits complement the mobile API's existing rate limit and signed attachment
+download limits. They do not verify an email address or expire guest access.
+
 ## Configuration
 
 All config lives in `config/escalated.php`. Key options:

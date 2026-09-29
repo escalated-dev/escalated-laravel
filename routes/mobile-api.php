@@ -23,9 +23,11 @@ Route::prefix(config('escalated.api.mobile_prefix', 'support/api/v1/mobile'))
         Route::post('/kb/articles/{slug}/rate', [MobileKnowledgeBaseController::class, 'rate'])->name('escalated.api.mobile.kb.rate');
         Route::get('/kb/categories', [MobileKnowledgeBaseController::class, 'categories'])->name('escalated.api.mobile.kb.categories');
 
-        Route::post('/guest/tickets', [MobileGuestTicketController::class, 'store'])->name('escalated.api.mobile.guest.tickets.store');
-        Route::get('/guest/tickets/{token}', [MobileGuestTicketController::class, 'show'])->name('escalated.api.mobile.guest.tickets.show');
-        Route::post('/guest/tickets/{token}/replies', [MobileGuestTicketController::class, 'reply'])->name('escalated.api.mobile.guest.tickets.reply');
+        Route::middleware('throttle:escalated-guest-requests')->group(function () {
+            Route::post('/guest/tickets', [MobileGuestTicketController::class, 'store'])->middleware('throttle:escalated-guest-submissions')->name('escalated.api.mobile.guest.tickets.store');
+            Route::get('/guest/tickets/{token}', [MobileGuestTicketController::class, 'show'])->name('escalated.api.mobile.guest.tickets.show');
+            Route::post('/guest/tickets/{token}/replies', [MobileGuestTicketController::class, 'reply'])->middleware('throttle:escalated-guest-replies')->name('escalated.api.mobile.guest.tickets.reply');
+        });
 
         Route::middleware(AuthenticateApiToken::class.':customer')->group(function () {
             Route::post('/auth/logout', [MobileAuthController::class, 'logout'])->name('escalated.api.mobile.auth.logout');
