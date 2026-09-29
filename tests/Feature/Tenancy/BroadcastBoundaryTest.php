@@ -46,7 +46,8 @@ beforeEach(function () {
 
         public function broadcast(array $channels, $event, array $payload = []) {}
     };
-    Broadcast::extend('tenant-test', fn () => $this->broadcaster);
+    $broadcaster = $this->broadcaster;
+    Broadcast::extend('tenant-test', fn () => $broadcaster);
     config(['broadcasting.connections.tenant-test' => ['driver' => 'tenant-test']]);
     Broadcast::setDefaultDriver('tenant-test');
     require __DIR__.'/../../../routes/channels.php';
