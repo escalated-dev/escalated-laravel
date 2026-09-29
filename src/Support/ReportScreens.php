@@ -224,7 +224,7 @@ final class ReportScreens
 
         $column = Escalated::userSearchableDisplayColumn();
 
-        return Escalated::newUserModel()->newQuery()
+        return Escalated::userQuery()
             ->whereKey($ids)
             ->get()
             ->mapWithKeys(fn ($user) => [$user->getKey() => (string) ($user->{$column} ?? $user->email ?? $user->getKey())])

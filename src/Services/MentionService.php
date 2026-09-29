@@ -42,7 +42,7 @@ class MentionService
 
         $names = array_unique(array_map('trim', $names));
 
-        $users = $userModel::query()
+        $users = Escalated::userQuery()
             ->where(function ($query) use ($names, $displayColumn) {
                 foreach ($names as $name) {
                     $query->orWhere($displayColumn, $name);
@@ -100,7 +100,7 @@ class MentionService
         $userModel = Escalated::userModel();
         $displayColumn = Escalated::userDisplayColumn();
 
-        return $userModel::query()
+        return Escalated::userQuery()
             ->where(function ($q) use ($query, $displayColumn) {
                 $q->where($displayColumn, 'like', "%{$query}%")
                     ->orWhere('email', 'like', "%{$query}%");

@@ -71,7 +71,7 @@ class SkillRoutingService
             ->pluck('aggregate', 'assigned_to');
 
         $rowsByUser = $agentSkillRows->groupBy('user_id');
-        $agents = $userModel::query()
+        $agents = Escalated::userQuery()
             ->whereIn($userKey, $agentIds->all())
             ->get()
             ->map(function ($agent) use ($rowsByUser, $openTicketCounts, $skillIds) {

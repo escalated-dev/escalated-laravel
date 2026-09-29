@@ -21,6 +21,9 @@ return [
     'tenancy' => [
         'enabled' => env('ESCALATED_TENANCY_ENABLED', false),
         'resolver' => null,
+        // Fully qualified host middleware classes that select the current
+        // account/domain. They run after session/auth and before tenant resolution.
+        'middleware' => [],
     ],
 
     /*

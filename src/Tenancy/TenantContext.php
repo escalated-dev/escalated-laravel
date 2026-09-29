@@ -95,4 +95,23 @@ class TenantContext
 
         return $query;
     }
+
+    public function assertPlatformAdmin(?Model $user): void
+    {
+        if ($this->enabled() && (! $user || ! $this->resolver()->isPlatformAdmin($user))) {
+            throw new AuthorizationException('This operation requires host platform administration.');
+        }
+    }
+
+    public function assertPluginRuntimeSupported(): void
+    {
+        if ($this->enabled()) {
+            throw new AuthorizationException('Plugin execution is unavailable until the plugin runtime supports tenant isolation.');
+        }
+    }
+
+    public function cacheKey(string $key): string
+    {
+        return $this->enabled() ? 'escalated:tenant:'.hash('sha256', $this->id()).':'.$key : $key;
+    }
 }

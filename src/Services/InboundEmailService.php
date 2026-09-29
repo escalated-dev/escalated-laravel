@@ -188,7 +188,7 @@ class InboundEmailService
         $userModelClass = Escalated::userModel();
 
         try {
-            $user = $userModelClass::where('email', $email)->first();
+            $user = Escalated::userQuery()->where('email', $email)->first();
 
             if ($user && $user instanceof Ticketable) {
                 return $user;

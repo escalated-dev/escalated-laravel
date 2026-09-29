@@ -12,6 +12,7 @@ use Escalated\Laravel\EscalatedManager;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Models\TicketLink;
+use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class TicketService
@@ -130,6 +131,10 @@ class TicketService
      */
     public function splitTicket(Ticket $source, Reply $reply, array $data = []): Ticket
     {
+        app(TenantContext::class)->assertOwns($source);
+        app(TenantContext::class)->assertOwns($reply);
+        abort_unless((string) $reply->ticket_id === (string) $source->getKey(), 403);
+
         return Escalated::db()->transaction(function () use ($source, $reply, $data) {
             $subject = $data['subject'] ?? 'Split from '.$source->reference.': '.$source->subject;
 

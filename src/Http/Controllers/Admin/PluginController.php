@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Services\PluginService;
+use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
@@ -15,6 +16,11 @@ class PluginController extends Controller
     public function __construct(PluginService $pluginService, protected EscalatedUiRenderer $renderer)
     {
         $this->pluginService = $pluginService;
+        $this->middleware(function ($request, $next) {
+            app(TenantContext::class)->assertPlatformAdmin($request->user());
+
+            return $next($request);
+        });
     }
 
     /**

@@ -9,6 +9,7 @@ use Escalated\Laravel\Models\PluginStoreRecord;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Tag;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Broadcast;
@@ -72,6 +73,8 @@ class ContextHandler
      */
     public function handle(string $method, array $params): mixed
     {
+        app(TenantContext::class)->assertPluginRuntimeSupported();
+
         return match (true) {
             // Config
             $method === 'ctx.config.all' => $this->configAll($params),
@@ -556,7 +559,7 @@ class ContextHandler
     {
         $id = $params['id'] ?? throw new \InvalidArgumentException('ctx.contacts.find requires id');
         $model = Escalated::userModel();
-        $user = $model::find($id);
+        $user = Escalated::findUser($id);
 
         return $user?->toArray();
     }
@@ -565,13 +568,14 @@ class ContextHandler
     {
         $email = $params['email'] ?? throw new \InvalidArgumentException('ctx.contacts.findByEmail requires email');
         $model = Escalated::userModel();
-        $user = $model::where('email', $email)->first();
+        $user = Escalated::userQuery()->where('email', $email)->first();
 
         return $user?->toArray();
     }
 
     private function contactsCreate(array $params): array
     {
+        abort_if(app(TenantContext::class)->enabled(), 403, 'Provision host identities through the host application.');
         $data = $params['data'] ?? throw new \InvalidArgumentException('ctx.contacts.create requires data');
         $data = array_intersect_key($data, array_flip(self::PLUGIN_CONTACT_FILLABLE));
         $model = Escalated::userModel();
@@ -625,14 +629,14 @@ class ContextHandler
         // Return users that have agent or admin gate access — we rely on the
         // application's user model structure. The simplest approach is to
         // return all users; the host application can filter via gates if needed.
-        return $model::select('id', 'name', 'email')->get()->toArray();
+        return Escalated::userQuery()->select('id', 'name', 'email')->get()->toArray();
     }
 
     private function agentsFind(array $params): ?array
     {
         $id = $params['id'] ?? throw new \InvalidArgumentException('ctx.agents.find requires id');
         $model = Escalated::userModel();
-        $user = $model::find($id);
+        $user = Escalated::findUser($id);
 
         return $user?->toArray();
     }

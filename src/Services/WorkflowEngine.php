@@ -14,6 +14,8 @@ use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Models\Workflow;
 use Escalated\Laravel\Models\WorkflowLog;
 use Escalated\Laravel\Support\OutboundUrlGuard;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -409,29 +411,34 @@ class WorkflowEngine
         $ticket->follow($userId);
     }
 
-    protected function findLeastBusyAgent(): ?int
+    protected function findLeastBusyAgent(): int|string|null
     {
-        $userModel = Escalated::userModel();
+        $agents = $this->assignmentCandidates();
+        $counts = Ticket::query()->whereIn('assigned_to', $agents->modelKeys())
+            ->whereNotIn('status', [TicketStatus::Resolved->value, TicketStatus::Closed->value])
+            ->selectRaw('assigned_to, COUNT(*) as aggregate')->groupBy('assigned_to')
+            ->pluck('aggregate', 'assigned_to');
 
-        return $userModel::withCount(['tickets' => function ($q) {
-            $q->whereNotIn('status', [TicketStatus::Resolved->value, TicketStatus::Closed->value]);
-        }])
-            ->orderBy('tickets_count')
-            ->first()?->id;
+        return $agents->sortBy(fn ($agent) => (int) ($counts[$agent->getKey()] ?? 0))->first()?->getKey();
     }
 
-    protected function findRoundRobinAgent(): ?int
+    protected function findRoundRobinAgent(): int|string|null
     {
-        $userModel = Escalated::userModel();
-
         $lastAssigned = Ticket::whereNotNull('assigned_to')
             ->latest('updated_at')
             ->first()?->assigned_to;
+        $agents = $this->assignmentCandidates();
+        $index = $agents->search(fn ($agent) => (string) $agent->getKey() === (string) $lastAssigned);
 
-        return $userModel::where('id', '>', $lastAssigned ?? 0)
-            ->orderBy('id')
-            ->first()?->id
-            ?? $userModel::orderBy('id')->first()?->id;
+        return ($index === false ? $agents->first() : ($agents->get($index + 1) ?? $agents->first()))?->getKey();
+    }
+
+    protected function assignmentCandidates(): Collection
+    {
+        $gate = config('escalated.authorization.agent_gate', 'escalated-agent');
+
+        return Escalated::userQuery()->orderBy(Escalated::newUserModel()->getKeyName())->get()
+            ->filter(fn ($user) => Gate::forUser($user)->allows($gate))->values();
     }
 
     protected function actionChangeStatus(Ticket $ticket, mixed $value): void

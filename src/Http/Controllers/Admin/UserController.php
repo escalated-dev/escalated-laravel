@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Escalated;
+use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,8 +25,7 @@ class UserController extends Controller
 
     public function index(Request $request): mixed
     {
-        $userClass = Escalated::userModel();
-        $query = $userClass::query();
+        $query = Escalated::userQuery();
 
         if ($search = trim((string) $request->query('search', ''))) {
             $term = '%'.$search.'%';
@@ -60,14 +60,15 @@ class UserController extends Controller
 
     public function updateRole(Request $request, int|string $user): RedirectResponse
     {
+        // These flags are global host permissions, not merchant roles.
+        abort_if(app(TenantContext::class)->enabled(), 403, 'Manage merchant roles through the host application.');
         $validated = $request->validate([
             'role' => 'required|in:admin,agent',
             'value' => 'required|boolean',
         ]);
 
-        $userClass = Escalated::userModel();
         /** @var Model $target */
-        $target = $userClass::query()->findOrFail($user);
+        $target = Escalated::userQuery()->findOrFail($user);
 
         // Don't let an admin demote themselves and lock themselves out of
         // the admin panel they're trying to use.

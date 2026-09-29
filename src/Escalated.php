@@ -3,7 +3,9 @@
 namespace Escalated\Laravel;
 
 use Escalated\Laravel\Support\ConnectionStore;
+use Escalated\Laravel\Tenancy\TenantContext;
 use Escalated\Laravel\Tenancy\TenantQueryBuilder;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Database\Query\Builder;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -67,6 +69,27 @@ class Escalated
         return new $model;
     }
 
+    /** Host identities stay on their own connection and inside the host's visibility scope. */
+    public static function userQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = static::newUserModel()->newQuery();
+        $context = app(TenantContext::class);
+        if ($context->enabled()) {
+            $tenant = $context->id();
+            // Query-local deferred scope groups callers' OR clauses without
+            // installing tenant state on the host's process-wide model class.
+            $query->withGlobalScope('escalated_host_visibility', function ($query) use ($tenant) {
+                $context = app(TenantContext::class);
+                if ($context->id() !== $tenant) {
+                    throw new AuthorizationException('A host query cannot be reused for another tenant.');
+                }
+                $context->scopeHost($query);
+            });
+        }
+
+        return $query;
+    }
+
     /**
      * Resolve the column type to use for host-user foreign-key columns.
      *
@@ -117,8 +140,6 @@ class Escalated
      */
     public static function findUser(mixed $id): mixed
     {
-        $model = static::userModel();
-
         if ($id === null || $id === '') {
             return null;
         }
@@ -127,7 +148,7 @@ class Escalated
             return null;
         }
 
-        return $model::find($id);
+        return static::userQuery()->find($id);
     }
 
     /**
@@ -191,10 +212,9 @@ class Escalated
      */
     public static function userOptions(): array
     {
-        $model = static::userModel();
         $column = static::userSearchableDisplayColumn();
 
-        return $model::pluck($column, 'id')->toArray();
+        return static::userQuery()->pluck($column, static::newUserModel()->getKeyName())->toArray();
     }
 
     /**

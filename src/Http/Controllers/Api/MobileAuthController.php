@@ -5,6 +5,7 @@ namespace Escalated\Laravel\Http\Controllers\Api;
 use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Http\Resources\MobileUserResource;
 use Escalated\Laravel\Models\ApiToken;
+use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,11 +22,11 @@ class MobileAuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        $userModel = Escalated::userModel();
         /** @var Model|null $user */
-        $user = $userModel::query()->where('email', $validated['email'])->first();
+        $user = Escalated::userQuery()->where('email', $validated['email'])->first();
 
-        if (! $user || ! Hash::check($validated['password'], (string) $user->getAttribute('password'))) {
+        if (! $user || ! app(TenantContext::class)->canAccess($user)
+            || ! Hash::check($validated['password'], (string) $user->getAttribute('password'))) {
             return response()->json(['message' => 'Invalid credentials.'], 422);
         }
 
@@ -34,6 +35,7 @@ class MobileAuthController extends Controller
 
     public function register(Request $request): JsonResponse
     {
+        abort_if(app(TenantContext::class)->enabled(), 403, 'Register through the host application to establish merchant membership.');
         $userModel = Escalated::userModel();
 
         $validated = $request->validate([
@@ -108,6 +110,7 @@ class MobileAuthController extends Controller
 
     protected function tokenResponse(mixed $user, string $tokenName, int $status = 200, array $abilities = ['customer']): JsonResponse
     {
+        abort_unless(app(TenantContext::class)->canAccess($user), 403);
         $expiryDays = config('escalated.api.token_expiry_days');
         $expiresAt = is_numeric($expiryDays) ? now()->addDays((int) $expiryDays) : null;
         $token = ApiToken::createToken($user, $tokenName, $abilities, $expiresAt);

@@ -24,6 +24,8 @@ use Escalated\Laravel\Contracts\TenantResolver;
 use Escalated\Laravel\Http\Controllers\Admin\ApiTokenController;
 use Escalated\Laravel\Http\Middleware\CheckPermission;
 use Escalated\Laravel\Http\Middleware\EnsureIsAdmin;
+use Escalated\Laravel\Http\Middleware\ResolveTenant;
+use Escalated\Laravel\Http\Middleware\ResolveTicketByReference;
 use Escalated\Laravel\Models\AgentProfile;
 use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Services\ImportService;
@@ -33,9 +35,17 @@ use Escalated\Laravel\Services\TicketActionRegistry;
 use Escalated\Laravel\Support\HookManager;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Escalated\Laravel\Tenancy\TenantPresenceVerifier;
+use Escalated\Laravel\Tenancy\TenantQueueContext;
+use Escalated\Laravel\Tenancy\TenantSyncConnector;
 use Escalated\Laravel\Tenancy\UnconfiguredTenantResolver;
 use Escalated\Laravel\UI\InertiaUiRenderer;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Queue\Events\JobAttempted;
+use Illuminate\Queue\Events\JobProcessing;
+use Illuminate\Queue\Events\Looping;
+use Illuminate\Queue\Queue;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -52,6 +62,10 @@ class EscalatedServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/escalated.php', 'escalated');
 
         $this->app->scoped(TenantContext::class);
+        $this->app->singleton(TenantQueueContext::class);
+        $this->callAfterResolving('queue', function ($queue) {
+            $queue->addConnector('sync', fn () => new TenantSyncConnector);
+        });
         $this->app->extend('validation.presence', fn ($verifier, $app) => new TenantPresenceVerifier($app['db'], $verifier));
         $this->app->bind(TenantResolver::class, function ($app) {
             return $app->make(config('escalated.tenancy.resolver')
@@ -108,6 +122,19 @@ class EscalatedServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Queue::createPayloadUsing(static fn () => app(TenantQueueContext::class)->payload());
+        Event::listen(JobProcessing::class, static fn ($event) => app(TenantQueueContext::class)->begin($event->job));
+        Event::listen(JobAttempted::class, static fn ($event) => app(TenantQueueContext::class)->finish($event->job));
+        Event::listen(Looping::class, static fn () => app(TenantQueueContext::class)->clear());
+        $this->callAfterResolving(Kernel::class, function ($kernel) {
+            $kernel->addToMiddlewarePriorityBefore(
+                [SubstituteBindings::class, ResolveTicketByReference::class],
+                ResolveTenant::class,
+            );
+            foreach (config('escalated.tenancy.middleware', []) as $middleware) {
+                $kernel->addToMiddlewarePriorityBefore(ResolveTenant::class, $middleware);
+            }
+        });
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'escalated');
         $this->registerTranslations();
 
@@ -180,17 +207,17 @@ class EscalatedServiceProvider extends ServiceProvider
             return;
         }
 
-        Route::middleware(['web', EnsureIsAdmin::class, CheckPermission::class.':newsletters.manage'])
+        Route::middleware(array_merge(['web'], $this->tenantMiddleware(), [EnsureIsAdmin::class, CheckPermission::class.':newsletters.manage']))
             ->prefix('admin/newsletters')
             ->name('escalated.admin.newsletters.')
             ->group(__DIR__.'/../routes/newsletter-admin.php');
 
-        Route::middleware('web')
+        Route::middleware(array_merge(['web'], $this->tenantMiddleware()))
             ->prefix('escalated/n')
             ->name('escalated.newsletters.public.')
             ->group(__DIR__.'/../routes/newsletter-public.php');
 
-        Route::middleware('api')
+        Route::middleware(array_merge(['api'], $this->tenantMiddleware()))
             ->prefix('escalated/webhooks/newsletter')
             ->group(__DIR__.'/../routes/newsletter-webhooks.php');
     }
@@ -366,19 +393,19 @@ class EscalatedServiceProvider extends ServiceProvider
 
         // REST API routes (token auth, no session)
         if (config('escalated.api.enabled', false)) {
-            $this->loadRoutesFrom(__DIR__.'/../routes/api.php');
-            $this->loadRoutesFrom(__DIR__.'/../routes/mobile-api.php');
+            $this->loadTenantRoutesFrom(__DIR__.'/../routes/api.php');
+            $this->loadTenantRoutesFrom(__DIR__.'/../routes/mobile-api.php');
             $this->registerApiTokenRoutes();
         }
 
         // Plugin admin routes
         if (config('escalated.plugins.enabled', true)) {
-            $this->loadRoutesFrom(__DIR__.'/../routes/plugins.php');
+            $this->loadTenantRoutesFrom(__DIR__.'/../routes/plugins.php');
         }
 
         // Inbound email webhook routes (no auth required)
         if (config('escalated.inbound_email.enabled', false)) {
-            $this->loadRoutesFrom(__DIR__.'/../routes/inbound.php');
+            $this->loadTenantRoutesFrom(__DIR__.'/../routes/inbound.php');
         }
 
         // Broadcasting channel authorization routes
@@ -387,11 +414,23 @@ class EscalatedServiceProvider extends ServiceProvider
         }
 
         // Widget routes (public, rate-limited)
-        $this->loadRoutesFrom(__DIR__.'/../routes/widget.php');
+        $this->loadTenantRoutesFrom(__DIR__.'/../routes/widget.php');
 
         // Cloud -> site webhook receiver (signature-authenticated; 503 until
         // escalated.hosted.signing_secret is set)
-        $this->loadRoutesFrom(__DIR__.'/../routes/cloud.php');
+        $this->loadTenantRoutesFrom(__DIR__.'/../routes/cloud.php');
+    }
+
+    protected function loadTenantRoutesFrom(string $path): void
+    {
+        if (! $this->app->routesAreCached()) {
+            Route::middleware($this->tenantMiddleware())->group($path);
+        }
+    }
+
+    protected function tenantMiddleware(): array
+    {
+        return array_merge(config('escalated.tenancy.middleware', []), [ResolveTenant::class]);
     }
 
     /**
@@ -403,16 +442,17 @@ class EscalatedServiceProvider extends ServiceProvider
             return;
         }
 
-        $this->loadRoutesFrom(__DIR__.'/../routes/agent.php');
-        $this->loadRoutesFrom(__DIR__.'/../routes/admin.php');
-        $this->loadRoutesFrom(__DIR__.'/../routes/customer.php');
-        $this->loadRoutesFrom(__DIR__.'/../routes/guest.php');
+        $this->loadTenantRoutesFrom(__DIR__.'/../routes/agent.php');
+        $this->loadTenantRoutesFrom(__DIR__.'/../routes/admin.php');
+        $this->loadTenantRoutesFrom(__DIR__.'/../routes/customer.php');
+        $this->loadTenantRoutesFrom(__DIR__.'/../routes/guest.php');
     }
 
     protected function registerApiTokenRoutes(): void
     {
         $middleware = array_merge(
             config('escalated.routes.admin_middleware', ['web', 'auth']),
+            $this->tenantMiddleware(),
             [EnsureIsAdmin::class]
         );
 
@@ -454,7 +494,7 @@ class EscalatedServiceProvider extends ServiceProvider
 
     protected function bootPluginBridge(): void
     {
-        if (! config('escalated.plugins.enabled', true)) {
+        if (! config('escalated.plugins.enabled', true) || app(TenantContext::class)->enabled()) {
             return;
         }
 
@@ -471,7 +511,7 @@ class EscalatedServiceProvider extends ServiceProvider
 
     protected function loadPlugins(): void
     {
-        if (! config('escalated.plugins.enabled', true)) {
+        if (! config('escalated.plugins.enabled', true) || app(TenantContext::class)->enabled()) {
             return;
         }
 
@@ -493,6 +533,10 @@ class EscalatedServiceProvider extends ServiceProvider
         }
 
         Inertia::share('escalated', function () {
+            if (app(TenantContext::class)->enabled() && app(TenantContext::class)->current() === null) {
+                // Shared Inertia data also runs on the host's unrelated pages.
+                return ['prefix' => config('escalated.routes.prefix', 'support'), 'is_agent' => false, 'is_admin' => false, 'permissions' => []];
+            }
             $user = $this->app['auth']->user();
 
             $data = [

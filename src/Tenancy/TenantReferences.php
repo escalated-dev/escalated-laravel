@@ -44,7 +44,10 @@ class TenantReferences
         'tickets' => ['requester'], 'replies' => ['author'], 'attachments' => ['attachable'],
         'ticket_subjects' => ['subject'], 'ticket_activities' => ['causer'],
         'satisfaction_ratings' => ['rated_by'], 'api_tokens' => ['tokenable'],
-        'custom_field_values' => ['entity'], 'audit_logs' => ['auditable'],
+        'custom_field_values' => ['entity'],
+        // Audit identifiers describe historical (including deleted) records or
+        // a report type with ID 0. They are not live foreign-key assignments;
+        // resolving auditable() still uses the mandatory tenant relation scope.
     ];
 
     public function validate(Model $model, array $values): void

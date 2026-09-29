@@ -34,7 +34,7 @@ class ApiTokenController extends Controller
         $userModel = Escalated::newUserModel();
         $agentGate = config('escalated.authorization.agent_gate', 'escalated-agent');
 
-        $query = $userModel->newQuery();
+        $query = Escalated::userQuery();
         $agentScope = config('escalated.authorization.agent_scope');
         if ($agentScope && is_callable($agentScope)) {
             $agentUsers = $agentScope($query)->get();
@@ -64,7 +64,7 @@ class ApiTokenController extends Controller
         ]);
 
         $userModel = Escalated::newUserModel();
-        $user = $userModel->newQuery()->findOrFail($validated['user_id']);
+        $user = Escalated::userQuery()->findOrFail($validated['user_id']);
 
         $expiresAt = ! empty($validated['expires_in_days'])
             ? now()->addDays($validated['expires_in_days'])

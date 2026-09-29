@@ -5,6 +5,7 @@ namespace Escalated\Laravel\Services;
 use Escalated\Laravel\Contracts\ImportAdapter;
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
+use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Models\Attachment;
 use Escalated\Laravel\Models\CustomField;
 use Escalated\Laravel\Models\Department;
@@ -15,6 +16,7 @@ use Escalated\Laravel\Models\SatisfactionRating;
 use Escalated\Laravel\Models\Tag;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Support\ImportContext;
+use Escalated\Laravel\Tenancy\TenantContext;
 
 class ImportService
 {
@@ -212,8 +214,7 @@ class ImportService
 
     private function persistAgent(array $record, array $mappings): string|int
     {
-        $userModel = config('escalated.user_model', 'App\\Models\\User');
-        $user = $userModel::where('email', $record['email'])->first();
+        $user = Escalated::userQuery()->where('email', $record['email'])->first();
 
         if (! $user) {
             throw new \RuntimeException("Agent with email '{$record['email']}' not found in host application.");
@@ -224,6 +225,11 @@ class ImportService
 
     private function persistContact(array $record, array $mappings): string|int
     {
+        if (app(TenantContext::class)->enabled()) {
+            // Provisioning a global host user also requires host membership
+            // rules. Imports may only reference an already visible identity.
+            return $this->persistAgent($record, $mappings);
+        }
         $userModel = config('escalated.user_model', 'App\\Models\\User');
 
         $user = $userModel::firstOrCreate(

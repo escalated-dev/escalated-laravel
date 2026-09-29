@@ -19,6 +19,7 @@ use Escalated\Laravel\Services\TicketService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 class TicketController extends Controller
@@ -31,6 +32,7 @@ class TicketController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        Gate::forUser($request->user())->authorize('viewAny', Ticket::class);
         $request->validate([
             'per_page' => 'sometimes|integer|min:1|max:100',
         ]);
@@ -56,6 +58,7 @@ class TicketController extends Controller
 
     public function show(Ticket $ticket): JsonResponse
     {
+        $this->authorizeTicket('view', $ticket);
         $ticket->load([
             'replies' => fn ($q) => $q->with('author', 'attachments')->latest(),
             'attachments', 'tags', 'department', 'requester', 'assignee',
@@ -68,6 +71,7 @@ class TicketController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        Gate::forUser($request->user())->authorize('create', Ticket::class);
         $validated = $request->validate([
             'subject' => 'required|string|max:255',
             'description' => 'required|string|max:65535',
@@ -93,6 +97,7 @@ class TicketController extends Controller
         ]);
 
         $isNote = $validated['is_internal_note'] ?? false;
+        $this->authorizeTicket($isNote ? 'addNote' : 'reply', $ticket);
 
         if ($isNote) {
             $reply = $this->ticketService->addNote($ticket, $request->user(), $validated['body']);
@@ -114,6 +119,7 @@ class TicketController extends Controller
 
     public function status(Ticket $ticket, Request $request): JsonResponse
     {
+        $this->authorizeTicket('update', $ticket);
         $validStatuses = array_column(TicketStatus::cases(), 'value');
 
         $validated = $request->validate([
@@ -127,6 +133,7 @@ class TicketController extends Controller
 
     public function priority(Ticket $ticket, Request $request): JsonResponse
     {
+        $this->authorizeTicket('update', $ticket);
         $validated = $request->validate([
             'priority' => 'required|string|in:low,medium,high,urgent,critical',
         ]);
@@ -138,6 +145,7 @@ class TicketController extends Controller
 
     public function assign(Ticket $ticket, Request $request): JsonResponse
     {
+        $this->authorizeTicket('assign', $ticket);
         $userModel = Escalated::newUserModel();
 
         $validated = $request->validate([
@@ -153,6 +161,7 @@ class TicketController extends Controller
 
     public function follow(Ticket $ticket, Request $request): JsonResponse
     {
+        $this->authorizeTicket('view', $ticket);
         $userId = $request->user()->getKey();
 
         if ($ticket->isFollowedBy($userId)) {
@@ -168,6 +177,7 @@ class TicketController extends Controller
 
     public function applyMacro(Ticket $ticket, Request $request, MacroService $macroService): JsonResponse
     {
+        $this->authorizeTicket('update', $ticket);
         $validated = $request->validate([
             'macro_id' => ['required', 'integer', Rule::exists(Macro::class, 'id')],
         ]);
@@ -180,6 +190,7 @@ class TicketController extends Controller
 
     public function customAction(Ticket $ticket, string $action, Request $request): JsonResponse
     {
+        $this->authorizeTicket('update', $ticket);
         $validated = $request->validate([
             'payload' => 'sometimes|array',
         ]);
@@ -206,6 +217,7 @@ class TicketController extends Controller
 
     public function tags(Ticket $ticket, Request $request): JsonResponse
     {
+        $this->authorizeTicket('update', $ticket);
         $validated = $request->validate([
             'tag_ids' => 'required|array',
             'tag_ids.*' => ['integer', Rule::exists(Tag::class, 'id')],
@@ -229,8 +241,14 @@ class TicketController extends Controller
 
     public function destroy(Ticket $ticket): JsonResponse
     {
+        $this->authorizeTicket('delete', $ticket);
         $ticket->delete();
 
         return response()->json(['message' => 'Ticket deleted.']);
+    }
+
+    private function authorizeTicket(string $ability, Ticket $ticket): void
+    {
+        Gate::forUser(request()->user())->authorize($ability, $ticket);
     }
 }

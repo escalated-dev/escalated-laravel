@@ -24,7 +24,7 @@ class ResourceController extends Controller
         $userModel = Escalated::newUserModel();
         $agentGate = config('escalated.authorization.agent_gate', 'escalated-agent');
 
-        $query = $userModel->newQuery();
+        $query = Escalated::userQuery();
 
         // Use escalated.authorization.agent_scope if defined, otherwise fall back to Gate filter with a limit
         $agentScope = config('escalated.authorization.agent_scope');

@@ -241,7 +241,7 @@ class TicketController extends Controller
     protected function getAgents(): array
     {
         $userModel = Escalated::userModel();
-        $users = $userModel::all();
+        $users = Escalated::userQuery()->get();
 
         return $users->filter(function ($user) {
             return (method_exists($user, 'escalated_agent') && $user->escalated_agent())
