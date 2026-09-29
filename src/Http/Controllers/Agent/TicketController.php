@@ -22,11 +22,13 @@ use Escalated\Laravel\Services\AssignmentService;
 use Escalated\Laravel\Services\MacroService;
 use Escalated\Laravel\Services\TicketActionRegistry;
 use Escalated\Laravel\Services\TicketService;
+use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Gate;
 
 class TicketController extends Controller
 {
@@ -202,28 +204,28 @@ class TicketController extends Controller
 
     public function presence(Ticket $ticket, Request $request): JsonResponse
     {
+        Gate::forUser($request->user())->authorize('addNote', $ticket);
         $userId = $request->user()->getKey();
         $userName = $request->user()->name;
-        $cacheKey = "escalated.presence.{$ticket->id}.{$userId}";
+        $cacheKey = app(TenantContext::class)->cacheKey("escalated.presence.{$ticket->id}.{$userId}");
 
         Cache::put($cacheKey, ['id' => $userId, 'name' => $userName], 60);
 
         $viewers = [];
-        $prefix = "escalated.presence.{$ticket->id}.";
 
         // Collect all viewers from cache
-        foreach (Cache::get("escalated.presence_list.{$ticket->id}", []) as $uid) {
-            if ($uid !== $userId && Cache::has("escalated.presence.{$ticket->id}.{$uid}")) {
-                $viewers[] = Cache::get("escalated.presence.{$ticket->id}.{$uid}");
+        foreach (Cache::get(app(TenantContext::class)->cacheKey("escalated.presence_list.{$ticket->id}"), []) as $uid) {
+            if ($uid !== $userId && Cache::has(app(TenantContext::class)->cacheKey("escalated.presence.{$ticket->id}.{$uid}"))) {
+                $viewers[] = Cache::get(app(TenantContext::class)->cacheKey("escalated.presence.{$ticket->id}.{$uid}"));
             }
         }
 
         // Track active user IDs
-        $activeIds = Cache::get("escalated.presence_list.{$ticket->id}", []);
+        $activeIds = Cache::get(app(TenantContext::class)->cacheKey("escalated.presence_list.{$ticket->id}"), []);
         if (! in_array($userId, $activeIds)) {
             $activeIds[] = $userId;
         }
-        Cache::put("escalated.presence_list.{$ticket->id}", $activeIds, 120);
+        Cache::put(app(TenantContext::class)->cacheKey("escalated.presence_list.{$ticket->id}"), $activeIds, 120);
 
         return response()->json(['viewers' => $viewers]);
     }

@@ -41,6 +41,7 @@ use Escalated\Laravel\Services\PluginUIService;
 use Escalated\Laravel\Services\TicketActionRegistry;
 use Escalated\Laravel\Support\HookManager;
 use Escalated\Laravel\Tenancy\TenantBackgroundConnector;
+use Escalated\Laravel\Tenancy\TenantBroadcast;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Escalated\Laravel\Tenancy\TenantDeferredConnector;
 use Escalated\Laravel\Tenancy\TenantPresenceVerifier;
@@ -572,6 +573,7 @@ class EscalatedServiceProvider extends ServiceProvider
 
             $data = [
                 'prefix' => config('escalated.routes.prefix', 'support'),
+                'broadcasting' => ['channel_prefix' => TenantBroadcast::prefix()],
                 'is_agent' => $user ? Gate::allows('escalated-agent', $user) : false,
                 'is_admin' => $user ? Gate::allows('escalated-admin', $user) : false,
                 'permissions' => $user ? CheckPermission::userPermissions($user->getKey()) : [],

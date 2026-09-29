@@ -62,6 +62,15 @@ trait BelongsToTenant
         return parent::save($options);
     }
 
+    public function saveOrIgnore(array $options = [], array|string|null $uniqueBy = null)
+    {
+        if ($this->tenantBoundaryEnabled()) {
+            throw new AuthorizationException('Use tenant-scoped model creation for this operation.');
+        }
+
+        return parent::saveOrIgnore($options, $uniqueBy);
+    }
+
     protected function insertAndSetId(Builder $query, $attributes)
     {
         parent::insertAndSetId($query, $attributes);
@@ -109,5 +118,15 @@ trait BelongsToTenant
         // Queue restoration normally removes all global scopes. Keep the tenant
         // boundary even when restoring a model before a job's middleware runs.
         return $this->newQueryWithoutScopes()->withGlobalScope(TenantScope::class, new TenantScope)->whereKey($ids);
+    }
+
+    protected function incrementOrDecrementEach(array $columns, array $extra, string $method)
+    {
+        // Guard before Laravel 13 mutates in-memory attributes or fires events.
+        if ($this->tenantBoundaryEnabled()) {
+            throw new AuthorizationException('Use tenant-scoped model updates for this operation.');
+        }
+
+        return parent::incrementOrDecrementEach($columns, $extra, $method);
     }
 }

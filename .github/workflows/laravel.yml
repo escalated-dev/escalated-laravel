@@ -27,6 +27,12 @@ jobs:
             testbench: 9.*
             pest: ^3.0
             pest-laravel: ^3.0
+          # Oldest worker with JobAttempted cleanup, required by tenant queues.
+          - php: '8.3'
+            laravel: 11.23.0
+            testbench: 9.*
+            pest: ^3.0
+            pest-laravel: ^3.0
           - php: '8.3'
             laravel: ^13.0
             testbench: 11.*

@@ -42,7 +42,13 @@ class TenantQueryBuilder extends Builder
 
     public function delete($id = null)
     {
-        return $this->mustScope() ? $this->scopedCopy()->delete($id) : parent::delete($id);
+        if ($this->mustScope()) {
+            $this->validateValues([]);
+
+            return $this->scopedCopy()->delete($id);
+        }
+
+        return parent::delete($id);
     }
 
     public function insert(array $values)
@@ -79,11 +85,26 @@ class TenantQueryBuilder extends Builder
         return parent::insertOrIgnore($values);
     }
 
+    public function insertOrIgnoreReturning(array $values, array $returning = ['*'], array|string|null $uniqueBy = null)
+    {
+        $this->rejectUnsafeWrite();
+
+        return parent::insertOrIgnoreReturning($values, $returning, $uniqueBy);
+    }
+
     public function updateOrInsert(array $attributes, array|callable $values = [])
     {
         $this->rejectUnsafeWrite();
 
         return parent::updateOrInsert($attributes, $values);
+    }
+
+    public function updateFrom(array $values)
+    {
+        // PostgreSQL compiles this without calling toSql/getBindings/update.
+        $this->rejectUnsafeWrite();
+
+        return parent::updateFrom($values);
     }
 
     public function upsert(array $values, $uniqueBy, $update = null)
@@ -163,6 +184,16 @@ class TenantQueryBuilder extends Builder
                 [$joinTable, $joinAlias] = $this->tableParts($join->table);
                 if (TenantTables::contains($joinTable)) {
                     // ON keeps optional department/tag left joins optional.
+                    // Group the entire existing ON predicate before appending
+                    // tenant ownership, including caller-supplied OR clauses.
+                    if ($join->wheres !== []) {
+                        $nested = $join->forNestedWhere();
+                        $nested->wheres = $join->wheres;
+                        $nested->setBindings($join->bindings['where'], 'where');
+                        $join->wheres = [];
+                        $join->setBindings([], 'where');
+                        $join->addNestedWhereQuery($nested);
+                    }
                     $join->where($joinAlias.'.tenant_id', $tenant);
                 } elseif ($joinTable !== Escalated::table('permissions')) {
                     throw new AuthorizationException('Host identities must be resolved on their own scoped connection.');

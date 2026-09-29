@@ -12,6 +12,7 @@ use Escalated\Laravel\Models\CannedResponse;
 use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\Macro;
 use Escalated\Laravel\Models\Tag;
+use Escalated\Laravel\Tenancy\TenantBroadcast;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -73,6 +74,7 @@ class ResourceController extends Controller
 
             return response()->json([
                 'driver' => $driver,
+                'channel_prefix' => TenantBroadcast::prefix(),
                 'key' => $config['key'] ?? null,
                 'host' => $driver === 'reverb'
                     ? ($config['options']['host'] ?? null)

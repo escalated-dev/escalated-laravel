@@ -28,4 +28,15 @@ class RetryTenantBatchCommand extends RetryBatchCommand
 
         return $failed ? self::FAILURE : self::SUCCESS;
     }
+
+    protected function getBatchJobIds()
+    {
+        // Laravel 11.23 predates the native multi-ID helper.
+        return array_values(array_filter(array_unique((array) $this->argument('id'))));
+    }
+
+    public function isolatableId()
+    {
+        return implode(',', $this->getBatchJobIds());
+    }
 }

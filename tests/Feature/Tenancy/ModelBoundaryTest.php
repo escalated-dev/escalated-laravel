@@ -64,6 +64,42 @@ it('fails closed without a current tenant and restores nested trusted contexts',
     expect($this->context->current())->toBeNull();
 });
 
+it('rejects native PostgreSQL update-from and multi-column arithmetic before any write', function () {
+    $this->context->run('merchant-a', function () {
+        foreach ([Escalated::query(Escalated::table('tickets')), Ticket::query()] as $query) {
+            expect(fn () => $query->updateFrom(['tenant_id' => 'merchant-b']))->toThrow(AuthorizationException::class);
+            expect(fn () => $query->insertOrIgnoreReturning([['tenant_id' => 'merchant-b']]))->toThrow(AuthorizationException::class);
+        }
+        $new = new Ticket(['subject' => 'Unsafe insert']);
+        expect(fn () => $new->saveOrIgnore())->toThrow(AuthorizationException::class);
+        expect($new->exists)->toBeFalse();
+        foreach (['incrementEach', 'decrementEach'] as $method) {
+            expect(fn () => Ticket::query()->{$method}(['id' => 1], ['tenant_id' => 'merchant-b']))->toThrow(AuthorizationException::class);
+            $before = $this->ticketA->getAttributes();
+            expect(fn () => $this->ticketA->{$method}(['id' => 1], ['tenant_id' => 'merchant-b']))->toThrow(AuthorizationException::class);
+            expect($this->ticketA->getAttributes())->toBe($before);
+        }
+        expect(Ticket::pluck('id')->all())->toBe([$this->ticketA->id]);
+    });
+    $this->context->run('merchant-b', fn () => expect(Ticket::pluck('id')->all())->toBe([$this->ticketB->id]));
+});
+
+it('groups raw join predicates and prevents deletion of the platform permission catalog', function () {
+    $this->context->run('merchant-b', fn () => Tag::create(['name' => 'B', 'slug' => 'b']));
+    $this->context->run('merchant-a', function () {
+        $tag = Tag::create(['name' => 'A', 'slug' => 'a']);
+        $tickets = Escalated::table('tickets');
+        $tags = Escalated::table('tags');
+        $rows = Escalated::query($tickets)->leftJoin($tags, fn ($join) => $join->whereRaw('1 = 1')->orWhereRaw('1 = 0'))
+            ->pluck($tags.'.id')->all();
+        expect($rows)->toBe([$tag->id]);
+        $permissions = Escalated::table('permissions');
+        $count = Escalated::query($permissions)->count();
+        expect(fn () => Escalated::query($permissions)->delete())->toThrow(AuthorizationException::class);
+        expect(Escalated::query($permissions)->count())->toBe($count);
+    });
+});
+
 it('cannot remove the tenant boundary with optional global scopes or queue restoration', function () {
     $this->context->run('merchant-a', function () {
         expect(Ticket::withoutGlobalScopes()->pluck('id')->all())->toBe([$this->ticketA->id])

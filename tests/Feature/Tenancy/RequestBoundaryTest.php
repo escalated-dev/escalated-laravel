@@ -7,11 +7,15 @@ use Escalated\Laravel\Models\ApiToken;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Models\Workflow;
 use Escalated\Laravel\Policies\TicketPolicy;
+use Escalated\Laravel\Services\AttachmentService;
 use Escalated\Laravel\Services\WorkflowEngine;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Escalated\Laravel\Tests\Fixtures\TestTenantResolver;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
     Event::fake([Events\TicketCreated::class, Events\TicketUpdated::class]);
@@ -35,6 +39,28 @@ it('bootstraps tenant-bound tokens and ignores submitted tenant selection', func
     $this->withToken($this->tokenB)->getJson(route('escalated.api.tickets.index'))
         ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.reference', $this->ticketB->reference);
     expect($this->context->current())->toBeNull();
+});
+
+it('binds signed attachment downloads to the authenticated tenant as well as the ticket policy', function () {
+    Storage::fake('local');
+    $url = $this->context->run('a', fn () => app(AttachmentService::class)->store(
+        $this->ticketA, UploadedFile::fake()->create('parcel.txt', 1),
+    )->url);
+    $this->withToken($this->tokenA)->get($url)->assertOk()->assertDownload('parcel.txt');
+    expect($this->context->current())->toBeNull();
+    $this->withToken($this->tokenB)->get($url)->assertNotFound();
+    expect($this->context->current())->toBeNull();
+});
+
+it('authorizes presence HTTP bindings and stores presence under the tenant cache namespace', function () {
+    $this->resolver->selected = 'a';
+    $this->actingAs($this->agentA)->postJson(route('escalated.agent.tickets.presence', $this->ticketA->reference))->assertOk();
+    $key = 'escalated.presence.'.$this->ticketA->id.'.'.$this->agentA->id;
+    expect(Cache::has($key))->toBeFalse();
+    $this->context->run('a', fn () => expect(Cache::get($this->context->cacheKey($key)))
+        ->toBe(['id' => $this->agentA->id, 'name' => $this->agentA->name]));
+    $this->postJson(route('escalated.agent.tickets.presence', $this->ticketB->reference))->assertNotFound();
+    $this->postJson(route('escalated.agent.tickets.typing', $this->ticketB->reference))->assertNotFound();
 });
 
 it('rejects foreign ticket bindings and trusted host-token conflicts', function () {

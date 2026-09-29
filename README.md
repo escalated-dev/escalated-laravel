@@ -59,7 +59,7 @@ A full-featured, embeddable support ticket system for Laravel. Drop it into any 
 ## Requirements
 
 - PHP 8.2+ for Laravel 11/12; PHP 8.3+ for Laravel 13
-- Laravel 11.x, 12.x, or 13.x
+- Laravel 11.23+, 12.x, or 13.x
 
 CI covers Laravel 11/12 on PHP 8.2/8.3, current Laravel 13 on PHP 8.3/8.5,
 and the exact Laravel 13.8.0 merchant-host compatibility target on PHP 8.3.
@@ -126,6 +126,17 @@ Override the detection with the `user_key_type` config (`'auto'` by default;
 > **Existing installs:** the column type is chosen when a migration runs. Apps
 > already migrated (e.g. as `bigint`) keep their columns; switching your user key
 > type after installing requires a manual migration.
+
+## Multiple merchant accounts
+
+Self-hosted installations can enable host-resolved tenant isolation for tickets,
+attachments, reports, settings, API tokens, background work and broadcasts. The
+host supplies account selection and membership checks. Existing installations must
+explicitly assign legacy data before enabling it; cloud/synced modes and plugin
+execution do not currently support tenant isolation.
+
+Follow the [tenant integration and upgrade guide](docs/tenancy.md), including the
+shared frontend prerequisite, account provisioning and per-account scheduler setup.
 
 ## Ticket subjects
 

@@ -97,7 +97,7 @@ class TenantBuilder extends Builder
 
     public function __call($method, $parameters)
     {
-        if (in_array(strtolower($method), ['insertorignore', 'insertusing', 'insertorignoreusing', 'updateorinsert', 'truncate', 'incrementeach', 'decrementeach'], true)) {
+        if (in_array(strtolower($method), ['insertorignore', 'insertorignorereturning', 'insertusing', 'insertorignoreusing', 'updateorinsert', 'updatefrom', 'truncate', 'incrementeach', 'decrementeach'], true)) {
             $this->rejectUnsafeWrite();
         }
 
@@ -116,6 +116,25 @@ class TenantBuilder extends Builder
         $this->validateIncrement($column, $extra);
 
         return parent::decrement($column, $amount, $extra);
+    }
+
+    // Laravel 13 added concrete methods, so __call alone no longer guards these.
+    public function incrementEach(array $columns, array $extra = [])
+    {
+        $this->rejectUnsafeWrite();
+
+        return method_exists(Builder::class, 'incrementEach')
+            ? parent::incrementEach($columns, $extra)
+            : parent::__call('incrementEach', [$columns, $extra]);
+    }
+
+    public function decrementEach(array $columns, array $extra = [])
+    {
+        $this->rejectUnsafeWrite();
+
+        return method_exists(Builder::class, 'decrementEach')
+            ? parent::decrementEach($columns, $extra)
+            : parent::__call('decrementEach', [$columns, $extra]);
     }
 
     private function validateIncrement($column, array $extra): void
