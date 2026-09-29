@@ -20,7 +20,9 @@ class TenantSyncQueue extends SyncQueue
         // unwound. Capture at dispatch, not when the deferred job finally runs.
         $tenant = $context->current();
         $transactions = $this->container->make('db.transactions');
-        if ($job instanceof ShouldBeUnique && method_exists($transactions, 'addCallbackForRollback')) {
+        if (method_exists($this, 'registerRollbackCallbacksForJobsThatDispatchAfterCommit')) {
+            $this->registerRollbackCallbacksForJobsThatDispatchAfterCommit($job);
+        } elseif ($job instanceof ShouldBeUnique && method_exists($transactions, 'addCallbackForRollback')) {
             $transactions->addCallbackForRollback(function () use ($job) {
                 (new UniqueLock($this->container->make(Repository::class)))->release($job);
             });

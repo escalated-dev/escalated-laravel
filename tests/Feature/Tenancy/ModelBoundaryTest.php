@@ -54,16 +54,6 @@ beforeEach(function () {
     $this->ticketB = $this->context->run('merchant-b', fn () => Ticket::factory()->create(['assigned_to' => $this->agentB->id]));
 });
 
-afterEach(function () {
-    // Dispose fixture transactions before Testbench's external-database
-    // migration rollback. Production rollback intentionally refuses tenant data.
-    if (Escalated::db()->getDriverName() !== 'sqlite') {
-        foreach (array_unique([Escalated::db()->getName(), config('database.default')]) as $connection) {
-            app('db')->connection($connection)->rollBack(0);
-        }
-    }
-});
-
 it('fails closed without a current tenant and restores nested trusted contexts', function () {
     expect(fn () => Ticket::count())->toThrow(AuthorizationException::class);
     $this->context->run('merchant-a', function () {

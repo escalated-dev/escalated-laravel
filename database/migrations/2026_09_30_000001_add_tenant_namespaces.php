@@ -7,7 +7,8 @@ use Illuminate\Database\Schema\Blueprint;
 
 return new class extends Migration
 {
-    // Credential/capability tokens and ticket references remain globally unique.
+    // Runs after the attachment recovery journal exists. Credential/capability
+    // tokens and ticket references remain globally unique.
     private array $uniqueKeys = [
         'departments' => ['slug'], 'tags' => ['slug'], 'inbound_emails' => ['message_id'],
         'settings' => ['key'], 'custom_fields' => ['slug'], 'ticket_statuses' => ['slug'],

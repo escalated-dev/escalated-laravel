@@ -3,6 +3,7 @@
 namespace Escalated\Laravel;
 
 use Escalated\Laravel\Bridge\PluginBridge;
+use Escalated\Laravel\Console\Commands\AssignLegacyTenantCommand;
 use Escalated\Laravel\Console\Commands\CheckSlaCommand;
 use Escalated\Laravel\Console\Commands\CleanupAbandonedChatsCommand;
 use Escalated\Laravel\Console\Commands\CloseIdleChatsCommand;
@@ -16,11 +17,16 @@ use Escalated\Laravel\Console\Commands\PluginInstallCommand;
 use Escalated\Laravel\Console\Commands\PollImapCommand;
 use Escalated\Laravel\Console\Commands\PrivatizeAttachmentsCommand;
 use Escalated\Laravel\Console\Commands\ProcessDelayedActionsCommand;
+use Escalated\Laravel\Console\Commands\ProvisionTenantCommand;
 use Escalated\Laravel\Console\Commands\PurgeActivitiesCommand;
 use Escalated\Laravel\Console\Commands\PurgeExpiredDataCommand;
+use Escalated\Laravel\Console\Commands\RetryTenantBatchCommand;
+use Escalated\Laravel\Console\Commands\RetryTenantJobsCommand;
 use Escalated\Laravel\Console\Commands\RunAutomationsCommand;
+use Escalated\Laravel\Console\Commands\RunTenantCommand;
 use Escalated\Laravel\Console\Commands\WakeSnoozedTicketsCommand;
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
+use Escalated\Laravel\Contracts\TenantCatalog;
 use Escalated\Laravel\Contracts\TenantResolver;
 use Escalated\Laravel\Http\Controllers\Admin\ApiTokenController;
 use Escalated\Laravel\Http\Middleware\CheckPermission;
@@ -34,14 +40,19 @@ use Escalated\Laravel\Services\PluginService;
 use Escalated\Laravel\Services\PluginUIService;
 use Escalated\Laravel\Services\TicketActionRegistry;
 use Escalated\Laravel\Support\HookManager;
+use Escalated\Laravel\Tenancy\TenantBackgroundConnector;
 use Escalated\Laravel\Tenancy\TenantContext;
+use Escalated\Laravel\Tenancy\TenantDeferredConnector;
 use Escalated\Laravel\Tenancy\TenantPresenceVerifier;
 use Escalated\Laravel\Tenancy\TenantQueueContext;
 use Escalated\Laravel\Tenancy\TenantSyncConnector;
+use Escalated\Laravel\Tenancy\UnconfiguredTenantCatalog;
 use Escalated\Laravel\Tenancy\UnconfiguredTenantResolver;
 use Escalated\Laravel\UI\InertiaUiRenderer;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Queue\BackgroundQueue;
+use Illuminate\Queue\DeferredQueue;
 use Illuminate\Queue\Events\JobAttempted;
 use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Queue\Events\Looping;
@@ -64,9 +75,20 @@ class EscalatedServiceProvider extends ServiceProvider
 
         $this->app->scoped(TenantContext::class);
         $this->app->singleton(TenantQueueContext::class);
+        // Register before framework boot listeners hydrate queued Context models.
+        $this->app['events']->listen(JobProcessing::class, static fn ($event) => app(TenantQueueContext::class)->begin($event->job));
+        $this->app['events']->listen(JobAttempted::class, static fn ($event) => app(TenantQueueContext::class)->finish($event->job));
+        $this->app['events']->listen(Looping::class, static fn () => app(TenantQueueContext::class)->clear());
         $this->callAfterResolving('queue', function ($queue) {
             $queue->addConnector('sync', fn () => new TenantSyncConnector);
+            if (class_exists(DeferredQueue::class)) {
+                $queue->addConnector('deferred', fn () => new TenantDeferredConnector);
+            }
+            if (class_exists(BackgroundQueue::class)) {
+                $queue->addConnector('background', fn () => new TenantBackgroundConnector);
+            }
         });
+        $this->app->bind(TenantCatalog::class, fn ($app) => $app->make(config('escalated.tenancy.catalog') ?: UnconfiguredTenantCatalog::class));
         $this->app->extend('validation.presence', fn ($verifier, $app) => new TenantPresenceVerifier($app['db'], $verifier));
         $this->app->bind(TenantResolver::class, function ($app) {
             return $app->make(config('escalated.tenancy.resolver')
@@ -124,9 +146,6 @@ class EscalatedServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Queue::createPayloadUsing(static fn () => app(TenantQueueContext::class)->payload());
-        Event::listen(JobProcessing::class, static fn ($event) => app(TenantQueueContext::class)->begin($event->job));
-        Event::listen(JobAttempted::class, static fn ($event) => app(TenantQueueContext::class)->finish($event->job));
-        Event::listen(Looping::class, static fn () => app(TenantQueueContext::class)->clear());
         $this->callAfterResolving(Kernel::class, function ($kernel) {
             $kernel->addToMiddlewarePriorityBefore(
                 [SubstituteBindings::class, ResolveTicketByReference::class],
@@ -170,26 +189,29 @@ class EscalatedServiceProvider extends ServiceProvider
                 return;
             }
 
-            $schedule->command('escalated:check-sla')->everyMinute();
-            $schedule->command('escalated:evaluate-escalations')->everyFiveMinutes();
-            $schedule->command('escalated:run-automations')->everyFiveMinutes();
-            $schedule->command('escalated:process-delayed-actions')->everyMinute();
-            $schedule->command('escalated:wake-snoozed-tickets')->everyMinute();
-            $schedule->command('escalated:close-resolved')->daily();
-            $schedule->command('escalated:purge-activities')->weekly();
+            $scheduled = fn (string $command) => app(TenantContext::class)->enabled()
+                ? 'escalated:tenant-run '.$command : $command;
+
+            $schedule->command($scheduled('escalated:check-sla'))->everyMinute();
+            $schedule->command($scheduled('escalated:evaluate-escalations'))->everyFiveMinutes();
+            $schedule->command($scheduled('escalated:run-automations'))->everyFiveMinutes();
+            $schedule->command($scheduled('escalated:process-delayed-actions'))->everyMinute();
+            $schedule->command($scheduled('escalated:wake-snoozed-tickets'))->everyMinute();
+            $schedule->command($scheduled('escalated:close-resolved'))->daily();
+            $schedule->command($scheduled('escalated:purge-activities'))->weekly();
 
             if (config('escalated.chat.enabled', false)) {
-                $schedule->command('escalated:close-idle-chats')->everyMinute();
-                $schedule->command('escalated:cleanup-abandoned-chats')->everyMinute();
+                $schedule->command($scheduled('escalated:close-idle-chats'))->everyMinute();
+                $schedule->command($scheduled('escalated:cleanup-abandoned-chats'))->everyMinute();
             }
 
             if (config('escalated.enable_newsletters', false)) {
-                $schedule->command('escalated:newsletters:dispatch')->everyMinute()->withoutOverlapping();
+                $schedule->command($scheduled('escalated:newsletters:dispatch'))->everyMinute()->withoutOverlapping();
             }
 
             if (config('escalated.inbound_email.enabled', false)
                 && config('escalated.inbound_email.adapter') === 'imap') {
-                $schedule->command('escalated:poll-imap')->everyMinute();
+                $schedule->command($scheduled('escalated:poll-imap'))->everyMinute();
             }
         });
     }
@@ -392,7 +414,7 @@ class EscalatedServiceProvider extends ServiceProvider
             return;
         }
 
-        $this->loadRoutesFrom(__DIR__.'/../routes/attachments.php');
+        $this->loadTenantRoutesFrom(__DIR__.'/../routes/attachments.php');
 
         // REST API routes (token auth, no session)
         if (config('escalated.api.enabled', false)) {
@@ -476,6 +498,11 @@ class EscalatedServiceProvider extends ServiceProvider
         }
 
         $this->commands([
+            AssignLegacyTenantCommand::class,
+            ProvisionTenantCommand::class,
+            RetryTenantJobsCommand::class,
+            RetryTenantBatchCommand::class,
+            RunTenantCommand::class,
             InstallCommand::class,
             PluginCommand::class,
             PluginInstallCommand::class,

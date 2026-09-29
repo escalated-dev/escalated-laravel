@@ -7,6 +7,7 @@ use Escalated\Laravel\Models;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /** Validate associations on the database that actually owns the referenced model. */
 class TenantReferences
@@ -50,7 +51,7 @@ class TenantReferences
         // resolving auditable() still uses the mandatory tenant relation scope.
     ];
 
-    public function validate(Model $model, array $values): void
+    public function validate(Model $model, array $values, bool $historical = false): void
     {
         $context = app(TenantContext::class);
         if (! $context->enabled() || ! TenantTables::contains($model->getTable())) {
@@ -89,16 +90,16 @@ class TenantReferences
                 if (! is_a($class, Model::class, true)) {
                     throw new AuthorizationException('Invalid referenced model type.');
                 }
-                $this->assertReference(new $class, $id);
+                $this->assertReference(new $class, $id, $historical);
             }
         }
         $keys = self::LOCAL_KEYS;
-        if ($model instanceof Models\ArticleCategory) {
+        if ($model->getTable() === Escalated::table('article_categories')) {
             $keys['parent_id'] = Models\ArticleCategory::class;
         }
         foreach ($keys as $key => $class) {
             if (array_key_exists($key, $values) && $values[$key] !== null) {
-                $this->assertReference(new $class, $values[$key]);
+                $this->assertReference(new $class, $values[$key], $historical);
             }
         }
         foreach (array_diff(self::HOST_KEYS, $morphFields) as $key) {
@@ -108,7 +109,7 @@ class TenantReferences
         }
     }
 
-    public function assertReference(Model $model, mixed $id): void
+    public function assertReference(Model $model, mixed $id, bool $historical = false): void
     {
         if (! is_int($id) && ! is_string($id)) {
             throw new AuthorizationException('A referenced identity must be a scalar key.');
@@ -119,6 +120,11 @@ class TenantReferences
         $context = app(TenantContext::class);
         $query = $model->newQuery();
         $local = TenantTables::contains($model->getTable());
+        if ($historical && $local && in_array(SoftDeletes::class, class_uses_recursive($model), true)) {
+            // Legacy history may still point to a soft-deleted local record.
+            // Keep the mandatory tenant scope and every host membership check.
+            $query->withTrashed();
+        }
         $platformPermission = $model instanceof Models\Permission;
         if (! $local && ! $platformPermission) {
             $context->scopeHost($query);

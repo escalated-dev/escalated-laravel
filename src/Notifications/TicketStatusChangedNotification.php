@@ -6,6 +6,7 @@ use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Mail\NotificationThreading;
 use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Notifications\Concerns\GuardsTenantNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -13,7 +14,7 @@ use Illuminate\Notifications\Notification;
 
 class TicketStatusChangedNotification extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use GuardsTenantNotification, Queueable;
 
     public function __construct(
         public Ticket $ticket,

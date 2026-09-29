@@ -3,6 +3,7 @@
 namespace Escalated\Laravel\Notifications;
 
 use Escalated\Laravel\Models\Reply;
+use Escalated\Laravel\Notifications\Concerns\GuardsTenantNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -10,7 +11,7 @@ use Illuminate\Notifications\Notification;
 
 class MentionNotification extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use GuardsTenantNotification, Queueable;
 
     public function __construct(public Reply $reply) {}
 

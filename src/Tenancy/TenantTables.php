@@ -7,6 +7,10 @@ use Escalated\Laravel\Escalated;
 /** Explicit package-owned tables; never infer ownership from a host table prefix. */
 class TenantTables
 {
+    // Installation administration, immutable permission vocabulary and host
+    // identity security. None carries merchant correspondence or credentials.
+    public const PLATFORM = ['plugins', 'permissions', 'two_factor', 'attachment_migration_locks'];
+
     public const NAMES = [
         'agent_capacity',
         'agent_profiles',
@@ -15,6 +19,7 @@ class TenantTables
         'article_categories',
         'articles',
         'attachments',
+        'attachment_migrations',
         'audit_logs',
         'automations',
         'business_schedules',
