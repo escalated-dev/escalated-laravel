@@ -3,16 +3,46 @@
 use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Mail\InboundMessage;
 use Escalated\Laravel\Mail\MessageIdUtil;
+use Escalated\Laravel\Models\Attachment;
 use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Models\InboundEmail;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\InboundEmailService;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
     config(['escalated.inbound_email.enabled' => true]);
     Notification::fake();
+});
+
+it('writes inbound email attachment bytes privately through the shared storage service', function () {
+    $disk = Storage::fake('local');
+    $verified = Mockery::mock($disk);
+    $verified->shouldReceive('put')->once()->withArgs(fn ($path, $content, $options) => $content === 'parcel bytes' && $options === ['visibility' => 'private'])
+        ->andReturnUsing(fn ($path, $content, $options) => $disk->put($path, $content, $options));
+    Storage::set('local', $verified);
+    $inbound = app(InboundEmailService::class)->process(new InboundMessage(
+        fromEmail: 'customer@example.test', fromName: 'Customer', toEmail: 'support@example.test',
+        subject: 'Parcel damage', bodyText: 'Photo attached', bodyHtml: null,
+        attachments: [['filename' => 'parcel.jpg', 'content' => 'parcel bytes', 'contentType' => 'image/jpeg', 'size' => 1]],
+    ));
+    expect($inbound->status)->toBe('processed')
+        ->and(Attachment::sole()->disk)->toBe('local')
+        ->and(Attachment::sole()->size)->toBe(12);
+});
+
+it('does not create an attachment record when inbound byte storage fails', function () {
+    $disk = Mockery::mock(Storage::fake('local'));
+    $disk->shouldReceive('put')->andReturn(false);
+    Storage::set('local', $disk);
+    $inbound = app(InboundEmailService::class)->process(new InboundMessage(
+        fromEmail: 'customer@example.test', fromName: 'Customer', toEmail: 'support@example.test',
+        subject: 'Parcel damage', bodyText: 'Photo attached', bodyHtml: null,
+        attachments: [['filename' => 'parcel.jpg', 'content' => 'parcel bytes', 'contentType' => 'image/jpeg']],
+    ));
+    expect($inbound->status)->toBe('failed')->and(Attachment::count())->toBe(0);
 });
 
 it('creates a new ticket from inbound email for a registered user', function () {
