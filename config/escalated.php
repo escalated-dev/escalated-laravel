@@ -524,6 +524,15 @@ return [
         'brand_physical_address' => env('ESCALATED_NEWSLETTER_BRAND_PHYSICAL_ADDRESS'),
     ],
 
+    // Native Slack ingress supports tenant routing independently of plugins.
+    'slack' => [
+        'enabled' => false,
+        'apps' => [],
+        'plugin_app' => 'default',
+        'requests_per_minute' => 600,
+        'max_attempts' => 8,
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Ticket subjects

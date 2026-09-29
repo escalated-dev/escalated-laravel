@@ -7,6 +7,7 @@ use Escalated\Laravel\Database\Factories\ReplyFactory;
 use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Events\InternalNoteAdded;
 use Escalated\Laravel\Events\ReplyCreated;
+use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,16 +22,36 @@ class Reply extends Model
 
     protected $guarded = ['id'];
 
+    public bool $deferCreatedEvent = false;
+
     protected static function booted()
     {
         parent::booted();
 
         static::created(function ($reply) {
+            if ($reply->deferCreatedEvent) {
+                return;
+            }
             if ($reply->is_internal_note) {
                 InternalNoteAdded::dispatch($reply);
             } else {
                 ReplyCreated::dispatch($reply);
             }
+        });
+    }
+
+    public function dispatchCreatedAfterCommit(): void
+    {
+        $tenant = app(TenantContext::class)->enabled() ? (string) $this->tenant_id : null;
+        $id = $this->getKey();
+        $connection = $this->getConnectionName();
+        $this->getConnection()->afterCommit(static function () use ($tenant, $id, $connection) {
+            $dispatch = static function () use ($id, $connection) {
+                if ($reply = static::on($connection)->find($id)) {
+                    $reply->is_internal_note ? InternalNoteAdded::dispatch($reply) : ReplyCreated::dispatch($reply);
+                }
+            };
+            $tenant !== null ? app(TenantContext::class)->run($tenant, $dispatch) : $dispatch();
         });
     }
 

@@ -664,6 +664,17 @@ class Ticket extends Model
         return $reply;
     }
 
+    /** Compare polymorphic identity, including a guest's first-class contact. */
+    public function isRequesterIdentity(?string $type, int|string|null $id): bool
+    {
+        if ($id === null) {
+            return $type === null && $this->requester_id === null;
+        }
+
+        return ($type === $this->requester_type && (string) $id === (string) $this->requester_id)
+            || ($type === (new Contact)->getMorphClass() && (string) $id === (string) $this->contact_id);
+    }
+
     public function markResolved(?Ticketable $causer = null): self
     {
         $oldStatus = $this->status;

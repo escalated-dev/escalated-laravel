@@ -17,6 +17,7 @@ use Escalated\Laravel\Console\Commands\PluginInstallCommand;
 use Escalated\Laravel\Console\Commands\PollImapCommand;
 use Escalated\Laravel\Console\Commands\PrivatizeAttachmentsCommand;
 use Escalated\Laravel\Console\Commands\ProcessDelayedActionsCommand;
+use Escalated\Laravel\Console\Commands\ProcessSlackInboxCommand;
 use Escalated\Laravel\Console\Commands\ProvisionTenantCommand;
 use Escalated\Laravel\Console\Commands\PurgeActivitiesCommand;
 use Escalated\Laravel\Console\Commands\PurgeExpiredDataCommand;
@@ -202,6 +203,10 @@ class EscalatedServiceProvider extends ServiceProvider
             $schedule->command($scheduled('escalated:wake-snoozed-tickets'))->everyMinute();
             $schedule->command($scheduled('escalated:close-resolved'))->daily();
             $schedule->command($scheduled('escalated:purge-activities'))->weekly();
+
+            if (config('escalated.slack.enabled', false)) {
+                $schedule->command($scheduled('escalated:slack:process'))->everyMinute()->withoutOverlapping();
+            }
 
             if (config('escalated.chat.enabled', false)) {
                 $schedule->command($scheduled('escalated:close-idle-chats'))->everyMinute();
@@ -419,6 +424,8 @@ class EscalatedServiceProvider extends ServiceProvider
 
         $this->loadTenantRoutesFrom(__DIR__.'/../routes/attachments.php');
 
+        $this->loadRoutesFrom(__DIR__.'/../routes/slack.php');
+
         // REST API routes (token auth, no session)
         if (config('escalated.api.enabled', false)) {
             $this->loadTenantRoutesFrom(__DIR__.'/../routes/api.php');
@@ -522,6 +529,7 @@ class EscalatedServiceProvider extends ServiceProvider
             CloseIdleChatsCommand::class,
             CleanupAbandonedChatsCommand::class,
             ProcessDelayedActionsCommand::class,
+            ProcessSlackInboxCommand::class,
             DispatchNewslettersCommand::class,
         ]);
     }
