@@ -6,6 +6,7 @@ use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Http\Resources\MobileTicketResource;
 use Escalated\Laravel\Models\Contact;
+use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Ticket;
@@ -33,7 +34,7 @@ class MobileGuestTicketController extends Controller
             'subject' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
             'priority' => ['nullable', 'in:low,medium,high,urgent,critical'],
-            'department_id' => ['nullable', 'exists:'.config('escalated.table_prefix', 'escalated_').'departments,id'],
+            'department_id' => ['nullable', 'exists:'.Department::class.',id'],
             'attachments' => ['nullable', 'array'],
             'attachments.*' => ['file', 'max:'.$maxSize],
         ]);

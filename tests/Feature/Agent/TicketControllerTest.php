@@ -6,6 +6,7 @@ use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Events\InternalNoteAdded;
 use Escalated\Laravel\Events\ReplyCreated;
 use Escalated\Laravel\Events\TicketCustomActionTriggered;
+use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\TicketActionRegistry;
 use Illuminate\Support\Facades\Event;
@@ -83,7 +84,7 @@ it('agent can reply to ticket', function () {
         ])
         ->assertRedirect();
 
-    $this->assertDatabaseHas('escalated_replies', [
+    $this->assertDatabaseHas(Reply::class, [
         'ticket_id' => $ticket->id,
         'body' => 'Agent reply here.',
         'is_internal_note' => false,
@@ -100,7 +101,7 @@ it('agent can add internal note', function () {
         ])
         ->assertRedirect();
 
-    $this->assertDatabaseHas('escalated_replies', [
+    $this->assertDatabaseHas(Reply::class, [
         'ticket_id' => $ticket->id,
         'is_internal_note' => true,
     ]);
@@ -215,7 +216,7 @@ it('records an internal note when a custom ticket action is triggered', function
         ->post(route('escalated.agent.tickets.custom-action', [$ticket->reference, 'sync-crm']))
         ->assertRedirect();
 
-    $this->assertDatabaseHas('escalated_replies', [
+    $this->assertDatabaseHas(Reply::class, [
         'ticket_id' => $ticket->id,
         'author_type' => $agent->getMorphClass(),
         'author_id' => $agent->getKey(),

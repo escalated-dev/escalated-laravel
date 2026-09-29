@@ -53,7 +53,7 @@ class ArticleController extends Controller
             'slug' => ['nullable', 'string', 'max:255'],
             'body' => ['nullable', 'string'],
             'status' => ['required', 'string', 'in:draft,published'],
-            'category_id' => ['nullable', 'integer', 'exists:'.ArticleCategory::make()->getTable().',id'],
+            'category_id' => ['nullable', 'integer', 'exists:'.ArticleCategory::class.',id'],
         ]);
 
         $validated['slug'] = $validated['slug'] ?: Str::slug($validated['title']);
@@ -84,7 +84,7 @@ class ArticleController extends Controller
             'slug' => ['nullable', 'string', 'max:255'],
             'body' => ['nullable', 'string'],
             'status' => ['required', 'string', 'in:draft,published'],
-            'category_id' => ['nullable', 'integer', 'exists:'.ArticleCategory::make()->getTable().',id'],
+            'category_id' => ['nullable', 'integer', 'exists:'.ArticleCategory::class.',id'],
         ]);
 
         $validated['slug'] = $validated['slug'] ?: Str::slug($validated['title']);

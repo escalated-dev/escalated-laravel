@@ -21,7 +21,7 @@ class AssignTicketRequest extends FormRequest
         $userModel = Escalated::newUserModel();
 
         return [
-            'agent_id' => ['required', Rule::exists($userModel->getTable(), $userModel->getKeyName())],
+            'agent_id' => ['required', Rule::exists($userModel::class, $userModel->getKeyName())],
         ];
     }
 }

@@ -35,7 +35,7 @@ class RoleController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'permissions' => 'nullable|array',
-            'permissions.*' => 'integer|exists:'.config('escalated.table_prefix', 'escalated_').'permissions,id',
+            'permissions.*' => 'integer|exists:'.Permission::class.',id',
         ]);
 
         $role = Role::create([
@@ -67,7 +67,7 @@ class RoleController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'permissions' => 'nullable|array',
-            'permissions.*' => 'integer|exists:'.config('escalated.table_prefix', 'escalated_').'permissions,id',
+            'permissions.*' => 'integer|exists:'.Permission::class.',id',
         ]);
 
         $role->update([

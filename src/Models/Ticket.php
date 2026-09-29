@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -331,9 +332,34 @@ class Ticket extends Model
                 ->orWhere('description', 'like', "%{$term}%")
                 ->orWhere('guest_name', 'like', "%{$term}%")
                 ->orWhere('guest_email', 'like', "%{$term}%")
-                ->orWhereHas('requester', function ($rq) use ($term) {
-                    Escalated::applyUserSearch($rq, $term);
-                });
+                ->orWhere(fn ($rq) => $rq->whereRequesterMatches($term));
+        });
+    }
+
+    /**
+     * Resolve polymorphic requester keys on each requester's own connection.
+     * A whereHas subquery would execute against the ticket database, where
+     * the host tables do not exist. Keep type and key paired: different host
+     * models can legitimately have the same primary key.
+     */
+    public function scopeWhereRequesterMatches($query, string $term)
+    {
+        $types = static::query()->whereNotNull('requester_type')
+            ->distinct()->pluck('requester_type');
+
+        return $query->where(function ($matches) use ($types, $term) {
+            $matches->whereRaw('1 = 0');
+
+            foreach ($types as $type) {
+                $class = Relation::getMorphedModel($type) ?? $type;
+                $requester = new $class;
+                $ids = $requester->newQuery()
+                    ->where(fn ($q) => Escalated::applyUserSearch($q, $term))
+                    ->pluck($requester->getKeyName())->all();
+
+                $matches->orWhere(fn ($q) => $q->where('requester_type', $type)
+                    ->whereIn('requester_id', $ids));
+            }
         });
     }
 

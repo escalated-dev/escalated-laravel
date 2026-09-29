@@ -104,6 +104,20 @@ pivot, then load the users by key — so `->agents`, `->followers`,
 as before. On a single connection nothing changes: the ordinary join is still
 issued.
 
+Agent reports aggregate ticket/reply data on Escalated's connection and resolve
+agent names in one query on the host user model's connection. Requester search
+also resolves matching identities separately before filtering tickets, keeping
+polymorphic types paired with their keys. Neither path requires a copy of your
+users table in the support database. Host model scopes and the configured
+display column apply to these identity lookups.
+
+The complete test suite runs in CI with two independent SQLite databases, with
+`users` present only on the host connection. To run that configuration locally:
+
+```sh
+ESCALATED_TEST_SEPARATE_CONNECTION=1 vendor/bin/pest
+```
+
 ### Changing it from the admin panel
 
 Since 1.7.0 there is a settings screen at `/admin/settings/database` that shows

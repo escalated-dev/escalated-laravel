@@ -12,6 +12,8 @@ abstract class TestCase extends BaseTestCase
 {
     use RefreshDatabase;
 
+    protected array $connectionsToTransact = ['testing'];
+
     protected function getPackageProviders($app): array
     {
         return [
@@ -24,6 +26,17 @@ abstract class TestCase extends BaseTestCase
     {
         $app['config']->set('database.default', 'testing');
         $app['config']->set('database.connections.testing', TestDatabase::config());
+
+        if (getenv('ESCALATED_TEST_SEPARATE_CONNECTION') === '1') {
+            $app['config']->set('database.connections.testing', [
+                'driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '',
+            ]);
+            $app['config']->set('database.connections.escalated', [
+                'driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '',
+            ]);
+            $app['config']->set('escalated.connection', 'escalated');
+            $this->connectionsToTransact = ['testing', 'escalated'];
+        }
 
         $app['config']->set('app.key', 'base64:'.base64_encode(str_repeat('a', 32)));
         $app['config']->set('view.paths', [__DIR__.'/../resources/views']);

@@ -134,7 +134,7 @@ class WidgetController extends Controller
             'email' => ['required', 'email', 'max:255'],
             'subject' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:5000'],
-            'department_id' => ['nullable', 'integer', 'exists:'.config('escalated.table_prefix', 'escalated_').'departments,id'],
+            'department_id' => ['nullable', 'integer', 'exists:'.Department::class.',id'],
         ]);
 
         // Dedupe repeat submitters by email — one Contact per email

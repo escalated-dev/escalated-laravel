@@ -49,7 +49,7 @@ class TicketController extends Controller
             'subject' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
             'priority' => ['nullable', 'in:low,medium,high,urgent,critical'],
-            'department_id' => ['nullable', 'exists:'.config('escalated.table_prefix', 'escalated_').'departments,id'],
+            'department_id' => ['nullable', 'exists:'.Department::class.',id'],
             'attachments' => ['nullable', 'array'],
             'attachments.*' => ['file', 'max:'.$maxSize],
         ]);

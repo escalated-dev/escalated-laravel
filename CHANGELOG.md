@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- Agent performance, CSAT, workload, productivity and requester search now
+  resolve host identities on their own database connection. Reports and CSV
+  exports no longer join the host users table from Escalated's database.
+  Identity lookups honor morph aliases and the configured display column;
+  same-named agents retain separate workload series. CI runs the complete
+  suite with independent host and package databases to guard this boundary.
+- Existence and uniqueness validation now follows the owning model's connection
+  for ticket creation, assignment, bulk actions, skills, roles, knowledge-base
+  categories, custom fields and mobile identities.
+
 ## [1.8.6] - 2026-09-27
 
 ### Fixed

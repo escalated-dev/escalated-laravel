@@ -18,7 +18,7 @@ it('can create a saved view', function () {
         ]);
 
     $response->assertCreated();
-    $this->assertDatabaseHas('escalated_saved_views', [
+    $this->assertDatabaseHas(SavedView::class, [
         'name' => 'My View',
         'user_id' => $admin->id,
     ]);

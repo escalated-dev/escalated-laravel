@@ -38,7 +38,7 @@ it('synced driver creates ticket locally and syncs to cloud', function () {
     expect($ticket->status)->toBe(TicketStatus::Open);
 
     // Verify the ticket exists in local DB
-    $this->assertDatabaseHas('escalated_tickets', [
+    $this->assertDatabaseHas(Ticket::class, [
         'subject' => 'Synced test ticket',
     ]);
 
@@ -117,7 +117,7 @@ it('synced driver continues working if cloud is unreachable', function () {
     ]);
 
     expect($ticket)->toBeInstanceOf(Ticket::class);
-    $this->assertDatabaseHas('escalated_tickets', [
+    $this->assertDatabaseHas(Ticket::class, [
         'subject' => 'Offline test',
     ]);
 });

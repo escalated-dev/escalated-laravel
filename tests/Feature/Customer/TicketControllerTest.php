@@ -1,6 +1,7 @@
 <?php
 
 use Escalated\Laravel\Enums\TicketStatus;
+use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Ticket;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
@@ -43,7 +44,7 @@ it('creates a new ticket', function () {
         ])
         ->assertRedirect();
 
-    $this->assertDatabaseHas('escalated_tickets', [
+    $this->assertDatabaseHas(Ticket::class, [
         'subject' => 'Test ticket',
         'requester_id' => $user->id,
     ]);
@@ -74,7 +75,7 @@ it('replies to a ticket', function () {
         ])
         ->assertRedirect();
 
-    $this->assertDatabaseHas('escalated_replies', [
+    $this->assertDatabaseHas(Reply::class, [
         'ticket_id' => $ticket->id,
         'body' => 'This is my reply.',
     ]);

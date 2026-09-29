@@ -35,11 +35,10 @@ class MobileAuthController extends Controller
     public function register(Request $request): JsonResponse
     {
         $userModel = Escalated::userModel();
-        $userTable = (new $userModel)->getTable();
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique($userTable, 'email')],
+            'email' => ['required', 'email', 'max:255', Rule::unique($userModel, 'email')],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
@@ -93,11 +92,10 @@ class MobileAuthController extends Controller
     public function updateProfile(Request $request): JsonResponse
     {
         $user = $request->user();
-        $userTable = $user->getTable();
 
         $validated = $request->validate([
             'name' => ['sometimes', 'string', 'max:255'],
-            'email' => ['sometimes', 'email', 'max:255', Rule::unique($userTable, 'email')->ignore($user->getKey())],
+            'email' => ['sometimes', 'email', 'max:255', Rule::unique($user::class, 'email')->ignore($user)],
         ]);
 
         $user->fill($validated);

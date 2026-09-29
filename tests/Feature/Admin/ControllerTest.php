@@ -39,7 +39,7 @@ it('creates a department', function () {
         ])
         ->assertRedirect();
 
-    $this->assertDatabaseHas('escalated_departments', ['name' => 'Engineering']);
+    $this->assertDatabaseHas(Department::class, ['name' => 'Engineering']);
 });
 
 it('lists SLA policies', function () {
@@ -64,7 +64,7 @@ it('creates an SLA policy', function () {
         ])
         ->assertRedirect();
 
-    $this->assertDatabaseHas('escalated_sla_policies', ['name' => 'Standard SLA']);
+    $this->assertDatabaseHas(SlaPolicy::class, ['name' => 'Standard SLA']);
 });
 
 it('lists tags', function () {
@@ -87,7 +87,7 @@ it('creates a tag', function () {
         ])
         ->assertRedirect();
 
-    $this->assertDatabaseHas('escalated_tags', ['name' => 'Bug']);
+    $this->assertDatabaseHas(Tag::class, ['name' => 'Bug']);
 });
 
 it('lists canned responses', function () {
