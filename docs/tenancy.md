@@ -8,6 +8,9 @@ Host users stay on their own database connection.
 
 Laravel 11 requires at least 11.23.0, which introduced the worker completion event
 needed to clear tenant context after each attempt. Laravel 12 and 13 are supported.
+The historical 11.23 CI fixture uses Symfony Console 7.3: that old framework's
+console container integration predates Symfony 7.4. Prefer a current patched host
+framework rather than using the historical fixture as a deployment template.
 
 ## Host contracts
 

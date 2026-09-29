@@ -139,7 +139,7 @@ class TenantBelongsToMany extends BelongsToMany
         return parent::createOrFirst($attributes, $values, $joining, $touch);
     }
 
-    public function updateOrCreate(array $attributes, array $values = [], array $joining = [], $touch = true)
+    public function updateOrCreate(array $attributes, array|Closure $values = [], array $joining = [], $touch = true)
     {
         $this->assertRelatedWritable();
 

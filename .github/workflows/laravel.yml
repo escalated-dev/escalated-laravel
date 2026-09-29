@@ -67,6 +67,11 @@ jobs:
       - name: Install dependencies
         run: |
           composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" "pestphp/pest:${{ matrix.pest }}" "pestphp/pest-plugin-laravel:${{ matrix.pest-laravel }}" --dev --no-interaction --no-update
+          # Historical Laravel only overrides Console::add; Symfony 7.4's lazy
+          # loader uses addCommand and skips its container injection entirely.
+          if [ "${{ matrix.laravel }}" = "11.23.0" ]; then
+            composer require "symfony/console:~7.3.0" --dev --no-interaction --no-update
+          fi
           composer update --prefer-stable --prefer-dist --no-interaction
 
       - name: Execute tests
