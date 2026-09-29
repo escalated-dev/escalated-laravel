@@ -1,9 +1,11 @@
 <?php
 
+use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Models\Attachment;
 use Escalated\Laravel\Models\AttachmentMigration;
 use Escalated\Laravel\Models\Ticket;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 beforeEach(function () {
     Storage::fake('public');
@@ -110,3 +112,43 @@ it('retains files when a concurrent edit changes the attachment record', functio
         ->and(AttachmentMigration::sole()->status)->toBe('conflict');
     Storage::disk('public')->assertExists($oldPath);
 });
+
+it('refuses overlapping commands and requires the exact stopped lock owner for recovery', function () {
+    $locks = Escalated::db()->table(Escalated::table('attachment_migration_locks'));
+    $owner = (string) Str::uuid();
+    $locks->insert(['id' => 1, 'owner' => $owner, 'started_at' => now()->subDays(2)]);
+    $this->artisan('escalated:attachments:privatize', ['--apply' => true])->assertFailed();
+    expect($this->attachment->fresh()->disk)->toBe('public')
+        ->and(Storage::disk('local')->allFiles())->toBe([]);
+    $this->artisan('escalated:attachments:privatize', ['--release-lock' => 'wrong-owner'])->assertFailed();
+    expect($locks->value('owner'))->toBe($owner);
+    $this->artisan('escalated:attachments:privatize', ['--release-lock' => $owner])->assertSuccessful();
+    expect($this->attachment->fresh()->disk)->toBe('public');
+    $this->artisan('escalated:attachments:privatize', ['--apply' => true])->assertSuccessful();
+    expect($locks->count())->toBe(0);
+});
+
+it('retains the public fallback if any referenced private duplicate is missing or corrupted during recovery', function (string $damage) {
+    $duplicate = $this->attachment->replicate();
+    $duplicate->save();
+    $disk = Storage::disk('public');
+    $failing = Mockery::mock($disk);
+    $failing->shouldReceive('delete')->andReturn(false);
+    Storage::set('public', $failing);
+    $oldPath = $this->attachment->path;
+    $this->artisan('escalated:attachments:privatize', ['--apply' => true])->assertFailed();
+    $damagedPath = $duplicate->fresh()->path;
+    if ($damage === 'missing') {
+        Storage::disk('local')->delete($damagedPath);
+    } else {
+        Storage::disk('local')->put($damagedPath, 'wrong bytes', 'private');
+    }
+    Storage::set('public', $disk);
+    $this->artisan('escalated:attachments:privatize', ['--apply' => true])->assertFailed();
+    $disk->assertExists($oldPath);
+    expect(AttachmentMigration::count())->toBe(2);
+    Storage::disk('local')->put($damagedPath, 'parcel bytes', 'private');
+    $this->artisan('escalated:attachments:privatize', ['--apply' => true])->assertSuccessful();
+    $disk->assertMissing($oldPath);
+    expect(AttachmentMigration::count())->toBe(0);
+})->with(['missing', 'corrupt']);

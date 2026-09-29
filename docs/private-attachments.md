@@ -31,7 +31,7 @@ Changing URLs does not remove files already served publicly. Before enabling mer
 
 1. Run the package migrations to create the recovery journal. Configure a private destination
    disk and verify its root/bucket cannot be read publicly. Stop attachment writes/deletions
-   during migration and run only one migration command at a time.
+   during migration. A database lock allows only one migration command at a time.
 2. Run `php artisan escalated:attachments:privatize --from=public --to=local` to review the count.
    Without `--apply`, the command changes nothing.
 3. Run the same command with `--apply`. It streams each file to a new private path, verifies
@@ -45,6 +45,11 @@ Changing URLs does not remove files already served publicly. Before enabling mer
    until recovery completes; rolling its migration back while entries remain is refused.
    Concurrent attachment edits are refused and leave a `conflict` journal entry for manual
    reconciliation of both paths; this is why writes and deletions must be paused first.
+   If the process was terminated, the next run reports its lock owner ID. Verify the old process
+   is stopped, then run `php artisan escalated:attachments:privatize --release-lock=<owner>` and
+   rerun with `--apply`. Locks never expire automatically while a slow copy might still be active.
+   Recovery rechecks every referenced private copy before deleting a shared public source; a
+   missing or corrupted copy keeps the source and journal for repair.
    Clear any CDN copies and verify an old public URL no longer returns the file.
 
 Repeat for each source disk. Imported attachments use `escalated.attachments.disk` to identify

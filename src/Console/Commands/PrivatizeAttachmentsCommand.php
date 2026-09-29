@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Console\Commands;
 
+use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Models\Attachment;
 use Escalated\Laravel\Models\AttachmentMigration;
 use Illuminate\Console\Command;
@@ -15,11 +16,45 @@ class PrivatizeAttachmentsCommand extends Command
     protected $signature = 'escalated:attachments:privatize
         {--from=public : Source disk containing existing public attachments}
         {--to= : Private destination disk (defaults to escalated.storage.disk)}
+        {--release-lock= : Release this exact owner ID only after verifying its process has stopped; does not migrate files}
         {--apply : Copy, verify, update records and remove unreferenced public originals}';
 
     protected $description = 'Move public attachments to private storage; dry run unless --apply is supplied';
 
     public function handle(): int
+    {
+        $locks = Escalated::db()->table(Escalated::table('attachment_migration_locks'));
+        if ($owner = $this->option('release-lock')) {
+            if ($locks->where('id', 1)->where('owner', $owner)->delete() !== 1) {
+                $this->error('No migration lock matches that owner ID.');
+
+                return self::FAILURE;
+            }
+            $this->info('Released the stopped migration owner. Rerun with --apply to recover.');
+
+            return self::SUCCESS;
+        }
+
+        if (! $this->option('apply')) {
+            return $this->migrate();
+        }
+
+        $owner = (string) Str::uuid();
+        // A nonexpiring database lock survives process death. Never infer that
+        // another command's pending copy was abandoned merely from elapsed time.
+        if (! $locks->insertOrIgnore(['id' => 1, 'owner' => $owner, 'started_at' => now()])) {
+            $this->error('Migration is locked by owner '.$locks->where('id', 1)->value('owner').'. Verify that process has stopped before using --release-lock=<owner>.');
+
+            return self::FAILURE;
+        }
+        try {
+            return $this->migrate();
+        } finally {
+            Escalated::db()->table(Escalated::table('attachment_migration_locks'))->where('id', 1)->where('owner', $owner)->delete();
+        }
+    }
+
+    private function migrate(): int
     {
         $from = (string) $this->option('from');
         $to = (string) ($this->option('to') ?: config('escalated.storage.disk', 'local'));
@@ -91,17 +126,18 @@ class PrivatizeAttachmentsCommand extends Command
                 throw new RuntimeException('The private copy failed; the public original was retained.');
             }
 
-            if (! hash_equals($this->checksum($from, $oldPath), $this->checksum($to, $newPath))) {
+            $checksum = $this->checksum($from, $oldPath);
+            if (! hash_equals($checksum, $this->checksum($to, $newPath))) {
                 throw new RuntimeException('Checksum verification failed; the public original was retained.');
             }
 
-            $attachment->getConnection()->transaction(function () use ($attachment, $from, $to, $oldPath, $newPath, $move) {
+            $attachment->getConnection()->transaction(function () use ($attachment, $from, $to, $oldPath, $newPath, $move, $checksum) {
                 $updated = Attachment::whereKey($attachment->getKey())->where('disk', $from)->where('path', $oldPath)
                     ->update(['disk' => $to, 'path' => $newPath]);
                 if ($updated !== 1) {
                     throw new RuntimeException('The record changed during migration; the original was retained.');
                 }
-                $move->update(['status' => 'moved']);
+                $move->update(['status' => 'moved', 'checksum' => $checksum]);
             });
         } catch (Throwable $error) {
             // Atomic record+journal updates make pending copies safe to discard.
@@ -129,6 +165,7 @@ class PrivatizeAttachmentsCommand extends Command
                             continue;
                         }
                         $source = Storage::disk($move->source_disk);
+                        $this->verifyDestinations($move);
                         if ($source->exists($move->source_path) && ! $source->delete($move->source_path)) {
                             throw new RuntimeException('Could not remove public original '.$move->source_disk.':'.$move->source_path);
                         }
@@ -158,6 +195,24 @@ class PrivatizeAttachmentsCommand extends Command
             throw new RuntimeException('Could not remove an unused private copy; its recovery entry was retained.');
         }
         $move->delete();
+    }
+
+    private function verifyDestinations(AttachmentMigration $move): void
+    {
+        $source = Storage::disk($move->source_disk);
+        $sourceHash = $source->exists($move->source_path) ? $this->checksum($move->source_disk, $move->source_path) : null;
+        foreach (AttachmentMigration::where('source_disk', $move->source_disk)->where('source_path', $move->source_path)->get() as $entry) {
+            if ($entry->status !== 'moved' || ! $entry->checksum) {
+                throw new RuntimeException('A related copy is incomplete; its public source was retained.');
+            }
+            if (Attachment::where('disk', $entry->destination_disk)->where('path', $entry->destination_path)->exists()
+                && ! hash_equals($entry->checksum, $this->checksum($entry->destination_disk, $entry->destination_path))) {
+                throw new RuntimeException('A private copy changed; its public source was retained.');
+            }
+            if ($sourceHash !== null && ! hash_equals($entry->checksum, $sourceHash)) {
+                throw new RuntimeException('The public source changed after copying; it was retained.');
+            }
+        }
     }
 
     private function checksum(string $disk, string $path): string
