@@ -1,0 +1,24 @@
+{
+  "name": "http-fixture",
+  "version": "0.1.0",
+  "config": [],
+  "pages": [],
+  "components": [],
+  "widgets": [],
+  "actionHooks": [],
+  "filterHooks": [],
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/echo/{id}",
+      "capability": "plugin.manage"
+    }
+  ],
+  "webhooks": [
+    {
+      "method": "POST",
+      "path": "/events"
+    }
+  ],
+  "cronSchedules": []
+}
