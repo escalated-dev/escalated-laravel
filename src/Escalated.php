@@ -3,6 +3,7 @@
 namespace Escalated\Laravel;
 
 use Escalated\Laravel\Support\ConnectionStore;
+use Escalated\Laravel\Tenancy\TenantQueryBuilder;
 use Illuminate\Contracts\Database\Query\Builder;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -370,6 +371,16 @@ class Escalated
     public static function db(): ConnectionInterface
     {
         return DB::connection(static::connection());
+    }
+
+    /** Tenant-aware table access. db() remains for schema and explicit platform operations. */
+    public static function query(string $table): \Illuminate\Database\Query\Builder
+    {
+        $connection = static::db();
+
+        return (new TenantQueryBuilder(
+            $connection, $connection->getQueryGrammar(), $connection->getPostProcessor(),
+        ))->from($table);
     }
 
     /**

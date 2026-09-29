@@ -20,6 +20,7 @@ use Escalated\Laravel\Console\Commands\PurgeExpiredDataCommand;
 use Escalated\Laravel\Console\Commands\RunAutomationsCommand;
 use Escalated\Laravel\Console\Commands\WakeSnoozedTicketsCommand;
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
+use Escalated\Laravel\Contracts\TenantResolver;
 use Escalated\Laravel\Http\Controllers\Admin\ApiTokenController;
 use Escalated\Laravel\Http\Middleware\CheckPermission;
 use Escalated\Laravel\Http\Middleware\EnsureIsAdmin;
@@ -30,6 +31,9 @@ use Escalated\Laravel\Services\PluginService;
 use Escalated\Laravel\Services\PluginUIService;
 use Escalated\Laravel\Services\TicketActionRegistry;
 use Escalated\Laravel\Support\HookManager;
+use Escalated\Laravel\Tenancy\TenantContext;
+use Escalated\Laravel\Tenancy\TenantPresenceVerifier;
+use Escalated\Laravel\Tenancy\UnconfiguredTenantResolver;
 use Escalated\Laravel\UI\InertiaUiRenderer;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Arr;
@@ -46,6 +50,13 @@ class EscalatedServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/../config/escalated.php', 'escalated');
+
+        $this->app->scoped(TenantContext::class);
+        $this->app->extend('validation.presence', fn ($verifier, $app) => new TenantPresenceVerifier($app['db'], $verifier));
+        $this->app->bind(TenantResolver::class, function ($app) {
+            return $app->make(config('escalated.tenancy.resolver')
+                ?: UnconfiguredTenantResolver::class);
+        });
 
         $this->app->singleton(EscalatedManager::class, function ($app) {
             return new EscalatedManager;

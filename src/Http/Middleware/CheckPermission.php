@@ -26,7 +26,7 @@ class CheckPermission
 
     public static function userHasPermission(int|string $userId, string $permissionSlug): bool
     {
-        return Escalated::db()->table(Escalated::table('role_user'))
+        return Escalated::query(Escalated::table('role_user'))
             ->join(Escalated::table('role_permission'), Escalated::table('role_user').'.role_id', '=', Escalated::table('role_permission').'.role_id')
             ->join(Escalated::table('permissions'), Escalated::table('role_permission').'.permission_id', '=', Escalated::table('permissions').'.id')
             ->where(Escalated::table('role_user').'.user_id', $userId)
@@ -43,7 +43,7 @@ class CheckPermission
     public static function userPermissions(int|string $userId): array
     {
         try {
-            return Escalated::db()->table(Escalated::table('role_user'))
+            return Escalated::query(Escalated::table('role_user'))
                 ->join(Escalated::table('role_permission'), Escalated::table('role_user').'.role_id', '=', Escalated::table('role_permission').'.role_id')
                 ->join(Escalated::table('permissions'), Escalated::table('role_permission').'.permission_id', '=', Escalated::table('permissions').'.id')
                 ->where(Escalated::table('role_user').'.user_id', $userId)

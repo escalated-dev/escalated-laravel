@@ -51,7 +51,7 @@ class SkillRoutingService
         $agentSkillTable = Escalated::table('agent_skill');
         $skillIds = $matchingSkills->pluck('id')->all();
 
-        $agentSkillRows = Escalated::db()->table($agentSkillTable)
+        $agentSkillRows = Escalated::query($agentSkillTable)
             ->whereIn('skill_id', $skillIds)
             ->get(['user_id', 'skill_id', 'proficiency']);
 

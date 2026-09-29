@@ -23,7 +23,7 @@ class NewsletterListController extends Controller
             ->withCount('members as member_count')
             ->get()
             ->map(function ($l) {
-                $l->opted_out_count = Escalated::db()->table(Escalated::table('newsletter_list_members'))
+                $l->opted_out_count = Escalated::query(Escalated::table('newsletter_list_members'))
                     ->join(Escalated::table('contacts'), Escalated::table('contacts').'.id', '=', Escalated::table('newsletter_list_members').'.contact_id')
                     ->where('list_id', $l->id)
                     ->whereNotNull('marketing_opt_out_at')
@@ -58,7 +58,7 @@ class NewsletterListController extends Controller
         $members = $list->members()->with('contact:id,name,email')->paginate(100);
         $matchCount = $list->kind === 'dynamic' ? $segments->countMatches($list->filter_json ?? ['rules' => []]) : 0;
         $list->member_count = $list->members()->count();
-        $list->opted_out_count = Escalated::db()->table(Escalated::table('newsletter_list_members'))
+        $list->opted_out_count = Escalated::query(Escalated::table('newsletter_list_members'))
             ->join(Escalated::table('contacts'), Escalated::table('contacts').'.id', '=', Escalated::table('newsletter_list_members').'.contact_id')
             ->where('list_id', $list->id)
             ->whereNotNull('marketing_opt_out_at')

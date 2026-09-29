@@ -69,7 +69,7 @@ class DataRetentionController extends Controller
             $ticketDays = $this->retentionDaysMap[$ticketSetting] ?? null;
             if ($ticketDays !== null) {
                 $cutoff = Carbon::now()->subDays($ticketDays);
-                $preview['tickets'] = Escalated::db()->table(Escalated::table('tickets'))
+                $preview['tickets'] = Escalated::query(Escalated::table('tickets'))
                     ->where('status', 'closed')
                     ->where('closed_at', '<', $cutoff)
                     ->whereNull('deleted_at')
@@ -81,7 +81,7 @@ class DataRetentionController extends Controller
             $attachDays = $this->retentionDaysMap[$attachSetting] ?? null;
             if ($attachDays !== null && Escalated::schema()->hasTable(Escalated::table('attachments'))) {
                 $cutoff = Carbon::now()->subDays($attachDays);
-                $preview['attachments'] = Escalated::db()->table(Escalated::table('attachments'))
+                $preview['attachments'] = Escalated::query(Escalated::table('attachments'))
                     ->where('created_at', '<', $cutoff)
                     ->count();
             }
@@ -91,7 +91,7 @@ class DataRetentionController extends Controller
             $auditDays = $this->retentionDaysMap[$auditSetting] ?? null;
             if ($auditDays !== null && Escalated::schema()->hasTable(Escalated::table('audit_logs'))) {
                 $cutoff = Carbon::now()->subDays($auditDays);
-                $preview['audit_logs'] = Escalated::db()->table(Escalated::table('audit_logs'))
+                $preview['audit_logs'] = Escalated::query(Escalated::table('audit_logs'))
                     ->where('created_at', '<', $cutoff)
                     ->count();
             }

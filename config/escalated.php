@@ -15,6 +15,14 @@ return [
     */
     'mode' => env('ESCALATED_MODE', 'self-hosted'),
 
+    // Enable only after assigning legacy data with escalated:tenant-backfill.
+    // The host resolver implements Contracts\TenantResolver; never use a posted
+    // tenant_id as proof of membership. Missing context denies access.
+    'tenancy' => [
+        'enabled' => env('ESCALATED_TENANCY_ENABLED', false),
+        'resolver' => null,
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | User Model

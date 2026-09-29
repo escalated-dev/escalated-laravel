@@ -90,7 +90,7 @@ class ReportingService
         $avgResponseRaw = $this->avgHoursDiffRaw("{$ticketsTable}.created_at", "{$ticketsTable}.first_response_at");
         $avgResolutionRaw = $this->avgHoursDiffRaw("{$ticketsTable}.created_at", "{$ticketsTable}.resolved_at");
 
-        $rows = Escalated::db()->table($ticketsTable)
+        $rows = Escalated::query($ticketsTable)
             ->whereBetween("{$ticketsTable}.created_at", [$startDate, $endDate])
             ->whereNotNull("{$ticketsTable}.assigned_to")
             ->groupBy("{$ticketsTable}.assigned_to")
@@ -239,7 +239,7 @@ class ReportingService
         $ticketsTable = Escalated::table('tickets');
         $ratingsTable = Escalated::table('satisfaction_ratings');
 
-        $rows = Escalated::db()->table($ratingsTable)
+        $rows = Escalated::query($ratingsTable)
             ->join($ticketsTable, "{$ratingsTable}.ticket_id", '=', "{$ticketsTable}.id")
             ->whereBetween("{$ratingsTable}.created_at", [$startDate, $endDate])
             ->whereNotNull("{$ticketsTable}.assigned_to")
@@ -312,7 +312,7 @@ class ReportingService
         $ticketsTable = Escalated::table('tickets');
         $departmentsTable = Escalated::table('departments');
 
-        return Escalated::db()->table($ticketsTable)
+        return Escalated::query($ticketsTable)
             ->leftJoin($departmentsTable, "{$ticketsTable}.department_id", '=', "{$departmentsTable}.id")
             ->where("{$ticketsTable}.created_at", '>=', $since)
             ->whereNotNull("{$ticketsTable}.sla_policy_id")
@@ -586,7 +586,7 @@ class ReportingService
             $resolutionRate = $totalTickets > 0 ? ($resolvedTickets / $totalTickets) * 100 : 0;
 
             // Get CSAT for this agent
-            $csatAvg = (float) Escalated::db()->table($ratingsTable)
+            $csatAvg = (float) Escalated::query($ratingsTable)
                 ->join($ticketsTable, "{$ratingsTable}.ticket_id", '=', "{$ticketsTable}.id")
                 ->where("{$ticketsTable}.assigned_to", $agentId)
                 ->where("{$ratingsTable}.created_at", '>=', $since)
@@ -634,7 +634,7 @@ class ReportingService
         $since = now()->subDays($days);
         $ticketsTable = Escalated::table('tickets');
 
-        $rows = Escalated::db()->table($ticketsTable)
+        $rows = Escalated::query($ticketsTable)
             ->where("{$ticketsTable}.created_at", '>=', $since)
             ->whereNotNull("{$ticketsTable}.assigned_to")
             ->selectRaw("{$this->dateExpression("{$ticketsTable}.created_at")} as date")
@@ -699,7 +699,7 @@ class ReportingService
         $userModel = Escalated::newUserModel();
 
         // Replies per agent
-        $replies = Escalated::db()->table($repliesTable)
+        $replies = Escalated::query($repliesTable)
             ->where("{$repliesTable}.created_at", '>=', $since)
             ->where("{$repliesTable}.author_type", $userModel->getMorphClass())
             ->where("{$repliesTable}.is_internal_note", false)
@@ -782,7 +782,7 @@ class ReportingService
         $pivotTable = Escalated::table('ticket_tag');
         $hoursDiff = $this->avgHoursDiffRaw("{$ticketsTable}.created_at", "{$ticketsTable}.resolved_at");
 
-        return Escalated::db()->table($pivotTable)
+        return Escalated::query($pivotTable)
             ->join($ticketsTable, "{$pivotTable}.ticket_id", '=', "{$ticketsTable}.id")
             ->join($tagsTable, "{$pivotTable}.tag_id", '=', "{$tagsTable}.id")
             ->where("{$ticketsTable}.created_at", '>=', $since)
@@ -814,7 +814,7 @@ class ReportingService
         $departmentsTable = Escalated::table('departments');
         $hoursDiff = $this->avgHoursDiffRaw("{$ticketsTable}.created_at", "{$ticketsTable}.resolved_at");
 
-        return Escalated::db()->table($ticketsTable)
+        return Escalated::query($ticketsTable)
             ->leftJoin($departmentsTable, "{$ticketsTable}.department_id", '=', "{$departmentsTable}.id")
             ->where("{$ticketsTable}.created_at", '>=', $since)
             ->groupBy("{$ticketsTable}.department_id", "{$departmentsTable}.name")
