@@ -39,6 +39,7 @@ use Escalated\Laravel\Services\ImportService;
 use Escalated\Laravel\Services\PluginService;
 use Escalated\Laravel\Services\PluginUIService;
 use Escalated\Laravel\Services\TicketActionRegistry;
+use Escalated\Laravel\Support\GuestRateLimits;
 use Escalated\Laravel\Support\HookManager;
 use Escalated\Laravel\Tenancy\TenantBackgroundConnector;
 use Escalated\Laravel\Tenancy\TenantBroadcast;
@@ -146,6 +147,7 @@ class EscalatedServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        GuestRateLimits::register();
         Queue::createPayloadUsing(static fn () => app(TenantQueueContext::class)->payload());
         $this->callAfterResolving(Kernel::class, function ($kernel) {
             $kernel->addToMiddlewarePriorityBefore(
