@@ -20,7 +20,7 @@ return new class extends Migration
     public function up(): void
     {
         $schema = Escalated::schema();
-        foreach (TenantTables::NAMES as $name) {
+        foreach (TenantTables::INITIAL_NAMES as $name) {
             $table = Escalated::table($name);
             $index = 'esc_tenant_'.substr(sha1($table), 0, 12);
             $schema->table($table, function (Blueprint $blueprint) use ($index) {
@@ -50,14 +50,14 @@ return new class extends Migration
     {
         // Collapsing tenants can collide on email/slug keys and expose data. Require
         // explicit archival/repartitioning instead of silently undoing the boundary.
-        foreach (TenantTables::NAMES as $name) {
+        foreach (TenantTables::INITIAL_NAMES as $name) {
             if (Escalated::db()->table(Escalated::table($name))->where('tenant_id', '!=', '')->exists()) {
                 throw new RuntimeException('Cannot remove tenant namespaces while assigned tenant data exists.');
             }
         }
 
         $schema = Escalated::schema();
-        foreach (TenantTables::NAMES as $name) {
+        foreach (TenantTables::INITIAL_NAMES as $name) {
             $table = Escalated::table($name);
             $index = 'esc_tenant_'.substr(sha1($table), 0, 12);
             $schema->table($table, function (Blueprint $blueprint) use ($name, $index) {

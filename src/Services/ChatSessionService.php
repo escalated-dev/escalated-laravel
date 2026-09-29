@@ -14,9 +14,10 @@ use Escalated\Laravel\Events\ChatStarted;
 use Escalated\Laravel\Events\ChatTransferred;
 use Escalated\Laravel\Events\ChatTyping;
 use Escalated\Laravel\Models\ChatSession;
+use Escalated\Laravel\Models\Contact;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Ticket;
-use Illuminate\Support\Str;
+use Escalated\Laravel\Tenancy\TenantContext;
 
 class ChatSessionService
 {
@@ -29,7 +30,17 @@ class ChatSessionService
      */
     public function startChat(array $data): array
     {
-        $ticket = Ticket::create([
+        return app(GuestEmailVerification::class)->consume(
+            $data['verification_id'] ?? '', $data['verification_code'] ?? '', $data['email'] ?? '', 'chat',
+            fn () => $this->startVerifiedChat($data)
+        );
+    }
+
+    protected function startVerifiedChat(array $data): array
+    {
+        $email = GuestEmailVerification::email($data['email']);
+        $contact = Contact::findOrCreateByEmail($email, $data['name']);
+        $ticket = new Ticket([
             'subject' => $data['subject'] ?? 'Live Chat',
             'description' => $data['message'] ?? '',
             'status' => TicketStatus::Live,
@@ -37,27 +48,44 @@ class ChatSessionService
             'channel' => TicketChannel::Chat,
             'department_id' => $data['department_id'] ?? null,
             'guest_name' => $data['name'] ?? null,
-            'guest_email' => $data['email'] ?? null,
-            'guest_token' => Str::random(64),
+            'guest_email' => $email,
+            'guest_verified_email' => $email,
+            'guest_email_verified_at' => now(),
+            'contact_id' => $contact->id,
             'chat_metadata' => $data['metadata'] ?? null,
         ]);
+        $ticket->deferCreatedEvent = true;
+        app(GuestTicketService::class)->applyIdentityPolicy($ticket);
+        $ticket->save();
+        $token = app(GuestAccess::class)->issue($ticket, 'chat');
 
         $session = ChatSession::create([
             'ticket_id' => $ticket->id,
-            'customer_session_id' => Str::random(64),
+            'customer_session_id' => hash('sha256', $token),
             'status' => ChatSessionStatus::Waiting,
             'started_at' => now(),
             'metadata' => $data['metadata'] ?? null,
         ]);
 
-        $this->routingService->evaluateRouting($session);
-
-        $session->refresh();
-
-        ChatStarted::dispatch($session);
+        $ticket->dispatchCreatedAfterCommit();
+        $tenant = app(TenantContext::class)->enabled() ? (string) $ticket->tenant_id : null;
+        Escalated::db()->afterCommit(function () use ($session, $tenant) {
+            $route = function () use ($session) {
+                $session->refresh();
+                $this->routingService->evaluateRouting($session);
+                ChatStarted::dispatch($session->fresh());
+            };
+            if ($tenant !== null) {
+                app(TenantContext::class)->run($tenant, $route);
+            } else {
+                $route();
+            }
+        });
 
         return [
-            'session_id' => $session->customer_session_id,
+            'id' => $token,
+            'session_id' => $token,
+            'expires_at' => $ticket->guest_access_expires_at->toIso8601String(),
             'ticket_reference' => $ticket->reference,
             'status' => $session->status->value,
             'agent_name' => $session->agent?->name,

@@ -1,12 +1,16 @@
 <?php
 
+use Escalated\Laravel\Http\Controllers\Guest\VerificationController;
 use Escalated\Laravel\Http\Controllers\WidgetChatController;
 use Escalated\Laravel\Http\Controllers\WidgetController;
+use Escalated\Laravel\Http\Middleware\GuestPrivacyHeaders;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['web', 'throttle:escalated-guest-requests'])
+Route::middleware(['web', GuestPrivacyHeaders::class, 'throttle:escalated-guest-requests'])
     ->prefix(config('escalated.routes.prefix', 'support').'/widget')
     ->group(function () {
+        Route::post('/verification', [VerificationController::class, 'store'])->middleware('throttle:escalated-guest-submissions')->name('escalated.widget.verification');
+        Route::post('/lookup', [VerificationController::class, 'lookup'])->middleware('throttle:escalated-guest-replies')->name('escalated.widget.lookup');
         Route::get('/config', [WidgetController::class, 'config'])->name('escalated.widget.config');
         Route::get('/articles', [WidgetController::class, 'searchArticles'])->name('escalated.widget.articles.search');
         Route::get('/articles/{slug}', [WidgetController::class, 'showArticle'])->name('escalated.widget.articles.show');
@@ -17,6 +21,8 @@ Route::middleware(['web', 'throttle:escalated-guest-requests'])
         Route::get('/chat/availability', [WidgetChatController::class, 'availability'])->name('escalated.widget.chat.availability');
         Route::post('/chat/start', [WidgetChatController::class, 'start'])->middleware('throttle:escalated-guest-submissions')->name('escalated.widget.chat.start');
         Route::post('/chat/{sessionId}/message', [WidgetChatController::class, 'message'])->middleware('throttle:escalated-guest-replies')->name('escalated.widget.chat.message');
+        Route::post('/chat/{sessionId}/messages', [WidgetChatController::class, 'message'])->middleware('throttle:escalated-guest-replies')->name('escalated.widget.chat.messages.store');
+        Route::get('/chat/{sessionId}/messages', [WidgetChatController::class, 'messages'])->name('escalated.widget.chat.messages');
         Route::post('/chat/{sessionId}/typing', [WidgetChatController::class, 'typing'])->name('escalated.widget.chat.typing');
         Route::post('/chat/{sessionId}/end', [WidgetChatController::class, 'end'])->name('escalated.widget.chat.end');
         Route::post('/chat/{sessionId}/rate', [WidgetChatController::class, 'rate'])->middleware('throttle:escalated-guest-replies')->name('escalated.widget.chat.rate');

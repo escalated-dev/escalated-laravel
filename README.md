@@ -43,7 +43,7 @@ A full-featured, embeddable support ticket system for Laravel. Drop it into any 
 - **Email notifications** — Configurable per-event notifications with webhook support
 - **Department routing** — Organize agents into departments with auto-assignment (round-robin)
 - **Tagging system** — Categorize tickets with colored tags
-- **Guest tickets** — Anonymous ticket submission with magic-link access via guest token
+- **Guest tickets** — Email-verified submission, expiring private links, and host-supplied tracking lookup; see [verified guest access and upgrade requirements](docs/guest-access.md)
 - **Inbound email** — Create and reply to tickets via email (Mailgun, Postmark, AWS SES, IMAP)
 - **Inertia.js + Vue 3 UI** — Shared frontend via [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated)
 - **Ticket splitting** — Split a reply into a new standalone ticket while preserving the original context

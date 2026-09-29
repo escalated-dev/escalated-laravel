@@ -33,16 +33,21 @@ class AttachmentAccess
     {
         $parameters = ['attachment' => $attachment->getKey()];
         $guest = request()->attributes->get('escalated.attachment_guest_ticket');
-        if ($guest instanceof Ticket && $guest->guest_token && $this->isPublic($attachment)
+        if ($guest instanceof Ticket && app(GuestAccess::class)->active($guest) && $this->isPublic($attachment)
             && $this->ticket($attachment)?->is($guest)) {
             // The download gets a short-lived, ticket-bound capability, never the
-            // permanent guest token. Rotating that token also revokes issued links.
-            $parameters['guest'] = hash('sha256', $guest->guest_token);
+            // ticket grant. Rotating or expiring that grant revokes issued links.
+            $parameters['guest'] = $guest->guest_access_hash;
         }
 
         $minutes = max(1, min(60, (int) config('escalated.storage.download_ttl_minutes', 10)));
 
-        return URL::temporarySignedRoute('escalated.attachments.download', now()->addMinutes($minutes), $parameters);
+        $expires = now()->addMinutes($minutes);
+        if (isset($parameters['guest']) && $guest->guest_access_expires_at->lt($expires)) {
+            $expires = $guest->guest_access_expires_at;
+        }
+
+        return URL::temporarySignedRoute('escalated.attachments.download', $expires, $parameters);
     }
 
     public function authorize(Request $request, Attachment $attachment): void
@@ -51,8 +56,8 @@ class AttachmentAccess
         abort_unless($ticket, 404);
 
         $guest = $request->query('guest');
-        if (is_string($guest) && $ticket->guest_token && $this->isPublic($attachment)
-            && hash_equals(hash('sha256', $ticket->guest_token), $guest)) {
+        if (is_string($guest) && app(GuestAccess::class)->active($ticket) && $this->isPublic($attachment)
+            && hash_equals($ticket->guest_access_hash, $guest)) {
             return; // Signature and expiry were checked by the route middleware.
         }
 

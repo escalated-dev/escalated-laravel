@@ -40,22 +40,18 @@ class Contact extends Model
     {
         $normalized = strtolower(trim($email));
 
-        $existing = static::where('email', $normalized)->first();
-        if ($existing) {
-            if (empty($existing->name) && ! empty($name)) {
-                $existing->name = $name;
-                $existing->save();
-            }
-
-            return $existing;
-        }
-
-        return static::create([
-            'email' => $normalized,
+        // Eloquent retries unique-key races inside a savepoint when already
+        // in a transaction, so concurrent proofs cannot abort the package TX.
+        $contact = static::firstOrCreate(['email' => $normalized], [
             'name' => $name,
             'user_id' => null,
             'metadata' => [],
         ]);
+        if (empty($contact->name) && ! empty($name)) {
+            $contact->update(['name' => $name]);
+        }
+
+        return $contact;
     }
 
     public function linkToUser(int|string $userId): self

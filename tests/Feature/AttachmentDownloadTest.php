@@ -78,17 +78,18 @@ it('keeps customer bearer tokens within requester access even when their owner i
 });
 
 it('allows only ticket-bound public guest grants and revokes them on token rotation', function () {
-    $this->ticket->update(['guest_token' => str_repeat('a', 64)]);
+    $token = $this->guestToken($this->ticket);
     app(AttachmentAccess::class)->forGuest($this->ticket);
     $url = $this->attachment->fresh()->url;
-    expect($url)->toContain('guest=')->not->toContain(str_repeat('a', 64));
+    expect($url)->toContain('guest=')->not->toContain($token);
     $this->get($url)->assertOk();
-    $this->ticket->update(['guest_token' => str_repeat('b', 64)]);
+    $this->guestToken($this->ticket);
     $this->get($url)->assertForbidden();
 });
 
 it('does not issue a guest grant for another ticket or an internal note', function () {
-    $guest = Ticket::factory()->create(['guest_token' => str_repeat('g', 64)]);
+    $guest = Ticket::factory()->create();
+    $this->guestToken($guest);
     app(AttachmentAccess::class)->forGuest($guest);
     expect($this->attachment->url)->not->toContain('guest=');
     $reply = Reply::factory()->create(['ticket_id' => $guest->id, 'is_internal_note' => true]);
@@ -96,7 +97,7 @@ it('does not issue a guest grant for another ticket or an internal note', functi
     expect($note->url)->not->toContain('guest=');
     // Even a host-issued URL carrying a guest grant cannot expose an internal note.
     $url = URL::temporarySignedRoute('escalated.attachments.download', now()->addMinute(), [
-        'attachment' => $note->id, 'guest' => hash('sha256', $guest->guest_token),
+        'attachment' => $note->id, 'guest' => $guest->guest_access_hash,
     ]);
     $this->get($url)->assertForbidden();
 });

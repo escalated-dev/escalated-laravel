@@ -4,8 +4,13 @@ namespace Escalated\Laravel\Tests;
 
 use Escalated\Laravel\Escalated;
 use Escalated\Laravel\EscalatedServiceProvider;
+use Escalated\Laravel\Mail\GuestVerificationCode;
+use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Services\GuestAccess;
+use Escalated\Laravel\Services\GuestEmailVerification;
 use Escalated\Laravel\Tests\Fixtures\TestUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Inertia\ServiceProvider as InertiaServiceProvider;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 
@@ -74,6 +79,23 @@ abstract class TestCase extends BaseTestCase
             'email' => 'test@example.com',
             'password' => bcrypt('password'),
         ], $attributes));
+    }
+
+    protected function guestProof(string $email, string $purpose = 'ticket'): array
+    {
+        Mail::fake();
+        $id = app(GuestEmailVerification::class)->challenge($email, $purpose);
+        $mail = Mail::sent(GuestVerificationCode::class)->last();
+
+        return ['verification_id' => $id, 'verification_code' => $mail->code];
+    }
+
+    protected function guestToken(Ticket $ticket, string $purpose = 'ticket'): string
+    {
+        $email = $ticket->guest_email ?? 'guest@example.com';
+        $ticket->updateQuietly(['guest_email' => $email, 'guest_verified_email' => $email, 'guest_email_verified_at' => now()]);
+
+        return app(GuestAccess::class)->issue($ticket, $purpose);
     }
 
     protected function createAgent(array $attributes = []): TestUser

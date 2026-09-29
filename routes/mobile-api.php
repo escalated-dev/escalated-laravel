@@ -5,8 +5,10 @@ use Escalated\Laravel\Http\Controllers\Api\MobileGuestTicketController;
 use Escalated\Laravel\Http\Controllers\Api\MobileKnowledgeBaseController;
 use Escalated\Laravel\Http\Controllers\Api\MobileResourceController;
 use Escalated\Laravel\Http\Controllers\Api\MobileTicketController;
+use Escalated\Laravel\Http\Controllers\Guest\VerificationController;
 use Escalated\Laravel\Http\Middleware\ApiRateLimit;
 use Escalated\Laravel\Http\Middleware\AuthenticateApiToken;
+use Escalated\Laravel\Http\Middleware\GuestPrivacyHeaders;
 use Escalated\Laravel\Http\Middleware\ResolveTicketByReference;
 use Illuminate\Support\Facades\Route;
 
@@ -23,7 +25,9 @@ Route::prefix(config('escalated.api.mobile_prefix', 'support/api/v1/mobile'))
         Route::post('/kb/articles/{slug}/rate', [MobileKnowledgeBaseController::class, 'rate'])->name('escalated.api.mobile.kb.rate');
         Route::get('/kb/categories', [MobileKnowledgeBaseController::class, 'categories'])->name('escalated.api.mobile.kb.categories');
 
-        Route::middleware('throttle:escalated-guest-requests')->group(function () {
+        Route::middleware([GuestPrivacyHeaders::class, 'throttle:escalated-guest-requests'])->group(function () {
+            Route::post('/guest/verification', [VerificationController::class, 'store'])->middleware('throttle:escalated-guest-submissions')->name('escalated.api.mobile.guest.verification');
+            Route::post('/guest/lookup', [VerificationController::class, 'lookup'])->middleware('throttle:escalated-guest-replies')->name('escalated.api.mobile.guest.lookup');
             Route::post('/guest/tickets', [MobileGuestTicketController::class, 'store'])->middleware('throttle:escalated-guest-submissions')->name('escalated.api.mobile.guest.tickets.store');
             Route::get('/guest/tickets/{token}', [MobileGuestTicketController::class, 'show'])->name('escalated.api.mobile.guest.tickets.show');
             Route::post('/guest/tickets/{token}/replies', [MobileGuestTicketController::class, 'reply'])->middleware('throttle:escalated-guest-replies')->name('escalated.api.mobile.guest.tickets.reply');

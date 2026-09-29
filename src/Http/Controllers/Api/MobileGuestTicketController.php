@@ -2,20 +2,19 @@
 
 namespace Escalated\Laravel\Http\Controllers\Api;
 
-use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Http\Resources\MobileTicketResource;
-use Escalated\Laravel\Models\Contact;
 use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Models\Reply;
-use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\AttachmentAccess;
 use Escalated\Laravel\Services\AttachmentService;
+use Escalated\Laravel\Services\GuestAccess;
+use Escalated\Laravel\Services\GuestEmailVerification;
+use Escalated\Laravel\Services\GuestTicketService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Str;
 
 class MobileGuestTicketController extends Controller
 {
@@ -33,32 +32,21 @@ class MobileGuestTicketController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
             'subject' => ['required', 'string', 'max:255'],
-            'description' => ['required', 'string'],
+            'verification_id' => ['required', 'uuid'],
+            'verification_code' => ['required', 'string', 'max:16'],
+            'description' => ['required', 'string', 'max:65535'],
             'priority' => ['nullable', 'in:low,medium,high,urgent,critical'],
             'department_id' => ['nullable', 'exists:'.Department::class.',id'],
-            'attachments' => ['nullable', 'array'],
+            'attachments' => ['nullable', 'array', 'max:10'],
             'attachments.*' => ['file', 'max:'.$maxSize],
         ]);
 
-        $contact = Contact::findOrCreateByEmail($validated['email'], $validated['name']);
-        $token = Str::random(64);
-
-        $ticket = Ticket::create([
-            'guest_name' => $validated['name'],
-            'guest_email' => $validated['email'],
-            'guest_token' => $token,
-            'contact_id' => $contact->id,
-            'subject' => $validated['subject'],
-            'description' => $validated['description'],
-            'status' => TicketStatus::Open,
-            'priority' => TicketPriority::tryFrom($validated['priority'] ?? '') ?? TicketPriority::from(config('escalated.default_priority', 'medium')),
-            'channel' => 'web',
-            'department_id' => $validated['department_id'] ?? null,
-        ]);
-
-        if ($request->hasFile('attachments')) {
-            $this->attachmentService->storeMany($ticket, $request->file('attachments', []));
-        }
+        $result = app(GuestTicketService::class)->create(
+            $validated,
+            'web', $request->file('attachments', [])
+        );
+        $ticket = $result['ticket'];
+        $token = $result['token'];
 
         $ticket->load(['department', 'attachments']);
         app(AttachmentAccess::class)->forGuest($ticket);
@@ -71,9 +59,7 @@ class MobileGuestTicketController extends Controller
 
     public function show(string $token): JsonResponse
     {
-        $ticket = Ticket::query()
-            ->where('guest_token', $token)
-            ->firstOrFail();
+        $ticket = app(GuestAccess::class)->resolve($token);
 
         app(AttachmentAccess::class)->forGuest($ticket);
 
@@ -91,20 +77,20 @@ class MobileGuestTicketController extends Controller
 
     public function reply(string $token, Request $request): JsonResponse
     {
-        $ticket = Ticket::query()->where('guest_token', $token)->firstOrFail();
+        $ticket = app(GuestAccess::class)->resolve($token);
 
         if ($ticket->status === TicketStatus::Closed) {
             return response()->json(['message' => 'This ticket is closed.'], 422);
         }
 
         $validated = $request->validate([
-            'body' => ['required', 'string'],
+            'body' => ['required', 'string', 'max:65535'],
             'email' => ['required', 'email'],
-            'attachments' => ['nullable', 'array'],
+            'attachments' => ['nullable', 'array', 'max:10'],
             'attachments.*' => ['file', 'max:'.config('escalated.tickets.max_attachment_size_kb', 10240)],
         ]);
 
-        if (! hash_equals((string) $ticket->guest_email, (string) $validated['email'])) {
+        if (! hash_equals((string) $ticket->guest_email, GuestEmailVerification::email($validated['email']))) {
             return response()->json(['message' => 'The provided email does not match this ticket.'], 403);
         }
 

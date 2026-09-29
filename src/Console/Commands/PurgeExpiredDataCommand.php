@@ -5,6 +5,7 @@ namespace Escalated\Laravel\Console\Commands;
 use Carbon\Carbon;
 use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Models\EscalatedSettings;
+use Escalated\Laravel\Models\GuestVerification;
 use Illuminate\Console\Command;
 
 class PurgeExpiredDataCommand extends Command
@@ -42,6 +43,11 @@ class PurgeExpiredDataCommand extends Command
         $this->purgeAttachments($isDryRun, $isForce);
         $this->purgeAuditLogs($isDryRun, $isForce);
         $this->permanentDeleteGraceExpired($isDryRun);
+        $expiredProofs = GuestVerification::where('expires_at', '<=', now());
+        $this->line('Expired guest verification records: '.$expiredProofs->count());
+        if (! $isDryRun) {
+            $expiredProofs->delete();
+        }
 
         $this->info('Purge complete.');
 

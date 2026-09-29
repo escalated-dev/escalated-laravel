@@ -16,6 +16,8 @@ class ChatSession extends Model
 
     protected $guarded = ['id'];
 
+    protected $hidden = ['customer_session_id'];
+
     public function getTable(): string
     {
         return Escalated::table('chat_sessions');

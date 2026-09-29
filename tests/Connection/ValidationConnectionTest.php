@@ -26,7 +26,7 @@ it('validates a widget department on the package database and rejects missing ID
         'name' => 'Recipient', 'email' => 'recipient@example.com',
         'subject' => 'Parcel question', 'description' => 'Please help with delivery.',
         'department_id' => $department->id,
-    ];
+    ] + $this->guestProof('recipient@example.com');
 
     $this->postJson(route('escalated.widget.tickets.store'), $payload)->assertCreated();
     expect(Ticket::first()->department_id)->toBe($department->id);

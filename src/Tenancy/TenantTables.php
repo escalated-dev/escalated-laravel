@@ -11,7 +11,9 @@ class TenantTables
     // identity security. None carries merchant correspondence or credentials.
     public const PLATFORM = ['plugins', 'permissions', 'two_factor', 'attachment_migration_locks'];
 
-    public const NAMES = [
+    // Frozen table set used by the initial tenant migration. Later tables own
+    // their tenant column in their creation migration.
+    public const INITIAL_NAMES = [
         'agent_capacity',
         'agent_profiles',
         'agent_skill',
@@ -71,6 +73,8 @@ class TenantTables
         'workflow_logs',
         'workflows',
     ];
+
+    public const NAMES = [...self::INITIAL_NAMES, 'guest_verifications'];
 
     public static function contains(string $table): bool
     {
