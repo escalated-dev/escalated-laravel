@@ -54,6 +54,8 @@ class PluginBridge
 
     private bool $routesRegistered = false;
 
+    private bool $supportsHttpContract = false;
+
     /** Crash-restart state */
     private int $restartAttempts = 0;
 
@@ -214,6 +216,8 @@ class PluginBridge
 
         $this->contextHandler->setCurrentPlugin($plugin);
 
+        $this->requireHttpContract($request);
+
         return $this->rpc->call(
             'endpoint',
             [
@@ -222,6 +226,9 @@ class PluginBridge
                 'path' => $path,
                 'body' => $request['body'] ?? null,
                 'params' => $request['params'] ?? [],
+                'query' => $request['query'] ?? [],
+                'headers' => $request['headers'] ?? [],
+                ...array_intersect_key($request, array_flip(['httpContract', 'rawBodyBase64', 'clientIp'])),
             ],
             self::TIMEOUT_ENDPOINT,
             [$this->contextHandler, 'handle']
@@ -231,13 +238,15 @@ class PluginBridge
     /**
      * Call a plugin's webhook handler (used by webhook route handlers).
      */
-    public function callWebhook(string $plugin, string $method, string $path, array $body, array $headers): mixed
+    public function callWebhook(string $plugin, string $method, string $path, array $body, array $headers, array $transport = []): mixed
     {
         if (! $this->ensureAlive()) {
             throw new RuntimeException('Plugin runtime is not available');
         }
 
         $this->contextHandler->setCurrentPlugin($plugin);
+
+        $this->requireHttpContract($transport);
 
         return $this->rpc->call(
             'webhook',
@@ -247,6 +256,9 @@ class PluginBridge
                 'path' => $path,
                 'body' => $body,
                 'headers' => $headers,
+                'params' => $transport['params'] ?? [],
+                'query' => $transport['query'] ?? [],
+                ...array_intersect_key($transport, array_flip(['httpContract', 'rawBodyBase64', 'clientIp'])),
             ],
             self::TIMEOUT_WEBHOOK,
             [$this->contextHandler, 'handle']
@@ -261,6 +273,14 @@ class PluginBridge
     public function getManifests(): array
     {
         return $this->manifests;
+    }
+
+    private function requireHttpContract(array $request): void
+    {
+        if (isset($request['httpContract'])) {
+            abort_unless($request['httpContract'] === 1 && $this->supportsHttpContract, 503,
+                'Upgrade the plugin runtime to support HTTP contract version 1.');
+        }
     }
 
     /**
@@ -296,7 +316,7 @@ class PluginBridge
     private function spawn(): void
     {
         $command = config('escalated.plugins.runtime_command')
-            ?: 'node node_modules/@escalated-dev/plugin-runtime/dist/index.js';
+            ?: 'node node_modules/@escalated-dev/plugin-runtime/build/bin/escalated-plugins.js';
 
         // Determine the working directory for the subprocess — default to the
         // Laravel base_path() so Node can resolve node_modules.
@@ -350,6 +370,8 @@ class PluginBridge
                 "Plugin runtime protocol mismatch: runtime speaks v{$protocolVer} (v{$runtimeVer}), host speaks v".self::PROTOCOL_VERSION
             );
         }
+
+        $this->supportsHttpContract = in_array(1, (array) ($result['http_contract_versions'] ?? []), true);
 
         Log::info('Escalated PluginBridge: handshake OK', [
             'runtime_version' => $result['runtime_version'] ?? 'unknown',
@@ -530,6 +552,7 @@ class PluginBridge
         $this->stdin = null;
         $this->stdout = null;
         $this->rpc = null;
+        $this->supportsHttpContract = false;
     }
 
     /**

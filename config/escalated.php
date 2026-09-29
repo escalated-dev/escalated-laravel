@@ -375,7 +375,7 @@ return [
 
         // SDK plugins run in a Node.js subprocess.
         'sdk_enabled' => env('ESCALATED_PLUGINS_SDK_ENABLED', true),
-        'runtime_command' => env('ESCALATED_PLUGINS_RUNTIME_COMMAND', 'node node_modules/@escalated-dev/plugin-runtime/dist/index.js'),
+        'runtime_command' => env('ESCALATED_PLUGINS_RUNTIME_COMMAND', 'node node_modules/@escalated-dev/plugin-runtime/build/bin/escalated-plugins.js'),
         // Working directory for the subprocess. `null` uses base_path().
         'runtime_cwd' => env('ESCALATED_PLUGINS_RUNTIME_CWD'),
     ],
