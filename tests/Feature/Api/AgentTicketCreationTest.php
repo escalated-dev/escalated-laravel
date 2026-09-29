@@ -8,16 +8,10 @@ use Escalated\Laravel\Models\TicketActivity;
 use Escalated\Laravel\Models\TicketSubjectLink;
 use Escalated\Laravel\Services\AgentTicketCreator;
 use Escalated\Laravel\Tests\Fixtures\ApiShipment;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Schema;
 
 beforeEach(function () {
-    Schema::create('api_shipments', function (Blueprint $table) {
-        $table->string('id')->primary();
-        $table->string('name');
-    });
     config(['escalated.ticket_subjects.types' => ['shipment' => ApiShipment::class]]);
     Gate::define('escalated-agent', fn ($user) => (bool) $user->is_agent);
     $this->actor = $this->createAgent();
@@ -30,8 +24,6 @@ beforeEach(function () {
         'subjects' => [['type' => 'shipment', 'id' => 'a', 'role' => 'parcel']],
     ];
 });
-
-afterEach(fn () => Schema::dropIfExists('api_shipments'));
 
 it('persists the aggregate and replaces ordered links on the configured database driver', function () {
     $created = $this->postJson('/support/api/v1/tickets', $this->payload)->assertCreated()->json('data');

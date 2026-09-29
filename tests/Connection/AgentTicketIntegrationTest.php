@@ -26,13 +26,11 @@ beforeEach(function () {
     Gate::define('escalated-admin', fn ($user) => (bool) $user->is_admin);
     config(['database.connections.subject_host' => ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => ''],
         'escalated.ticket_subjects.types' => ['shipment' => ApiShipment::class, 'order' => ApiOrder::class]]);
-    foreach (['testing' => 'api_shipments', 'subject_host' => 'api_orders'] as $connection => $table) {
-        Schema::connection($connection)->create($table, function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->string('name');
-            $table->string('account')->default('a');
-        });
-    }
+    Schema::connection('subject_host')->create('api_orders', function (Blueprint $table) {
+        $table->string('id')->primary();
+        $table->string('name');
+        $table->string('account')->default('a');
+    });
     $this->agent = $this->createAgent(['email' => 'agent@example.test']);
     $this->requester = $this->createTestUser(['email' => 'requester@example.test']);
     $this->shipment = ApiShipment::create(['id' => '00017', 'name' => 'Shipment A']);
