@@ -10,7 +10,10 @@ advertising the verification capability.
 Deploy the shared frontend's verified guest forms before enabling these backend
 routes, and run the package migrations. Existing `Guest/Create` and `Guest/Show`
 pages are reused. `Guest/Create` receives `verification_url` and `lookup_url`;
-widget configuration advertises `guest_verification_required: true`. Older
+widget configuration advertises `guest_verification_required: true`. The shared
+frontend implementation is in [PR 186](https://github.com/escalated-dev/escalated/pull/186)
+with the tenant-context correction in [PR 187](https://github.com/escalated-dev/escalated/pull/187);
+hosts must include both when building their frontend assets. Older
 clients cannot create guest tickets without adding the email-code step.
 
 Legacy permanent ticket and chat tokens no longer authorize requests. Existing
@@ -68,7 +71,8 @@ hour, shared across IPs, tenants and purposes. A 429 response includes
 Browser creation retains `guest_name` and `guest_email`; mobile and widget
 creation retain `name` and `email`. Add the proof fields to the existing ticket
 payload. Browser creation redirects to the private ticket URL. Mobile creation
-returns `data.guest_access_token`; widget creation returns `guest_access_token`.
+returns `data.guest_access_token` and `data.guest_access_expires_at`; widget
+creation returns `guest_access_token` and `expires_at`.
 The token is an opaque authenticated, encrypted, expiring grant. Do not parse it
 or assume the old 64-character format.
 
