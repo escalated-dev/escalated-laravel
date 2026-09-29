@@ -47,6 +47,7 @@ it('starts a new chat session', function () {
     AgentProfile::forUser($agent->id)->update(['chat_status' => ChatStatus::Online]);
 
     $response = $this->postJson('/support/widget/chat/start', [
+        ...$this->guestProof('john@example.com', 'chat'),
         'name' => 'John Doe',
         'email' => 'john@example.com',
         'subject' => 'Need help',
@@ -63,8 +64,10 @@ it('starts a new chat session', function () {
 it('sends a customer message', function () {
     $ticket = Ticket::factory()->create(['status' => TicketStatus::Live, 'channel' => 'chat']);
     $session = ChatSession::factory()->active()->create(['ticket_id' => $ticket->id]);
+    $token = $this->guestToken($ticket, 'chat');
+    $session->update(['customer_session_id' => hash('sha256', $token)]);
 
-    $response = $this->postJson("/support/widget/chat/{$session->customer_session_id}/message", [
+    $response = $this->postJson("/support/widget/chat/{$token}/message", [
         'body' => 'Hello from customer!',
     ]);
 
@@ -75,8 +78,10 @@ it('sends a customer message', function () {
 it('rejects message on ended chat', function () {
     $ticket = Ticket::factory()->create(['status' => TicketStatus::Closed, 'channel' => 'chat']);
     $session = ChatSession::factory()->ended()->create(['ticket_id' => $ticket->id]);
+    $token = $this->guestToken($ticket, 'chat');
+    $session->update(['customer_session_id' => hash('sha256', $token)]);
 
-    $response = $this->postJson("/support/widget/chat/{$session->customer_session_id}/message", [
+    $response = $this->postJson("/support/widget/chat/{$token}/message", [
         'body' => 'Hello',
     ]);
 
@@ -86,8 +91,10 @@ it('rejects message on ended chat', function () {
 it('customer ends a chat', function () {
     $ticket = Ticket::factory()->create(['status' => TicketStatus::Live, 'channel' => 'chat']);
     $session = ChatSession::factory()->active()->create(['ticket_id' => $ticket->id]);
+    $token = $this->guestToken($ticket, 'chat');
+    $session->update(['customer_session_id' => hash('sha256', $token)]);
 
-    $response = $this->postJson("/support/widget/chat/{$session->customer_session_id}/end");
+    $response = $this->postJson("/support/widget/chat/{$token}/end");
     $response->assertOk();
 
     $session->refresh();
@@ -97,8 +104,10 @@ it('customer ends a chat', function () {
 it('rates a completed chat', function () {
     $ticket = Ticket::factory()->create(['status' => TicketStatus::Closed, 'channel' => 'chat']);
     $session = ChatSession::factory()->ended()->create(['ticket_id' => $ticket->id]);
+    $token = $this->guestToken($ticket, 'chat');
+    $session->update(['customer_session_id' => hash('sha256', $token)]);
 
-    $response = $this->postJson("/support/widget/chat/{$session->customer_session_id}/rate", [
+    $response = $this->postJson("/support/widget/chat/{$token}/rate", [
         'rating' => 5,
         'comment' => 'Great help!',
     ]);
@@ -113,8 +122,10 @@ it('rates a completed chat', function () {
 it('rejects rating on active chat', function () {
     $ticket = Ticket::factory()->create(['status' => TicketStatus::Live, 'channel' => 'chat']);
     $session = ChatSession::factory()->active()->create(['ticket_id' => $ticket->id]);
+    $token = $this->guestToken($ticket, 'chat');
+    $session->update(['customer_session_id' => hash('sha256', $token)]);
 
-    $response = $this->postJson("/support/widget/chat/{$session->customer_session_id}/rate", [
+    $response = $this->postJson("/support/widget/chat/{$token}/rate", [
         'rating' => 5,
     ]);
 
@@ -124,8 +135,10 @@ it('rejects rating on active chat', function () {
 it('sends customer typing indicator', function () {
     $ticket = Ticket::factory()->create(['status' => TicketStatus::Live, 'channel' => 'chat']);
     $session = ChatSession::factory()->active()->create(['ticket_id' => $ticket->id]);
+    $token = $this->guestToken($ticket, 'chat');
+    $session->update(['customer_session_id' => hash('sha256', $token)]);
 
-    $response = $this->postJson("/support/widget/chat/{$session->customer_session_id}/typing");
+    $response = $this->postJson("/support/widget/chat/{$token}/typing");
     $response->assertOk();
 
     $session->refresh();

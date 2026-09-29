@@ -29,6 +29,7 @@ it('starts a chat and creates ticket and session', function () {
     $service = app(ChatSessionService::class);
 
     $result = $service->startChat([
+        ...$this->guestProof('john@example.com', 'chat'),
         'name' => 'John Doe',
         'email' => 'john@example.com',
         'subject' => 'Help me',
@@ -42,7 +43,7 @@ it('starts a chat and creates ticket and session', function () {
     expect($ticket->channel)->toBe(TicketChannel::Chat);
     expect($ticket->guest_name)->toBe('John Doe');
 
-    $session = ChatSession::where('customer_session_id', $result['session_id'])->first();
+    $session = ChatSession::where('customer_session_id', hash('sha256', $result['session_id']))->first();
     expect($session)->not->toBeNull();
     expect($session->ticket_id)->toBe($ticket->id);
 });

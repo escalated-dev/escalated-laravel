@@ -2,13 +2,12 @@
 
 namespace Escalated\Laravel\Http\Controllers;
 
-use Escalated\Laravel\Enums\TicketPriority;
-use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Models\Article;
-use Escalated\Laravel\Models\Contact;
 use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Services\GuestAccess;
+use Escalated\Laravel\Services\GuestTicketService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -41,6 +40,7 @@ class WidgetController extends Controller
             'departments' => $departments,
             'kb_enabled' => $this->knowledgeBaseAvailable($request),
             'guest_tickets_enabled' => EscalatedSettings::guestTicketsEnabled(),
+            'guest_verification_required' => true,
         ]);
     }
 
@@ -133,67 +133,25 @@ class WidgetController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
             'subject' => ['required', 'string', 'max:255'],
+            'verification_id' => ['required', 'uuid'],
+            'verification_code' => ['required', 'string', 'max:16'],
             'description' => ['required', 'string', 'max:5000'],
             'department_id' => ['nullable', 'integer', 'exists:'.Department::class.',id'],
         ]);
 
-        // Dedupe repeat submitters by email — one Contact per email
-        // across all their tickets (Pattern B).
-        $contact = Contact::findOrCreateByEmail($validated['email'], $validated['name']);
-
-        $attrs = [
-            'subject' => $validated['subject'],
-            'description' => $validated['description'],
-            'status' => TicketStatus::Open,
-            'priority' => TicketPriority::from(config('escalated.default_priority', 'medium')),
-            'channel' => 'widget',
-            'department_id' => $validated['department_id'] ?? null,
-            'contact_id' => $contact->id,
-        ];
-
-        // Apply the admin-configured guest policy. Persisted by
-        // PublicTicketsSettingsController under three keys in the
-        // EscalatedSettings table. Modes:
-        //   - unassigned (default): write guest_name / guest_email /
-        //     guest_token, leave requester_* null.
-        //   - guest_user: route to a pre-created host-app user via
-        //     requester_id + requester_type. Still records guest_name/
-        //     guest_email so agents can see who submitted.
-        //   - prompt_signup: same ticket-create path as unassigned;
-        //     signup-invite emission is a listener-level follow-up.
-        $mode = EscalatedSettings::get('guest_policy_mode', 'unassigned');
-
-        if ($mode === 'guest_user') {
-            $guestUserId = EscalatedSettings::get('guest_policy_user_id');
-            if (! empty($guestUserId)) {
-                $attrs['requester_type'] = config('escalated.user_model', 'App\\Models\\User');
-                $attrs['requester_id'] = $guestUserId;
-                $attrs['guest_name'] = $validated['name'];
-                $attrs['guest_email'] = $validated['email'];
-            } else {
-                // Misconfigured guest_user mode (no/zero user id):
-                // fall through to unassigned behavior so submissions
-                // still succeed instead of 500ing.
-                $attrs['guest_name'] = $validated['name'];
-                $attrs['guest_email'] = $validated['email'];
-                $attrs['guest_token'] = Str::random(64);
-            }
-        } else {
-            $attrs['guest_name'] = $validated['name'];
-            $attrs['guest_email'] = $validated['email'];
-            $attrs['guest_token'] = Str::random(64);
-        }
-
-        $ticket = Ticket::create($attrs);
+        $result = app(GuestTicketService::class)->create($validated, 'widget');
+        $ticket = $result['ticket'];
 
         return response()->json([
             'message' => 'Ticket created successfully.',
             'reference' => $ticket->reference,
+            'guest_access_token' => $result['token'],
+            'expires_at' => $ticket->guest_access_expires_at->toIso8601String(),
         ], 201);
     }
 
     /**
-     * Look up ticket status by reference + email.
+     * Look up ticket status with its verified, expiring guest bearer grant.
      */
     public function ticketStatus(string $reference, Request $request): JsonResponse
     {
@@ -201,17 +159,10 @@ class WidgetController extends Controller
             abort(403);
         }
 
-        $request->validate([
-            'email' => ['required', 'email'],
-        ]);
-
-        $ticket = Ticket::where('reference', $reference)
-            ->where('guest_email', $request->input('email'))
-            ->first();
-
-        if (! $ticket) {
-            return response()->json(['message' => 'Ticket not found.'], 404);
-        }
+        $token = $request->bearerToken();
+        abort_unless(is_string($token) && $token !== '', 404);
+        $ticket = app(GuestAccess::class)->resolve($token);
+        abort_unless(hash_equals($ticket->reference, $reference), 404);
 
         $replies = $ticket->replies()
             ->where('is_internal_note', false)

@@ -107,6 +107,7 @@ it('supports guest ticket creation and guest replies in the mobile api', functio
     EscalatedSettings::set('guest_tickets_enabled', 'true');
 
     $created = $this->postJson('/support/api/v1/mobile/guest/tickets', [
+        ...$this->guestProof('guest@example.com'),
         'name' => 'Guest Rider',
         'email' => 'guest@example.com',
         'subject' => 'Need help',

@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Http\Controllers;
 
 use Escalated\Laravel\Models\SatisfactionRating;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Services\GuestAccess;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -43,7 +44,7 @@ class SatisfactionRatingController extends Controller
             'comment' => 'nullable|string|max:2000',
         ]);
 
-        $ticket = Ticket::where('guest_token', $token)->firstOrFail();
+        $ticket = app(GuestAccess::class)->resolve($token);
 
         if (! in_array($ticket->status->value, ['resolved', 'closed'])) {
             return back()->with('error', __('escalated::messages.rating.only_resolved_closed'));

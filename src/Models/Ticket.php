@@ -11,6 +11,8 @@ use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Events;
+use Escalated\Laravel\Services\GuestEmailVerification;
+use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -29,7 +31,12 @@ class Ticket extends Model
 
     public const TYPES = ['question', 'problem', 'incident', 'task'];
 
+    /** Aggregate creators dispatch only after related records have committed. */
+    public bool $deferCreatedEvent = false;
+
     protected $guarded = ['id'];
+
+    protected $hidden = ['guest_token', 'guest_access_hash', 'guest_verified_email'];
 
     protected $appends = [
         'requester_name',
@@ -67,13 +74,34 @@ class Ticket extends Model
                 ]);
             }
 
-            Events\TicketCreated::dispatch($ticket);
+            if (! $ticket->deferCreatedEvent) {
+                Events\TicketCreated::dispatch($ticket);
+            }
         });
     }
 
     public function getRouteKeyName(): string
     {
         return 'reference';
+    }
+
+    public function dispatchCreatedAfterCommit(): void
+    {
+        $tenant = app(TenantContext::class)->enabled() ? (string) $this->tenant_id : null;
+        $id = $this->getKey();
+        $connection = $this->getConnectionName();
+        $this->getConnection()->afterCommit(static function () use ($tenant, $id, $connection) {
+            $dispatch = static function () use ($id, $connection) {
+                if ($ticket = static::on($connection)->find($id)) {
+                    Events\TicketCreated::dispatch($ticket);
+                }
+            };
+            if ($tenant !== null) {
+                app(TenantContext::class)->run($tenant, $dispatch);
+            } else {
+                $dispatch();
+            }
+        });
     }
 
     protected function casts(): array
@@ -93,12 +121,25 @@ class Ticket extends Model
             'resolved_at' => 'datetime',
             'closed_at' => 'datetime',
             'snoozed_until' => 'datetime',
+            'guest_access_expires_at' => 'datetime',
+            'guest_email_verified_at' => 'datetime',
         ];
     }
 
     public function getTable(): string
     {
         return Escalated::table('tickets');
+    }
+
+    public function setGuestEmailAttribute(?string $value): void
+    {
+        $email = $value === null ? null : GuestEmailVerification::email($value);
+        if (array_key_exists('guest_email', $this->attributes) && $this->attributes['guest_email'] !== $email) {
+            foreach (['guest_token', 'guest_access_hash', 'guest_access_expires_at', 'guest_email_verified_at', 'guest_verified_email'] as $field) {
+                $this->attributes[$field] = null;
+            }
+        }
+        $this->attributes['guest_email'] = $email;
     }
 
     public function requester(): MorphTo
@@ -384,7 +425,7 @@ class Ticket extends Model
 
     public function isGuest(): bool
     {
-        return $this->requester_type === null && $this->guest_token !== null;
+        return $this->requester_type === null && ($this->guest_email !== null || $this->guest_token !== null);
     }
 
     public function getRequesterNameAttribute(): string

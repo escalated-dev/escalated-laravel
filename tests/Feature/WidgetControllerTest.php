@@ -92,6 +92,7 @@ it('ticket creation works with valid data', function () {
     EscalatedSettings::set('guest_tickets_enabled', '1');
 
     $response = $this->postJson(route('escalated.widget.tickets.store'), [
+        ...$this->guestProof('jane@example.com'),
         'name' => 'Jane Doe',
         'email' => 'jane@example.com',
         'subject' => 'Help needed',
@@ -113,6 +114,7 @@ it('widget ticket creation resolves/creates a Contact and links the ticket', fun
     EscalatedSettings::set('guest_tickets_enabled', '1');
 
     $this->postJson(route('escalated.widget.tickets.store'), [
+        ...$this->guestProof('alice@example.com'),
         'name' => 'Alice',
         'email' => 'alice@example.com',
         'subject' => 'First ticket',
@@ -139,6 +141,7 @@ it('dedupes repeat widget submissions onto the same Contact', function () {
 
     // First submission — creates the Contact
     $this->postJson(route('escalated.widget.tickets.store'), [
+        ...$this->guestProof('alice@example.com'),
         'name' => 'Alice',
         'email' => 'alice@example.com',
         'subject' => 'First',
@@ -148,6 +151,7 @@ it('dedupes repeat widget submissions onto the same Contact', function () {
     // Second submission from the same email (different casing, to exercise
     // normalization) — should reuse the Contact
     $this->postJson(route('escalated.widget.tickets.store'), [
+        ...$this->guestProof('ALICE@example.com'),
         'name' => 'Alice',
         'email' => 'ALICE@example.com',
         'subject' => 'Second',
@@ -161,7 +165,7 @@ it('dedupes repeat widget submissions onto the same Contact', function () {
     expect($tickets)->toHaveCount(2);
 });
 
-it('ticket lookup by reference and email works', function () {
+it('ticket lookup with a verified bearer grant works', function () {
     EscalatedSettings::set('widget_enabled', '1');
 
     $ticket = Ticket::factory()->create([
@@ -170,8 +174,8 @@ it('ticket lookup by reference and email works', function () {
         'status' => TicketStatus::Open,
     ]);
 
-    $response = $this->getJson(
-        route('escalated.widget.tickets.status', $ticket->reference).'?email=guest@example.com'
+    $response = $this->withToken($this->guestToken($ticket))->getJson(
+        route('escalated.widget.tickets.status', $ticket->reference)
     );
 
     $response->assertOk();
@@ -216,6 +220,7 @@ it('returns 403 for all endpoints when widget disabled', function () {
     $this->getJson(route('escalated.widget.articles.search', ['q' => 'test']))->assertStatus(403);
     $this->getJson(route('escalated.widget.articles.show', 'any-slug'))->assertStatus(403);
     $this->postJson(route('escalated.widget.tickets.store'), [
+        ...$this->guestProof('test@test.com'),
         'name' => 'Test',
         'email' => 'test@test.com',
         'subject' => 'Test',
@@ -231,6 +236,7 @@ it('respects guest_policy unassigned mode (default) writing guest_* fields', fun
     EscalatedSettings::set('guest_policy_mode', 'unassigned');
 
     $response = $this->postJson(route('escalated.widget.tickets.store'), [
+        ...$this->guestProof('alice@example.com'),
         'name' => 'Alice',
         'email' => 'alice@example.com',
         'subject' => 'Hello',
@@ -249,9 +255,11 @@ it('respects guest_policy guest_user mode routing to the configured host user', 
     EscalatedSettings::set('widget_enabled', '1');
     EscalatedSettings::set('guest_tickets_enabled', '1');
     EscalatedSettings::set('guest_policy_mode', 'guest_user');
-    EscalatedSettings::set('guest_policy_user_id', '42');
+    $user = $this->createTestUser(['id' => 42]);
+    EscalatedSettings::set('guest_policy_user_id', (string) $user->id);
 
     $response = $this->postJson(route('escalated.widget.tickets.store'), [
+        ...$this->guestProof('bob@example.com'),
         'name' => 'Bob',
         'email' => 'bob@example.com',
         'subject' => 'Hi',
@@ -274,6 +282,7 @@ it('falls through to unassigned behavior when guest_user mode has no user id', f
     EscalatedSettings::set('guest_policy_user_id', '');
 
     $response = $this->postJson(route('escalated.widget.tickets.store'), [
+        ...$this->guestProof('charlie@example.com'),
         'name' => 'Charlie',
         'email' => 'charlie@example.com',
         'subject' => 'Help',
@@ -294,6 +303,7 @@ it('prompt_signup mode uses unassigned ticket-creation path (signup invite is se
     EscalatedSettings::set('guest_policy_mode', 'prompt_signup');
 
     $response = $this->postJson(route('escalated.widget.tickets.store'), [
+        ...$this->guestProof('dana@example.com'),
         'name' => 'Dana',
         'email' => 'dana@example.com',
         'subject' => 'Hi',

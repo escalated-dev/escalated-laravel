@@ -23,6 +23,7 @@ class MobileTicketResource extends JsonResource
             'id' => $ticket->id,
             'reference' => $ticket->reference,
             'guest_access_token' => $this->guestAccessToken,
+            'guest_access_expires_at' => $this->guestAccessToken ? $ticket->guest_access_expires_at?->toIso8601String() : null,
             'subject' => $ticket->subject,
             'description' => $ticket->description ?? '',
             'status' => [

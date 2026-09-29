@@ -275,6 +275,12 @@ return [
     | Public Guest Requests
     |--------------------------------------------------------------------------
     */
+    'guest_access' => [
+        // Verified guest links expire after one day; accepted range is 5 minutes
+        // through 7 days. Email codes always expire in 10 minutes after 5 guesses.
+        'ttl_minutes' => 1440,
+    ],
+
     'guest_rate_limits' => [
         'requests_per_minute' => 60,
         'submissions_per_minute' => 5,
