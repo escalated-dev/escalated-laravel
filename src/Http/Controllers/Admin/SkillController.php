@@ -142,12 +142,12 @@ class SkillController extends Controller
      */
     protected function agentRoleRule(string $userModel, string $userKey, array $roleColumns): \Closure
     {
-        return function ($attribute, $value, $fail) use ($userModel, $userKey, $roleColumns): void {
+        return function ($attribute, $value, $fail) use ($userKey, $roleColumns): void {
             if ($roleColumns === []) {
                 return;
             }
 
-            $user = $userModel::query()->where($userKey, $value)->first();
+            $user = Escalated::userQuery()->where($userKey, $value)->first();
             if ($user === null) {
                 return; // Rule::exists already reports this; avoid duplicate failure.
             }
@@ -191,7 +191,7 @@ class SkillController extends Controller
         $userTable = $userInstance->getTable();
         $userKey = $userInstance->getKeyName();
 
-        $agentQuery = $userModel::query()->orderBy('name');
+        $agentQuery = Escalated::userQuery()->orderBy('name');
         $columns = Escalated::userSchema()->getColumnListing($userTable);
         if (in_array('is_agent', $columns, true) || in_array('is_admin', $columns, true)) {
             $agentQuery->where(function ($query) use ($columns) {

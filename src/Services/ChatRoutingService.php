@@ -54,7 +54,7 @@ class ChatRoutingService
             RoutingStrategy::LeastBusy => $this->findLeastBusyAgent($availableAgentIds, $userModel),
             RoutingStrategy::RoundRobin => $this->findRoundRobinAgent($availableAgentIds, $userModel),
             RoutingStrategy::SkillBased => $this->findRoundRobinAgent($availableAgentIds, $userModel),
-            RoutingStrategy::AutoAssign => $userModel::whereIn('id', $availableAgentIds)->first(),
+            RoutingStrategy::AutoAssign => Escalated::userQuery()->whereIn('id', $availableAgentIds)->first(),
             RoutingStrategy::ManualQueue => null,
         };
     }
@@ -137,7 +137,7 @@ class ChatRoutingService
             }
         }
 
-        return $leastBusyId ? $userModel::find($leastBusyId) : null;
+        return $leastBusyId ? Escalated::findUser($leastBusyId) : null;
     }
 
     protected function findRoundRobinAgent(array $agentIds, string $userModel): ?Model
@@ -154,12 +154,12 @@ class ChatRoutingService
         $neverAssigned = array_diff($agentIds, $lastAssigned);
 
         if (! empty($neverAssigned)) {
-            return $userModel::find(reset($neverAssigned));
+            return Escalated::findUser(reset($neverAssigned));
         }
 
         // Pick the agent who was assigned longest ago (last in the recent list)
         $leastRecent = collect($lastAssigned)->intersect($agentIds)->last();
 
-        return $leastRecent ? $userModel::find($leastRecent) : $userModel::find(reset($agentIds));
+        return $leastRecent ? Escalated::findUser($leastRecent) : Escalated::findUser(reset($agentIds));
     }
 }

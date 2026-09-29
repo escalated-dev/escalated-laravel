@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Tests;
 
+use Escalated\Laravel\Escalated;
 use Escalated\Laravel\EscalatedServiceProvider;
 use Escalated\Laravel\Tests\Fixtures\TestUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -13,6 +14,19 @@ abstract class TestCase extends BaseTestCase
     use RefreshDatabase;
 
     protected array $connectionsToTransact = ['testing'];
+
+    protected function tearDown(): void
+    {
+        // Testbench registers migration rollback before RefreshDatabase's
+        // transaction cleanup. Dispose external-DB fixtures first, so the
+        // production guard against dropping assigned tenant data stays intact.
+        if ($this->app && Escalated::db()->getDriverName() !== 'sqlite') {
+            foreach ($this->connectionsToTransact as $connection) {
+                $this->app['db']->connection($connection)->rollBack(0);
+            }
+        }
+        parent::tearDown();
+    }
 
     protected function getPackageProviders($app): array
     {

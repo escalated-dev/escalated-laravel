@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Bridge;
 
+use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
@@ -107,6 +108,7 @@ class PluginBridge
      */
     public function boot(): void
     {
+        app(TenantContext::class)->assertPluginRuntimeSupported();
         if ($this->booted) {
             return;
         }
@@ -454,6 +456,7 @@ class PluginBridge
      */
     private function ensureAlive(): bool
     {
+        app(TenantContext::class)->assertPluginRuntimeSupported();
         if (! $this->isRuntimeAvailable()) {
             return false;
         }

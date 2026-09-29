@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Services;
 
 use Escalated\Laravel\Facades\Hook;
 use Escalated\Laravel\Models\Plugin;
+use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -136,6 +137,7 @@ class PluginService
      */
     public function activatePlugin(string $slug): bool
     {
+        app(TenantContext::class)->assertPluginRuntimeSupported();
         $plugin = Plugin::where('slug', $slug)->first();
 
         if (! $plugin) {
@@ -169,6 +171,7 @@ class PluginService
      */
     public function deactivatePlugin(string $slug): bool
     {
+        app(TenantContext::class)->assertPluginRuntimeSupported();
         $plugin = Plugin::where('slug', $slug)->first();
 
         if ($plugin && $plugin->is_active) {
@@ -190,6 +193,7 @@ class PluginService
      */
     public function deletePlugin(string $slug): bool
     {
+        app(TenantContext::class)->assertPluginRuntimeSupported();
         // Check if this is a composer plugin — cannot delete those
         $allPlugins = $this->getAllPlugins();
         $pluginData = collect($allPlugins)->firstWhere('slug', $slug);
@@ -234,6 +238,7 @@ class PluginService
      */
     public function uploadPlugin($file): array
     {
+        app(TenantContext::class)->assertPlatformAdmin(request()->user());
         $zip = new ZipArchive;
         $tempPath = storage_path('app/temp/'.$file->getClientOriginalName());
 
@@ -310,6 +315,9 @@ class PluginService
      */
     public function loadActivePlugins(): void
     {
+        if (app(TenantContext::class)->enabled()) {
+            return;
+        }
         $activatedPlugins = $this->getActivatedPlugins();
 
         foreach ($activatedPlugins as $slug) {
@@ -322,6 +330,7 @@ class PluginService
      */
     public function loadPlugin(string $slug): void
     {
+        app(TenantContext::class)->assertPluginRuntimeSupported();
         $pluginPath = $this->resolvePluginPath($slug);
 
         if (! $pluginPath) {

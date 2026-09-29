@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Events;
 
 use Escalated\Laravel\Events\Concerns\BroadcastsWhenEnabled;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Tenancy\TenantBroadcast;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -22,8 +23,8 @@ class TicketAssigned implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('escalated.tickets.'.$this->ticket->id),
-            new PrivateChannel('escalated.agents.'.$this->agentId),
+            new PrivateChannel(TenantBroadcast::channel('tickets.'.$this->ticket->id, $this->ticket)),
+            new PrivateChannel(TenantBroadcast::channel('agents.'.$this->agentId, $this->ticket)),
         ];
     }
 

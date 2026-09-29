@@ -6,6 +6,7 @@ use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Tenancy\TenantContext;
 
 class TicketMergeService
 {
@@ -17,6 +18,8 @@ class TicketMergeService
      */
     public function merge(Ticket $source, Ticket $target, ?int $mergedByUserId = null): void
     {
+        app(TenantContext::class)->assertOwns($source);
+        app(TenantContext::class)->assertOwns($target);
         Escalated::db()->transaction(function () use ($source, $target, $mergedByUserId) {
             // Move all replies from source to target
             Reply::where('ticket_id', $source->id)->update(['ticket_id' => $target->id]);

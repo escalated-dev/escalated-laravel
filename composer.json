@@ -13,7 +13,7 @@
     "require": {
         "php": "^8.2",
         "escalated-dev/locale": "^0.1.8",
-        "illuminate/contracts": "^11.0|^12.0|^13.0",
+        "illuminate/contracts": "^11.39|^12.0|^13.0",
         "inertiajs/inertia-laravel": "^2.0|^3.0",
         "league/commonmark": "^2.0",
         "symfony/dom-crawler": "^6.0|^7.0"
@@ -61,7 +61,8 @@
                 "PKSA-qzrn-rnz3-85w1": "laravel/framework 11.x advisory; CI compat matrix only (see above).",
                 "PKSA-w7xr-vk7n-rstm": "laravel/framework 11.x advisory; CI compat matrix only (see above).",
                 "PKSA-m5cs-t1y6-qpcs": "Historical Laravel 11.x and pinned 13.8.0 compatibility fixtures only. This root test configuration does not propagate to host applications; deploy a current security-patched framework release.",
-                "PKSA-3r5d-mb8f-1qw9": "Historical Laravel 11.x and pinned 13.8.0 compatibility fixtures only. This root test configuration does not propagate to host applications; deploy a current security-patched framework release."
+                "PKSA-3r5d-mb8f-1qw9": "Historical Laravel 11.x and pinned 13.8.0 compatibility fixtures only. This root test configuration does not propagate to host applications; deploy a current security-patched framework release.",
+                "PKSA-d5tc-s1qs-h781": "Historical Laravel 11.x and pinned 13.8.0 compatibility fixtures only (debug-page XSS). This root test configuration does not propagate to host applications; deploy a current security-patched framework release."
             }
         }
     },

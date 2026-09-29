@@ -6,6 +6,7 @@ use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Mail\NewsletterMail;
 use Escalated\Laravel\Models\Newsletter\Newsletter;
 use Escalated\Laravel\Models\Newsletter\NewsletterDelivery;
+use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -30,7 +31,7 @@ class NewsletterDispatcherService
         // minute (a cache counter keyed by the current minute), independent of
         // batch size / cron frequency.
         $rateLimit = (int) config('escalated.newsletters.rate_limit_per_minute', 60);
-        $minuteKey = 'escalated:newsletters:sent:'.now()->format('YmdHi');
+        $minuteKey = app(TenantContext::class)->cacheKey('escalated:newsletters:sent:'.now()->format('YmdHi'));
         $sentThisMinute = (int) Cache::get($minuteKey, 0);
         $allowance = max(0, $rateLimit - $sentThisMinute);
 

@@ -6,6 +6,7 @@ use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Support\ConnectionInspector;
 use Escalated\Laravel\Support\ConnectionStore;
+use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Validation\ValidationException;
@@ -39,6 +40,8 @@ class DatabaseConnectionController extends Controller
 
     public function index(): mixed
     {
+        app(TenantContext::class)->assertPlatformAdmin(request()->user());
+
         return $this->renderer->render('Escalated/Admin/Settings/DatabaseConnection', [
             'connections' => $this->inspector->all(),
             'current' => Escalated::connection(),
@@ -54,6 +57,7 @@ class DatabaseConnectionController extends Controller
      */
     public function test(Request $request)
     {
+        app(TenantContext::class)->assertPlatformAdmin($request->user());
         $validated = $request->validate([
             'connection' => ['required', 'string', 'max:64'],
         ]);
@@ -67,6 +71,7 @@ class DatabaseConnectionController extends Controller
 
     public function update(Request $request)
     {
+        app(TenantContext::class)->assertPlatformAdmin($request->user());
         if (Escalated::connectionIsPinnedByConfig()) {
             // Not a validation failure -- the request is well formed, the
             // screen is simply not in charge here.

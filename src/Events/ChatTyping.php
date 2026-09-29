@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Events;
 
 use Escalated\Laravel\Events\Concerns\BroadcastsWhenEnabled;
 use Escalated\Laravel\Models\ChatSession;
+use Escalated\Laravel\Tenancy\TenantBroadcast;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -22,7 +23,7 @@ class ChatTyping implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('escalated.chat.'.$this->session->id),
+            new PrivateChannel(TenantBroadcast::channel('chat.'.$this->session->id, $this->session)),
         ];
     }
 

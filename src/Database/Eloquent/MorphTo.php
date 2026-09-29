@@ -3,6 +3,8 @@
 namespace Escalated\Laravel\Database\Eloquent;
 
 use Escalated\Laravel\Concerns\UsesEscalatedConnection;
+use Escalated\Laravel\Tenancy\GuardsHostRelation;
+use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo as BaseMorphTo;
 
@@ -24,6 +26,38 @@ use Illuminate\Database\Eloquent\Relations\MorphTo as BaseMorphTo;
  */
 class MorphTo extends BaseMorphTo
 {
+    use GuardsHostRelation;
+
+    public function getResults()
+    {
+        $this->assertTenantParent();
+
+        return $this->visibleHostResult(parent::getResults());
+    }
+
+    protected function getResultsByType($type)
+    {
+        $class = Model::getActualClassNameForMorph($type);
+        $previous = $this->morphableConstraints[$class] ?? null;
+        if (! ConnectionPropagation::belongsToEscalated(new $class)) {
+            $this->morphableConstraints[$class] = function ($query) use ($previous) {
+                if ($previous) {
+                    $previous($query);
+                }
+                $query->withGlobalScope('escalated-host-tenant', fn ($builder) => app(TenantContext::class)->scopeHost($builder));
+            };
+        }
+        try {
+            return parent::getResultsByType($type)->filter(fn ($model) => $this->visibleHostResult($model) !== null)->values();
+        } finally {
+            if ($previous) {
+                $this->morphableConstraints[$class] = $previous;
+            } else {
+                unset($this->morphableConstraints[$class]);
+            }
+        }
+    }
+
     /**
      * @param  string  $type
      * @return Model

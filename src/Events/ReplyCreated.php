@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Events;
 
 use Escalated\Laravel\Events\Concerns\BroadcastsWhenEnabled;
 use Escalated\Laravel\Models\Reply;
+use Escalated\Laravel\Tenancy\TenantBroadcast;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -15,10 +16,15 @@ class ReplyCreated implements ShouldBroadcastNow
 
     public function __construct(public Reply $reply) {}
 
+    public function broadcastWhen(): bool
+    {
+        return static::broadcastingEnabled() && ! $this->reply->is_internal_note;
+    }
+
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('escalated.tickets.'.$this->reply->ticket_id),
+            new PrivateChannel(TenantBroadcast::channel('tickets.'.$this->reply->ticket_id, $this->reply)),
         ];
     }
 

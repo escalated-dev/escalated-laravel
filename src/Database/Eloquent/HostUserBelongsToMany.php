@@ -2,10 +2,11 @@
 
 namespace Escalated\Laravel\Database\Eloquent;
 
+use Escalated\Laravel\Tenancy\TenantBelongsToMany;
+use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Query\Expression;
 
 /**
@@ -28,7 +29,7 @@ use Illuminate\Database\Query\Expression;
  * host runs — nothing here diverges from Eloquent at all: every override falls
  * through to the parent, and the single JOIN is still issued.
  */
-class HostUserBelongsToMany extends BelongsToMany
+class HostUserBelongsToMany extends TenantBelongsToMany
 {
     /**
      * The pivot rows for a set of parent keys, keyed by parent key.
@@ -64,11 +65,7 @@ class HostUserBelongsToMany extends BelongsToMany
      */
     public function newPivotStatement()
     {
-        if (! $this->crossesConnections()) {
-            return parent::newPivotStatement();
-        }
-
-        return $this->parent->getConnection()->table($this->table);
+        return parent::newPivotStatement();
     }
 
     public function addConstraints(): void
@@ -153,6 +150,7 @@ class HostUserBelongsToMany extends BelongsToMany
      */
     public function getEager(): Collection
     {
+        $this->assertCurrentContext();
         if (! $this->crossesConnections()) {
             return parent::getEager();
         }
@@ -165,6 +163,7 @@ class HostUserBelongsToMany extends BelongsToMany
      */
     public function get($columns = ['*']): Collection
     {
+        $this->assertCurrentContext();
         if (! $this->crossesConnections()) {
             return parent::get($columns);
         }
@@ -237,6 +236,10 @@ class HostUserBelongsToMany extends BelongsToMany
                 '=',
                 $this->getQualifiedParentKeyName(),
             );
+        if ($this->tenantScoped()) {
+            $pivot->where($this->qualifyPivotColumn('tenant_id'), app(TenantContext::class)->id());
+            $pivot->whereIn($this->relatedPivotKey, app(TenantContext::class)->scopeHost($this->related->newQuery())->pluck($this->relatedKey)->all());
+        }
 
         return $query->setQuery($pivot);
     }

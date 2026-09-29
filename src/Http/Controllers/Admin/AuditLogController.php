@@ -44,7 +44,7 @@ class AuditLogController extends Controller
         return $this->renderer->render('Escalated/Admin/AuditLog/Index', [
             'logs' => $query->paginate(50)->withQueryString(),
             'filters' => $request->only(['user_id', 'action', 'auditable_type', 'date_from', 'date_to']),
-            'users' => $userModel::select('id', 'name')->orderBy('name')->get(),
+            'users' => Escalated::userQuery()->select('id', 'name')->orderBy('name')->get(),
             'actions' => ['created', 'updated', 'deleted'],
             'resourceTypes' => AuditLog::select('auditable_type')->distinct()->pluck('auditable_type'),
         ]);

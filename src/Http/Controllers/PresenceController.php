@@ -3,10 +3,12 @@
 namespace Escalated\Laravel\Http\Controllers;
 
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Gate;
 
 class PresenceController extends Controller
 {
@@ -16,9 +18,10 @@ class PresenceController extends Controller
      */
     public function typing(Request $request, Ticket $ticket): JsonResponse
     {
+        Gate::forUser($request->user())->authorize('addNote', $ticket);
         $userId = $request->user()->getKey();
         $userName = $request->user()->name;
-        $typingKey = "escalated.typing.{$ticket->id}.{$userId}";
+        $typingKey = app(TenantContext::class)->cacheKey("escalated.typing.{$ticket->id}.{$userId}");
 
         Cache::put($typingKey, [
             'id' => $userId,
@@ -26,7 +29,7 @@ class PresenceController extends Controller
         ], 10); // 10 second TTL
 
         // Track typing user IDs
-        $typingListKey = "escalated.typing_list.{$ticket->id}";
+        $typingListKey = app(TenantContext::class)->cacheKey("escalated.typing_list.{$ticket->id}");
         $typingIds = Cache::get($typingListKey, []);
         if (! in_array($userId, $typingIds)) {
             $typingIds[] = $userId;
@@ -37,8 +40,8 @@ class PresenceController extends Controller
         $typers = [];
         $activeIds = [];
         foreach ($typingIds as $uid) {
-            if ($uid !== $userId && Cache::has("escalated.typing.{$ticket->id}.{$uid}")) {
-                $typers[] = Cache::get("escalated.typing.{$ticket->id}.{$uid}");
+            if ($uid !== $userId && Cache::has(app(TenantContext::class)->cacheKey("escalated.typing.{$ticket->id}.{$uid}"))) {
+                $typers[] = Cache::get(app(TenantContext::class)->cacheKey("escalated.typing.{$ticket->id}.{$uid}"));
                 $activeIds[] = $uid;
             }
             if ($uid === $userId) {
@@ -51,10 +54,10 @@ class PresenceController extends Controller
 
         // Also return viewers from the presence system
         $viewers = [];
-        $presenceList = Cache::get("escalated.presence_list.{$ticket->id}", []);
+        $presenceList = Cache::get(app(TenantContext::class)->cacheKey("escalated.presence_list.{$ticket->id}"), []);
         foreach ($presenceList as $uid) {
-            if ($uid !== $userId && Cache::has("escalated.presence.{$ticket->id}.{$uid}")) {
-                $viewers[] = Cache::get("escalated.presence.{$ticket->id}.{$uid}");
+            if ($uid !== $userId && Cache::has(app(TenantContext::class)->cacheKey("escalated.presence.{$ticket->id}.{$uid}"))) {
+                $viewers[] = Cache::get(app(TenantContext::class)->cacheKey("escalated.presence.{$ticket->id}.{$uid}"));
             }
         }
 

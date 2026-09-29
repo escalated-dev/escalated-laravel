@@ -6,6 +6,9 @@ use Escalated\Laravel\Database\Eloquent\ConnectionPropagation;
 use Escalated\Laravel\Database\Eloquent\HostUserBelongsToMany as EscalatedBelongsToMany;
 use Escalated\Laravel\Database\Eloquent\MorphTo as EscalatedMorphTo;
 use Escalated\Laravel\Escalated;
+use Escalated\Laravel\Tenancy\TenantBelongsTo;
+use Escalated\Laravel\Tenancy\TenantBelongsToMany;
+use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -31,6 +34,8 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  */
 trait UsesEscalatedConnection
 {
+    use BelongsToTenant;
+
     public function getConnectionName(): ?string
     {
         return $this->connection ?? Escalated::connection();
@@ -75,7 +80,20 @@ trait UsesEscalatedConnection
      */
     protected function newMorphTo(Builder $query, Model $parent, $foreignKey, $ownerKey, $type, $relation): MorphTo
     {
+        if (! ConnectionPropagation::belongsToEscalated($query->getModel())) {
+            $query->withGlobalScope('escalated-host-tenant', fn (Builder $builder) => app(TenantContext::class)->scopeHost($builder));
+        }
+
         return new EscalatedMorphTo($query, $parent, $foreignKey, $ownerKey, $type, $relation);
+    }
+
+    protected function newBelongsTo(Builder $query, Model $child, $foreignKey, $ownerKey, $relation)
+    {
+        if (! ConnectionPropagation::belongsToEscalated($query->getModel())) {
+            $query->withGlobalScope('escalated-host-tenant', fn (Builder $builder) => app(TenantContext::class)->scopeHost($builder));
+        }
+
+        return new TenantBelongsTo($query, $child, $foreignKey, $ownerKey, $relation);
     }
 
     /**
@@ -117,7 +135,7 @@ trait UsesEscalatedConnection
             );
         }
 
-        return parent::newBelongsToMany(
+        return new TenantBelongsToMany(
             $query, $parent, $table, $foreignPivotKey, $relatedPivotKey, $parentKey, $relatedKey, $relationName
         );
     }

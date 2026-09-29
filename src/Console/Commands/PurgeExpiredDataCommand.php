@@ -62,7 +62,7 @@ class PurgeExpiredDataCommand extends Command
         $cutoff = Carbon::now()->subDays($days);
         $table = Escalated::table('tickets');
 
-        $query = Escalated::db()->table($table)
+        $query = Escalated::query($table)
             ->where('status', 'closed')
             ->where('closed_at', '<', $cutoff)
             ->whereNull('deleted_at');
@@ -72,14 +72,14 @@ class PurgeExpiredDataCommand extends Command
 
         if (! $dryRun && $count > 0) {
             if ($force) {
-                Escalated::db()->table($table)
+                Escalated::query($table)
                     ->where('status', 'closed')
                     ->where('closed_at', '<', $cutoff)
                     ->whereNull('deleted_at')
                     ->delete();
                 $this->info("Permanently deleted {$count} closed tickets.");
             } else {
-                Escalated::db()->table($table)
+                Escalated::query($table)
                     ->where('status', 'closed')
                     ->where('closed_at', '<', $cutoff)
                     ->whereNull('deleted_at')
@@ -109,14 +109,14 @@ class PurgeExpiredDataCommand extends Command
             return;
         }
 
-        $count = Escalated::db()->table($table)
+        $count = Escalated::query($table)
             ->where('created_at', '<', $cutoff)
             ->count();
 
         $this->line("Attachments: {$count} records older than {$days} days.");
 
         if (! $dryRun && $count > 0) {
-            Escalated::db()->table($table)
+            Escalated::query($table)
                 ->where('created_at', '<', $cutoff)
                 ->delete();
             $this->info("Deleted {$count} attachments.");
@@ -143,14 +143,14 @@ class PurgeExpiredDataCommand extends Command
             return;
         }
 
-        $count = Escalated::db()->table($table)
+        $count = Escalated::query($table)
             ->where('created_at', '<', $cutoff)
             ->count();
 
         $this->line("Audit logs: {$count} records older than {$days} days.");
 
         if (! $dryRun && $count > 0) {
-            Escalated::db()->table($table)
+            Escalated::query($table)
                 ->where('created_at', '<', $cutoff)
                 ->delete();
             $this->info("Deleted {$count} audit log entries.");
@@ -165,7 +165,7 @@ class PurgeExpiredDataCommand extends Command
         $gracePeriod = Carbon::now()->subDays(30);
         $table = Escalated::table('tickets');
 
-        $count = Escalated::db()->table($table)
+        $count = Escalated::query($table)
             ->whereNotNull('deleted_at')
             ->where('deleted_at', '<', $gracePeriod)
             ->count();
@@ -179,7 +179,7 @@ class PurgeExpiredDataCommand extends Command
         $this->line("Grace period expired: {$count} soft-deleted tickets for permanent removal.");
 
         if (! $dryRun) {
-            Escalated::db()->table($table)
+            Escalated::query($table)
                 ->whereNotNull('deleted_at')
                 ->where('deleted_at', '<', $gracePeriod)
                 ->delete();

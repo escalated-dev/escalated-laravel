@@ -2,84 +2,49 @@
 
 use Escalated\Laravel\Models\ChatSession;
 use Escalated\Laravel\Models\Ticket;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\Relation;
+use Escalated\Laravel\Tenancy\TenantBroadcast;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Gate;
 
-/*
-|--------------------------------------------------------------------------
-| Escalated Broadcast Channels
-|--------------------------------------------------------------------------
-|
-| These channels are registered when broadcasting is enabled
-| (escalated.broadcasting.enabled = true). They authorize users to
-| subscribe to private WebSocket channels for real-time ticket updates.
-|
-*/
+$isAgent = static fn ($user): bool => Gate::forUser($user)->allows(config('escalated.authorization.agent_gate', 'escalated-agent'))
+    || Gate::forUser($user)->allows(config('escalated.authorization.admin_gate', 'escalated-admin'));
+$isUser = static fn ($user, $id): bool => $id !== null && $id !== '' && (string) $user->getAuthIdentifier() === (string) $id;
+$isPresence = static fn (): bool => str_starts_with((string) request('channel_name', ''), 'presence-');
 
-// Whether $id is the user's id. Compared as strings: a host user may be keyed
-// by UUID or ULID, and an (int) cast turns every ULID into 1.
-$isUser = static fn ($user, mixed $id): bool => $id !== null
-    && $id !== ''
-    && (string) $user->getAuthIdentifier() === (string) $id;
+// Register both forms so route caches do not embed the tenancy feature flag.
+// Legacy channels fail closed whenever tenant isolation is enabled.
+foreach (['escalated' => false, 'escalated.tenants.{namespace}' => true] as $prefix => $namespaced) {
+    $register = static function (string $suffix, Closure $callback) use ($prefix, $namespaced) {
+        Broadcast::channel($prefix.'.'.$suffix, static function ($user, ...$parameters) use ($callback, $namespaced) {
+            $namespace = $namespaced ? array_shift($parameters) : null;
 
-// Whether the user raised the ticket. The requester is polymorphic, so the id
-// identifies the user only together with the type.
-$isRequester = static function ($user, Ticket $ticket) use ($isUser): bool {
-    if (! $user instanceof Model || $ticket->requester_type === null) {
-        return false;
-    }
+            return TenantBroadcast::authorize($user, $namespace, fn () => $callback($user, ...$parameters));
+        });
+    };
+    $register('tickets', fn ($user) => ! $isPresence() && $isAgent($user));
+    $register('tickets.{ticketId}', static function ($user, $ticketId) use ($isPresence, $isAgent) {
+        if (! ctype_digit((string) $ticketId) || ! ($ticket = Ticket::find($ticketId))) {
+            return false;
+        }
+        if (! Gate::forUser($user)->allows('view', $ticket)) {
+            return false;
+        }
+        // Laravel strips the presence-/private- prefix before pattern matching.
+        // Requesters may receive public updates, but must not join agent presence.
+        if ($isPresence()) {
+            return $isAgent($user) ? ['id' => $user->getAuthIdentifier(), 'name' => $user->name] : false;
+        }
 
-    $class = static fn (string $type): string => Relation::getMorphedModel($type) ?? $type;
-
-    return $class($ticket->requester_type) === $class($user->getMorphClass())
-        && $isUser($user, $ticket->requester_id);
-};
-
-// All tickets channel - agents and admins only
-Broadcast::channel('escalated.tickets', function ($user) {
-    return Gate::allows(config('escalated.authorization.agent_gate', 'escalated-agent'))
-        || Gate::allows(config('escalated.authorization.admin_gate', 'escalated-admin'));
-});
-
-// Individual ticket channel - agent/admin or the ticket requester
-Broadcast::channel('escalated.tickets.{ticketId}', function ($user, $ticketId) use ($isRequester) {
-    if (Gate::allows(config('escalated.authorization.agent_gate', 'escalated-agent'))
-        || Gate::allows(config('escalated.authorization.admin_gate', 'escalated-admin'))) {
         return true;
-    }
+    });
+    $register('agents.{agentId}', fn ($user, $agentId) => ! $isPresence() && $isUser($user, $agentId));
+    // Exact match must precede the session wildcard ("queue" is not a session ID).
+    $register('chat.queue', fn ($user) => ! $isPresence() && $isAgent($user));
+    $register('chat.{sessionId}', static function ($user, $sessionId) use ($isPresence, $isAgent, $isUser) {
+        if ($isPresence() || ! ctype_digit((string) $sessionId) || ! ($session = ChatSession::find($sessionId))) {
+            return false;
+        }
 
-    $ticket = Ticket::find($ticketId);
-
-    return $ticket !== null && $isRequester($user, $ticket);
-});
-
-// Agent-specific channel - only the agent themselves
-Broadcast::channel('escalated.agents.{agentId}', function ($user, $agentId) use ($isUser) {
-    return $isUser($user, $agentId);
-});
-
-// Chat session channel - assigned agent only (customer auth is handled via session token)
-Broadcast::channel('escalated.chat.{sessionId}', function ($user, $sessionId) use ($isUser) {
-    $session = ChatSession::find($sessionId);
-
-    if (! $session) {
-        return false;
-    }
-
-    // Agent assigned to the session
-    if ($isUser($user, $session->agent_id)) {
-        return true;
-    }
-
-    // Any agent/admin can view if not yet assigned
-    return Gate::allows(config('escalated.authorization.agent_gate', 'escalated-agent'))
-        || Gate::allows(config('escalated.authorization.admin_gate', 'escalated-admin'));
-});
-
-// Chat queue channel - any agent/admin
-Broadcast::channel('escalated.chat.queue', function ($user) {
-    return Gate::allows(config('escalated.authorization.agent_gate', 'escalated-agent'))
-        || Gate::allows(config('escalated.authorization.admin_gate', 'escalated-admin'));
-});
+        return $isUser($user, $session->agent_id) || $isAgent($user);
+    });
+}

@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Events;
 
 use Escalated\Laravel\Events\Concerns\BroadcastsWhenEnabled;
 use Escalated\Laravel\Models\ChatSession;
+use Escalated\Laravel\Tenancy\TenantBroadcast;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -23,15 +24,15 @@ class ChatTransferred implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         $channels = [
-            new PrivateChannel('escalated.chat.'.$this->session->id),
+            new PrivateChannel(TenantBroadcast::channel('chat.'.$this->session->id, $this->session)),
         ];
 
         if ($this->toAgentId) {
-            $channels[] = new PrivateChannel('escalated.agents.'.$this->toAgentId);
+            $channels[] = new PrivateChannel(TenantBroadcast::channel('agents.'.$this->toAgentId, $this->session));
         }
 
         if ($this->fromAgentId) {
-            $channels[] = new PrivateChannel('escalated.agents.'.$this->fromAgentId);
+            $channels[] = new PrivateChannel(TenantBroadcast::channel('agents.'.$this->fromAgentId, $this->session));
         }
 
         return $channels;
