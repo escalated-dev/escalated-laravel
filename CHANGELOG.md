@@ -15,6 +15,12 @@ All notable changes to this project will be documented in this file.
   for ticket creation, assignment, bulk actions, skills, roles, knowledge-base
   categories, custom fields and mobile identities.
 
+### Changed
+- CI now exercises Laravel 13 on PHP 8.3 and 8.5, plus pinned Laravel 13.8.0
+  compatibility. Pest 4 is allowed for the Laravel 13 test toolchain; Laravel
+  11/12 retain their Pest 3 compatibility legs. Documentation distinguishes the
+  Laravel 13 PHP minimum from the package's Laravel 11/12 minimum.
+
 ## [1.8.6] - 2026-09-27
 
 ### Fixed

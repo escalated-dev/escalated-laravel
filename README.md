@@ -58,8 +58,14 @@ A full-featured, embeddable support ticket system for Laravel. Drop it into any 
 
 ## Requirements
 
-- PHP 8.2+
+- PHP 8.2+ for Laravel 11/12; PHP 8.3+ for Laravel 13
 - Laravel 11.x, 12.x, or 13.x
+
+CI covers Laravel 11/12 on PHP 8.2/8.3, current Laravel 13 on PHP 8.3/8.5,
+and the exact Laravel 13.8.0 merchant-host compatibility target on PHP 8.3.
+The historical 13.8.0 job checks compatibility; deployments should use a current
+security-patched framework release. The test tooling supports Pest 3 and 4,
+with Pest 4 selected for Laravel 13.
 - Node.js 18+ (for frontend assets)
 
 ## Quick Start
