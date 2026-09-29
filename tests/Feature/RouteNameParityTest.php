@@ -27,9 +27,6 @@ const ROUTE_MANIFEST = __DIR__.'/../Fixtures/escalated-route-names.json';
  * without them still renders.
  */
 const OPTIONAL_FRONTEND_ROUTES = [
-    // AttachmentList and ChatBubble prefer attachment.url, then try this name
-    // in a try/catch, then fall back to a fixed path.
-    'escalated.attachments.download',
     // TwoFactorChallenge posts to its `action` prop when one is given.
     'escalated.two-factor.verify',
 ];

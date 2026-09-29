@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Fixed
+- Attachments now use private storage by default and expiring application download
+  URLs with ticket authorization, internal-note restrictions and customer token
+  limits. A dry-run-first command copies, verifies and removes existing public
+  files. See `docs/private-attachments.md` for required upgrade steps.
 - Agent performance, CSAT, workload, productivity and requester search now
   resolve host identities on their own database connection. Reports and CSV
   exports no longer join the host users table from Escalated's database.

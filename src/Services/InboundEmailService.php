@@ -9,13 +9,11 @@ use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Events;
 use Escalated\Laravel\Mail\InboundMessage;
 use Escalated\Laravel\Mail\MessageIdUtil;
-use Escalated\Laravel\Models\Attachment;
 use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Models\InboundEmail;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Ticket;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class InboundEmailService
@@ -355,8 +353,6 @@ class InboundEmailService
             return;
         }
 
-        $disk = config('escalated.storage.disk', 'public');
-        $basePath = config('escalated.storage.path', 'escalated/attachments');
         $maxSize = config('escalated.tickets.max_attachment_size_kb', 10240) * 1024;
         $maxCount = config('escalated.tickets.max_attachments_per_reply', 5);
 
@@ -368,7 +364,7 @@ class InboundEmailService
             }
 
             $content = $attachment['content'] ?? '';
-            $size = $attachment['size'] ?? strlen($content);
+            $size = strlen($content);
 
             // Skip oversized attachments
             if ($size > $maxSize) {
@@ -393,21 +389,12 @@ class InboundEmailService
                 continue;
             }
 
-            $filename = Str::uuid().'.'.$extension;
-            $path = $basePath.'/'.$filename;
-
-            Storage::disk($disk)->put($path, $content);
-
-            Attachment::create([
-                'attachable_type' => $attachable->getMorphClass(),
-                'attachable_id' => $attachable->getKey(),
-                'filename' => $filename,
-                'original_filename' => $attachment['filename'] ?? 'attachment',
-                'mime_type' => $attachment['contentType'] ?? 'application/octet-stream',
-                'size' => $size,
-                'disk' => $disk,
-                'path' => $path,
-            ]);
+            $this->attachmentService->storeContent(
+                $attachable,
+                $content,
+                $attachment['filename'] ?? 'attachment',
+                $attachment['contentType'] ?? 'application/octet-stream',
+            );
 
             $stored++;
         }

@@ -10,6 +10,7 @@ use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Services\AttachmentAccess;
 use Escalated\Laravel\Services\AttachmentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -87,6 +88,7 @@ class TicketController extends Controller
     public function show(string $token): mixed
     {
         $ticket = Ticket::where('guest_token', $token)->firstOrFail();
+        app(AttachmentAccess::class)->forGuest($ticket);
 
         $ticket->load(['replies' => function ($q) {
             $q->where('is_internal_note', false)->with('author', 'attachments')->latest();

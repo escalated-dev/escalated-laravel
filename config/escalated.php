@@ -263,8 +263,11 @@ return [
     |--------------------------------------------------------------------------
     */
     'storage' => [
-        'disk' => 'public',
+        'disk' => env('ESCALATED_ATTACHMENTS_DISK', 'local'),
         'path' => 'escalated/attachments',
+        'download_ttl_minutes' => 10,
+        // Optional host session guard for downloads (null uses the default guard).
+        'download_guard' => null,
     ],
 
     /*

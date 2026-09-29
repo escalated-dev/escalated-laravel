@@ -14,7 +14,7 @@ class TicketPolicy
 
     public function view($user, Ticket $ticket): bool
     {
-        if (Gate::forUser($user)->allows('escalated-agent') || Gate::forUser($user)->allows('escalated-admin')) {
+        if (Gate::forUser($user)->allows(config('escalated.authorization.agent_gate', 'escalated-agent')) || Gate::forUser($user)->allows(config('escalated.authorization.admin_gate', 'escalated-admin'))) {
             return true;
         }
 
@@ -29,12 +29,12 @@ class TicketPolicy
 
     public function update($user, Ticket $ticket): bool
     {
-        return Gate::forUser($user)->allows('escalated-agent') || Gate::forUser($user)->allows('escalated-admin');
+        return Gate::forUser($user)->allows(config('escalated.authorization.agent_gate', 'escalated-agent')) || Gate::forUser($user)->allows(config('escalated.authorization.admin_gate', 'escalated-admin'));
     }
 
     public function reply($user, Ticket $ticket): bool
     {
-        if (Gate::forUser($user)->allows('escalated-agent') || Gate::forUser($user)->allows('escalated-admin')) {
+        if (Gate::forUser($user)->allows(config('escalated.authorization.agent_gate', 'escalated-agent')) || Gate::forUser($user)->allows(config('escalated.authorization.admin_gate', 'escalated-admin'))) {
             return true;
         }
 
@@ -44,17 +44,17 @@ class TicketPolicy
 
     public function addNote($user, Ticket $ticket): bool
     {
-        return Gate::forUser($user)->allows('escalated-agent') || Gate::forUser($user)->allows('escalated-admin');
+        return Gate::forUser($user)->allows(config('escalated.authorization.agent_gate', 'escalated-agent')) || Gate::forUser($user)->allows(config('escalated.authorization.admin_gate', 'escalated-admin'));
     }
 
     public function assign($user, Ticket $ticket): bool
     {
-        return Gate::forUser($user)->allows('escalated-agent') || Gate::forUser($user)->allows('escalated-admin');
+        return Gate::forUser($user)->allows(config('escalated.authorization.agent_gate', 'escalated-agent')) || Gate::forUser($user)->allows(config('escalated.authorization.admin_gate', 'escalated-admin'));
     }
 
     public function close($user, Ticket $ticket): bool
     {
-        if (Gate::forUser($user)->allows('escalated-agent') || Gate::forUser($user)->allows('escalated-admin')) {
+        if (Gate::forUser($user)->allows(config('escalated.authorization.agent_gate', 'escalated-agent')) || Gate::forUser($user)->allows(config('escalated.authorization.admin_gate', 'escalated-admin'))) {
             return true;
         }
 
