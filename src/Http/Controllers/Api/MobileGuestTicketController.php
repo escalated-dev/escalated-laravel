@@ -10,6 +10,7 @@ use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Services\AttachmentAccess;
 use Escalated\Laravel\Services\AttachmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -60,6 +61,7 @@ class MobileGuestTicketController extends Controller
         }
 
         $ticket->load(['department', 'attachments']);
+        app(AttachmentAccess::class)->forGuest($ticket);
 
         return response()->json([
             'data' => new MobileTicketResource($ticket, $token),
@@ -72,6 +74,8 @@ class MobileGuestTicketController extends Controller
         $ticket = Ticket::query()
             ->where('guest_token', $token)
             ->firstOrFail();
+
+        app(AttachmentAccess::class)->forGuest($ticket);
 
         $ticket->load([
             'replies' => fn ($query) => $query->where('is_internal_note', false)->with('author', 'attachments')->latest(),

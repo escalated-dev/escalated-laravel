@@ -14,6 +14,7 @@ use Escalated\Laravel\Console\Commands\InstallCommand;
 use Escalated\Laravel\Console\Commands\PluginCommand;
 use Escalated\Laravel\Console\Commands\PluginInstallCommand;
 use Escalated\Laravel\Console\Commands\PollImapCommand;
+use Escalated\Laravel\Console\Commands\PrivatizeAttachmentsCommand;
 use Escalated\Laravel\Console\Commands\ProcessDelayedActionsCommand;
 use Escalated\Laravel\Console\Commands\PurgeActivitiesCommand;
 use Escalated\Laravel\Console\Commands\PurgeExpiredDataCommand;
@@ -391,6 +392,8 @@ class EscalatedServiceProvider extends ServiceProvider
             return;
         }
 
+        $this->loadRoutesFrom(__DIR__.'/../routes/attachments.php');
+
         // REST API routes (token auth, no session)
         if (config('escalated.api.enabled', false)) {
             $this->loadTenantRoutesFrom(__DIR__.'/../routes/api.php');
@@ -483,6 +486,7 @@ class EscalatedServiceProvider extends ServiceProvider
             PollImapCommand::class,
             RunAutomationsCommand::class,
             PurgeExpiredDataCommand::class,
+            PrivatizeAttachmentsCommand::class,
             ImportCommand::class,
             WakeSnoozedTicketsCommand::class,
             CloseIdleChatsCommand::class,
