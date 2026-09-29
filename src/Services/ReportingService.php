@@ -577,11 +577,12 @@ class ReportingService
         $ratingsTable = Escalated::table('satisfaction_ratings');
 
         $ranked = collect($agents)->map(function ($agent) use ($since, $ticketsTable, $ratingsTable) {
-            $agentId = $agent->agent_id ?? $agent['agent_id'] ?? null;
-            $totalTickets = (int) ($agent->total_tickets ?? $agent['total_tickets'] ?? 0);
-            $resolvedTickets = (int) ($agent->resolved_tickets ?? $agent['resolved_tickets'] ?? 0);
-            $avgResponseHours = (float) ($agent->avg_response_hours ?? $agent['avg_response_hours'] ?? 0);
-            $avgResolutionHours = (float) ($agent->avg_resolution_hours ?? $agent['avg_resolution_hours'] ?? 0);
+            $agent = (array) $agent;
+            $agentId = $agent['agent_id'] ?? null;
+            $totalTickets = (int) ($agent['total_tickets'] ?? 0);
+            $resolvedTickets = (int) ($agent['resolved_tickets'] ?? 0);
+            $avgResponseHours = (float) ($agent['avg_response_hours'] ?? 0);
+            $avgResolutionHours = (float) ($agent['avg_resolution_hours'] ?? 0);
 
             $resolutionRate = $totalTickets > 0 ? ($resolvedTickets / $totalTickets) * 100 : 0;
 
@@ -604,7 +605,7 @@ class ReportingService
 
             return [
                 'agent_id' => $agentId,
-                'agent_name' => $agent->agent_name ?? $agent['agent_name'] ?? '',
+                'agent_name' => $agent['agent_name'] ?? '',
                 'total_tickets' => $totalTickets,
                 'resolved_tickets' => $resolvedTickets,
                 'resolution_rate' => round($resolutionRate, 1),
