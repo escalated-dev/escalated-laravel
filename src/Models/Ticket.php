@@ -12,7 +12,10 @@ use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Events;
 use Escalated\Laravel\Services\GuestEmailVerification;
+use Escalated\Laravel\Services\TicketSubjectResolver;
+use Escalated\Laravel\Services\TicketSubjectService;
 use Escalated\Laravel\Tenancy\TenantContext;
+use Escalated\Laravel\Tenancy\TenantReferences;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -205,9 +208,11 @@ class Ticket extends Model
     {
         $type = $subject->getMorphClass();
 
-        $allowed = (array) config('escalated.ticket_subjects.types', []);
-        if ($allowed !== [] && ! in_array($type, $allowed, true)) {
-            throw new \InvalidArgumentException("Subject type [{$type}] is not an allowed ticket subject.");
+        app(TicketSubjectResolver::class)->assertAllowedModel($subject);
+        $context = app(TenantContext::class);
+        $context->assertOwns($this);
+        if ($context->enabled()) {
+            app(TenantReferences::class)->assertReference($subject, $subject->getKey());
         }
 
         return $this->subjects()->updateOrCreate(
@@ -234,13 +239,7 @@ class Ticket extends Model
      */
     public function syncSubjects(iterable $subjects): void
     {
-        $this->subjects()->delete();
-
-        $position = 0;
-        foreach ($subjects as $entry) {
-            [$subject, $role] = is_array($entry) ? [$entry[0], $entry[1] ?? null] : [$entry, null];
-            $this->attachSubject($subject, $role, $position++);
-        }
+        app(TicketSubjectService::class)->replace($this, $subjects);
     }
 
     public function tags(): BelongsToMany

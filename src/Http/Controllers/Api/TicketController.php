@@ -8,10 +8,10 @@ use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Events\TicketCustomActionTriggered;
 use Escalated\Laravel\Http\Resources\TicketCollectionResource;
 use Escalated\Laravel\Http\Resources\TicketResource;
-use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\Macro;
 use Escalated\Laravel\Models\Tag;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Services\AgentTicketCreator;
 use Escalated\Laravel\Services\AssignmentService;
 use Escalated\Laravel\Services\MacroService;
 use Escalated\Laravel\Services\TicketActionRegistry;
@@ -63,7 +63,7 @@ class TicketController extends Controller
             'replies' => fn ($q) => $q->with('author', 'attachments')->latest(),
             'attachments', 'tags', 'department', 'requester', 'assignee',
             'slaPolicy', 'activities' => fn ($q) => $q->with('causer')->latest()->take(20),
-            'satisfactionRating', 'pinnedNotes.author',
+            'satisfactionRating', 'pinnedNotes.author', 'contact', 'subjects.subject',
         ]);
 
         return response()->json(['data' => new TicketResource($ticket)]);
@@ -72,19 +72,18 @@ class TicketController extends Controller
     public function store(Request $request): JsonResponse
     {
         Gate::forUser($request->user())->authorize('create', Ticket::class);
-        $validated = $request->validate([
-            'subject' => 'required|string|max:255',
-            'description' => 'required|string|max:65535',
-            'priority' => 'sometimes|string|in:low,medium,high,urgent,critical',
-            'department_id' => ['sometimes', 'nullable', 'integer', Rule::exists(Department::class, 'id')],
-            'tags' => 'sometimes|array',
-            'tags.*' => ['integer', Rule::exists(Tag::class, 'id')],
-        ]);
-
-        $ticket = $this->ticketService->create($request->user(), $validated);
+        $validated = $request->validate(AgentTicketCreator::rules());
+        $advanced = array_intersect(['requester', 'metadata', 'subjects', 'external_reference'], array_keys($validated)) !== [];
+        $ticket = $advanced
+            ? AgentTicketCreator::assertSupported()->createAgentTicket($request->user(), $validated)
+            : $this->ticketService->create($request->user(), $validated);
+        $relations = ['requester', 'assignee', 'department', 'tags'];
+        if (config('escalated.mode', 'self-hosted') === 'self-hosted') {
+            $relations = array_merge($relations, ['contact', 'subjects.subject']);
+        }
 
         return response()->json([
-            'data' => new TicketResource($ticket->load(['requester', 'assignee', 'department', 'tags'])),
+            'data' => new TicketResource($ticket->load($relations)),
             'message' => 'Ticket created.',
         ], 201);
     }

@@ -5,6 +5,7 @@ use Escalated\Laravel\Http\Controllers\Api\DashboardController;
 use Escalated\Laravel\Http\Controllers\Api\ReportController;
 use Escalated\Laravel\Http\Controllers\Api\ResourceController;
 use Escalated\Laravel\Http\Controllers\Api\TicketController;
+use Escalated\Laravel\Http\Controllers\Api\TicketSubjectController;
 use Escalated\Laravel\Http\Middleware\ApiRateLimit;
 use Escalated\Laravel\Http\Middleware\AuthenticateApiToken;
 use Escalated\Laravel\Http\Middleware\ResolveTicketByReference;
@@ -23,6 +24,8 @@ Route::middleware([AuthenticateApiToken::class.':agent', ApiRateLimit::class])
 
         Route::middleware(ResolveTicketByReference::class)->group(function () {
             Route::get('/tickets/{ticket}', [TicketController::class, 'show'])->name('escalated.api.tickets.show');
+            Route::get('/tickets/{ticket}/subjects', [TicketSubjectController::class, 'index'])->name('escalated.api.tickets.subjects.index');
+            Route::put('/tickets/{ticket}/subjects', [TicketSubjectController::class, 'update'])->name('escalated.api.tickets.subjects.update');
             Route::post('/tickets/{ticket}/reply', [TicketController::class, 'reply'])->name('escalated.api.tickets.reply');
             Route::patch('/tickets/{ticket}/status', [TicketController::class, 'status'])->name('escalated.api.tickets.status');
             Route::patch('/tickets/{ticket}/priority', [TicketController::class, 'priority'])->name('escalated.api.tickets.priority');

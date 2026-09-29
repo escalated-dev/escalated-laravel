@@ -428,6 +428,7 @@ return [
     |
     */
     'api' => [
+        'max_metadata_bytes' => 16384,
         'enabled' => env('ESCALATED_API_ENABLED', false),
         'rate_limit' => env('ESCALATED_API_RATE_LIMIT', 60),
         'token_expiry_days' => null,
@@ -540,6 +541,10 @@ return [
     |
     */
     'ticket_subjects' => [
+        'max_per_ticket' => 100,
+        // Optional callable ($actor, $subject, $ticket, $purpose): bool.
+        // Tenant visibility is always enforced before this additional check.
+        'authorize' => null,
         'types' => [
             // \App\Models\Project::class,
             // 'project' => \App\Models\Project::class,

@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Drivers;
 
+use Escalated\Laravel\Contracts\CreatesAgentTickets;
 use Escalated\Laravel\Contracts\Ticketable;
 use Escalated\Laravel\Contracts\TicketDriver;
 use Escalated\Laravel\Enums\ActivityType;
@@ -11,11 +12,13 @@ use Escalated\Laravel\Events;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Tag;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Services\AgentTicketCreator;
 use Escalated\Laravel\Services\AttachmentService;
 use Escalated\Laravel\Services\MentionService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Model;
 
-class LocalDriver implements TicketDriver
+class LocalDriver implements CreatesAgentTickets, TicketDriver
 {
     protected const ALLOWED_SORT_COLUMNS = [
         'created_at', 'updated_at', 'status', 'priority',
@@ -58,6 +61,11 @@ class LocalDriver implements TicketDriver
         // TicketCreated event is automatically dispatched by the Ticket model's $dispatchesEvents property
 
         return $ticket->fresh();
+    }
+
+    public function createAgentTicket(Model&Ticketable $actor, array $data): Ticket
+    {
+        return app(AgentTicketCreator::class)->create($actor, $data);
     }
 
     public function updateTicket(Ticket $ticket, array $data): Ticket
