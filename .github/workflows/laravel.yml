@@ -21,8 +21,29 @@ jobs:
         include:
           - laravel: ^12.0
             testbench: 10.*
+            pest: ^3.0
+            pest-laravel: ^3.0
           - laravel: ^11.0
             testbench: 9.*
+            pest: ^3.0
+            pest-laravel: ^3.0
+          - php: '8.3'
+            laravel: ^13.0
+            testbench: 11.*
+            pest: ^4.4.1
+            pest-laravel: ^4.0
+          - php: '8.5'
+            laravel: ^13.0
+            testbench: 11.*
+            pest: ^4.4.1
+            pest-laravel: ^4.0
+          # Keep the merchant host's exact framework version covered, not just
+          # the newest compatible 13.x. Composer selects compatible Testbench.
+          - php: '8.3'
+            laravel: 13.8.0
+            testbench: 11.*
+            pest: ^4.4.1
+            pest-laravel: ^4.0
 
     name: P${{ matrix.php }} - L${{ matrix.laravel }} - sqlite
 
@@ -39,15 +60,27 @@ jobs:
 
       - name: Install dependencies
         run: |
-          composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
+          composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" "pestphp/pest:${{ matrix.pest }}" "pestphp/pest-plugin-laravel:${{ matrix.pest-laravel }}" --dev --no-interaction --no-update
           composer update --prefer-stable --prefer-dist --no-interaction
 
       - name: Execute tests
         run: vendor/bin/pest
 
   separate-database:
-    name: pest - separate host and package databases
+    name: L${{ matrix.laravel }} - separate host and package databases
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - laravel: ^12.0
+            testbench: 10.*
+            pest: ^3.0
+            pest-laravel: ^3.0
+          - laravel: ^13.0
+            testbench: 11.*
+            pest: ^4.4.1
+            pest-laravel: ^4.0
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -60,7 +93,9 @@ jobs:
           coverage: none
 
       - name: Install dependencies
-        run: composer update --prefer-stable --prefer-dist --no-interaction
+        run: |
+          composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" "pestphp/pest:${{ matrix.pest }}" "pestphp/pest-plugin-laravel:${{ matrix.pest-laravel }}" --dev --no-interaction --no-update
+          composer update --prefer-stable --prefer-dist --no-interaction
 
       - name: Execute the complete suite with two independent databases
         env:
