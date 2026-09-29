@@ -5,6 +5,7 @@ namespace Escalated\Laravel\Models;
 use Escalated\Laravel\Concerns\UsesEscalatedConnection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\UniqueConstraintViolationException;
 
 /**
  * First-class identity for guest requesters. Deduped by email
@@ -40,13 +41,22 @@ class Contact extends Model
     {
         $normalized = strtolower(trim($email));
 
-        // Eloquent retries unique-key races inside a savepoint when already
-        // in a transaction, so concurrent proofs cannot abort the package TX.
-        $contact = static::firstOrCreate(['email' => $normalized], [
-            'name' => $name,
-            'user_id' => null,
-            'metadata' => [],
-        ]);
+        $contact = static::where('email', $normalized)->first();
+        if (! $contact) {
+            try {
+                // A savepoint keeps an enclosing PostgreSQL transaction usable.
+                $contact = (new static)->getConnection()->transaction(fn () => static::create([
+                    'email' => $normalized, 'name' => $name, 'user_id' => null, 'metadata' => [],
+                ]));
+            } catch (UniqueConstraintViolationException $collision) {
+                // MySQL REPEATABLE READ may retain the initial miss. A locking
+                // read sees the committed winner while retaining tenant scope.
+                $contact = static::where('email', $normalized)->lockForUpdate()->first();
+                if (! $contact) {
+                    throw $collision;
+                }
+            }
+        }
         if (empty($contact->name) && ! empty($name)) {
             $contact->update(['name' => $name]);
         }

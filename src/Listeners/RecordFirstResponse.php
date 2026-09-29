@@ -19,8 +19,7 @@ class RecordFirstResponse
         // Only record first response by an agent (not the requester)
         if ($ticket->first_response_at === null
             && ! $reply->is_internal_note
-            && $reply->author_type !== $ticket->requester_type
-            || ($reply->author_type === $ticket->requester_type && $reply->author_id !== $ticket->requester_id)
+            && ! $ticket->isRequesterIdentity($reply->author_type, $reply->author_id)
         ) {
             $ticket->update(['first_response_at' => now()]);
         }

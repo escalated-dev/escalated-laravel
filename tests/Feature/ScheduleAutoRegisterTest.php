@@ -51,6 +51,7 @@ it('schedules the maintenance commands when auto_register is on', function () {
         'escalated:cleanup-abandoned-chats',
         'escalated:newsletters:dispatch',
         'escalated:poll-imap',
+        'escalated:slack:process',
     ]);
 });
 
@@ -60,11 +61,13 @@ it('schedules the commands for optional features once those features are on', fu
     config()->set('escalated.enable_newsletters', true);
     config()->set('escalated.inbound_email.enabled', true);
     config()->set('escalated.inbound_email.adapter', 'imap');
+    config()->set('escalated.slack.enabled', true);
 
     expect(escalatedScheduledCommands())->toMatchArray([
         'escalated:close-idle-chats' => '* * * * *',
         'escalated:cleanup-abandoned-chats' => '* * * * *',
         'escalated:newsletters:dispatch' => '* * * * *',
         'escalated:poll-imap' => '* * * * *',
+        'escalated:slack:process' => '* * * * *',
     ]);
 });

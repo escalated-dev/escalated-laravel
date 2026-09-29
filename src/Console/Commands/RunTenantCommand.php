@@ -20,6 +20,7 @@ class RunTenantCommand extends Command
         'escalated:close-idle-chats', 'escalated:cleanup-abandoned-chats',
         'escalated:newsletters:dispatch', 'escalated:poll-imap',
         'escalated:attachments:privatize', 'escalated:import',
+        'escalated:slack:process',
     ];
 
     public function handle(): int

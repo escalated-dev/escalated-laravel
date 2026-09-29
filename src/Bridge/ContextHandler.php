@@ -9,6 +9,7 @@ use Escalated\Laravel\Models\PluginStoreRecord;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Tag;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Services\SlackInbox;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -687,10 +688,16 @@ class ContextHandler
     // Misc
     // -------------------------------------------------------------------------
 
-    private function emit(array $params): null
+    private function emit(array $params): mixed
     {
         $hook = $params['hook'] ?? throw new \InvalidArgumentException('ctx.emit requires hook');
         $data = $params['data'] ?? [];
+
+        if ($hook === 'slack.message.received') {
+            // Re-authenticate the original bytes at the host; no plugin's
+            // asserted tenant, user or verification flag is authoritative.
+            return app(SlackInbox::class)->receivePlugin($data);
+        }
 
         if ($this->bridge !== null) {
             $this->bridge->dispatchAction($hook, $data);
