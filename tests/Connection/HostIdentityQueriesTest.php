@@ -147,3 +147,18 @@ it('serves report screens and agent CSV exports through HTTP on separate databas
         'type' => 'csat', 'format' => 'csv', 'period' => 7,
     ]))->assertOk()->assertSee('Agent Identity');
 });
+
+it('ranks and exports agents whose tickets have no response or resolution yet', function () {
+    $this->ticket->update(['status' => 'open', 'first_response_at' => null, 'resolved_at' => null]);
+    $report = app(ReportingService::class)->agentPerformanceRanking(7);
+    expect($report)->toHaveCount(1)
+        ->and($report[0])->toMatchArray([
+            'agent_name' => 'Agent Identity', 'total_tickets' => 1,
+            'resolved_tickets' => 0, 'avg_response_hours' => 0.0, 'avg_resolution_hours' => 0.0,
+        ]);
+
+    Gate::define('escalated-admin', fn ($user) => $user->is_admin);
+    $this->actingAs($this->createAdmin())->get(route('escalated.admin.reports.export', [
+        'type' => 'agent_performance', 'format' => 'csv', 'period' => 7,
+    ]))->assertOk()->assertSee('Agent Identity');
+});
