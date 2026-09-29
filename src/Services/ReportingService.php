@@ -85,28 +85,25 @@ class ReportingService
      */
     public function getAgentPerformance(Carbon $startDate, Carbon $endDate): array
     {
-        $userModel = Escalated::newUserModel();
-        $usersTable = $userModel->getTable();
         $ticketsTable = Escalated::table('tickets');
 
         $avgResponseRaw = $this->avgHoursDiffRaw("{$ticketsTable}.created_at", "{$ticketsTable}.first_response_at");
         $avgResolutionRaw = $this->avgHoursDiffRaw("{$ticketsTable}.created_at", "{$ticketsTable}.resolved_at");
 
-        return Escalated::db()->table($ticketsTable)
-            ->join($usersTable, "{$ticketsTable}.assigned_to", '=', "{$usersTable}.id")
+        $rows = Escalated::db()->table($ticketsTable)
             ->whereBetween("{$ticketsTable}.created_at", [$startDate, $endDate])
             ->whereNotNull("{$ticketsTable}.assigned_to")
-            ->groupBy("{$ticketsTable}.assigned_to", "{$usersTable}.name")
+            ->groupBy("{$ticketsTable}.assigned_to")
             ->select([
                 "{$ticketsTable}.assigned_to as agent_id",
-                "{$usersTable}.name as agent_name",
                 DB::raw('count(*) as total_tickets'),
                 DB::raw("SUM(CASE WHEN {$ticketsTable}.resolved_at IS NOT NULL THEN 1 ELSE 0 END) as resolved_tickets"),
                 DB::raw("ROUND({$avgResponseRaw}, 1) as avg_response_hours"),
                 DB::raw("ROUND({$avgResolutionRaw}, 1) as avg_resolution_hours"),
             ])
-            ->get()
-            ->toArray();
+            ->get();
+
+        return $this->withAgentNames($rows)->all();
     }
 
     /**
@@ -239,24 +236,22 @@ class ReportingService
      */
     public function getCsatByAgent(Carbon $startDate, Carbon $endDate): array
     {
-        $userModel = Escalated::newUserModel();
-        $usersTable = $userModel->getTable();
         $ticketsTable = Escalated::table('tickets');
         $ratingsTable = Escalated::table('satisfaction_ratings');
 
-        return Escalated::db()->table($ratingsTable)
+        $rows = Escalated::db()->table($ratingsTable)
             ->join($ticketsTable, "{$ratingsTable}.ticket_id", '=', "{$ticketsTable}.id")
-            ->join($usersTable, "{$ticketsTable}.assigned_to", '=', "{$usersTable}.id")
             ->whereBetween("{$ratingsTable}.created_at", [$startDate, $endDate])
-            ->groupBy("{$ticketsTable}.assigned_to", "{$usersTable}.name")
+            ->whereNotNull("{$ticketsTable}.assigned_to")
+            ->groupBy("{$ticketsTable}.assigned_to")
             ->select([
                 "{$ticketsTable}.assigned_to as agent_id",
-                "{$usersTable}.name as agent_name",
                 DB::raw("ROUND(AVG({$ratingsTable}.rating), 1) as avg_rating"),
                 DB::raw('COUNT(*) as total_ratings'),
             ])
-            ->get()
-            ->toArray();
+            ->get();
+
+        return $this->withAgentNames($rows)->all();
     }
 
     /**
@@ -637,26 +632,22 @@ class ReportingService
     public function agentWorkloadDistribution(int $days): array
     {
         $since = now()->subDays($days);
-        $dateExpr = $this->dateExpression('created_at');
-
-        $userModel = Escalated::newUserModel();
-        $usersTable = $userModel->getTable();
         $ticketsTable = Escalated::table('tickets');
 
-        return Escalated::db()->table($ticketsTable)
-            ->join($usersTable, "{$ticketsTable}.assigned_to", '=', "{$usersTable}.id")
+        $rows = Escalated::db()->table($ticketsTable)
             ->where("{$ticketsTable}.created_at", '>=', $since)
             ->whereNotNull("{$ticketsTable}.assigned_to")
             ->selectRaw("{$this->dateExpression("{$ticketsTable}.created_at")} as date")
-            ->addSelect("{$usersTable}.name as agent_name")
             ->addSelect("{$ticketsTable}.assigned_to as agent_id")
             ->selectRaw('COUNT(*) as ticket_count')
-            ->groupBy('date', "{$usersTable}.name", "{$ticketsTable}.assigned_to")
+            ->groupBy('date', "{$ticketsTable}.assigned_to")
             ->orderBy('date')
-            ->get()
-            ->groupBy('agent_name')
-            ->map(fn ($rows, $name) => [
-                'agent_name' => $name,
+            ->get();
+
+        return $this->withAgentNames($rows)
+            ->groupBy('agent_id')
+            ->map(fn ($rows) => [
+                'agent_name' => $rows->first()->agent_name,
                 'data' => $rows->map(fn ($row) => [
                     'date' => $row->date,
                     'count' => (int) $row->ticket_count,
@@ -706,18 +697,15 @@ class ReportingService
         $ticketsTable = Escalated::table('tickets');
         $repliesTable = Escalated::table('replies');
         $userModel = Escalated::newUserModel();
-        $usersTable = $userModel->getTable();
 
         // Replies per agent
         $replies = Escalated::db()->table($repliesTable)
-            ->join($usersTable, "{$repliesTable}.author_id", '=', "{$usersTable}.id")
             ->where("{$repliesTable}.created_at", '>=', $since)
-            ->where("{$repliesTable}.author_type", $userModel::class)
+            ->where("{$repliesTable}.author_type", $userModel->getMorphClass())
             ->where("{$repliesTable}.is_internal_note", false)
-            ->groupBy("{$repliesTable}.author_id", "{$usersTable}.name")
+            ->groupBy("{$repliesTable}.author_id")
             ->select([
                 "{$repliesTable}.author_id as agent_id",
-                "{$usersTable}.name as agent_name",
                 DB::raw('COUNT(*) as total_replies'),
             ])
             ->get()
@@ -736,23 +724,47 @@ class ReportingService
 
         $agentIds = $replies->keys()->merge($resolved->keys())->unique();
 
-        return $agentIds->map(function ($agentId) use ($replies, $resolved, $days) {
+        $rows = $agentIds->map(function ($agentId) use ($replies, $resolved, $days) {
             $replyData = $replies->get($agentId);
             $resolvedData = $resolved->get($agentId);
             $totalReplies = $replyData ? (int) $replyData->total_replies : 0;
             $totalResolved = $resolvedData ? (int) $resolvedData->total_resolved : 0;
 
-            return [
+            return (object) [
                 'agent_id' => $agentId,
-                'agent_name' => $replyData->agent_name ?? '',
                 'total_replies' => $totalReplies,
                 'replies_per_day' => round($totalReplies / max($days, 1), 1),
                 'total_resolved' => $totalResolved,
                 'resolved_per_day' => round($totalResolved / max($days, 1), 1),
             ];
-        })
-            ->values()
-            ->toArray();
+        });
+
+        return $this->withAgentNames($rows)->map(fn ($row) => (array) $row)->all();
+    }
+
+    /**
+     * Resolve host identities after aggregating package data. The two models
+     * may use different databases, so their tables must never share a JOIN.
+     * One host query handles all rows, honours host scopes and the configured
+     * display column, and drops deleted identities just as the old inner join did.
+     */
+    protected function withAgentNames(Collection $rows): Collection
+    {
+        if ($rows->isEmpty()) {
+            return $rows;
+        }
+
+        $model = Escalated::newUserModel();
+        $names = $model->newQuery()
+            ->whereKey($rows->pluck('agent_id')->unique()->all())
+            ->pluck(Escalated::userSearchableDisplayColumn(), $model->getKeyName());
+
+        return $rows->filter(fn ($row) => $names->has($row->agent_id))
+            ->map(function ($row) use ($names) {
+                $row->agent_name = $names->get($row->agent_id);
+
+                return $row;
+            })->values();
     }
 
     // ──────────────────────────────────────────────────────────────────────

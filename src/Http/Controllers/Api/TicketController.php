@@ -8,7 +8,9 @@ use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Events\TicketCustomActionTriggered;
 use Escalated\Laravel\Http\Resources\TicketCollectionResource;
 use Escalated\Laravel\Http\Resources\TicketResource;
+use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\Macro;
+use Escalated\Laravel\Models\Tag;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\AssignmentService;
 use Escalated\Laravel\Services\MacroService;
@@ -70,9 +72,9 @@ class TicketController extends Controller
             'subject' => 'required|string|max:255',
             'description' => 'required|string|max:65535',
             'priority' => 'sometimes|string|in:low,medium,high,urgent,critical',
-            'department_id' => ['sometimes', 'nullable', 'integer', Rule::exists(Escalated::table('departments'), 'id')],
+            'department_id' => ['sometimes', 'nullable', 'integer', Rule::exists(Department::class, 'id')],
             'tags' => 'sometimes|array',
-            'tags.*' => ['integer', Rule::exists(Escalated::table('tags'), 'id')],
+            'tags.*' => ['integer', Rule::exists(Tag::class, 'id')],
         ]);
 
         $ticket = $this->ticketService->create($request->user(), $validated);
@@ -141,7 +143,7 @@ class TicketController extends Controller
         $validated = $request->validate([
             // Accept both integer and string/UUID host-app user keys, validated
             // against the host's actual user table + key column.
-            'agent_id' => ['required', Rule::exists($userModel->getTable(), $userModel->getKeyName())],
+            'agent_id' => ['required', Rule::exists($userModel::class, $userModel->getKeyName())],
         ]);
 
         $this->assignmentService->assign($ticket, $validated['agent_id'], $request->user());
@@ -167,7 +169,7 @@ class TicketController extends Controller
     public function applyMacro(Ticket $ticket, Request $request, MacroService $macroService): JsonResponse
     {
         $validated = $request->validate([
-            'macro_id' => ['required', 'integer', Rule::exists(Escalated::table('macros'), 'id')],
+            'macro_id' => ['required', 'integer', Rule::exists(Macro::class, 'id')],
         ]);
 
         $macro = Macro::forAgent($request->user()->getKey())->findOrFail($validated['macro_id']);
@@ -206,7 +208,7 @@ class TicketController extends Controller
     {
         $validated = $request->validate([
             'tag_ids' => 'required|array',
-            'tag_ids.*' => ['integer', Rule::exists(Escalated::table('tags'), 'id')],
+            'tag_ids.*' => ['integer', Rule::exists(Tag::class, 'id')],
         ]);
 
         $newTagIds = collect($validated['tag_ids'])->map(fn ($id) => (int) $id);

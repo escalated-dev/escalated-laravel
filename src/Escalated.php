@@ -7,6 +7,7 @@ use Illuminate\Contracts\Database\Query\Builder;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Schema\Builder as SchemaBuilder;
 use Illuminate\Database\Schema\ColumnDefinition;
@@ -222,12 +223,13 @@ class Escalated
      * the fallback contract documented in issue #63.
      *
      * @param  Builder  $query  The inner query (an already-scoped user query,
-     *                          usually from `whereHas('requester', ...)`)
+     *                          on the host model's own connection)
      */
     public static function applyUserSearch(Builder $query, string $term): Builder
     {
         $displayColumn = static::userDisplayColumn();
-        $hasDisplay = static::userHasColumn($displayColumn);
+        $model = $query instanceof \Illuminate\Database\Eloquent\Builder ? $query->getModel() : null;
+        $hasDisplay = static::userHasColumn($displayColumn, $model);
 
         if ($hasDisplay && $displayColumn !== 'email') {
             return $query->where($displayColumn, 'like', "%{$term}%")
@@ -243,17 +245,18 @@ class Escalated
      * column. Results are memoized per process because Schema lookups
      * hit information_schema.
      */
-    protected static function userHasColumn(string $column): bool
+    protected static function userHasColumn(string $column, ?Model $model = null): bool
     {
-        $model = static::userModel();
-        $table = (new $model)->getTable();
-        $key = "{$table}.{$column}";
+        $model ??= static::newUserModel();
+        $table = $model->getTable();
+        $connection = $model->getConnection();
+        $key = implode('.', [$connection->getName(), $connection->getDatabaseName(), $table, $column]);
 
         if (! array_key_exists($key, static::$columnExistsCache)) {
             // Deliberately the user model's connection, not Escalated's. The
             // users table is the host's; moving Escalated onto a separate
             // connection must not send this lookup somewhere users never lived.
-            static::$columnExistsCache[$key] = static::userSchema()->hasColumn($table, $column);
+            static::$columnExistsCache[$key] = $connection->getSchemaBuilder()->hasColumn($table, $column);
         }
 
         return static::$columnExistsCache[$key];

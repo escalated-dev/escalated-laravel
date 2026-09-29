@@ -118,17 +118,17 @@ class SkillController extends Controller
         $roleColumns = $this->userRoleColumns($userTable);
 
         return $request->validate([
-            'name' => ['required', 'string', 'max:255', Rule::unique(Skill::make()->getTable(), 'name')->ignore($skill?->id)],
+            'name' => ['required', 'string', 'max:255', Rule::unique(Skill::class, 'name')->ignore($skill?->id)],
             'routing_tag_ids' => ['sometimes', 'array'],
-            'routing_tag_ids.*' => ['integer', Rule::exists(Tag::make()->getTable(), 'id')],
+            'routing_tag_ids.*' => ['integer', Rule::exists(Tag::class, 'id')],
             'routing_department_ids' => ['sometimes', 'array'],
-            'routing_department_ids.*' => ['integer', Rule::exists(Department::make()->getTable(), 'id')],
+            'routing_department_ids.*' => ['integer', Rule::exists(Department::class, 'id')],
             'agents' => ['sometimes', 'array'],
             'agents.*.user_id' => [
                 'required',
                 'integer',
                 'distinct',
-                Rule::exists($userTable, $userKey),
+                Rule::exists($userModel, $userKey),
                 $this->agentRoleRule($userModel, $userKey, $roleColumns),
             ],
             'agents.*.proficiency' => ['required', 'integer', 'between:1,5'],

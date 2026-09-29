@@ -101,7 +101,7 @@ it('ticket creation works with valid data', function () {
     $response->assertCreated();
     $response->assertJsonStructure(['message', 'reference']);
 
-    $this->assertDatabaseHas('escalated_tickets', [
+    $this->assertDatabaseHas(Ticket::class, [
         'guest_name' => 'Jane Doe',
         'guest_email' => 'jane@example.com',
         'subject' => 'Help needed',
@@ -119,7 +119,7 @@ it('widget ticket creation resolves/creates a Contact and links the ticket', fun
         'description' => 'body',
     ]);
 
-    $this->assertDatabaseHas('escalated_contacts', [
+    $this->assertDatabaseHas(Contact::class, [
         'email' => 'alice@example.com',
         'name' => 'Alice',
     ]);
@@ -127,7 +127,7 @@ it('widget ticket creation resolves/creates a Contact and links the ticket', fun
     $contact = Contact::where('email', 'alice@example.com')->first();
     expect($contact)->not->toBeNull();
 
-    $this->assertDatabaseHas('escalated_tickets', [
+    $this->assertDatabaseHas(Ticket::class, [
         'guest_email' => 'alice@example.com',
         'contact_id' => $contact->id,
     ]);
@@ -238,7 +238,7 @@ it('respects guest_policy unassigned mode (default) writing guest_* fields', fun
     ]);
 
     $response->assertCreated();
-    $this->assertDatabaseHas('escalated_tickets', [
+    $this->assertDatabaseHas(Ticket::class, [
         'guest_email' => 'alice@example.com',
         'requester_id' => null,
         'requester_type' => null,
@@ -259,7 +259,7 @@ it('respects guest_policy guest_user mode routing to the configured host user', 
     ]);
 
     $response->assertCreated();
-    $this->assertDatabaseHas('escalated_tickets', [
+    $this->assertDatabaseHas(Ticket::class, [
         'requester_id' => 42,
         'requester_type' => config('escalated.user_model', 'App\\Models\\User'),
         'guest_email' => 'bob@example.com',
@@ -281,7 +281,7 @@ it('falls through to unassigned behavior when guest_user mode has no user id', f
     ]);
 
     $response->assertCreated();
-    $this->assertDatabaseHas('escalated_tickets', [
+    $this->assertDatabaseHas(Ticket::class, [
         'guest_email' => 'charlie@example.com',
         'requester_id' => null,
         'requester_type' => null,
@@ -301,7 +301,7 @@ it('prompt_signup mode uses unassigned ticket-creation path (signup invite is se
     ]);
 
     $response->assertCreated();
-    $this->assertDatabaseHas('escalated_tickets', [
+    $this->assertDatabaseHas(Ticket::class, [
         'guest_email' => 'dana@example.com',
         'requester_id' => null,
     ]);

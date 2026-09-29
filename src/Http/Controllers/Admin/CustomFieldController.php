@@ -90,7 +90,7 @@ class CustomFieldController extends Controller
     {
         $request->validate([
             'positions' => 'required|array',
-            'positions.*.id' => 'required|integer|exists:'.config('escalated.table_prefix', 'escalated_').'custom_fields,id',
+            'positions.*.id' => 'required|integer|exists:'.CustomField::class.',id',
             'positions.*.position' => 'required|integer',
         ]);
 

@@ -45,6 +45,28 @@ jobs:
       - name: Execute tests
         run: vendor/bin/pest
 
+  separate-database:
+    name: pest - separate host and package databases
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: dom, curl, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite
+          coverage: none
+
+      - name: Install dependencies
+        run: composer update --prefer-stable --prefer-dist --no-interaction
+
+      - name: Execute the complete suite with two independent databases
+        env:
+          ESCALATED_TEST_SEPARATE_CONNECTION: '1'
+        run: vendor/bin/pest
+
   # The version matrix above runs on SQLite. These two legs run the same suite
   # against the engines hosts actually deploy on. The three disagree about
   # enough to matter -- LIKE case sensitivity, aggregate return types, and

@@ -7,7 +7,6 @@ use Escalated\Laravel\Contracts\TicketDriver;
 use Escalated\Laravel\Enums\ActivityType;
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
-use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Events;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Tag;
@@ -181,9 +180,7 @@ class LocalDriver implements TicketDriver
             $query->where(function ($q) use ($term) {
                 $q->where('guest_name', 'like', "%{$term}%")
                     ->orWhere('guest_email', 'like', "%{$term}%")
-                    ->orWhereHas('requester', function ($rq) use ($term) {
-                        Escalated::applyUserSearch($rq, $term);
-                    });
+                    ->orWhere(fn ($rq) => $rq->whereRequesterMatches($term));
             });
         }
 

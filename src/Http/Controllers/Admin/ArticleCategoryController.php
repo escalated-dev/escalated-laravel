@@ -29,7 +29,7 @@ class ArticleCategoryController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255'],
-            'parent_id' => ['nullable', 'integer', 'exists:'.ArticleCategory::make()->getTable().',id'],
+            'parent_id' => ['nullable', 'integer', 'exists:'.ArticleCategory::class.',id'],
             'position' => ['nullable', 'integer', 'min:0'],
             'description' => ['nullable', 'string', 'max:1000'],
         ]);
@@ -47,7 +47,7 @@ class ArticleCategoryController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255'],
-            'parent_id' => ['nullable', 'integer', 'exists:'.ArticleCategory::make()->getTable().',id'],
+            'parent_id' => ['nullable', 'integer', 'exists:'.ArticleCategory::class.',id'],
             'position' => ['nullable', 'integer', 'min:0'],
             'description' => ['nullable', 'string', 'max:1000'],
         ]);

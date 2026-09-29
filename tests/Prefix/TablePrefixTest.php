@@ -1,5 +1,6 @@
 <?php
 
+use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Http\Middleware\CheckPermission;
 use Escalated\Laravel\Http\Requests\CreateTicketRequest;
 use Escalated\Laravel\Models\Contact;
@@ -9,9 +10,7 @@ use Escalated\Laravel\Models\Newsletter\NewsletterDelivery;
 use Escalated\Laravel\Models\Newsletter\NewsletterList;
 use Escalated\Laravel\Models\Newsletter\NewsletterListMember;
 use Escalated\Laravel\Models\Newsletter\NewsletterTemplate;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 
 /*
@@ -30,7 +29,7 @@ beforeEach(function () {
  */
 function prefixTestTableNames(): array
 {
-    return array_map(fn (array $table) => $table['name'], Schema::getTables());
+    return array_map(fn (array $table) => $table['name'], Escalated::schema()->getTables());
 }
 
 it('creates every package table under the configured prefix', function () {
@@ -48,14 +47,14 @@ it('creates every package table under the configured prefix', function () {
 
     expect(array_values(array_filter($tables, fn (string $table) => str_starts_with($table, 'escalated_'))))
         ->toBeEmpty()
-        ->and(Schema::hasColumn('helpdesk_contacts', 'marketing_opt_out_at'))->toBeTrue();
+        ->and(Escalated::schema()->hasColumn('helpdesk_contacts', 'marketing_opt_out_at'))->toBeTrue();
 });
 
 it('points every foreign key at a table that exists', function () {
     $tables = prefixTestTableNames();
 
     foreach ($tables as $table) {
-        foreach (Schema::getForeignKeys($table) as $foreignKey) {
+        foreach (Escalated::schema()->getForeignKeys($table) as $foreignKey) {
             expect(in_array($foreignKey['foreign_table'], $tables, true))
                 ->toBeTrue("[{$table}] has a foreign key to [{$foreignKey['foreign_table']}], which does not exist");
         }
@@ -82,8 +81,8 @@ it('stores newsletter records in the prefixed tables', function () {
     ]);
 
     expect($list->contacts()->pluck('email')->all())->toBe(['reader@example.com'])
-        ->and(DB::table('helpdesk_newsletters')->count())->toBe(1)
-        ->and(DB::table('helpdesk_newsletter_deliveries')->count())->toBe(1);
+        ->and(Escalated::db()->table('helpdesk_newsletters')->count())->toBe(1)
+        ->and(Escalated::db()->table('helpdesk_newsletter_deliveries')->count())->toBe(1);
 });
 
 it('renders the newsletter list pages, which count opted-out members', function () {

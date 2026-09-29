@@ -5,6 +5,7 @@ use Escalated\Laravel\Mail\InboundMessage;
 use Escalated\Laravel\Mail\MessageIdUtil;
 use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Models\InboundEmail;
+use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\InboundEmailService;
 use Illuminate\Support\Facades\Notification;
@@ -82,7 +83,7 @@ it('adds a reply to existing ticket when subject contains reference', function (
     expect($inbound->ticket_id)->toBe($ticket->id);
     expect($inbound->reply_id)->not->toBeNull();
 
-    $this->assertDatabaseHas('escalated_replies', [
+    $this->assertDatabaseHas(Reply::class, [
         'ticket_id' => $ticket->id,
         'body' => 'Thanks, that fixed it!',
     ]);

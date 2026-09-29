@@ -47,7 +47,8 @@ it('renders every configured connection with its state', function () {
 
     expect($connections->pluck('name'))->toContain('testing', 'support')
         ->and($connections->firstWhere('name', 'testing')['is_current'])->toBeTrue()
-        ->and($connections->firstWhere('name', 'testing')['migrated'])->toBeTrue();
+        ->and($connections->firstWhere('name', 'testing')['migrated'])
+        ->toBe(getenv('ESCALATED_TEST_SEPARATE_CONNECTION') !== '1');
 });
 
 it('refuses a connection that has no escalated tables', function () {
@@ -74,16 +75,16 @@ it('refuses a connection the host never configured', function () {
 it('stores the choice outside the database it selects', function () {
     $this->actingAs($this->createAdmin());
 
-    // The already-migrated test connection is a legitimate target, which lets
-    // this assert the storage location without a second migrated database.
-    $this->post(route('escalated.admin.settings.database.update'), ['connection' => 'testing'])
+    // Pick the database that actually owns the package tables in this run.
+    $migrated = getenv('ESCALATED_TEST_SEPARATE_CONNECTION') === '1' ? 'escalated' : 'testing';
+    $this->post(route('escalated.admin.settings.database.update'), ['connection' => $migrated])
         ->assertSessionHas('success');
 
     expect(File::exists(ConnectionStore::path()))->toBeTrue()
-        ->and(ConnectionStore::get())->toBe('testing');
+        ->and(ConnectionStore::get())->toBe($migrated);
 
     // The point of the file: it is readable with no working database at all.
-    expect(require ConnectionStore::path())->toBe('testing');
+    expect(require ConnectionStore::path())->toBe($migrated);
 });
 
 it('clears the choice back to the host default', function () {
