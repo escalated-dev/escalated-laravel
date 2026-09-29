@@ -19,6 +19,14 @@ beforeEach(function () {
     Storage::disk('public')->put($this->attachment->path, 'parcel bytes');
 });
 
+afterEach(function () {
+    // Testbench rolls PostgreSQL/MySQL migrations back while fixtures still
+    // exist. Remove only this test's disposable recovery data so the production
+    // rollback guard can keep protecting unfinished real migrations.
+    AttachmentMigration::query()->delete();
+    Escalated::db()->table(Escalated::table('attachment_migration_locks'))->delete();
+});
+
 it('defaults to a dry run without touching records or files', function () {
     $this->artisan('escalated:attachments:privatize')->assertSuccessful();
     expect($this->attachment->fresh()->disk)->toBe('public');
@@ -121,6 +129,7 @@ it('refuses overlapping commands and requires the exact stopped lock owner for r
     expect($this->attachment->fresh()->disk)->toBe('public')
         ->and(Storage::disk('local')->allFiles())->toBe([]);
     $this->artisan('escalated:attachments:privatize', ['--release-lock' => 'wrong-owner'])->assertFailed();
+    $this->artisan('escalated:attachments:privatize', ['--release-lock' => (string) Str::uuid()])->assertFailed();
     expect($locks->value('owner'))->toBe($owner);
     $this->artisan('escalated:attachments:privatize', ['--release-lock' => $owner])->assertSuccessful();
     expect($this->attachment->fresh()->disk)->toBe('public');

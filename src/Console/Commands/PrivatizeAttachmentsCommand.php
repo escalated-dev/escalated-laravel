@@ -25,7 +25,7 @@ class PrivatizeAttachmentsCommand extends Command
     {
         $locks = Escalated::db()->table(Escalated::table('attachment_migration_locks'));
         if ($owner = $this->option('release-lock')) {
-            if ($locks->where('id', 1)->where('owner', $owner)->delete() !== 1) {
+            if (! Str::isUuid($owner) || $locks->where('id', 1)->where('owner', $owner)->delete() !== 1) {
                 $this->error('No migration lock matches that owner ID.');
 
                 return self::FAILURE;
