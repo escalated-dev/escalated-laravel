@@ -14,8 +14,8 @@ use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Models\Workflow;
 use Escalated\Laravel\Models\WorkflowLog;
 use Escalated\Laravel\Support\OutboundUrlGuard;
+use Escalated\Laravel\Support\StaffAccess;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -435,10 +435,8 @@ class WorkflowEngine
 
     protected function assignmentCandidates(): Collection
     {
-        $gate = config('escalated.authorization.agent_gate', 'escalated-agent');
-
         return Escalated::userQuery()->orderBy(Escalated::newUserModel()->getKeyName())->get()
-            ->filter(fn ($user) => Gate::forUser($user)->allows($gate))->values();
+            ->filter(fn ($user) => StaffAccess::isAgent($user))->values();
     }
 
     protected function actionChangeStatus(Ticket $ticket, mixed $value): void

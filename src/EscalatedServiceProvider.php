@@ -42,6 +42,7 @@ use Escalated\Laravel\Services\PluginUIService;
 use Escalated\Laravel\Services\TicketActionRegistry;
 use Escalated\Laravel\Support\GuestRateLimits;
 use Escalated\Laravel\Support\HookManager;
+use Escalated\Laravel\Support\StaffAccess;
 use Escalated\Laravel\Tenancy\TenantBackgroundConnector;
 use Escalated\Laravel\Tenancy\TenantBroadcast;
 use Escalated\Laravel\Tenancy\TenantContext;
@@ -63,7 +64,6 @@ use Illuminate\Queue\Queue;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -584,8 +584,8 @@ class EscalatedServiceProvider extends ServiceProvider
             $data = [
                 'prefix' => config('escalated.routes.prefix', 'support'),
                 'broadcasting' => ['channel_prefix' => TenantBroadcast::prefix()],
-                'is_agent' => $user ? Gate::allows('escalated-agent', $user) : false,
-                'is_admin' => $user ? Gate::allows('escalated-admin', $user) : false,
+                'is_agent' => $user ? StaffAccess::isAgent($user) : false,
+                'is_admin' => $user ? StaffAccess::isAdmin($user) : false,
                 'permissions' => $user ? CheckPermission::userPermissions($user->getKey()) : [],
                 'features' => [
                     'newsletters' => (bool) config('escalated.enable_newsletters', false),

@@ -99,6 +99,11 @@ Gate::define('escalated-admin', fn ($user) => $user->is_admin);
 Gate::define('escalated-agent', fn ($user) => $user->is_agent);
 ```
 
+These global gates are enough for a single-account installation. With
+[multiple merchant accounts](#multiple-merchant-accounts) enabled, staff access
+also requires a tenant-local seat from the host resolver's `isAgent` / `isAdmin`,
+so a global flag never makes someone an agent of an account where they are a customer.
+
 Visit `/support` — you're live.
 
 ### UUID / string user keys
@@ -132,7 +137,8 @@ Override the detection with the `user_key_type` config (`'auto'` by default;
 
 Self-hosted installations can enable host-resolved tenant isolation for tickets,
 attachments, reports, settings, API tokens, background work and broadcasts. The
-host supplies account selection and membership checks. Existing installations must
+host supplies account selection, membership checks and per-account agent/admin
+seats; without a seat decision staff access is denied. Existing installations must
 explicitly assign legacy data before enabling it; cloud/synced modes and plugin
 execution do not currently support tenant isolation.
 

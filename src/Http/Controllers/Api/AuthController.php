@@ -2,10 +2,10 @@
 
 namespace Escalated\Laravel\Http\Controllers\Api;
 
+use Escalated\Laravel\Support\StaffAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Gate;
 
 class AuthController extends Controller
 {
@@ -21,8 +21,8 @@ class AuthController extends Controller
                 'email' => $user->email,
             ],
             'abilities' => $apiToken->abilities ?? [],
-            'is_agent' => Gate::forUser($user)->allows('escalated-agent'),
-            'is_admin' => Gate::forUser($user)->allows('escalated-admin'),
+            'is_agent' => StaffAccess::isAgent($user),
+            'is_admin' => StaffAccess::isAdmin($user),
             'token_name' => $apiToken->name,
             'expires_at' => $apiToken->expires_at?->toIso8601String(),
         ]);

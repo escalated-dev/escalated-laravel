@@ -7,6 +7,8 @@ use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\Skill;
 use Escalated\Laravel\Models\Tag;
+use Escalated\Laravel\Support\StaffAccess;
+use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -143,13 +145,23 @@ class SkillController extends Controller
     protected function agentRoleRule(string $userModel, string $userKey, array $roleColumns): \Closure
     {
         return function ($attribute, $value, $fail) use ($userKey, $roleColumns): void {
-            if ($roleColumns === []) {
+            $tenancy = app(TenantContext::class)->enabled();
+            if ($roleColumns === [] && ! $tenancy) {
                 return;
             }
 
             $user = Escalated::userQuery()->where($userKey, $value)->first();
             if ($user === null) {
                 return; // Rule::exists already reports this; avoid duplicate failure.
+            }
+
+            // Host role columns are global; merchants need a tenant-local seat.
+            if ($tenancy) {
+                if (! StaffAccess::isAgent($user)) {
+                    $fail('The selected '.$attribute.' is not an agent.');
+                }
+
+                return;
             }
 
             foreach ($roleColumns as $column) {
@@ -204,8 +216,13 @@ class SkillController extends Controller
             });
         }
 
+        // Tenant seats are decided per host model, so load whole rows there.
+        $agents = app(TenantContext::class)->enabled()
+            ? $agentQuery->get()->filter(fn ($agent) => StaffAccess::isAgent($agent))
+            : $agentQuery->get([$userKey, 'name', 'email']);
+
         return [
-            'availableAgents' => $agentQuery->get([$userKey, 'name', 'email'])
+            'availableAgents' => $agents
                 ->map(fn ($agent) => [
                     'id' => $agent->getKey(),
                     'name' => $agent->name,

@@ -2,12 +2,12 @@
 
 use Escalated\Laravel\Models\ChatSession;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Support\StaffAccess;
 use Escalated\Laravel\Tenancy\TenantBroadcast;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Gate;
 
-$isAgent = static fn ($user): bool => Gate::forUser($user)->allows(config('escalated.authorization.agent_gate', 'escalated-agent'))
-    || Gate::forUser($user)->allows(config('escalated.authorization.admin_gate', 'escalated-admin'));
+$isAgent = static fn ($user): bool => StaffAccess::isStaff($user);
 $isUser = static fn ($user, $id): bool => $id !== null && $id !== '' && (string) $user->getAuthIdentifier() === (string) $id;
 $isPresence = static fn (): bool => str_starts_with((string) request('channel_name', ''), 'presence-');
 
