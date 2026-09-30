@@ -56,7 +56,13 @@ prefix and app key). The app's signing secret authenticates URL verification too
 The receiver uses the [Slack signing protocol](https://docs.slack.dev/authentication/verifying-requests-from-slack/):
 exact body bytes, HMAC-SHA256, constant-time comparison and a five-minute window.
 It also checks the app ID and explicit workspace/channel mapping for messages.
-Bot, hidden, edit/deletion and other subtype events are ignored. Attachments,
+A wrong app ID is refused with 403. Once the signature and app ID pass, events
+this installation does not route are acknowledged with HTTP 200
+`{"ignored": true}` and nothing is stored: unmapped workspaces, channels and
+direct messages, whitespace-only text, and bot, hidden, edit/deletion and other
+subtype events. Slack retries non-2xx responses and can disable an endpoint
+that keeps failing, so these are not errors. The ignore reason is logged
+without the message payload. Attachments,
 edits, deletions, Slack Connect identity discovery and automatic Slack user/email
 lookup are not supported by this text-message adapter.
 
@@ -66,6 +72,20 @@ or wraps the package connection in an outer transaction. Such a transaction
 returns 503: an uncommitted write must not be acknowledged as durable. The route
 also applies the configured per-minute IP budget; configure trusted proxies in
 Laravel. Unknown/unconfigured apps or disabled/non-self-hosted mode reject use.
+
+Map each workspace channel to exactly one configured app. When a second
+configured app delivers a message another app has already recorded, the host
+acknowledges it with `{"ignored": true}` and keeps the first receipt; replies
+in a thread bound to a different app fail with `different_app_binding`.
+
+Message text has no separate length limit at ingress; only the 1 MiB signed
+request limit applies, so messages up to Slack's 40,000-character limit are
+accepted into the inbox (its payload column is `longText`). The worker decodes Slack's
+`&amp;`, `&lt;` and `&gt;` escapes once, then HTML-escapes the text for the
+ticket description or reply body. If that escaped text exceeds 65,535 bytes
+(the portable size of those `TEXT` columns), the receipt fails at once with
+`message_too_large` instead of being truncated; its full text remains in the
+encrypted inbox payload.
 
 ## Process and monitor the inbox
 
@@ -85,6 +105,8 @@ host mapping/configuration. Limit each batch with `--limit` (default 100, maximu
 1,000). Monitor failed receipts and the age of pending records. Temporary errors
 retry with bounded backoff; after the configured attempt limit a receipt remains
 failed for explicit recovery. Unmapped identities report `identity_not_mapped`.
+Failures that a retry cannot fix fail on the first attempt: `ticket_missing`
+(the linked ticket was deleted) and `message_too_large`.
 No failure is acknowledged as a successfully created ticket.
 
 HTTP 202 means the package database committed a receipt, not that processing has
@@ -101,8 +123,9 @@ the mapped requester and origin metadata. A thread message becomes a public
 reply on that mapped ticket. Replies arriving before their root are deferred for
 up to a day, then remain failed for recovery. A thread whose original message was
 a bot notification or predates this adapter has no inbound root mapping and is
-not silently turned into another ticket. Deleting a ticket preserves its receipt
-and thread identities so a retry cannot recreate deleted correspondence.
+not silently turned into another ticket. Deleting a ticket (soft or permanent)
+preserves its receipt and thread identities so a retry cannot recreate deleted
+correspondence: later thread messages fail as `ticket_missing` without retrying.
 
 Ticket/reply/activity/thread writes and the processed receipt commit together.
 Creation events run after commit, when listeners can see the complete mapping.
@@ -119,14 +142,18 @@ In single-tenant mode the authenticated Slack plugin may continue using
 HTTP contract first, configure the same app secret and routing in the native host
 configuration above, and choose its app key with `slack.plugin_app`. The host now
 subscribes to `slack.message.received`, independently verifies its original signed
-bytes and returns a matching durable receipt. It ignores plugin-supplied tenant
-or verification assertions. The plugin returns retryable 503 when the host does
-not durably accept the message.
+bytes and returns a matching durable receipt, or `{"ignored": true}` for an
+event the host does not route. It ignores plugin-supplied tenant or verification
+assertions. The plugin acknowledges ignored events with 200 and returns
+retryable 503 only when the host does not durably accept a routed message.
 
 The native adapter persists `metadata.source = "slack"` and
-`metadata.slack = {app, workspace, channel, thread_ts, event_id, user}`. Compatible
-Slack plugin handlers can use that origin for host public replies and suppress
-imported-message echoes. The host still owns outbound framework hook dispatch;
-native tenant-mode outbound Slack delivery is not implemented here. Internal
-notes must never be forwarded. This work does not publish npm/Composer packages,
+`metadata.slack = {app, workspace, channel, thread_ts, event_id, user}`.
+Laravel does not currently dispatch `ticket.created` or `reply.created` to SDK
+plugins (the bridge forwards only hooks raised through `escalated_do_action`),
+so the Slack plugin's origin-thread replies and imported-message echo
+suppression do not run on this host, and neither does its outbound ticket
+notification. That metadata is recorded for a future outbound adapter; native
+outbound Slack delivery is not implemented here. Internal notes must never be
+forwarded. This work does not publish npm/Composer packages,
 configure a production Slack app, or introduce Microsoft Teams support.

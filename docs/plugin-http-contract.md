@@ -14,8 +14,14 @@ before deploying this bridge. The default command uses the runtime package's
 actual `build/bin/escalated-plugins.js` entry point; custom commands are preserved.
 
 The host sends `httpContract: 1`, `rawBodyBase64` from the exact request content,
-parsed `body`, distinct route `params` and `query`, lowercase scalar `headers`,
-and `clientIp` from Laravel's trusted-proxy policy. Repeated headers remain
+parsed `body`, distinct route `params` and `query` (always JSON objects, `{}`
+when empty), lowercase scalar `headers`, and `clientIp` from Laravel's
+trusted-proxy policy. Manifest paths may use SDK `:param` segments
+(`/topics/:id`); the host matches them as Laravel `{param}` segments, sends the
+values as `params`, and dispatches on the manifest path. The caller's
+`Cookie`, `Authorization` (and PHP auth variables), `X-XSRF-TOKEN`,
+`X-CSRF-TOKEN` and `Proxy-*` headers are not forwarded to plugins; signature
+headers such as `X-Slack-Signature` are. Repeated headers remain
 comma-separated, so signature handlers must reject an ambiguous signature.
 The runtime decodes raw bytes to the SDK's `req.rawBody`; JSON serialization of
 the parsed body must never be used to verify signatures. Hosts must configure
