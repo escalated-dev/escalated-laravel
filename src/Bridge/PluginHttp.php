@@ -8,15 +8,28 @@ use Symfony\Component\HttpFoundation\Response;
 /** The additive version 1 HTTP contract within plugin JSON-RPC protocol 1.0. */
 class PluginHttp
 {
+    /** Browser and proxy credentials of the caller never reach plugin code. */
+    private const WITHHELD_HEADERS = ['cookie', 'authorization', 'php-auth-user', 'php-auth-pw', 'php-auth-digest',
+        'x-xsrf-token', 'x-csrf-token'];
+
     public static function request(Request $request): array
     {
+        $headers = [];
+        foreach ($request->headers->all() as $name => $values) {
+            $name = strtolower($name);
+            if (! in_array($name, self::WITHHELD_HEADERS, true) && ! str_starts_with($name, 'proxy-')) {
+                $headers[$name] = implode(', ', $values);
+            }
+        }
+
         return [
             'httpContract' => 1,
             'rawBodyBase64' => base64_encode($request->getContent()),
             'body' => $request->isJson() ? $request->json()->all() : $request->request->all(),
-            'params' => $request->route()?->parameters() ?? [],
-            'query' => $request->query(),
-            'headers' => array_map(fn ($values) => implode(', ', $values), $request->headers->all()),
+            // JSON objects even when empty: the SDK types both as records.
+            'params' => (object) ($request->route()?->parameters() ?? []),
+            'query' => (object) $request->query(),
+            'headers' => $headers,
             'clientIp' => $request->ip(),
         ];
     }
