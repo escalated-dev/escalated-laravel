@@ -13,6 +13,8 @@ class SatisfactionRatingController extends Controller
 {
     public function store(Ticket $ticket, Request $request): RedirectResponse
     {
+        $this->authorizeRequester($ticket, $request);
+
         $request->validate([
             'rating' => 'required|integer|min:1|max:5',
             'comment' => 'nullable|string|max:2000',
@@ -61,5 +63,19 @@ class SatisfactionRatingController extends Controller
         ]);
 
         return back()->with('success', __('escalated::messages.rating.thanks'));
+    }
+
+    /**
+     * Only the ticket's own requester may rate it from the customer portal.
+     */
+    protected function authorizeRequester(Ticket $ticket, Request $request): void
+    {
+        $user = $request->user();
+
+        if ($user === null
+            || $ticket->requester_type !== $user->getMorphClass()
+            || (string) $ticket->requester_id !== (string) $user->getKey()) {
+            abort(403);
+        }
     }
 }
