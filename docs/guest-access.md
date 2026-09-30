@@ -62,9 +62,13 @@ the authorized database operation commit together. Incorrect attempts remain
 counted. A failed operation rolls back consumption so it can be retried.
 
 Route-level IP budgets cover reads and writes across all three surfaces. In
-addition, code delivery is limited to three requests per normalized email per
-hour, shared across IPs, tenants and purposes. A 429 response includes
-`Retry-After`. Changing an IP, token or route does not reset the email budget.
+addition, code delivery for a normalized email is limited to three requests per
+hour from one client IP, and to ten per hour across all IPs, shared across
+tenants and purposes. One client exhausting its budget therefore does not lock
+the mailbox owner out. A 429 response includes `Retry-After`. Changing a token
+or route does not reset either budget. Tune the limits with
+`escalated.guest_access.challenges_per_client_per_hour` and
+`challenges_per_mailbox_per_hour`.
 
 ## Tickets and private grants
 

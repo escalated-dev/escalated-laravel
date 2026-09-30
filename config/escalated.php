@@ -281,6 +281,10 @@ return [
         // Verified guest links expire after one day; accepted range is 5 minutes
         // through 7 days. Email codes always expire in 10 minutes after 5 guesses.
         'ttl_minutes' => 1440,
+        // Email-code delivery budgets per hour: per mailbox and client IP, and
+        // per mailbox across all clients (never lower than the per-client one).
+        'challenges_per_client_per_hour' => 3,
+        'challenges_per_mailbox_per_hour' => 10,
     ],
 
     'guest_rate_limits' => [

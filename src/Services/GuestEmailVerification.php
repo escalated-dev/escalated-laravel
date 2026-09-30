@@ -20,18 +20,29 @@ class GuestEmailVerification
         return strtolower(trim($email));
     }
 
-    public function challenge(string $email, string $purpose): string
+    /**
+     * Email a one-time code. Delivery is budgeted per (mailbox, client IP)
+     * so one client cannot exhaust the owner's budget, and per mailbox
+     * across all clients so the mailbox cannot be flooded.
+     */
+    public function challenge(string $email, string $purpose, ?string $clientIp = null): string
     {
         $email = self::email($email);
         if (! in_array($purpose, ['ticket', 'chat', 'lookup'], true) || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
             throw ValidationException::withMessages(['email' => 'Enter a valid email address.']);
         }
         $key = 'escalated:guest-email:'.$this->digest($email);
+        $clientKey = $key.':client:'.$this->digest((string) ($clientIp ?? request()->ip() ?? ''));
+        $perClient = max(1, (int) config('escalated.guest_access.challenges_per_client_per_hour', 3));
+        $perMailbox = max($perClient, (int) config('escalated.guest_access.challenges_per_mailbox_per_hour', 10));
         try {
-            Cache::lock($key.':lock', 10)->block(3, function () use ($key) {
-                abort_if(RateLimiter::tooManyAttempts($key, 3), 429, 'Please wait before requesting another code.', [
-                    'Retry-After' => (string) RateLimiter::availableIn($key),
-                ]);
+            Cache::lock($key.':lock', 10)->block(3, function () use ($key, $clientKey, $perClient, $perMailbox) {
+                foreach ([$clientKey => $perClient, $key => $perMailbox] as $limitKey => $limit) {
+                    abort_if(RateLimiter::tooManyAttempts($limitKey, $limit), 429, 'Please wait before requesting another code.', [
+                        'Retry-After' => (string) RateLimiter::availableIn($limitKey),
+                    ]);
+                }
+                RateLimiter::hit($clientKey, 3600);
                 RateLimiter::hit($key, 3600);
             });
         } catch (LockTimeoutException) {
