@@ -62,6 +62,12 @@ class TenantReferences
             if (str_contains((string) $column, '.')) {
                 throw new AuthorizationException('Tenant writes require unqualified column names.');
             }
+            // MySQL and SQLite resolve column names case-insensitively, so a
+            // key such as TENANT_ID would write the column this check guards.
+            $lower = strtolower((string) $column);
+            if ($lower !== (string) $column && ($this->isReferenceColumn($lower) || str_ends_with($lower, '_type'))) {
+                throw new AuthorizationException('Tenant writes require exact-case identity column names.');
+            }
         }
         if (array_key_exists('tenant_id', $values) && $values['tenant_id'] !== $tenant) {
             throw new AuthorizationException('Tenant identity cannot be assigned by record data.');
@@ -137,6 +143,8 @@ class TenantReferences
 
     public function isReferenceColumn(string $column): bool
     {
+        $column = strtolower($column);
+
         return $column === 'tenant_id' || $column === 'id' || str_ends_with($column, '_id')
             || in_array($column, ['assigned_to', 'created_by', 'sent_by'], true);
     }
