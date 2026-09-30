@@ -260,9 +260,11 @@ return [
     | APP_URL, then falls back to "escalated.dev".
     |
     | `inbound_secret` is the HMAC key used to sign the Reply-To local
-    | part (reply+{id}.{hmac8}@domain). When empty, Reply-To is left
-    | untouched — basic threading still works via Message-ID /
-    | In-Reply-To, but inbound providers can't verify ticket identity.
+    | part (reply+{id}.{hmac8}@domain). When set, inbound replies are
+    | routed to a ticket only through that signed address. When empty,
+    | Reply-To is left untouched and inbound threading falls back to the
+    | unsigned Message-ID / In-Reply-To headers and subject reference.
+    | Either way a reply is accepted only from the ticket's requester.
     |
     */
     'email' => [
