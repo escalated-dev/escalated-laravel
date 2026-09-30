@@ -6,6 +6,7 @@ use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Models\SlackInboundEvent;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\Log;
 
 /** Authenticated ingress only: no host identity lookup, HTTP call or ticket event on the acknowledgement path. */
 class SlackInbox
@@ -57,8 +58,17 @@ class SlackInbox
             [$event['thread_ts'] ?? $event['ts'] ?? null, '/^[0-9]{1,16}\.[0-9]{1,10}$/D']] as [$value, $pattern]) {
             abort_unless(is_string($value) && preg_match($pattern, $value), 400, 'Invalid Slack message identity.');
         }
-        abort_unless(is_string($event['text'] ?? null) && trim($event['text']) !== ''
-            && strlen($event['text']) <= 16384 && strlen(nl2br(e($event['text']))) <= 65535, 400, 'Invalid Slack message text.');
+        abort_unless(is_string($event['text'] ?? null), 400, 'Invalid Slack message text.');
+        // Authenticated events this installation does not route are acknowledged,
+        // not refused: Slack retries failures and can disable the subscription.
+        // Text length is bounded only by the raw body limit; the processor
+        // dead-letters text that cannot be stored, so none is silently lost.
+        if (trim($event['text']) === '') {
+            return $this->ignore('empty_text');
+        }
+        if (! is_array($config['channels'][$payload['team_id']][$event['channel']] ?? null)) {
+            return $this->ignore('channel_not_mapped');
+        }
         $destination = $this->destination($app, $payload['team_id'], $event['channel']);
         $store = fn () => $this->persist($app, $payload);
         $context = app(TenantContext::class);
@@ -87,6 +97,13 @@ class SlackInbox
         return $this->receive((string) config('escalated.slack.plugin_app', 'default'), $raw, $data['timestamp'], $data['signature']);
     }
 
+    private function ignore(string $reason): array
+    {
+        Log::info('Slack inbound event ignored', ['reason' => $reason]);
+
+        return ['ignored' => true];
+    }
+
     private function persist(string $app, array $payload): array
     {
         // Returning 202 from a surrounding uncommitted transaction would lose
@@ -95,12 +112,13 @@ class SlackInbox
         $event = $payload['event'];
         $thread = $event['thread_ts'] ?? $event['ts'];
         $hash = hash('sha256', json_encode($payload, JSON_THROW_ON_ERROR));
+        $messageKey = hash('sha256', $payload['team_id'].':'.$event['channel'].':'.$event['ts']);
         try {
-            Escalated::db()->transaction(function () use ($app, $payload, $event, $thread, $hash) {
+            Escalated::db()->transaction(function () use ($app, $payload, $event, $thread, $hash, $messageKey) {
                 $eventKey = hash('sha256', $payload['team_id'].':'.$payload['event_id']);
                 $attributes = [
                     'event_key' => $eventKey,
-                    'message_key' => hash('sha256', $payload['team_id'].':'.$event['channel'].':'.$event['ts']),
+                    'message_key' => $messageKey,
                     'app_key' => $app, 'workspace_id' => $payload['team_id'], 'channel_id' => $event['channel'],
                     'event_id' => $payload['event_id'], 'thread_ts' => $thread,
                     'thread_key' => hash('sha256', $payload['team_id'].':'.$event['channel'].':'.$thread),
@@ -121,6 +139,12 @@ class SlackInbox
                 abort_unless(hash_equals($record->payload_hash, $hash) && $record->app_key === $app, 409, 'Slack delivery conflicts with an existing receipt.');
             });
         } catch (UniqueConstraintViolationException) {
+            // One app owns a channel's messages. Another configured app's copy of
+            // an already recorded message is acknowledged without a second receipt.
+            $owner = SlackInboundEvent::where('message_key', $messageKey)->value('app_key');
+            if (is_string($owner) && $owner !== $app) {
+                return $this->ignore('message_recorded_by_another_app');
+            }
             // A message key collision or a routing change must not cross tenants.
             abort(409, 'Slack delivery conflicts with an existing receipt.');
         }

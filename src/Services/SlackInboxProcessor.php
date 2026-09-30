@@ -40,6 +40,13 @@ class SlackInboxProcessor
                     throw new SlackProcessingException('routing_changed');
                 }
                 $message = $event->payload['event'];
+                $text = self::decodeEntities($message['text']);
+                $body = nl2br(e($text));
+                // Portable ceiling of the ticket description / reply body TEXT
+                // columns (bytes on MySQL). Retrying cannot make it fit.
+                if (strlen($body) > 65535) {
+                    throw new SlackProcessingException('message_too_large', terminal: true);
+                }
                 $root = $message['ts'] === $event->thread_ts;
                 if ($root) {
                     SlackThread::firstOrCreate(['thread_key' => $event->thread_key], [
@@ -76,14 +83,18 @@ class SlackInboxProcessor
                     }
                     Gate::forUser($actor)->authorize('create', Ticket::class);
                     $ticket = app(AgentTicketCreator::class)->create($actor, [
-                        'subject' => Str::limit(preg_replace('/\s+/u', ' ', trim($message['text'])), 240),
-                        'description' => nl2br(e($message['text'])), 'requester' => $requester,
+                        'subject' => Str::limit(preg_replace('/\s+/u', ' ', trim($text)), 240),
+                        'description' => $body, 'requester' => $requester,
                         'department_id' => $destination['department_id'] ?? null, 'metadata' => $metadata,
                     ]);
                     $ticket->updateQuietly(['channel' => TicketChannel::Slack]);
                     $thread->update(['ticket_id' => $ticket->id]);
                 } else {
-                    $ticket = Ticket::whereKey($thread->ticket_id)->lockForUpdate()->firstOrFail();
+                    $ticket = Ticket::whereKey($thread->ticket_id)->lockForUpdate()->first();
+                    if (! $ticket) {
+                        // Deleted correspondence is never recreated or retried.
+                        throw new SlackProcessingException('ticket_missing', terminal: true);
+                    }
                     if (! $root) {
                         $author = isset($requester['id']) ? $this->hostUser($requester['id'])
                             : Contact::findOrCreateByEmail($requester['email'], $requester['name']);
@@ -94,7 +105,7 @@ class SlackInboxProcessor
                         } else {
                             Gate::forUser($author)->authorize('reply', $ticket);
                         }
-                        $reply = new Reply(['ticket_id' => $ticket->id, 'body' => nl2br(e($message['text'])),
+                        $reply = new Reply(['ticket_id' => $ticket->id, 'body' => $body,
                             'type' => 'reply', 'is_internal_note' => false, 'metadata' => $metadata]);
                         $reply->author()->associate($author);
                         $reply->deferCreatedEvent = true;
@@ -121,7 +132,8 @@ class SlackInboxProcessor
                     return 'processed';
                 }
                 $attempts = $event->attempts + 1;
-                $status = $attempts >= max(1, (int) config('escalated.slack.max_attempts', 8)) ? 'failed' : 'pending';
+                $status = ($error instanceof SlackProcessingException && $error->terminal)
+                    || $attempts >= max(1, (int) config('escalated.slack.max_attempts', 8)) ? 'failed' : 'pending';
                 $event->update(['attempts' => $attempts, 'status' => $status,
                     'last_error' => $error instanceof SlackProcessingException ? $error->getMessage() : class_basename($error),
                     'available_at' => now()->addSeconds(min(3600, 30 * 2 ** min($attempts, 7)))]);
@@ -130,6 +142,12 @@ class SlackInboxProcessor
                 return $status;
             });
         }
+    }
+
+    /** Slack escapes only &, < and > in message text; decode them in one pass. */
+    public static function decodeEntities(string $text): string
+    {
+        return strtr($text, ['&lt;' => '<', '&gt;' => '>', '&amp;' => '&']);
     }
 
     private function hostUser(mixed $id): Model&Ticketable
