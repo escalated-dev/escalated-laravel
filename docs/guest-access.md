@@ -80,7 +80,11 @@ Browser and mobile reads/replies use the grant in their existing token route.
 Widget GET `tickets/{reference}` requires `Authorization: Bearer <grant>` and a
 matching ticket reference; an email query parameter cannot authorize it. Guest
 CSAT and attachment downloads enforce the same active grant. Internal notes
-remain excluded. Responses use `Cache-Control: no-store` and
+remain excluded. The browser page and the mobile API send an allow-listed ticket
+payload rather than the ticket model: ticket `metadata`, `chat_metadata` and
+`external_reference` are never included (mobile keeps `metadata` as an empty
+object for client compatibility), and agents appear by display name only, with
+no email address or user id. Responses use `Cache-Control: no-store` and
 `Referrer-Policy: no-referrer`. Hosts should redact guest grant route segments and
 authorization headers from access logs and analytics.
 
