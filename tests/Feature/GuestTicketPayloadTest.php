@@ -147,3 +147,76 @@ it('shows authenticated mobile customers their own identity but only staff displ
         ->and($data['assignee']['email'])->toBe('')
         ->and(json_encode($data))->not->toContain('vip-risk')->not->toContain('agent.smith@example.com');
 });
+
+it('renders the authenticated customer ticket page from an allow-list', function () {
+    $customer = $this->createTestUser(['name' => 'Cust Omer', 'email' => 'customer@example.com']);
+    $agent = $this->createAgent(['name' => 'Agent Smith', 'email' => 'agent.smith@example.com']);
+    $ticket = Ticket::factory()->create([
+        'requester_type' => $customer->getMorphClass(), 'requester_id' => $customer->id,
+        'assigned_to' => $agent->id,
+        'metadata' => ['internal_score' => 'vip-risk'],
+        'chat_metadata' => ['visitor_ip' => '203.0.113.9'],
+        'external_reference' => 'ORDER-SECRET-1',
+    ]);
+    Reply::create([
+        'ticket_id' => $ticket->id, 'author_type' => $agent->getMorphClass(), 'author_id' => $agent->id,
+        'body' => 'Agent answer', 'is_internal_note' => false, 'type' => 'reply',
+        'metadata' => ['source' => 'internal-tool'],
+    ]);
+    Reply::create([
+        'ticket_id' => $ticket->id, 'author_type' => $agent->getMorphClass(), 'author_id' => $agent->id,
+        'body' => 'Private note', 'is_internal_note' => true, 'type' => 'note',
+    ]);
+    Reply::create([
+        'ticket_id' => $ticket->id, 'author_type' => $customer->getMorphClass(), 'author_id' => $customer->id,
+        'body' => 'Customer follow-up', 'is_internal_note' => false, 'type' => 'reply',
+    ]);
+
+    $ticketProp = $this->actingAs($customer)
+        ->withHeaders(['X-Inertia' => 'true', 'X-Inertia-Version' => ''])
+        ->get(route('escalated.customer.tickets.show', $ticket->reference))
+        ->assertOk()
+        ->json('props.ticket');
+
+    expect(array_keys($ticketProp))->toEqualCanonicalizing([
+        'reference', 'subject', 'description', 'status', 'priority', 'channel',
+        'department', 'attachments', 'replies', 'satisfaction_rating',
+        'resolved_at', 'closed_at', 'created_at', 'updated_at',
+    ]);
+    expect(count($ticketProp['replies']))->toBe(2);
+    foreach ($ticketProp['replies'] as $reply) {
+        expect(array_keys($reply))->toEqualCanonicalizing([
+            'id', 'body', 'is_internal_note', 'is_pinned', 'author', 'attachments', 'created_at',
+        ])->and(array_keys($reply['author']))->toBe(['name']);
+    }
+    expect(collect($ticketProp['replies'])->pluck('author.name')->all())
+        ->toEqualCanonicalizing(['Agent Smith', 'Cust Omer']);
+
+    $json = json_encode($ticketProp);
+    expect($json)->not->toContain('agent.smith@example.com')
+        ->not->toContain('vip-risk')
+        ->not->toContain('ORDER-SECRET-1')
+        ->not->toContain('203.0.113.9')
+        ->not->toContain('internal-tool')
+        ->not->toContain('Private note');
+});
+
+it('tells the customer ticket page when the ticket was already rated', function () {
+    $customer = $this->createTestUser();
+    $ticket = Ticket::factory()->create([
+        'requester_type' => $customer->getMorphClass(), 'requester_id' => $customer->id,
+        'status' => TicketStatus::Resolved,
+    ]);
+    $ticket->satisfactionRating()->create([
+        'rating' => 4, 'comment' => 'Thanks',
+        'rated_by_type' => $customer->getMorphClass(), 'rated_by_id' => $customer->id,
+    ]);
+
+    $ticketProp = $this->actingAs($customer)
+        ->withHeaders(['X-Inertia' => 'true', 'X-Inertia-Version' => ''])
+        ->get(route('escalated.customer.tickets.show', $ticket->reference))
+        ->assertOk()
+        ->json('props.ticket');
+
+    expect($ticketProp['satisfaction_rating'])->toBe(['rating' => 4, 'comment' => 'Thanks']);
+});

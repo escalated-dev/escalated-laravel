@@ -8,7 +8,7 @@ use Escalated\Laravel\Models\Ticket;
 
 /**
  * Allow-listed ticket fields for requester-facing views (guest web page,
- * mobile API). Serializing the Ticket model directly would carry every
+ * authenticated customer web page, mobile API). Serializing the Ticket model directly would carry every
  * column and loaded relation — metadata, external_reference,
  * chat_metadata, assignee and author user records — to the requester.
  *
@@ -57,6 +57,18 @@ class CustomerTicketPayload
             'created_at' => $ticket->created_at?->toIso8601String(),
             'updated_at' => $ticket->updated_at?->toIso8601String(),
         ];
+    }
+
+    /**
+     * Props for the authenticated `Escalated/Customer/Show` page. Same
+     * allow-list as the guest page, minus the guest-link expiry.
+     */
+    public static function customerWeb(Ticket $ticket): array
+    {
+        $payload = self::guestWeb($ticket);
+        unset($payload['guest_access_expires_at']);
+
+        return $payload;
     }
 
     /**
