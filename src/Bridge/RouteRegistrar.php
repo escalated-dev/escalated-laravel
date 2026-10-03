@@ -161,7 +161,7 @@ class RouteRegistrar
 
                     Route::match(
                         [strtolower($httpMethod)],
-                        ltrim($path, '/'),
+                        $this->laravelUri($path),
                         function (Request $request) use ($pluginName, $httpMethod, $path, $capability) {
                             if ($capability !== null) {
                                 abort_unless(
@@ -216,7 +216,7 @@ class RouteRegistrar
 
                     Route::match(
                         [strtolower($httpMethod)],
-                        ltrim($path, '/'),
+                        $this->laravelUri($path),
                         function (Request $request) use ($pluginName, $httpMethod, $path) {
                             $transport = PluginHttp::request($request);
                             $result = $this->bridge->callWebhook(
@@ -238,6 +238,15 @@ class RouteRegistrar
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
+
+    /**
+     * SDK manifests declare Express-style `:param` segments; Laravel matches
+     * `{param}`. The manifest path is still what the runtime dispatches on.
+     */
+    private function laravelUri(string $path): string
+    {
+        return ltrim(preg_replace('#(?<=/):([A-Za-z_][A-Za-z0-9_]*)(?=/|$)#', '{$1}', $path), '/');
+    }
 
     /**
      * Parse an endpoint signature like "GET /settings" into [method, path].

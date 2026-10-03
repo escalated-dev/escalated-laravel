@@ -23,8 +23,9 @@ it('registers a real SDK manifest and preserves exact webhook bytes and status',
         expect($plugin)->toBe('http-fixture')->and($method)->toBe('POST')->and($path)->toBe('/events')
             ->and($body)->toBe(['message' => '📦', 'id' => 'body'])
             ->and($headers['x-slack-signature'])->toBe('v0=test')
-            ->and($transport['query'])->toBe(['id' => 'query'])
-            ->and($transport['params'])->toBe([])->and($transport['httpContract'])->toBe(1)
+            ->and((array) $transport['query'])->toBe(['id' => 'query'])
+            ->and((array) $transport['params'])->toBe([])->and(json_encode($transport['params']))->toBe('{}')
+            ->and($transport['httpContract'])->toBe(1)
             ->and(base64_decode($transport['rawBodyBase64'], true))->toBe($this->raw)
             ->and($transport['clientIp'])->toBe('192.0.2.4');
 
@@ -49,8 +50,8 @@ it('keeps plugin endpoints authenticated and capability protected', function () 
 
 it('separates route parameters query and body on authorized endpoints', function () {
     $this->bridge->shouldReceive('callEndpoint')->once()->withArgs(function ($plugin, $method, $path, $request) {
-        expect($path)->toBe('/echo/{id}')->and($request['params'])->toBe(['id' => 'route-id'])
-            ->and($request['query'])->toBe(['id' => 'query'])->and($request['body']['id'])->toBe('body')
+        expect($path)->toBe('/echo/{id}')->and((array) $request['params'])->toBe(['id' => 'route-id'])
+            ->and((array) $request['query'])->toBe(['id' => 'query'])->and($request['body']['id'])->toBe('body')
             ->and(base64_decode($request['rawBodyBase64']))->toBe($this->raw);
 
         return true;
@@ -105,3 +106,50 @@ it('carries HTTP fields through the actual bridge JSON RPC peer', function (bool
     }
     unset($bridge);
 })->with([false, true]);
+
+it('does not forward browser credentials or proxy headers to plugins', function () {
+    $this->bridge->shouldReceive('callWebhook')->once()->withArgs(function ($plugin, $method, $path, $body, $headers, $transport) {
+        foreach (['cookie', 'authorization', 'x-xsrf-token', 'x-csrf-token', 'proxy-authorization', 'proxy-connection',
+            'php-auth-user', 'php-auth-pw'] as $name) {
+            expect($headers)->not->toHaveKey($name);
+        }
+        expect($headers)->toBe($transport['headers'])
+            ->and($headers['x-slack-signature'])->toBe('v0=test')->and($headers['x-slack-request-timestamp'])->toBe('123')
+            ->and($headers['content-type'])->toBe('application/json');
+
+        return true;
+    })->andReturn(['ok' => true]);
+    $this->call('POST', '/support/webhooks/plugins/http-fixture/events', [], ['session' => 'secret'], [], [
+        'CONTENT_TYPE' => 'application/json', 'HTTP_X_SLACK_SIGNATURE' => 'v0=test', 'HTTP_X_SLACK_REQUEST_TIMESTAMP' => '123',
+        'HTTP_COOKIE' => 'session=secret', 'HTTP_AUTHORIZATION' => 'Basic dXNlcjpwYXNz', 'PHP_AUTH_USER' => 'user', 'PHP_AUTH_PW' => 'pass',
+        'HTTP_X_XSRF_TOKEN' => 'xsrf', 'HTTP_X_CSRF_TOKEN' => 'csrf', 'HTTP_PROXY_AUTHORIZATION' => 'Basic cHJveHk=', 'HTTP_PROXY_CONNECTION' => 'keep-alive',
+    ], $this->raw)->assertOk();
+});
+
+it('matches SDK colon route parameters and forwards them with the manifest path', function () {
+    $this->registrar->registerPlugin('colon', [
+        'endpoints' => [['method' => 'GET', 'path' => '/topics/:id', 'capability' => 'plugin.manage'],
+            ['method' => 'POST', 'path' => '/topics/:topic_id/replies/:reply', 'capability' => 'plugin.manage']],
+        'webhooks' => ['POST /events/:kind' => []],
+    ]);
+    $this->bridge->shouldReceive('callEndpoint')->once()->withArgs(function ($plugin, $method, $path, $request) {
+        expect($plugin)->toBe('colon')->and($path)->toBe('/topics/:id')->and(json_encode($request['params']))->toBe('{"id":"42"}')
+            ->and(json_encode($request['query']))->toBe('{}');
+
+        return true;
+    })->andReturn(['ok' => 1]);
+    $this->bridge->shouldReceive('callEndpoint')->once()->withArgs(function ($plugin, $method, $path, $request) {
+        expect($path)->toBe('/topics/:topic_id/replies/:reply')->and((array) $request['params'])->toBe(['topic_id' => '7', 'reply' => '9']);
+
+        return true;
+    })->andReturn(['ok' => 2]);
+    $this->bridge->shouldReceive('callWebhook')->once()->withArgs(function ($plugin, $method, $path, $body, $headers, $transport) {
+        expect($path)->toBe('/events/:kind')->and((array) $transport['params'])->toBe(['kind' => 'message']);
+
+        return true;
+    })->andReturn(['ok' => 3]);
+    $this->actingAs($this->createAdmin());
+    $this->getJson('/support/api/plugins/colon/topics/42')->assertOk()->assertJsonPath('ok', 1);
+    $this->postJson('/support/api/plugins/colon/topics/7/replies/9')->assertOk()->assertJsonPath('ok', 2);
+    $this->postJson('/support/webhooks/plugins/colon/events/message')->assertOk()->assertJsonPath('ok', 3);
+});

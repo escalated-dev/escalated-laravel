@@ -114,14 +114,77 @@ it('rejects unauthenticated and stale callbacks before challenge or persistence'
     expect(SlackInboundEvent::count())->toBe(0);
 });
 
-it('rejects wrong app workspace channel and conflicting replay data', function () {
+it('rejects a wrong app and conflicting replay data', function () {
     $this->slackRequest($this->slackPayload(['api_app_id' => 'AOTHER']))->assertForbidden();
-    $this->slackRequest($this->slackPayload(['team_id' => 'TOTHER']))->assertForbidden();
-    $this->slackRequest($this->slackPayload(['event' => ['channel' => 'COTHER']]))->assertForbidden();
     $this->slackRequest()->assertStatus(202);
     $this->slackRequest($this->slackPayload(['event' => ['text' => 'changed']]))->assertStatus(409);
     $this->slackRequest($this->slackPayload(['event_id' => 'EvOTHER']))->assertStatus(409);
     expect(SlackInboundEvent::count())->toBe(1);
+});
+
+it('acknowledges authenticated events from unmapped workspaces channels and direct messages without storing them', function (array $replace) {
+    $this->slackRequest($this->slackPayload($replace))->assertOk()->assertExactJson(['ignored' => true]);
+    expect(SlackInboundEvent::count())->toBe(0);
+})->with([
+    'unmapped workspace' => [['team_id' => 'TOTHER']],
+    'unmapped channel' => [['event' => ['channel' => 'COTHER']]],
+    'direct message' => [['event' => ['channel' => 'D123']]],
+    'whitespace-only text' => [['event' => ['text' => " \n\t "]]],
+]);
+
+it('accepts text up to the Slack message limit and processes it without truncation', function () {
+    $text = str_repeat('Parcel 📦', 5000);
+    expect(strlen($text))->toBeGreaterThan(16384)->and(mb_strlen($text))->toBe(40000);
+    $this->slackRequest($this->slackPayload(['event' => ['text' => $text]]))->assertStatus(202);
+    expect(app(SlackInboxProcessor::class)->process(SlackInboundEvent::sole()->id))->toBe('processed')
+        ->and(Ticket::sole()->description)->toBe(nl2br(e($text)));
+});
+
+it('dead letters accepted text that cannot be stored instead of rejecting or retrying it', function () {
+    $text = str_repeat('&lt;', 40000);
+    $this->slackRequest($this->slackPayload(['event' => ['text' => $text]]))->assertStatus(202);
+    $id = SlackInboundEvent::sole()->id;
+    expect(app(SlackInboxProcessor::class)->process($id))->toBe('failed')->and(Ticket::count())->toBe(0);
+    $record = SlackInboundEvent::sole();
+    expect($record->last_error)->toBe('message_too_large')->and($record->attempts)->toBe(1)
+        ->and($record->payload['event']['text'])->toBe($text);
+});
+
+it('decodes Slack entities once before escaping the ticket and reply text', function () {
+    $this->slackRequest($this->slackPayload(['event' => ['text' => "Fish &amp; chips &lt;b&gt; &amp;lt;\nnext"]]))->assertStatus(202);
+    $processor = app(SlackInboxProcessor::class);
+    expect($processor->process(SlackInboundEvent::sole()->id))->toBe('processed');
+    $ticket = Ticket::sole();
+    expect($ticket->subject)->toBe('Fish & chips <b> &lt; next')
+        ->and($ticket->description)->toBe(nl2br(e("Fish & chips <b> &lt;\nnext")));
+    $this->slackRequest($this->slackPayload(['event_id' => 'Ev124', 'event' => ['ts' => '1234567891.000100',
+        'thread_ts' => '1234567890.000100', 'text' => 'A &amp; B']]))->assertStatus(202);
+    expect($processor->process(SlackInboundEvent::where('event_id', 'Ev124')->sole()->id))->toBe('processed')
+        ->and(Reply::sole()->body)->toBe('A &amp; B');
+});
+
+it('treats a deleted linked ticket as terminal instead of retrying', function (bool $force) {
+    $this->slackRequest()->assertStatus(202);
+    $processor = app(SlackInboxProcessor::class);
+    $processor->process(SlackInboundEvent::sole()->id);
+    $force ? Ticket::sole()->forceDelete() : Ticket::sole()->delete();
+    $this->slackRequest($this->slackPayload(['event_id' => 'Ev124', 'event' => ['ts' => '1234567891.000100', 'thread_ts' => '1234567890.000100']]))->assertStatus(202);
+    $id = SlackInboundEvent::where('event_id', 'Ev124')->sole()->id;
+    expect($processor->process($id))->toBe('failed');
+    $record = SlackInboundEvent::findOrFail($id);
+    expect($record->last_error)->toBe('ticket_missing')->and($record->attempts)->toBe(1)->and(Reply::count())->toBe(0);
+})->with(['soft deleted' => false, 'purged' => true]);
+
+it('acknowledges a second app delivering a message another app already recorded', function () {
+    config(['escalated.slack.apps.second' => array_replace(config('escalated.slack.apps.default'), ['app_id' => 'A456'])]);
+    $this->slackRequest()->assertStatus(202);
+    $raw = json_encode($this->slackPayload(['api_app_id' => 'A456', 'event_id' => 'Ev999']), JSON_THROW_ON_ERROR);
+    $timestamp = (string) now()->timestamp;
+    $this->call('POST', '/support/inbound/slack/second', [], [], [], ['CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json',
+        'HTTP_X_SLACK_REQUEST_TIMESTAMP' => $timestamp,
+        'HTTP_X_SLACK_SIGNATURE' => 'v0='.hash_hmac('sha256', 'v0:'.$timestamp.':'.$raw, 'fixture-secret')], $raw)
+        ->assertOk()->assertExactJson(['ignored' => true]);
+    expect(SlackInboundEvent::count())->toBe(1)->and(SlackInboundEvent::sole()->app_key)->toBe('default');
 });
 
 it('ignores bot edits deletion hidden and non-message events', function (array $event) {
@@ -211,6 +274,10 @@ it('subscribes to the plugin hook and re-verifies its signed bytes at the host',
     expect($handler->handle('ctx.emit', ['hook' => 'slack.message.received', 'data' => $data]))
         ->toBe(['accepted' => true, 'event_id' => 'Ev123']);
     expect(SlackInboundEvent::sole()->payload['event']['text'])->toBe($this->slackPayload()['event']['text']);
+    $unmapped = json_encode($this->slackPayload(['event_id' => 'Ev125', 'event' => ['channel' => 'COTHER']]), JSON_THROW_ON_ERROR);
+    expect($handler->handle('ctx.emit', ['hook' => 'slack.message.received', 'data' => ['raw_body_base64' => base64_encode($unmapped),
+        'timestamp' => $timestamp, 'signature' => 'v0='.hash_hmac('sha256', 'v0:'.$timestamp.':'.$unmapped, 'fixture-secret')]]))
+        ->toBe(['ignored' => true]);
     $data['signature'] = 'v0=bad';
     expect(fn () => $handler->handle('ctx.emit', ['hook' => 'slack.message.received', 'data' => $data]))
         ->toThrow(HttpException::class);

@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Fixed
+- Slack inbound acknowledges authenticated events it does not route (unmapped
+  workspaces, channels and direct messages, whitespace-only text, and a second
+  app's copy of a recorded message) with 200 `{"ignored": true}` instead of
+  403/400/409. Text is no longer capped at 16,384 bytes; text too large for the
+  ticket columns is dead-lettered as `message_too_large`. Slack entities are
+  decoded once before escaping, and a deleted linked ticket fails as
+  `ticket_missing` without retrying. See `docs/slack-inbound.md`.
+- The plugin HTTP bridge no longer forwards cookie, authorization, XSRF/CSRF or
+  proxy headers to plugins, matches SDK `:param` route segments and sends their
+  values, and encodes empty `params`/`query` as JSON objects.
 - Attachments now use private storage by default and expiring application download
   URLs with ticket authorization, internal-note restrictions and customer token
   limits. A dry-run-first command copies, verifies and removes existing public
