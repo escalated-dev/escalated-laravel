@@ -113,3 +113,18 @@ it('partitions cached presence and suppresses an internal note passed to the pub
         expect((new Events\ReplyCreated($reply))->broadcastWhen())->toBeFalse();
     });
 });
+
+it('requires a tenant-local staff seat, not the host-global agent flag, for agent channels', function () {
+    // A global agent who is only a member (not staff) of merchant B.
+    $this->resolver->selected = 'b';
+    $this->resolver->agents = ['a' => [$this->agent->id], 'b' => []];
+    $this->resolver->admins = ['a' => [], 'b' => []];
+    $prefix = 'private-escalated.tenants.'.hash('sha256', 'b');
+    foreach ([$prefix.'.tickets', $prefix.'.chat.queue', $prefix.'.tickets.'.$this->ticketB->id,
+        'presence-escalated.tenants.'.hash('sha256', 'b').'.tickets.'.$this->ticketB->id] as $channel) {
+        expect(fn () => tenantChannelAuth($this->broadcaster, $this->agent, $channel))->toThrow(AccessDeniedHttpException::class);
+    }
+    $this->resolver->agents['b'] = [$this->agent->id];
+    expect(tenantChannelAuth($this->broadcaster, $this->agent, $prefix.'.tickets'))->toBeTrue()
+        ->and(tenantChannelAuth($this->broadcaster, $this->agent, $prefix.'.chat.queue'))->toBeTrue();
+});

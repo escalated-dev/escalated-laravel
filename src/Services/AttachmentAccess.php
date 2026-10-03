@@ -6,6 +6,7 @@ use Escalated\Laravel\Models\ApiToken;
 use Escalated\Laravel\Models\Attachment;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Support\StaffAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
@@ -70,8 +71,7 @@ class AttachmentAccess
                 && $ticket->requester_type === $user->getMorphClass(), 403);
         }
         if (! $this->isPublic($attachment)) {
-            abort_unless(Gate::forUser($user)->allows(config('escalated.authorization.agent_gate', 'escalated-agent'))
-                || Gate::forUser($user)->allows(config('escalated.authorization.admin_gate', 'escalated-admin')), 403);
+            abort_unless(StaffAccess::isStaff($user), 403);
         }
     }
 

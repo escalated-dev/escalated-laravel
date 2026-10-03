@@ -8,9 +8,9 @@ use Escalated\Laravel\Http\Requests\BulkActionRequest;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\AssignmentService;
 use Escalated\Laravel\Services\TicketService;
+use Escalated\Laravel\Support\StaffAccess;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Gate;
 
 class BulkActionController extends Controller
 {
@@ -37,7 +37,7 @@ class BulkActionController extends Controller
                     'assign' => $this->assignmentService->assign($ticket, $value, $causer),
                     'tags' => $this->ticketService->addTags($ticket, (array) $value, $causer),
                     'department' => $this->ticketService->changeDepartment($ticket, (int) $value, $causer),
-                    'delete' => Gate::allows(config('escalated.authorization.admin_gate', 'escalated-admin'), $request->user())
+                    'delete' => StaffAccess::isAdmin($request->user())
                         ? $ticket->delete()
                         : abort(403, 'Only admins can delete tickets'),
                 };

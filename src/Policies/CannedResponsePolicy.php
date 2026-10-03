@@ -3,28 +3,28 @@
 namespace Escalated\Laravel\Policies;
 
 use Escalated\Laravel\Models\CannedResponse;
-use Illuminate\Support\Facades\Gate;
+use Escalated\Laravel\Support\StaffAccess;
 
 class CannedResponsePolicy
 {
     public function viewAny($user): bool
     {
-        return Gate::allows('escalated-agent', $user);
+        return StaffAccess::isAgent($user);
     }
 
     public function view($user, CannedResponse $cannedResponse): bool
     {
-        return Gate::allows('escalated-agent', $user);
+        return StaffAccess::isAgent($user);
     }
 
     public function create($user): bool
     {
-        return Gate::allows('escalated-agent', $user);
+        return StaffAccess::isAgent($user);
     }
 
     public function update($user, CannedResponse $cannedResponse): bool
     {
-        if (! Gate::allows('escalated-agent', $user)) {
+        if (! StaffAccess::isAgent($user)) {
             return false;
         }
 
@@ -33,7 +33,7 @@ class CannedResponsePolicy
 
     public function delete($user, CannedResponse $cannedResponse): bool
     {
-        if (! Gate::allows('escalated-agent', $user)) {
+        if (! StaffAccess::isAgent($user)) {
             return false;
         }
 

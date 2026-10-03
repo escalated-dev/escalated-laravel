@@ -29,6 +29,16 @@ class UnconfiguredTenantResolver implements TenantResolver
         $query->whereRaw('1 = 0');
     }
 
+    public function isAgent(Model $user, string $tenantId): bool
+    {
+        return false;
+    }
+
+    public function isAdmin(Model $user, string $tenantId): bool
+    {
+        return false;
+    }
+
     public function isPlatformAdmin(Model $user): bool
     {
         return false;

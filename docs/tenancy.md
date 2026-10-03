@@ -3,7 +3,8 @@
 Tenancy is opt-in and currently supports **self-hosted mode**. Each merchant-owned
 table carries `tenant_id`; tickets, replies, attachments, settings, roles, tokens,
 reports and scheduled work require a current tenant when it is enabled. A missing
-tenant denies access. Agent/admin permissions remain necessary within that tenant.
+tenant denies access. Staff access requires a tenant-local seat as well as the host
+agent/admin gate (see [Staff seats](#staff-seats)).
 Host users stay on their own database connection.
 
 Laravel 11 requires at least 11.39.0 for the package's worker completion,
@@ -24,12 +25,36 @@ Configure `escalated.tenancy.resolver` with a class implementing
 | `canAccess(Model $user, string $tenantId)` | Check current membership for the authenticated user, including revoked/inactive memberships. |
 | `canReference(Model $model, string $tenantId)` | Check visibility of a host user or linked host entity (shipment/order/account) in that account. Deny unknown model types. |
 | `scope(Builder $query, string $tenantId)` | Restrict host entity discovery on that model's own connection. Apply the same account rules as `canReference`; unknown models should match nothing. |
+| `isAgent(Model $user, string $tenantId)` | Return whether the user holds an agent seat in that account. Include account admins who answer tickets. |
+| `isAdmin(Model $user, string $tenantId)` | Return whether the user administers that account. |
 | `isPlatformAdmin(Model $user)` | Authorize installation-wide administration separately from merchant admin access. |
 
 The default resolver denies everything. Tenant identifiers are case-sensitive,
 nonempty strings of at most 128 bytes; whitespace around IDs and control characters
 are rejected. Use a stable account key. Do not use a person's current role or a
 mutable account name as that key.
+
+### Staff seats
+
+The `escalated-agent` / `escalated-admin` gates (or the gates named in
+`escalated.authorization`) usually read global host flags such as `is_agent`. Those
+flags cannot say *which* account a person staffs. In tenant mode every package staff
+check (agent/admin middleware, ticket and admin policies, API token abilities, agent
+directories and assignment, broadcast channels and private attachments) requires all
+of:
+
+1. the host gate,
+2. current membership (`canAccess`), and
+3. the seat for the current account: `isAgent` for agent surfaces, `isAdmin` for admin
+   surfaces.
+
+A person who is staff at one merchant and a customer at another is therefore only a
+customer at the second. The default resolver, and any resolver extending
+`UnconfiguredTenantResolver` without overriding these methods, returns `false`, so
+staff access fails closed until the host provides seats. Single-account installations
+(tenancy disabled) use the gates unchanged. Host code that needs the same decision can
+call `Escalated\Laravel\Support\StaffAccess::isAgent($user)` / `isAdmin($user)`
+inside a resolved account context.
 
 For example, a host with `User::accounts()` would check membership using the user's
 host-database relation and constrain user discovery with `whereHas('accounts',
@@ -76,7 +101,8 @@ safe rollback for a multi-account installation.
 `php artisan escalated:tenant-provision ACCOUNT` creates account defaults and the
 standard roles. It preserves customized setting values and never copies another
 account's credentials. Re-provisioning refreshes standard role permission mappings.
-Host membership must already exist before agent access can succeed.
+Host membership and the account's agent/admin seats must already exist before staff
+access can succeed.
 
 ## Background and maintenance work
 

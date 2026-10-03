@@ -3,9 +3,9 @@
 namespace Escalated\Laravel\Policies;
 
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Support\StaffAccess;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Gate;
 
 class TicketPolicy
 {
@@ -19,7 +19,7 @@ class TicketPolicy
         if (! $this->canUse($user, $ticket)) {
             return false;
         }
-        if (Gate::forUser($user)->allows(config('escalated.authorization.agent_gate', 'escalated-agent')) || Gate::forUser($user)->allows(config('escalated.authorization.admin_gate', 'escalated-admin'))) {
+        if (StaffAccess::isStaff($user)) {
             return true;
         }
 
@@ -38,7 +38,7 @@ class TicketPolicy
             return false;
         }
 
-        return Gate::forUser($user)->allows(config('escalated.authorization.agent_gate', 'escalated-agent')) || Gate::forUser($user)->allows(config('escalated.authorization.admin_gate', 'escalated-admin'));
+        return StaffAccess::isStaff($user);
     }
 
     public function reply($user, Ticket $ticket): bool
@@ -46,7 +46,7 @@ class TicketPolicy
         if (! $this->canUse($user, $ticket)) {
             return false;
         }
-        if (Gate::forUser($user)->allows(config('escalated.authorization.agent_gate', 'escalated-agent')) || Gate::forUser($user)->allows(config('escalated.authorization.admin_gate', 'escalated-admin'))) {
+        if (StaffAccess::isStaff($user)) {
             return true;
         }
 
@@ -60,7 +60,7 @@ class TicketPolicy
             return false;
         }
 
-        return Gate::forUser($user)->allows(config('escalated.authorization.agent_gate', 'escalated-agent')) || Gate::forUser($user)->allows(config('escalated.authorization.admin_gate', 'escalated-admin'));
+        return StaffAccess::isStaff($user);
     }
 
     public function assign($user, Ticket $ticket): bool
@@ -69,7 +69,7 @@ class TicketPolicy
             return false;
         }
 
-        return Gate::forUser($user)->allows(config('escalated.authorization.agent_gate', 'escalated-agent')) || Gate::forUser($user)->allows(config('escalated.authorization.admin_gate', 'escalated-admin'));
+        return StaffAccess::isStaff($user);
     }
 
     public function close($user, Ticket $ticket): bool
@@ -77,7 +77,7 @@ class TicketPolicy
         if (! $this->canUse($user, $ticket)) {
             return false;
         }
-        if (Gate::forUser($user)->allows(config('escalated.authorization.agent_gate', 'escalated-agent')) || Gate::forUser($user)->allows(config('escalated.authorization.admin_gate', 'escalated-admin'))) {
+        if (StaffAccess::isStaff($user)) {
             return true;
         }
 
@@ -98,6 +98,6 @@ class TicketPolicy
     public function delete($user, Ticket $ticket): bool
     {
         return $this->canUse($user, $ticket)
-            && Gate::forUser($user)->allows(config('escalated.authorization.admin_gate', 'escalated-admin'));
+            && StaffAccess::isAdmin($user);
     }
 }

@@ -5,10 +5,11 @@ namespace Escalated\Laravel\Http\Controllers\Admin;
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Models\ApiToken;
+use Escalated\Laravel\Support\StaffAccess;
+use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Gate;
 
 class ApiTokenController extends Controller
 {
@@ -32,16 +33,16 @@ class ApiTokenController extends Controller
         ]);
 
         $userModel = Escalated::newUserModel();
-        $agentGate = config('escalated.authorization.agent_gate', 'escalated-agent');
-
         $query = Escalated::userQuery();
         $agentScope = config('escalated.authorization.agent_scope');
         if ($agentScope && is_callable($agentScope)) {
             $agentUsers = $agentScope($query)->get();
+            // A host scope is not account-specific; tenant mode also needs a seat.
+            if (app(TenantContext::class)->enabled()) {
+                $agentUsers = $agentUsers->filter(fn ($user) => StaffAccess::isAgent($user));
+            }
         } else {
-            $agentUsers = $query->limit(500)->get()->filter(function ($user) use ($agentGate) {
-                return Gate::forUser($user)->allows($agentGate);
-            });
+            $agentUsers = $query->limit(500)->get()->filter(fn ($user) => StaffAccess::isAgent($user));
         }
 
         $users = $agentUsers->map(fn ($u) => ['id' => $u->getKey(), 'name' => $u->name, 'email' => $u->email])->values();
