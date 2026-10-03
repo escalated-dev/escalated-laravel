@@ -8,6 +8,7 @@ use Escalated\Laravel\Http\Requests\ReplyToTicketRequest;
 use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\TicketService;
+use Escalated\Laravel\Support\CustomerTicketPayload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -66,10 +67,10 @@ class TicketController extends Controller
 
         $ticket->load(['replies' => function ($q) {
             $q->where('is_internal_note', false)->with('author', 'attachments')->latest();
-        }, 'attachments', 'tags', 'department']);
+        }, 'attachments', 'department', 'satisfactionRating']);
 
         return $this->renderer->render('Escalated/Customer/Show', [
-            'ticket' => $ticket,
+            'ticket' => CustomerTicketPayload::customerWeb($ticket),
         ]);
     }
 
