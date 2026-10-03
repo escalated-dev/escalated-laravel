@@ -58,11 +58,45 @@ it('expires codes and rolls back consumption if the authorized operation fails',
     expect(fn () => $service->consume($id, $code, 'guest@example.com', 'ticket', fn () => true))->toThrow(ValidationException::class);
 });
 
-it('shares the email challenge limit across client IPs', function () {
+it('limits email challenges per mailbox and client IP', function () {
     $service = app(GuestEmailVerification::class);
     for ($i = 0; $i < 3; $i++) {
-        $service->challenge('guest@example.com', 'ticket');
+        $service->challenge('guest@example.com', 'ticket', '198.51.100.7');
     }
-    expect(fn () => $service->challenge('GUEST@example.com', 'chat'))->toThrow(HttpException::class);
+    expect(fn () => $service->challenge('GUEST@example.com', 'chat', '198.51.100.7'))->toThrow(HttpException::class);
     Mail::assertSentCount(3);
+});
+
+it('does not let one client lock the mailbox owner out of new codes', function () {
+    $service = app(GuestEmailVerification::class);
+    for ($i = 0; $i < 3; $i++) {
+        $service->challenge('guest@example.com', 'ticket', '198.51.100.7');
+    }
+    expect(fn () => $service->challenge('guest@example.com', 'ticket', '198.51.100.7'))->toThrow(HttpException::class);
+
+    expect($service->challenge('guest@example.com', 'ticket', '203.0.113.20'))->toBeString();
+    Mail::assertSentCount(4);
+});
+
+it('caps email challenges per mailbox across client IPs', function () {
+    $service = app(GuestEmailVerification::class);
+    for ($i = 0; $i < 10; $i++) {
+        $service->challenge('guest@example.com', 'ticket', '198.51.100.'.$i);
+    }
+    expect(fn () => $service->challenge('guest@example.com', 'ticket', '198.51.100.200'))->toThrow(HttpException::class);
+    Mail::assertSentCount(10);
+});
+
+it('keys the HTTP challenge budget on the requesting client IP', function () {
+    for ($i = 0; $i < 3; $i++) {
+        $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.7'])
+            ->postJson('/support/guest/verification', ['email' => 'guest@example.com', 'purpose' => 'ticket'])
+            ->assertAccepted();
+    }
+    $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.7'])
+        ->postJson('/support/guest/verification', ['email' => 'guest@example.com', 'purpose' => 'ticket'])
+        ->assertStatus(429)->assertHeader('Retry-After');
+    $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.20'])
+        ->postJson('/support/guest/verification', ['email' => 'guest@example.com', 'purpose' => 'ticket'])
+        ->assertAccepted();
 });

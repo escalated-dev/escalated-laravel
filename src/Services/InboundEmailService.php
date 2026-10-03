@@ -53,19 +53,27 @@ class InboundEmailService
                 return $inboundEmail;
             }
 
-            // 2. Check if this is a reply to an existing ticket
+            // 2. Check if this is a reply to an existing ticket. A thread
+            // match alone is not enough: the sender must also be the
+            // ticket's requester, and the author is always taken from the
+            // ticket, never from the unauthenticated From header.
             $existingTicket = $this->findTicketByEmail($message);
+            $author = $existingTicket ? $this->resolveReplyAuthor($existingTicket, $message) : false;
 
-            // 3. Look up the sender
-            $user = $this->findUserByEmail($message->fromEmail);
-
-            if ($existingTicket) {
-                // 4. Reply to existing ticket
-                $reply = $this->addReplyToTicket($existingTicket, $message, $user);
+            if ($existingTicket && $author !== false) {
+                // 3. Reply to existing ticket as its requester
+                $reply = $this->addReplyToTicket($existingTicket, $message, $author);
                 $inboundEmail->markProcessed($existingTicket->id, $reply->id);
             } else {
-                // 5. Create new ticket
-                $ticket = $this->createNewTicket($message, $user);
+                if ($existingTicket) {
+                    Log::info('Escalated: Inbound email matched a ticket thread but not its requester; opening a new ticket.', [
+                        'inbound_email_id' => $inboundEmail->id,
+                        'ticket_id' => $existingTicket->id,
+                    ]);
+                }
+
+                // 4. Create new ticket
+                $ticket = $this->createNewTicket($message, $this->findUserByEmail($message->fromEmail));
                 $inboundEmail->markProcessed($ticket->id);
             }
 
@@ -98,9 +106,22 @@ class InboundEmailService
      *   5. In-Reply-To / References looked up in the InboundEmail table
      *      (relies on the receiving mail server storing Message-IDs we
      *      issued in the past — weaker than #1 but covers legacy).
+     *
+     * Message-IDs and ticket references are guessable, so once an
+     * inbound secret is configured (and outbound mail therefore carries
+     * the signed Reply-To) only path 3 is accepted. Without a secret the
+     * unsigned paths remain, and {@see resolveReplyAuthor()} still
+     * requires the sender to be the ticket's requester.
      */
     protected function findTicketByEmail(InboundMessage $message): ?Ticket
     {
+        $secret = (string) config('escalated.email.inbound_secret', '');
+        if ($secret !== '') {
+            $verified = MessageIdUtil::verifyReplyTo($message->toEmail, $secret);
+
+            return $verified !== null ? Ticket::find($verified) : null;
+        }
+
         // 1/2. Parse our own Message-IDs out of In-Reply-To / References.
         foreach ($this->candidateHeaderMessageIds($message) as $raw) {
             $ticketId = MessageIdUtil::parseTicketIdFromMessageId($raw);
@@ -112,17 +133,7 @@ class InboundEmailService
             }
         }
 
-        // 3. Signed Reply-To on the recipient address.
-        $secret = (string) config('escalated.email.inbound_secret', '');
-        if ($secret !== '') {
-            $verified = MessageIdUtil::verifyReplyTo($message->toEmail, $secret);
-            if ($verified !== null) {
-                $ticket = Ticket::find($verified);
-                if ($ticket) {
-                    return $ticket;
-                }
-            }
-        }
+        // 3. The signed Reply-To path is handled above.
 
         // 4. Subject line reference pattern.
         $prefix = EscalatedSettings::get('ticket_reference_prefix', 'ESC');
@@ -176,6 +187,42 @@ class InboundEmailService
         }
 
         return $ids;
+    }
+
+    /**
+     * Decide who a threaded inbound email may post as.
+     *
+     * Returns the requester (a Ticketable user, or null for a guest reply)
+     * when the From address is the ticket's guest email or its requester's
+     * email, and false when the sender is anyone else. Staff identity is
+     * never derived from the From header: an agent replying by email is
+     * not the requester, so the message becomes a new ticket instead.
+     */
+    protected function resolveReplyAuthor(Ticket $ticket, InboundMessage $message): Ticketable|false|null
+    {
+        $sender = $this->normalizeEmail($message->fromEmail);
+        if ($sender === '') {
+            return false;
+        }
+
+        if ($ticket->guest_email !== null && $this->normalizeEmail($ticket->guest_email) === $sender) {
+            return null;
+        }
+
+        if ($ticket->requester_type !== null) {
+            $requester = $ticket->requester;
+            if ($requester instanceof Ticketable
+                && $this->normalizeEmail((string) ($requester->email ?? '')) === $sender) {
+                return $requester;
+            }
+        }
+
+        return false;
+    }
+
+    protected function normalizeEmail(?string $email): string
+    {
+        return strtolower(trim((string) $email));
     }
 
     /**

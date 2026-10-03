@@ -62,9 +62,13 @@ the authorized database operation commit together. Incorrect attempts remain
 counted. A failed operation rolls back consumption so it can be retried.
 
 Route-level IP budgets cover reads and writes across all three surfaces. In
-addition, code delivery is limited to three requests per normalized email per
-hour, shared across IPs, tenants and purposes. A 429 response includes
-`Retry-After`. Changing an IP, token or route does not reset the email budget.
+addition, code delivery for a normalized email is limited to three requests per
+hour from one client IP, and to ten per hour across all IPs, shared across
+tenants and purposes. One client exhausting its budget therefore does not lock
+the mailbox owner out. A 429 response includes `Retry-After`. Changing a token
+or route does not reset either budget. Tune the limits with
+`escalated.guest_access.challenges_per_client_per_hour` and
+`challenges_per_mailbox_per_hour`.
 
 ## Tickets and private grants
 
@@ -80,7 +84,11 @@ Browser and mobile reads/replies use the grant in their existing token route.
 Widget GET `tickets/{reference}` requires `Authorization: Bearer <grant>` and a
 matching ticket reference; an email query parameter cannot authorize it. Guest
 CSAT and attachment downloads enforce the same active grant. Internal notes
-remain excluded. Responses use `Cache-Control: no-store` and
+remain excluded. The browser page and the mobile API send an allow-listed ticket
+payload rather than the ticket model: ticket `metadata`, `chat_metadata` and
+`external_reference` are never included (mobile keeps `metadata` as an empty
+object for client compatibility), and agents appear by display name only, with
+no email address or user id. Responses use `Cache-Control: no-store` and
 `Referrer-Policy: no-referrer`. Hosts should redact guest grant route segments and
 authorization headers from access logs and analytics.
 

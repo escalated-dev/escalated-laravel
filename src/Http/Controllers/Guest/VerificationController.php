@@ -24,7 +24,7 @@ class VerificationController extends Controller
             : EscalatedSettings::guestTicketsEnabled(), 403);
 
         return response()->json([
-            'verification_id' => $verification->challenge($data['email'], $data['purpose']),
+            'verification_id' => $verification->challenge($data['email'], $data['purpose'], $request->ip()),
             'expires_in' => 600,
             'message' => 'Check your email for a verification code.',
         ], 202);

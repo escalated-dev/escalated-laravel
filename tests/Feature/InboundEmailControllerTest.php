@@ -152,11 +152,11 @@ it('rejects postmark webhook with wrong token', function () {
     $response->assertStatus(403);
 });
 
-it('adds reply to existing ticket via subject reference', function () {
+it('adds the requester reply to an existing ticket via subject reference', function () {
     $signingKey = 'test-key-reply';
     config(['escalated.inbound_email.mailgun.signing_key' => $signingKey]);
 
-    $ticket = Ticket::factory()->create(['reference' => 'ESC-00099']);
+    $ticket = Ticket::factory()->create(['reference' => 'ESC-00099', 'guest_email' => 'customer@example.com']);
 
     $timestamp = (string) time();
     $token = 'reply-token-123';
