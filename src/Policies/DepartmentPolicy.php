@@ -3,32 +3,32 @@
 namespace Escalated\Laravel\Policies;
 
 use Escalated\Laravel\Models\Department;
-use Illuminate\Support\Facades\Gate;
+use Escalated\Laravel\Support\StaffAccess;
 
 class DepartmentPolicy
 {
     public function viewAny($user): bool
     {
-        return Gate::allows('escalated-admin', $user);
+        return StaffAccess::isAdmin($user);
     }
 
     public function view($user, Department $department): bool
     {
-        return Gate::allows('escalated-admin', $user);
+        return StaffAccess::isAdmin($user);
     }
 
     public function create($user): bool
     {
-        return Gate::allows('escalated-admin', $user);
+        return StaffAccess::isAdmin($user);
     }
 
     public function update($user, Department $department): bool
     {
-        return Gate::allows('escalated-admin', $user);
+        return StaffAccess::isAdmin($user);
     }
 
     public function delete($user, Department $department): bool
     {
-        return Gate::allows('escalated-admin', $user);
+        return StaffAccess::isAdmin($user);
     }
 }

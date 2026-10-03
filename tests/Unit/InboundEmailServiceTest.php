@@ -95,7 +95,11 @@ it('creates a guest ticket when sender email is not a registered user', function
 
 it('adds a reply to existing ticket when subject contains reference', function () {
     $user = $this->createTestUser(['email' => 'customer@example.com']);
-    $ticket = Ticket::factory()->create(['reference' => 'ESC-00001']);
+    $ticket = Ticket::factory()->create([
+        'reference' => 'ESC-00001',
+        'requester_type' => $user->getMorphClass(),
+        'requester_id' => $user->id,
+    ]);
 
     $service = app(InboundEmailService::class);
     $message = new InboundMessage(
@@ -147,6 +151,8 @@ it('reopens a resolved ticket when a reply comes in', function () {
     $user = $this->createTestUser(['email' => 'customer@example.com']);
     $ticket = Ticket::factory()->create([
         'reference' => 'ESC-00003',
+        'requester_type' => $user->getMorphClass(),
+        'requester_id' => $user->id,
         'status' => TicketStatus::Resolved,
         'resolved_at' => now(),
     ]);
@@ -301,7 +307,7 @@ it('finds ticket by canonical In-Reply-To Message-ID via MessageIdUtil', functio
     // No InboundEmail row — this is the cold-start path where the
     // reply hits us first. Parsing the ticket id out of the canonical
     // Message-ID format lets us route without database lookup.
-    $ticket = Ticket::factory()->create();
+    $ticket = Ticket::factory()->create(['guest_email' => 'nobody@example.com']);
 
     $service = app(InboundEmailService::class);
     $message = new InboundMessage(
@@ -320,7 +326,7 @@ it('finds ticket by canonical In-Reply-To Message-ID via MessageIdUtil', functio
 });
 
 it('finds ticket by canonical References header via MessageIdUtil', function () {
-    $ticket = Ticket::factory()->create();
+    $ticket = Ticket::factory()->create(['guest_email' => 'nobody@example.com']);
 
     $service = app(InboundEmailService::class);
     $message = new InboundMessage(
@@ -341,7 +347,7 @@ it('finds ticket by canonical References header via MessageIdUtil', function () 
 it('finds ticket by signed Reply-To when inbound_secret is configured', function () {
     config(['escalated.email.inbound_secret' => 'test-secret']);
     config(['escalated.email.domain' => 'support.example.com']);
-    $ticket = Ticket::factory()->create();
+    $ticket = Ticket::factory()->create(['guest_email' => 'customer@example.com']);
 
     $replyTo = MessageIdUtil::buildReplyTo(
         $ticket->id,
@@ -396,7 +402,7 @@ it('rejects a forged Reply-To signature', function () {
 
 it('finds ticket by In-Reply-To header', function () {
     // Create a ticket and record its inbound email with a message ID
-    $ticket = Ticket::factory()->create();
+    $ticket = Ticket::factory()->create(['guest_email' => 'nobody@example.com']);
     InboundEmail::create([
         'message_id' => '<original-msg@example.com>',
         'from_email' => 'support@example.com',
@@ -488,4 +494,109 @@ it('uses unassigned ticket path in prompt_signup mode (signup invite is separate
 
     expect($ticket->requester_id)->toBeNull();
     expect($ticket->guest_email)->toBe('stranger@unknown.com');
+});
+
+it('opens a new ticket instead of replying when a stranger quotes a ticket reference in the subject', function () {
+    $ticket = Ticket::factory()->create([
+        'reference' => 'ESC-07001',
+        'guest_email' => 'owner@example.com',
+    ]);
+
+    $inbound = app(InboundEmailService::class)->process(new InboundMessage(
+        fromEmail: 'stranger@example.net',
+        fromName: 'Stranger',
+        toEmail: 'support@example.com',
+        subject: 'RE: [ESC-07001] Your order',
+        bodyText: 'Injected reply.',
+        bodyHtml: null,
+    ), 'mailgun');
+
+    expect($inbound->status)->toBe('processed')
+        ->and($inbound->ticket_id)->not->toBe($ticket->id)
+        ->and($inbound->reply_id)->toBeNull()
+        ->and(Reply::where('ticket_id', $ticket->id)->count())->toBe(0)
+        ->and(Ticket::find($inbound->ticket_id)->guest_email)->toBe('stranger@example.net');
+});
+
+it('does not reopen a closed ticket for a stranger who threads onto it', function () {
+    $ticket = Ticket::factory()->closed()->create(['guest_email' => 'owner@example.com']);
+
+    $inbound = app(InboundEmailService::class)->process(new InboundMessage(
+        fromEmail: 'stranger@example.net',
+        fromName: null,
+        toEmail: 'support@example.com',
+        subject: "RE: [{$ticket->reference}] Closed",
+        bodyText: 'Reopen this.',
+        bodyHtml: null,
+        inReplyTo: "<ticket-{$ticket->id}@support.example.com>",
+    ), 'mailgun');
+
+    expect($inbound->ticket_id)->not->toBe($ticket->id)
+        ->and($ticket->fresh()->status)->toBe(TicketStatus::Closed)
+        ->and(Reply::where('ticket_id', $ticket->id)->count())->toBe(0);
+});
+
+it('never posts as an agent because the From header names one', function () {
+    config(['escalated.email.inbound_secret' => 'test-secret']);
+    config(['escalated.email.domain' => 'support.example.com']);
+    $agent = $this->createAgent(['email' => 'agent@example.com']);
+    $ticket = Ticket::factory()->create(['guest_email' => 'owner@example.com']);
+
+    $inbound = app(InboundEmailService::class)->process(new InboundMessage(
+        fromEmail: 'agent@example.com',
+        fromName: 'Agent',
+        toEmail: MessageIdUtil::buildReplyTo($ticket->id, 'test-secret', 'support.example.com'),
+        subject: "RE: [{$ticket->reference}] Update",
+        bodyText: 'Refund approved.',
+        bodyHtml: null,
+        inReplyTo: "<ticket-{$ticket->id}@support.example.com>",
+    ), 'mailgun');
+
+    expect($inbound->ticket_id)->not->toBe($ticket->id)
+        ->and(Reply::where('ticket_id', $ticket->id)->count())->toBe(0)
+        ->and(Reply::where('author_id', $agent->id)->count())->toBe(0);
+});
+
+it('requires the signed Reply-To once an inbound secret is configured', function () {
+    config(['escalated.email.inbound_secret' => 'test-secret']);
+    config(['escalated.email.domain' => 'support.example.com']);
+    $ticket = Ticket::factory()->create(['guest_email' => 'owner@example.com']);
+
+    $inbound = app(InboundEmailService::class)->process(new InboundMessage(
+        fromEmail: 'owner@example.com',
+        fromName: null,
+        toEmail: 'support@support.example.com',
+        subject: "RE: [{$ticket->reference}] Question",
+        bodyText: 'Unsigned follow-up.',
+        bodyHtml: null,
+        inReplyTo: "<ticket-{$ticket->id}@support.example.com>",
+    ), 'mailgun');
+
+    expect($inbound->ticket_id)->not->toBe($ticket->id)
+        ->and(Reply::where('ticket_id', $ticket->id)->count())->toBe(0);
+});
+
+it('accepts a signed reply from the requester and reopens the ticket as the requester', function () {
+    config(['escalated.email.inbound_secret' => 'test-secret']);
+    config(['escalated.email.domain' => 'support.example.com']);
+    $user = $this->createTestUser(['email' => 'owner@example.com']);
+    $ticket = Ticket::factory()->resolved()->create([
+        'requester_type' => $user->getMorphClass(),
+        'requester_id' => $user->id,
+    ]);
+
+    $inbound = app(InboundEmailService::class)->process(new InboundMessage(
+        fromEmail: 'Owner@Example.com',
+        fromName: null,
+        toEmail: MessageIdUtil::buildReplyTo($ticket->id, 'test-secret', 'support.example.com'),
+        subject: 'RE: Question',
+        bodyText: 'Still broken.',
+        bodyHtml: null,
+        inReplyTo: "<ticket-{$ticket->id}@support.example.com>",
+    ), 'mailgun');
+
+    $reply = Reply::find($inbound->reply_id);
+    expect($inbound->ticket_id)->toBe($ticket->id)
+        ->and((string) $reply->author_id)->toBe((string) $user->id)
+        ->and($ticket->fresh()->status)->toBe(TicketStatus::Reopened);
 });

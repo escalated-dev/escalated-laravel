@@ -11,6 +11,7 @@ use Escalated\Laravel\Services\AttachmentAccess;
 use Escalated\Laravel\Services\AttachmentService;
 use Escalated\Laravel\Services\GuestAccess;
 use Escalated\Laravel\Services\GuestTicketService;
+use Escalated\Laravel\Support\CustomerTicketPayload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -76,10 +77,10 @@ class TicketController extends Controller
 
         $ticket->load(['replies' => function ($q) {
             $q->where('is_internal_note', false)->with('author', 'attachments')->latest();
-        }, 'attachments', 'department']);
+        }, 'attachments', 'department', 'satisfactionRating']);
 
         return $this->renderer->render('Escalated/Guest/Show', [
-            'ticket' => $ticket,
+            'ticket' => CustomerTicketPayload::guestWeb($ticket),
             'token' => $token,
         ]);
     }

@@ -11,6 +11,7 @@ use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\SlackInboundEvent;
 use Escalated\Laravel\Models\SlackThread;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Support\StaffAccess;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
@@ -77,8 +78,7 @@ class SlackInboxProcessor
                 $reply = null;
                 if ($root && $thread->ticket_id === null) {
                     $actor = $this->hostUser($destination['actor_id'] ?? null);
-                    if (! Gate::forUser($actor)->any([config('escalated.authorization.agent_gate', 'escalated-agent'),
-                        config('escalated.authorization.admin_gate', 'escalated-admin')])) {
+                    if (! StaffAccess::isStaff($actor)) {
                         throw new SlackProcessingException('service_agent_denied');
                     }
                     Gate::forUser($actor)->authorize('create', Ticket::class);

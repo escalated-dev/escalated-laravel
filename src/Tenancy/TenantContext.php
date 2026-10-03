@@ -73,6 +73,28 @@ class TenantContext
             && $this->resolver()->canAccess($user, $this->id()));
     }
 
+    /**
+     * Tenant-local staff seat for the current account. Host-global agent/admin
+     * gates are not account-specific, so tenant mode also requires membership
+     * and the resolver's seat decision. Always true when tenancy is disabled.
+     *
+     * @param  'agent'|'admin'  $seat
+     */
+    public function hasStaffSeat(?Model $user, string $seat): bool
+    {
+        if (! $this->enabled()) {
+            return true;
+        }
+        if (! $this->canAccess($user)) {
+            return false;
+        }
+
+        return match ($seat) {
+            'agent' => $this->resolver()->isAgent($user, $this->id()) === true,
+            'admin' => $this->resolver()->isAdmin($user, $this->id()) === true,
+        };
+    }
+
     public function owns(Model $model): bool
     {
         return ! $this->enabled() || ($this->tenantId !== null

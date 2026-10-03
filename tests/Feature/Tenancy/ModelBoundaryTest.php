@@ -307,3 +307,26 @@ it('validates toggle inputs before detaching and rejects forged loaded parent ow
         expect(fn () => $this->ticketB->followers()->attach($this->agentA))->toThrow(AuthorizationException::class);
     });
 });
+
+it('rejects case-variant identity and reference keys that case-insensitive engines would write', function () {
+    $this->context->run('merchant-a', function () {
+        $table = Escalated::table('tickets');
+        expect(fn () => Ticket::whereKey($this->ticketA->id)->update(['TENANT_ID' => 'merchant-b']))->toThrow(AuthorizationException::class);
+        expect(fn () => Ticket::whereKey($this->ticketA->id)->update(['Assigned_To' => $this->agentB->id]))->toThrow(AuthorizationException::class);
+        expect(fn () => Escalated::query($table)->where('id', $this->ticketA->id)->update(['Tenant_Id' => 'merchant-b']))->toThrow(AuthorizationException::class);
+        expect(fn () => $this->ticketA->forceFill(['Assigned_To' => $this->agentB->id])->save())->toThrow(AuthorizationException::class);
+        $ticket = Ticket::find($this->ticketA->id);
+        $ticket->setAttribute('TENANT_ID', 'merchant-b');
+        expect(fn () => $ticket->save())->toThrow(AuthorizationException::class);
+        $ticket = Ticket::find($this->ticketA->id);
+        $ticket->setAttribute('Requester_Id', $this->agentB->id);
+        $ticket->setAttribute('REQUESTER_TYPE', $this->agentB->getMorphClass());
+        expect(fn () => $ticket->save())->toThrow(AuthorizationException::class);
+        expect(fn () => Reply::forceCreate(['TICKET_ID' => $this->ticketB->id, 'body' => 'foreign']))->toThrow(AuthorizationException::class);
+        expect(fn () => Ticket::query()->touch('TENANT_ID'))->toThrow(AuthorizationException::class);
+        expect(fn () => Ticket::whereKey($this->ticketA->id)->increment('Assigned_To'))->toThrow(AuthorizationException::class);
+    });
+    $row = Escalated::db()->table(Escalated::table('tickets'))->where('id', $this->ticketA->id)->first();
+    expect($row->tenant_id)->toBe('merchant-a')
+        ->and((string) $row->assigned_to)->toBe((string) $this->agentA->id);
+});

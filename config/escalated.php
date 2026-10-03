@@ -260,9 +260,11 @@ return [
     | APP_URL, then falls back to "escalated.dev".
     |
     | `inbound_secret` is the HMAC key used to sign the Reply-To local
-    | part (reply+{id}.{hmac8}@domain). When empty, Reply-To is left
-    | untouched — basic threading still works via Message-ID /
-    | In-Reply-To, but inbound providers can't verify ticket identity.
+    | part (reply+{id}.{hmac8}@domain). When set, inbound replies are
+    | routed to a ticket only through that signed address. When empty,
+    | Reply-To is left untouched and inbound threading falls back to the
+    | unsigned Message-ID / In-Reply-To headers and subject reference.
+    | Either way a reply is accepted only from the ticket's requester.
     |
     */
     'email' => [
@@ -279,6 +281,10 @@ return [
         // Verified guest links expire after one day; accepted range is 5 minutes
         // through 7 days. Email codes always expire in 10 minutes after 5 guesses.
         'ttl_minutes' => 1440,
+        // Email-code delivery budgets per hour: per mailbox and client IP, and
+        // per mailbox across all clients (never lower than the per-client one).
+        'challenges_per_client_per_hour' => 3,
+        'challenges_per_mailbox_per_hour' => 10,
     ],
 
     'guest_rate_limits' => [

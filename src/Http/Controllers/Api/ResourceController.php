@@ -12,29 +12,30 @@ use Escalated\Laravel\Models\CannedResponse;
 use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\Macro;
 use Escalated\Laravel\Models\Tag;
+use Escalated\Laravel\Support\StaffAccess;
 use Escalated\Laravel\Tenancy\TenantBroadcast;
+use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Gate;
 
 class ResourceController extends Controller
 {
     public function agents(): JsonResponse
     {
         $userModel = Escalated::newUserModel();
-        $agentGate = config('escalated.authorization.agent_gate', 'escalated-agent');
-
         $query = Escalated::userQuery();
 
         // Use escalated.authorization.agent_scope if defined, otherwise fall back to Gate filter with a limit
         $agentScope = config('escalated.authorization.agent_scope');
         if ($agentScope && is_callable($agentScope)) {
             $agents = $agentScope($query)->get();
+            // A host scope is not account-specific; tenant mode also needs a seat.
+            if (app(TenantContext::class)->enabled()) {
+                $agents = $agents->filter(fn ($user) => StaffAccess::isAgent($user))->values();
+            }
         } else {
-            $agents = $query->limit(500)->get()->filter(function ($user) use ($agentGate) {
-                return Gate::forUser($user)->allows($agentGate);
-            })->values();
+            $agents = $query->limit(500)->get()->filter(fn ($user) => StaffAccess::isAgent($user))->values();
         }
 
         return response()->json(['data' => AgentResource::collection($agents)]);

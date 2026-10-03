@@ -4,9 +4,17 @@ namespace Escalated\Laravel\Http\Resources;
 
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Support\CustomerTicketPayload;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * Requester-facing ticket payload for the mobile API (authenticated
+ * customers and verified guests). Fields are allow-listed through
+ * {@see CustomerTicketPayload}: staff appear by display name only, and
+ * internal metadata is never included. `metadata` stays an empty JSON
+ * object so existing clients keep decoding it.
+ */
 class MobileTicketResource extends JsonResource
 {
     public function __construct($resource, protected ?string $guestAccessToken = null)
@@ -35,16 +43,9 @@ class MobileTicketResource extends JsonResource
                 'label' => $ticket->priority->label(),
             ],
             'channel' => $ticket->channel->value,
-            'metadata' => $ticket->metadata ?? [],
-            'requester' => [
-                'name' => $ticket->requester_name,
-                'email' => $ticket->requester_email,
-            ],
-            'assignee' => $ticket->assignee ? [
-                'id' => $ticket->assignee->getKey(),
-                'name' => $ticket->assignee->name,
-                'email' => $ticket->assignee->email,
-            ] : null,
+            'metadata' => new \stdClass,
+            'requester' => CustomerTicketPayload::requester($ticket),
+            'assignee' => CustomerTicketPayload::assignee($ticket),
             'department' => $ticket->department ? [
                 'id' => $ticket->department->id,
                 'name' => $ticket->department->name,
@@ -57,16 +58,12 @@ class MobileTicketResource extends JsonResource
                 ])->values()
                 : [],
             'replies' => $ticket->relationLoaded('replies')
-                ? $ticket->replies->map(fn (Reply $reply) => [
+                ? $ticket->replies->reject(fn (Reply $reply) => (bool) $reply->is_internal_note)->map(fn (Reply $reply) => [
                     'id' => $reply->id,
                     'body' => $reply->body,
-                    'is_internal_note' => $reply->is_internal_note,
+                    'is_internal_note' => false,
                     'is_pinned' => $reply->is_pinned ?? false,
-                    'author' => [
-                        'id' => $reply->author?->getKey() ?? 0,
-                        'name' => $reply->author?->name ?? $ticket->guest_name ?? 'Guest',
-                        'email' => $reply->author?->email ?? $ticket->guest_email ?? '',
-                    ],
+                    'author' => CustomerTicketPayload::replyAuthor($ticket, $reply),
                     'attachments' => $reply->relationLoaded('attachments')
                         ? $reply->attachments->map(fn ($attachment) => [
                             'id' => $attachment->id,

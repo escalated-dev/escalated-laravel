@@ -4,8 +4,8 @@ namespace Escalated\Laravel\Http\Middleware;
 
 use Closure;
 use Escalated\Laravel\Models\ApiToken;
+use Escalated\Laravel\Support\StaffAccess;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -57,8 +57,7 @@ class AuthenticateApiToken
         }
 
         if (in_array($ability, ['agent', 'admin'], true)) {
-            $agentGate = config('escalated.authorization.agent_gate', 'escalated-agent');
-            if (! Gate::forUser($user)->allows($agentGate)) {
+            if (! StaffAccess::isAgent($user)) {
                 Log::warning('API authentication failed: user no longer has agent access', [
                     'token_id' => $apiToken->id,
                     'user_id' => $user->getKey(),
@@ -70,8 +69,7 @@ class AuthenticateApiToken
         }
 
         if ($ability === 'admin') {
-            $adminGate = config('escalated.authorization.admin_gate', 'escalated-admin');
-            if (! Gate::forUser($user)->allows($adminGate)) {
+            if (! StaffAccess::isAdmin($user)) {
                 return response()->json(['message' => 'Insufficient permissions.'], 403);
             }
         }

@@ -99,6 +99,11 @@ Gate::define('escalated-admin', fn ($user) => $user->is_admin);
 Gate::define('escalated-agent', fn ($user) => $user->is_agent);
 ```
 
+These global gates are enough for a single-account installation. With
+[multiple merchant accounts](#multiple-merchant-accounts) enabled, staff access
+also requires a tenant-local seat from the host resolver's `isAgent` / `isAdmin`,
+so a global flag never makes someone an agent of an account where they are a customer.
+
 Visit `/support` — you're live.
 
 ### UUID / string user keys
@@ -132,7 +137,8 @@ Override the detection with the `user_key_type` config (`'auto'` by default;
 
 Self-hosted installations can enable host-resolved tenant isolation for tickets,
 attachments, reports, settings, API tokens, background work and broadcasts. The
-host supplies account selection and membership checks. Existing installations must
+host supplies account selection, membership checks and per-account agent/admin
+seats; without a seat decision staff access is denied. Existing installations must
 explicitly assign legacy data before enabling it; cloud/synced modes and plugin
 execution do not currently support tenant isolation.
 
@@ -514,9 +520,10 @@ Escalated can create and reply to tickets from incoming emails. Supports **Mailg
 2. The service forwards the email to your application via webhook (or IMAP polling fetches it)
 3. Escalated normalizes the payload into an `InboundMessage` DTO via the adapter
 4. The `InboundEmailService` processes the message:
-   - **Thread matching**: checks the subject for a ticket reference (e.g., `[ESC-00001]`), then checks `In-Reply-To` / `References` headers against stored message IDs
+   - **Thread matching**: when `ESCALATED_EMAIL_INBOUND_SECRET` is set, only the signed Reply-To address (`reply+{id}.{hmac8}@domain`) that outbound notifications carry identifies a ticket. Without a secret, the `In-Reply-To` / `References` headers and the subject reference (e.g., `[ESC-00001]`) are used instead
+   - **Sender check**: a threaded email becomes a reply only when the `From` address is the ticket's requester (the guest email, or the requester user's email). The reply is posted as that requester. Staff identity is never taken from the `From` header, so agents reply in the app, not by email
    - **Match found**: adds a reply to the existing ticket; reopens the ticket if it was resolved or closed
-   - **No match**: creates a new ticket — if the sender is a registered user they become the requester, otherwise a guest ticket is created
+   - **No match, or a sender who is not the requester**: creates a new ticket — if the sender is a registered user they become the requester, otherwise a guest ticket is created
 5. Every inbound email is logged to `escalated_inbound_emails` for audit
 
 ### Enable Inbound Email
@@ -603,13 +610,13 @@ Where `{prefix}` is your configured route prefix (default: `support`) and `{adap
 
 ### Processing Features
 
-- **Thread detection** via subject reference pattern (`[ESC-00001]`) and `In-Reply-To` / `References` headers
+- **Thread detection** via the signed Reply-To address, or (without an inbound secret) the `In-Reply-To` / `References` headers and subject reference pattern (`[ESC-00001]`); replies are accepted only from the ticket's requester
 - **Guest tickets** for unknown senders — display name derived from email (e.g., `john.doe@example.com` → `John Doe`)
 - **Subject sanitization** — strips `RE:`, `FW:`, `FWD:` prefixes (including stacked)
 - **HTML fallback** — uses stripped HTML body when plain text is empty
 - **Duplicate detection** — skips messages with duplicate `Message-ID` headers
 - **Attachment handling** — stores attachments respecting `max_attachment_size_kb` and `max_attachments_per_reply`
-- **Auto-reopen** — reopens resolved/closed tickets when a reply arrives via email
+- **Auto-reopen** — reopens resolved/closed tickets when the requester replies via email
 - **Audit logging** — every inbound email recorded in `escalated_inbound_emails` with status tracking
 
 ### Custom Adapter
