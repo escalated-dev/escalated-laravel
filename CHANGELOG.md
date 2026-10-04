@@ -5,11 +5,17 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Fixed
+- Slack inbound text too large for a ticket description or reply body is no
+  longer dead-lettered as `message_too_large`. The body keeps the leading text
+  that fits, cut on a character boundary, with a truncation note, and the full
+  text is stored as a private `slack-message.txt` attachment on the ticket or
+  reply. Only a failure to store that attachment fails the receipt
+  (`attachment_storage_failed`, retried then dead-lettered); retries never
+  duplicate it. See `docs/slack-inbound.md`.
 - Slack inbound acknowledges authenticated events it does not route (unmapped
   workspaces, channels and direct messages, whitespace-only text, and a second
   app's copy of a recorded message) with 200 `{"ignored": true}` instead of
-  403/400/409. Text is no longer capped at 16,384 bytes; text too large for the
-  ticket columns is dead-lettered as `message_too_large`. Slack entities are
+  403/400/409. Text is no longer capped at 16,384 bytes. Slack entities are
   decoded once before escaping, and a deleted linked ticket fails as
   `ticket_missing` without retrying. See `docs/slack-inbound.md`.
 - The plugin HTTP bridge no longer forwards cookie, authorization, XSRF/CSRF or

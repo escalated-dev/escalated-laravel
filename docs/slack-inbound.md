@@ -62,7 +62,7 @@ this installation does not route are acknowledged with HTTP 200
 direct messages, whitespace-only text, and bot, hidden, edit/deletion and other
 subtype events. Slack retries non-2xx responses and can disable an endpoint
 that keeps failing, so these are not errors. The ignore reason is logged
-without the message payload. Attachments,
+without the message payload. Slack file attachments,
 edits, deletions, Slack Connect identity discovery and automatic Slack user/email
 lookup are not supported by this text-message adapter.
 
@@ -83,9 +83,17 @@ request limit applies, so messages up to Slack's 40,000-character limit are
 accepted into the inbox (its payload column is `longText`). The worker decodes Slack's
 `&amp;`, `&lt;` and `&gt;` escapes once, then HTML-escapes the text for the
 ticket description or reply body. If that escaped text exceeds 65,535 bytes
-(the portable size of those `TEXT` columns), the receipt fails at once with
-`message_too_large` instead of being truncated; its full text remains in the
-encrypted inbox payload.
+(the portable size of those `TEXT` columns), the body keeps the longest leading
+part of the text that fits, cut between UTF-8 characters before escaping, followed
+by "[Message truncated; full text attached as slack-message.txt]". The complete
+decoded text is stored as a `text/plain` attachment named `slack-message.txt` on
+that ticket or reply, using the configured attachment disk (private storage,
+authorized expiring downloads, tenant-scoped rows; see
+`docs/private-attachments.md`). The attachment is written in the same transaction
+as the ticket or reply: a failed attempt removes its file, and a retry or
+redelivery never adds a second copy. If the attachment cannot be stored, the
+receipt retries as `attachment_storage_failed` and is dead-lettered after the
+attempt limit; its full text remains in the encrypted inbox payload.
 
 ## Process and monitor the inbox
 
@@ -106,7 +114,8 @@ host mapping/configuration. Limit each batch with `--limit` (default 100, maximu
 retry with bounded backoff; after the configured attempt limit a receipt remains
 failed for explicit recovery. Unmapped identities report `identity_not_mapped`.
 Failures that a retry cannot fix fail on the first attempt: `ticket_missing`
-(the linked ticket was deleted) and `message_too_large`.
+(the linked ticket was deleted). `attachment_storage_failed` (the full text of an
+oversized message could not be stored) retries like other temporary errors.
 No failure is acknowledged as a successfully created ticket.
 
 HTTP 202 means the package database committed a receipt, not that processing has

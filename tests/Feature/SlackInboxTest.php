@@ -4,6 +4,7 @@ use Escalated\Laravel\Bridge\ContextHandler;
 use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Events\ReplyCreated;
 use Escalated\Laravel\Events\TicketCreated;
+use Escalated\Laravel\Models\Attachment;
 use Escalated\Laravel\Models\Contact;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\SlackInboundEvent;
@@ -13,8 +14,11 @@ use Escalated\Laravel\Models\TicketActivity;
 use Escalated\Laravel\Notifications\TicketReplyNotification;
 use Escalated\Laravel\Services\SlackInboxProcessor;
 use Escalated\Laravel\Tests\Fixtures\ExercisesSlackInbox;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Process\Process;
 
@@ -140,13 +144,104 @@ it('accepts text up to the Slack message limit and processes it without truncati
         ->and(Ticket::sole()->description)->toBe(nl2br(e($text)));
 });
 
-it('dead letters accepted text that cannot be stored instead of rejecting or retrying it', function () {
+function expectTruncatedSlackBody(string $body, string $text): void
+{
+    $note = SlackInboxProcessor::TRUNCATION_NOTE;
+    expect(strlen($body))->toBeLessThanOrEqual(SlackInboxProcessor::MAX_BODY_BYTES)
+        ->and(mb_check_encoding($body, 'UTF-8'))->toBeTrue()->and($body)->toEndWith($note);
+    $prefix = substr($body, 0, -strlen($note));
+    $cut = htmlspecialchars_decode(str_replace('<br />', '', $prefix), ENT_QUOTES);
+    // The kept text is an exact leading slice of the message, escaped whole.
+    expect($text)->toStartWith($cut)->and(nl2br(e($cut)))->toBe($prefix)
+        ->and(mb_strlen($cut))->toBeGreaterThan(1000)->toBeLessThan(mb_strlen($text));
+}
+
+function expectFullSlackTextAttached(Model $attachable, string $text): void
+{
+    $attachment = Attachment::sole();
+    expect($attachment->attachable->is($attachable))->toBeTrue()
+        ->and($attachment->mime_type)->toBe('text/plain')->and($attachment->original_filename)->toEndWith('.txt')
+        ->and($attachment->disk)->toBe('local')->and($attachment->size)->toBe(strlen($text))
+        ->and(Storage::disk('local')->get($attachment->path))->toBe($text);
+}
+
+it('truncates a root message too large for the ticket and attaches the full text privately', function () {
+    Storage::fake('local');
+    $text = str_repeat('📦', 40000);
+    $this->slackRequest($this->slackPayload(['event' => ['text' => $text]]))->assertStatus(202);
+    $id = SlackInboundEvent::sole()->id;
+    expect(app(SlackInboxProcessor::class)->process($id))->toBe('processed');
+    $ticket = Ticket::sole();
+    expectTruncatedSlackBody($ticket->description, $text);
+    expectFullSlackTextAttached($ticket, $text);
+    expect(SlackInboundEvent::sole()->last_error)->toBeNull();
+});
+
+it('cuts escaped and multi-line text on a character boundary before escaping overflows', function () {
+    Storage::fake('local');
+    $text = str_repeat("&lt;é\n", 12000).str_repeat('📦', 9000);
+    $this->slackRequest($this->slackPayload(['event' => ['text' => $text]]))->assertStatus(202);
+    expect(app(SlackInboxProcessor::class)->process(SlackInboundEvent::sole()->id))->toBe('processed');
+    $decoded = SlackInboxProcessor::decodeEntities($text);
+    expectTruncatedSlackBody(Ticket::sole()->description, $decoded);
+    expectFullSlackTextAttached(Ticket::sole(), $decoded);
+});
+
+it('truncates an oversized thread reply and attaches the full text to that reply', function () {
+    Storage::fake('local');
+    $this->slackRequest()->assertStatus(202);
+    $processor = app(SlackInboxProcessor::class);
+    $processor->process(SlackInboundEvent::sole()->id);
+    $text = str_repeat('📦', 40000);
+    $this->slackRequest($this->slackPayload(['event_id' => 'Ev124', 'event' => ['ts' => '1234567891.000100',
+        'thread_ts' => '1234567890.000100', 'text' => $text]]))->assertStatus(202);
+    expect($processor->process(SlackInboundEvent::where('event_id', 'Ev124')->sole()->id))->toBe('processed');
+    $reply = Reply::sole();
+    expectTruncatedSlackBody($reply->body, $text);
+    expectFullSlackTextAttached($reply, $text);
+    expect($reply->is_internal_note)->toBeFalse()->and(Ticket::sole()->attachments()->count())->toBe(0);
+});
+
+it('retries a rolled back attempt without duplicating the attachment or leaving its file', function (string $failure) {
+    Storage::fake('local');
+    $text = str_repeat('📦', 40000);
+    $this->slackRequest($this->slackPayload(['event' => ['text' => $text]]))->assertStatus(202);
+    $id = SlackInboundEvent::sole()->id;
+    $processor = app(SlackInboxProcessor::class);
+    $fail = true;
+    $throwOnce = function () use (&$fail) {
+        if ($fail) {
+            $fail = false;
+            throw new RuntimeException('write failed');
+        }
+    };
+    // Fail while recording the attachment, or after it while completing the receipt.
+    $failure === 'attachment' ? Attachment::created($throwOnce)
+        : SlackInboundEvent::updating(fn ($event) => $event->status === 'processed' ? $throwOnce() : null);
+    expect($processor->process($id))->toBe('pending')->and(Ticket::count())->toBe(0)->and(Attachment::count())->toBe(0)
+        ->and(SlackInboundEvent::sole()->last_error)->toBe($failure === 'attachment' ? 'attachment_storage_failed' : 'RuntimeException')
+        ->and(Storage::disk('local')->allFiles())->toBe([]);
+    SlackInboundEvent::whereKey($id)->update(['available_at' => now()]);
+    expect($processor->process($id))->toBe('processed')->and($processor->process($id))->toBe('processed')
+        ->and(Ticket::count())->toBe(1)->and(Attachment::count())->toBe(1)
+        ->and(Storage::disk('local')->allFiles())->toHaveCount(1);
+    expectFullSlackTextAttached(Ticket::sole(), $text);
+})->with(['attachment', 'receipt']);
+
+it('dead letters oversized text only when the full text cannot be stored', function () {
+    config(['escalated.slack.max_attempts' => 2, 'escalated.storage.disk' => 'slack-broken']);
+    $broken = Mockery::mock(FilesystemAdapter::class);
+    $broken->shouldReceive('put')->andReturn(false);
+    Storage::set('slack-broken', $broken);
     $text = str_repeat('&lt;', 40000);
     $this->slackRequest($this->slackPayload(['event' => ['text' => $text]]))->assertStatus(202);
     $id = SlackInboundEvent::sole()->id;
-    expect(app(SlackInboxProcessor::class)->process($id))->toBe('failed')->and(Ticket::count())->toBe(0);
+    $processor = app(SlackInboxProcessor::class);
+    expect($processor->process($id))->toBe('pending');
+    SlackInboundEvent::whereKey($id)->update(['available_at' => now()]);
+    expect($processor->process($id))->toBe('failed')->and(Ticket::count())->toBe(0)->and(Attachment::count())->toBe(0);
     $record = SlackInboundEvent::sole();
-    expect($record->last_error)->toBe('message_too_large')->and($record->attempts)->toBe(1)
+    expect($record->last_error)->toBe('attachment_storage_failed')->and($record->attempts)->toBe(2)
         ->and($record->payload['event']['text'])->toBe($text);
 });
 

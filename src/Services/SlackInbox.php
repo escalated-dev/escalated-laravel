@@ -62,7 +62,7 @@ class SlackInbox
         // Authenticated events this installation does not route are acknowledged,
         // not refused: Slack retries failures and can disable the subscription.
         // Text length is bounded only by the raw body limit; the processor
-        // dead-letters text that cannot be stored, so none is silently lost.
+        // attaches text too large for a body in full, so none is silently lost.
         if (trim($event['text']) === '') {
             return $this->ignore('empty_text');
         }
