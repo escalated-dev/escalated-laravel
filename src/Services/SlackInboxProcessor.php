@@ -17,19 +17,28 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Throwable;
 
 class SlackInboxProcessor
 {
+    /** Portable ceiling of the ticket description / reply body TEXT columns (bytes on MySQL). */
+    public const MAX_BODY_BYTES = 65535;
+
+    public const ATTACHMENT_NAME = 'slack-message.txt';
+
+    public const TRUNCATION_NOTE = '<br />'."\n".'<br />'."\n".'[Message truncated; full text attached as slack-message.txt]';
+
     public function process(int $id): string
     {
         if (Escalated::db()->transactionLevel() !== 0) {
             throw new \LogicException('Process the Slack inbox outside an enclosing transaction.');
         }
+        $stored = [];
         try {
-            return Escalated::db()->transaction(function () use ($id) {
+            return Escalated::db()->transaction(function () use ($id, &$stored) {
                 $event = SlackInboundEvent::whereKey($id)->lockForUpdate()->firstOrFail();
                 if ($event->status !== 'pending' || $event->available_at?->isFuture()) {
                     return $event->status;
@@ -43,10 +52,11 @@ class SlackInboxProcessor
                 $message = $event->payload['event'];
                 $text = self::decodeEntities($message['text']);
                 $body = nl2br(e($text));
-                // Portable ceiling of the ticket description / reply body TEXT
-                // columns (bytes on MySQL). Retrying cannot make it fit.
-                if (strlen($body) > 65535) {
-                    throw new SlackProcessingException('message_too_large', terminal: true);
+                // Text too large for the body columns is kept whole as a private
+                // attachment; the body holds a leading slice and a note.
+                $oversized = strlen($body) > self::MAX_BODY_BYTES;
+                if ($oversized) {
+                    $body = self::truncatedBody($text);
                 }
                 $root = $message['ts'] === $event->thread_ts;
                 if ($root) {
@@ -89,6 +99,9 @@ class SlackInboxProcessor
                     ]);
                     $ticket->updateQuietly(['channel' => TicketChannel::Slack]);
                     $thread->update(['ticket_id' => $ticket->id]);
+                    if ($oversized) {
+                        $stored[] = $this->attachFullText($ticket, $text);
+                    }
                 } else {
                     $ticket = Ticket::whereKey($thread->ticket_id)->lockForUpdate()->first();
                     if (! $ticket) {
@@ -110,6 +123,9 @@ class SlackInboxProcessor
                         $reply->author()->associate($author);
                         $reply->deferCreatedEvent = true;
                         $reply->save();
+                        if ($oversized) {
+                            $stored[] = $this->attachFullText($reply, $text);
+                        }
                         $ticket->activities()->create(['type' => ActivityType::Replied,
                             'causer_type' => $author->getMorphClass(), 'causer_id' => $author->getKey(),
                             'properties' => ['source' => 'slack', 'event_id' => $event->event_id]]);
@@ -124,12 +140,17 @@ class SlackInboxProcessor
         } catch (Throwable $error) {
             // Ticket/reply writes rolled back. Keep a durable retry record, but
             // never re-create an aggregate after an after-commit listener fails.
-            return Escalated::db()->transaction(function () use ($id, $error) {
+            return Escalated::db()->transaction(function () use ($id, $error, $stored) {
                 $event = SlackInboundEvent::whereKey($id)->lockForUpdate()->firstOrFail();
                 if ($event->status === 'processed') {
                     Log::warning('Slack inbox after-commit listener failed', ['event_id' => $event->event_id, 'exception' => $error::class]);
 
                     return 'processed';
+                }
+                // The attachment rows rolled back; remove their files so a retry
+                // leaves exactly one stored copy.
+                foreach ($stored as [$disk, $path]) {
+                    rescue(fn () => Storage::disk($disk)->delete($path), report: false);
                 }
                 $attempts = $event->attempts + 1;
                 $status = ($error instanceof SlackProcessingException && $error->terminal)
@@ -142,6 +163,36 @@ class SlackInboxProcessor
                 return $status;
             });
         }
+    }
+
+    /** The longest leading slice, cut between characters, whose escaped HTML and note fit the column. */
+    public static function truncatedBody(string $text): string
+    {
+        $budget = self::MAX_BODY_BYTES - strlen(self::TRUNCATION_NOTE);
+        [$low, $high] = [0, mb_strlen($text, 'UTF-8')];
+        while ($low < $high) {
+            $length = intdiv($low + $high + 1, 2);
+            if (strlen(nl2br(e(mb_substr($text, 0, $length, 'UTF-8')))) <= $budget) {
+                $low = $length;
+            } else {
+                $high = $length - 1;
+            }
+        }
+
+        return nl2br(e(mb_substr($text, 0, $low, 'UTF-8'))).self::TRUNCATION_NOTE;
+    }
+
+    /** @return array{0: string, 1: string} the stored disk and path */
+    private function attachFullText(Model $attachable, string $text): array
+    {
+        try {
+            $attachment = app(AttachmentService::class)->storeContent($attachable, $text, self::ATTACHMENT_NAME, 'text/plain');
+        } catch (Throwable) {
+            // Retried with backoff, then dead-lettered; the inbox keeps the text.
+            throw new SlackProcessingException('attachment_storage_failed');
+        }
+
+        return [$attachment->disk, $attachment->path];
     }
 
     /** Slack escapes only &, < and > in message text; decode them in one pass. */

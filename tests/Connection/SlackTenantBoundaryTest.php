@@ -1,10 +1,12 @@
 <?php
 
 use Escalated\Laravel\Escalated;
+use Escalated\Laravel\Models\Attachment;
 use Escalated\Laravel\Models\SlackInboundEvent;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\SlackInboxProcessor;
 use Escalated\Laravel\Tests\Fixtures\ExercisesSlackInbox;
+use Illuminate\Support\Facades\Storage;
 
 uses(ExercisesSlackInbox::class);
 beforeEach(fn () => $this->prepareSlackInbox());
@@ -44,4 +46,19 @@ it('does not create for a host requester outside the mapped merchant', function 
         expect(app(SlackInboxProcessor::class)->process(SlackInboundEvent::sole()->id))->toBe('pending')
             ->and(Ticket::count())->toBe(0);
     });
+});
+
+it('keeps the full text attachment of an oversized message inside the mapped merchant', function () {
+    Storage::fake('local');
+    $context = $this->enableSlackTenancy();
+    $text = str_repeat('📦', 40000);
+    $this->slackRequest($this->slackPayload(['event' => ['text' => $text]]))->assertStatus(202);
+    $context->run('a', function () use ($text) {
+        expect(app(SlackInboxProcessor::class)->process(SlackInboundEvent::sole()->id))->toBe('processed');
+        $attachment = Attachment::sole();
+        expect($attachment->attachable->is(Ticket::sole()))->toBeTrue()
+            ->and(Storage::disk('local')->get($attachment->path))->toBe($text)
+            ->and(Escalated::db()->table(Escalated::table('attachments'))->value('tenant_id'))->toBe('a');
+    });
+    $context->run('b', fn () => expect(Attachment::count())->toBe(0));
 });
