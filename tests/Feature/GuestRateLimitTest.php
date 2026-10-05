@@ -74,3 +74,36 @@ it('keeps a positive limit when a host misconfigures zero', function () {
     $this->postJson('/support/guest', [])->assertUnprocessable();
     $this->postJson('/support/guest', [])->assertTooManyRequests();
 });
+
+it('rejects the sixth guest ticket in a minute by default', function (string $path) {
+    for ($i = 0; $i < 5; $i++) {
+        $this->postJson($path, [])->assertUnprocessable();
+    }
+    $this->postJson($path, [])->assertTooManyRequests()->assertHeader('Retry-After');
+})->with([
+    'browser' => '/support/guest',
+    'widget' => '/support/widget/tickets',
+    'mobile' => '/support/api/v1/mobile/guest/tickets',
+]);
+
+it('rejects guest replies over the default per-minute limit, counting wrong-token attempts', function () {
+    $path = '/support/guest/'.str_repeat('a', 64).'/reply';
+    for ($i = 0; $i < 30; $i++) {
+        $this->postJson($path, ['body' => 'Reply'])->assertNotFound();
+    }
+    $this->postJson($path, ['body' => 'Reply'])->assertTooManyRequests()->assertHeader('Retry-After');
+});
+
+it('never throttles guest endpoints when guest rate limiting is disabled', function () {
+    config([
+        'escalated.guest_rate_limits.enabled' => false,
+        'escalated.guest_rate_limits.requests_per_minute' => 1,
+        'escalated.guest_rate_limits.submissions_per_minute' => 1,
+        'escalated.guest_rate_limits.replies_per_minute' => 1,
+    ]);
+    for ($i = 0; $i < 4; $i++) {
+        $this->postJson('/support/guest', [])->assertUnprocessable();
+        $this->postJson('/support/guest/'.str_repeat('a', 64).'/reply', ['body' => 'Reply'])->assertNotFound();
+        $this->getJson('/support/widget/config')->assertOk();
+    }
+});
