@@ -287,7 +287,17 @@ return [
         'challenges_per_mailbox_per_hour' => 10,
     ],
 
+    // Per-client-IP limits on the unauthenticated guest routes (browser,
+    // widget and mobile). Over the limit: 429 with Retry-After. Submissions
+    // cover ticket creation, chat start and verification codes; replies
+    // cover guest replies, ratings, chat messages and lookups. Counters use
+    // the app's rate-limiter cache store (`cache.limiter`); multi-server
+    // deployments should point it at a shared store such as Redis. The key
+    // is the client IP, so hosts behind a proxy MUST configure trusted
+    // proxies or every guest shares one budget. Disable only when the host
+    // already throttles these routes upstream.
     'guest_rate_limits' => [
+        'enabled' => (bool) env('ESCALATED_GUEST_RATE_LIMITS_ENABLED', true),
         'requests_per_minute' => 60,
         'submissions_per_minute' => 5,
         'replies_per_minute' => 30,
