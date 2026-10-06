@@ -141,7 +141,10 @@ jobs:
           MYSQL_DATABASE: escalated_test
         ports:
           - 3306:3306
+        # The suite repeatedly rebuilds its disposable schemas. Keeping the
+        # data directory in bounded RAM avoids host-disk fsync costs per DDL.
         options: >-
+          --tmpfs /var/lib/mysql:rw,size=2g
           --health-cmd="mysqladmin ping --silent"
           --health-interval=10s
           --health-timeout=5s
