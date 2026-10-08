@@ -4,6 +4,113 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-10-08
+
+This release contains breaking and behaviour changes. Read **Upgrading** below
+before deploying.
+
+### Upgrading
+- **Ship the shared frontend first.** This release needs
+  `@escalated-dev/escalated` ^0.12.0 (the package's `package.json` now asks for
+  it). Its verified guest forms and account-scoped channels must be in the host's
+  built assets before this backend is deployed, or guest ticket creation and
+  tenant broadcasts stop working.
+- **Run the migrations.** New migrations add the attachment migration journal,
+  tenant namespaces on package tables, verified guest access and the Slack inbox:
+  `php artisan migrate`.
+- **Laravel 11 hosts need 11.39 or later** (`illuminate/contracts`
+  `^11.39|^12.0|^13.0`). Laravel 12 and 13 are unchanged.
+- **Attachments are private by default.** The default disk changes from
+  `public` to `local` (`ESCALATED_ATTACHMENTS_DISK`), and serialized URLs are
+  expiring signed download links that check ticket access. Files uploaded before
+  this release stay on the public disk and stay publicly readable until moved:
+  run `php artisan escalated:attachments:privatize --from=public --to=local`
+  (dry run), then again with `--apply`, then remove any public/CDN copies. See
+  `docs/private-attachments.md`. Hosts that disable all package routes must
+  register the named `escalated.attachments.download` route themselves.
+- **Guest permanent tokens no longer work.** Guest ticket creation, live chat and
+  tracking lookup require a one-time code sent to the recipient's mailbox, and
+  access is through expiring grants. Existing ticket and chat links stop
+  authorizing requests; recipients renew access by verifying their email with
+  their ticket reference. Configure outbound mail, a shared cache with atomic
+  locks (for example Redis) and the same `APP_KEY` on every worker. See
+  `docs/guest-access.md`.
+- **Inbound email replies are accepted only from the ticket's requester.** A
+  matched email becomes a reply only when `From` is the requester's address, and
+  the reply is posted as the requester; the author is never taken from `From`.
+  Anything else, including an agent replying to a notification email, opens a
+  new ticket instead (it no longer replies to or reopens the matched ticket).
+  Agents should reply in the app. Once `ESCALATED_EMAIL_INBOUND_SECRET` is set,
+  only the signed Reply-To address on outbound notifications links mail to a
+  ticket; replies without it (for example a new email with the reference in the
+  subject) open a new ticket.
+- **Tenant mode needs staff seats.** `Contracts\TenantResolver` requires
+  `isAgent(Model $user, string $tenantId)` and
+  `isAdmin(Model $user, string $tenantId)`. `UnconfiguredTenantResolver` returns
+  `false` for both, so with `ESCALATED_TENANCY_ENABLED=true` all agent and admin
+  access is denied until the host resolver implements seats. Host code that
+  checks staff access should call `Escalated\Laravel\Support\StaffAccess::isAgent()`
+  / `isAdmin()` / `isStaff()` instead of the `escalated-agent` /
+  `escalated-admin` gates directly. Tenancy stays off by default; to adopt it,
+  follow `docs/tenancy.md` (backfill with writers paused, then enable).
+- **Guest endpoints are rate-limited per client IP** (60 requests, 5
+  submissions, 30 replies per minute, shared across browser, widget and mobile).
+  Configure trusted proxies, or every guest shares the proxy's budget, and point
+  `cache.limiter` at a shared store on multi-server hosts. Hosts that throttle
+  upstream can set `ESCALATED_GUEST_RATE_LIMITS_ENABLED=false`.
+- **Only the requester can rate a ticket** from the customer portal; other users
+  get 403.
+- **Requester-facing payloads are allow-listed.** The customer and guest ticket
+  pages and the mobile ticket resource no longer include ticket metadata,
+  `external_reference`, `chat_metadata` or agent emails/IDs. Host overrides of
+  these pages that read those fields must source them elsewhere.
+- **Plugin HTTP routes need `@escalated-dev/plugin-runtime` v0.2.0** (HTTP
+  contract version 1). Older runtimes get 503 before a plugin handler runs. The
+  default `ESCALATED_PLUGINS_RUNTIME_COMMAND` now points at the runtime's
+  `build/bin/escalated-plugins.js`. Cookie, Authorization, CSRF and proxy headers
+  are no longer forwarded to plugins.
+
+### Added
+- **Host account isolation (tenancy, opt-in).** A host-supplied
+  `TenantResolver` scopes package records, policies, route bindings, API tokens,
+  host identity discovery, reports, scheduled and queued work, broadcasts and
+  attachments to the current account, including when host users live on another
+  database. `escalated:tenant-backfill` and `escalated:tenant-provision` commands.
+  See `docs/tenancy.md`. (#213)
+- **Tenant-local staff seats** through `TenantResolver::isAgent/isAdmin` and
+  `Support\StaffAccess`, used by the agent/admin middleware, ticket and admin
+  policies, API token abilities, shared Inertia props, agent directories,
+  workflow assignment, broadcast channels, private attachments and the Slack
+  service actor. (#219)
+- **Verified, expiring guest access** for guest tickets, chat and tracking
+  lookup, with email codes (ten-minute expiry, five attempts) and per-client and
+  per-mailbox delivery budgets (`guest_access.challenges_per_client_per_hour`,
+  `guest_access.challenges_per_mailbox_per_hour`). See `docs/guest-access.md`.
+  (#215, #220)
+- **Agent API: create tickets for a requester** (named recipient or host user)
+  with metadata, a host-assigned tracking reference and ordered
+  shipment/account/order subjects, plus GET/PUT subject endpoints. See
+  `docs/agent-ticket-api.md`. (#216)
+- **Durable Slack inbound.** Authenticated Slack messages are stored in an
+  encrypted inbox and processed by the scheduler into tickets or public thread
+  replies, with bounded retries and dead-letter recovery. See
+  `docs/slack-inbound.md`. (#218)
+- `escalated.guest_rate_limits.enabled` (`ESCALATED_GUEST_RATE_LIMITS_ENABLED`)
+  to switch the guest limiters off. (#226)
+
+### Security
+- Inbound email replies are accepted only from the ticket's requester, and only
+  through the signed Reply-To address when `ESCALATED_EMAIL_INBOUND_SECRET` is
+  set. A `From` naming a staff address no longer posts as that agent. (#220)
+- Customer portal ratings are limited to the ticket's requester. (#220)
+- The guest, customer and mobile ticket payloads are serialized from allow-lists,
+  so ticket metadata and agent emails no longer reach requesters. (#220, #224)
+- Guest ticket and widget entry points share per-IP request, submission and
+  reply quotas; blocked requests get 429 with `Retry-After` before any record is
+  created. (#214, #226)
+- `TenantReferences` rejects case-variant spellings of identity, reference and
+  morph type columns. (#219)
+
 ### Fixed
 - Slack inbound text too large for a ticket description or reply body is no
   longer dead-lettered as `message_too_large`. The body keeps the leading text
@@ -34,12 +141,19 @@ All notable changes to this project will be documented in this file.
 - Existence and uniqueness validation now follows the owning model's connection
   for ticket creation, assignment, bulk actions, skills, roles, knowledge-base
   categories, custom fields and mobile identities.
+- Agent rankings and CSV exports no longer fail when an assigned agent has no
+  first response or resolution yet. (#212)
+- The customer and guest ticket pages load the satisfaction rating, so an
+  already-rated ticket no longer shows the rating form. (#220, #224)
 
 ### Changed
 - CI now exercises Laravel 13 on PHP 8.3 and 8.5, plus pinned Laravel 13.8.0
   compatibility. Pest 4 is allowed for the Laravel 13 test toolchain; Laravel
   11/12 retain their Pest 3 compatibility legs. Documentation distinguishes the
   Laravel 13 PHP minimum from the package's Laravel 11/12 minimum.
+- The minimum Laravel 11 version is 11.39. (#213)
+- The shared frontend dependency is `@escalated-dev/escalated` ^0.12.0, and the
+  page and route-name fixtures are refreshed to 0.12.0.
 
 ## [1.8.6] - 2026-09-27
 

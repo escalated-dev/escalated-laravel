@@ -1,6 +1,6 @@
 {
     "$comment": "Route names the shared frontend (@escalated-dev/escalated) passes to route(), extracted from its src/ at the version below. A name here that this package does not register throws in the browser while the page renders and takes the whole screen down with it. Refresh it together with tests/Fixtures/escalated-pages.json; tests/Feature/RouteNameParityTest.php explains the extraction.",
-    "version": "0.11.7",
+    "version": "0.12.0",
     "routes": [
         "escalated.admin.audit-log",
         "escalated.admin.automations.create",
@@ -179,8 +179,10 @@
         "escalated.customer.tickets.reopen",
         "escalated.customer.tickets.reply",
         "escalated.customer.tickets.store",
+        "escalated.guest.tickets.create",
         "escalated.guest.tickets.rate",
         "escalated.guest.tickets.reply",
+        "escalated.guest.tickets.show",
         "escalated.guest.tickets.store",
         "escalated.two-factor.verify"
     ]
