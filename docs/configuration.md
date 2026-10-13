@@ -2,6 +2,8 @@
 
 All configuration is in `config/escalated.php`.
 
+For opt-in department visibility, account associations, account restrictions, and targeted SLAs, see [Ticket access and routing](ticket-access-and-routing.md). All access restrictions and targeted SLA selection are off by default.
+
 ## Hosting Mode
 
 ```php

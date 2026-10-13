@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Policies;
 
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Support\StaffAccess;
+use Escalated\Laravel\Support\TicketVisibility;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\Model;
 
@@ -91,8 +92,9 @@ class TicketPolicy
     {
         $context = app(TenantContext::class);
 
-        return ! $context->enabled() || ($user instanceof Model && $context->canAccess($user)
-            && ($ticket === null || $context->owns($ticket)));
+        return (! $context->enabled() || ($user instanceof Model && $context->canAccess($user)
+            && ($ticket === null || $context->owns($ticket))))
+            && ($ticket === null || TicketVisibility::allows($user, $ticket));
     }
 
     public function delete($user, Ticket $ticket): bool

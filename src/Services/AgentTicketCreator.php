@@ -13,6 +13,7 @@ use Escalated\Laravel\Models\Contact;
 use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\Tag;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Support\TicketAccounts;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Validator;
@@ -40,6 +41,7 @@ class AgentTicketCreator
             'subject' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:65535'],
             'priority' => ['sometimes', 'string', 'in:low,medium,high,urgent,critical'],
+            'ticket_type' => ['sometimes', 'string', Rule::in(Ticket::TYPES)],
             'department_id' => ['sometimes', 'nullable', 'integer', Rule::exists(Department::class, 'id')],
             'tags' => ['sometimes', 'array'],
             'tags.*' => ['integer', Rule::exists(Tag::class, 'id')],
@@ -101,7 +103,7 @@ class AgentTicketCreator
                 'subject' => $data['subject'], 'description' => $data['description'],
                 'status' => TicketStatus::Open,
                 'priority' => TicketPriority::from($data['priority'] ?? config('escalated.default_priority', 'medium')),
-                'ticket_type' => 'question', 'channel' => 'web',
+                'ticket_type' => $data['ticket_type'] ?? 'question', 'channel' => 'web',
                 'department_id' => $data['department_id'] ?? null,
                 'metadata' => $data['metadata'] ?? null, 'external_reference' => $data['external_reference'] ?? null,
             ]);
@@ -110,6 +112,15 @@ class AgentTicketCreator
                 $ticket->fill(['contact_id' => $contact->id, 'guest_email' => $contact->email, 'guest_name' => $contact->name]);
             } else {
                 $ticket->requester()->associate($requester);
+            }
+            if (config('escalated.accounts.enabled', false)) {
+                $account = TicketAccounts::resolve($ticket->requester);
+                foreach ($subjects as [$subject]) {
+                    $account ??= TicketAccounts::resolve($subject);
+                }
+                if ($account) {
+                    $ticket->account()->associate($account);
+                }
             }
             $ticket->deferCreatedEvent = true;
             $ticket->save();

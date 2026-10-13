@@ -5,6 +5,7 @@ namespace Escalated\Laravel\Services;
 use Escalated\Laravel\Models\Automation;
 use Escalated\Laravel\Models\Tag;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Support\TicketAccounts;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
@@ -80,7 +81,14 @@ class AutomationRunner
                     break;
 
                 case 'ticket_type':
-                    $query->where('ticket_type', $value);
+                case 'department_id':
+                case 'account_type':
+                case 'account_id':
+                    $query->where($field, $value);
+                    break;
+
+                case 'account':
+                    TicketAccounts::constrain($query, $value);
                     break;
 
                 case 'subject_contains':

@@ -41,6 +41,8 @@ class SatisfactionRating extends Model
 
     protected static function booted(): void
     {
+        static::addGlobalScope(new Scopes\TicketChildVisibilityScope);
+
         static::creating(function ($model) {
             $model->created_at = $model->created_at ?? now();
         });

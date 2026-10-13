@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Notifications\Concerns;
 
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Notifications;
+use Escalated\Laravel\Support\TicketVisibility;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\AnonymousNotifiable;
@@ -13,6 +14,13 @@ trait GuardsTenantNotification
 {
     public function shouldSend(object $notifiable, string $channel): bool
     {
+        if (TicketVisibility::restricted($notifiable)) {
+            $record = $this->ticket ?? $this->reply ?? null;
+            $ticket = $record instanceof Ticket ? $record : $record?->ticket;
+            if (! $ticket || ! TicketVisibility::allows($notifiable, $ticket)) {
+                return false;
+            }
+        }
         $context = app(TenantContext::class);
         if (! $context->enabled()) {
             return true;

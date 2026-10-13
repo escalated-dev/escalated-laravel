@@ -39,6 +39,11 @@ class TicketSubjectService
                 $ids[] = $locked->attachSubject($subject, $role, $position)->getKey();
             }
             $locked->subjects()->whereNotIn('id', $ids)->delete();
+            // Keep the caller's account identity in sync with the locked model.
+            $ticket->setAttribute('account_type', $locked->account_type);
+            $ticket->setAttribute('account_id', $locked->account_id);
+            $ticket->syncOriginalAttributes(['account_type', 'account_id']);
+            $ticket->unsetRelation('account');
         });
         $ticket->unsetRelation('subjects');
     }

@@ -484,6 +484,8 @@ All config lives in `config/escalated.php`. Key options:
 
 See the [full configuration reference](docs/configuration.md).
 
+Department visibility, ticket accounts, account restrictions, and targeted SLAs are independent opt-ins. See [ticket access and routing](docs/ticket-access-and-routing.md) for host integration hooks and upgrade guidance.
+
 ## Events
 
 Every ticket action dispatches an event you can listen to:

@@ -2,6 +2,18 @@
 
 return [
 
+    // Agent access: 'all' preserves existing behavior; 'department' limits
+    // tickets to department_agent membership. Admins retain tenant-wide access.
+    'visibility' => env('ESCALATED_VISIBILITY', 'all'),
+
+    'accounts' => [
+        'enabled' => env('ESCALATED_ACCOUNTS_ENABLED', false),
+        // Implements Contracts\TicketAccountResolver, or bind that interface.
+        'resolver' => null,
+        // Independent of department visibility; both restrictions intersect.
+        'scope_agents' => env('ESCALATED_ACCOUNT_VISIBILITY', false),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Hosting Mode
@@ -225,6 +237,7 @@ return [
     */
     'sla' => [
         'enabled' => true,
+        'targeted' => env('ESCALATED_TARGETED_SLA', false),
         'business_hours_only' => false,
         'business_hours' => [
             'start' => '09:00',

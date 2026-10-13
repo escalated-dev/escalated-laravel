@@ -2,6 +2,8 @@
 
 SLA (Service Level Agreement) policies define response and resolution time targets per priority level.
 
+Policies can optionally target a department, ticket type, or both. Enable `escalated.sla.targeted` to select the most specific matching policy before falling back to the global default. See [targeted SLA configuration and precedence](ticket-access-and-routing.md#targeted-slas).
+
 ## Creating SLA Policies
 
 In the admin panel (`/support/admin/sla-policies`), create policies with:

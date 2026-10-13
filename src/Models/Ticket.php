@@ -14,6 +14,7 @@ use Escalated\Laravel\Events;
 use Escalated\Laravel\Services\GuestEmailVerification;
 use Escalated\Laravel\Services\TicketSubjectResolver;
 use Escalated\Laravel\Services\TicketSubjectService;
+use Escalated\Laravel\Support\TicketAccounts;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Escalated\Laravel\Tenancy\TenantReferences;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -39,6 +40,9 @@ class Ticket extends Model
 
     protected $guarded = ['id'];
 
+    // Creation listeners run before database defaults are reloaded.
+    protected $attributes = ['ticket_type' => 'question'];
+
     protected $hidden = ['guest_token', 'guest_access_hash', 'guest_verified_email'];
 
     protected $appends = [
@@ -58,7 +62,20 @@ class Ticket extends Model
     {
         parent::boot();
 
+        static::addGlobalScope(new Scopes\TicketVisibilityScope);
+
+        static::saving(function (self $ticket) {
+            if (($ticket->account_type !== null || $ticket->account_id !== null)
+                && TicketAccounts::identity(['type' => $ticket->account_type, 'id' => $ticket->account_id]) === null) {
+                throw new \InvalidArgumentException('Ticket accounts require both a non-empty type and identity.');
+            }
+        });
+
         static::creating(function (self $ticket) {
+            if (config('escalated.accounts.enabled', false) && $ticket->account_type === null && $ticket->account_id === null
+                && ($account = TicketAccounts::resolve($ticket->requester))) {
+                $ticket->account()->associate($account);
+            }
             if (empty($ticket->reference)) {
                 $ticket->reference = 'TEMP-'.Str::uuid()->toString();
             }
@@ -150,6 +167,17 @@ class Ticket extends Model
         return $this->morphTo();
     }
 
+    public function account(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
+    public function scopeForAccount($query, Model $account)
+    {
+        return $query->where('account_type', $account->getMorphClass())
+            ->where('account_id', (string) $account->getKey());
+    }
+
     public function contact(): BelongsTo
     {
         return $this->belongsTo(Contact::class, 'contact_id');
@@ -215,10 +243,31 @@ class Ticket extends Model
             app(TenantReferences::class)->assertReference($subject, $subject->getKey());
         }
 
-        return $this->subjects()->updateOrCreate(
+        $attach = fn () => $this->subjects()->updateOrCreate(
             ['subject_type' => $type, 'subject_id' => (string) $subject->getKey()],
             ['role' => $role, 'position' => $position ?? ($this->subjects()->max('position') + 1)],
         );
+        if (! config('escalated.accounts.enabled', false)) {
+            return $attach();
+        }
+
+        return $this->getConnection()->transaction(function () use ($subject, $attach) {
+            // The supplied model has already been authorized. Keep tenancy, but
+            // allow trusted creators to fill an account on an unallocated ticket.
+            $locked = $this->newQuery()->withoutGlobalScope(Scopes\TicketVisibilityScope::class)
+                ->whereKey($this->getKey())->lockForUpdate()->firstOrFail();
+            $this->account_type = $locked->account_type;
+            $this->account_id = $locked->account_id;
+            $this->unsetRelation('account');
+            $link = $attach();
+            if ($this->account_type === null && $this->account_id === null
+                && ($account = TicketAccounts::resolve($subject))) {
+                $this->account()->associate($account);
+                $this->save();
+            }
+
+            return $link;
+        });
     }
 
     /**

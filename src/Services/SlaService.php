@@ -12,7 +12,16 @@ class SlaService
 {
     public function attachDefaultPolicy(Ticket $ticket): void
     {
-        $policy = SlaPolicy::active()->default()->first();
+        $query = SlaPolicy::active();
+        if (config('escalated.sla.targeted', false)) {
+            $query->where(fn ($q) => $q->whereNull('department_id')->orWhere('department_id', $ticket->department_id))
+                ->where(fn ($q) => $q->whereNull('ticket_type')->orWhere('ticket_type', $ticket->ticket_type))
+                ->where(fn ($q) => $q->whereNotNull('department_id')->orWhereNotNull('ticket_type')->orWhere('is_default', true))
+                ->orderByRaw('CASE WHEN department_id IS NOT NULL AND ticket_type IS NOT NULL THEN 0 WHEN department_id IS NOT NULL THEN 1 WHEN ticket_type IS NOT NULL THEN 2 ELSE 3 END');
+        } else {
+            $query->default()->whereNull('department_id')->whereNull('ticket_type');
+        }
+        $policy = $query->orderBy('id')->first();
 
         if (! $policy) {
             return;

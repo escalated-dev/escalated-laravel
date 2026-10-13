@@ -15,6 +15,7 @@ use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\AgentTicketCreator;
 use Escalated\Laravel\Services\AttachmentService;
 use Escalated\Laravel\Services\MentionService;
+use Escalated\Laravel\Support\TicketAccounts;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Model;
 
@@ -153,6 +154,10 @@ class LocalDriver implements CreatesAgentTickets, TicketDriver
 
         if (! empty($filters['department_id'])) {
             $query->where('department_id', $filters['department_id']);
+        }
+
+        if (isset($filters['account_type']) || isset($filters['account_id'])) {
+            TicketAccounts::constrain($query, ['type' => $filters['account_type'] ?? null, 'id' => $filters['account_id'] ?? null]);
         }
 
         if (! empty($filters['search'])) {
