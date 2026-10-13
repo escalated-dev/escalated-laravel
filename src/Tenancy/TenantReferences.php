@@ -42,7 +42,7 @@ class TenantReferences
     private const HOST_KEYS = ['user_id', 'agent_id', 'assigned_to', 'created_by', 'sent_by', 'author_id', 'snoozed_by', 'added_by'];
 
     private const MORPHS = [
-        'tickets' => ['requester'], 'replies' => ['author'], 'attachments' => ['attachable'],
+        'tickets' => ['requester', 'account'], 'replies' => ['author'], 'attachments' => ['attachable'],
         'ticket_subjects' => ['subject'], 'ticket_activities' => ['causer'],
         'satisfaction_ratings' => ['rated_by'], 'api_tokens' => ['tokenable'],
         'custom_field_values' => ['entity'],

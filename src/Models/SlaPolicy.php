@@ -8,6 +8,7 @@ use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Escalated;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SlaPolicy extends Model
@@ -35,6 +36,11 @@ class SlaPolicy extends Model
     public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class, 'sla_policy_id');
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
     }
 
     public function getFirstResponseHoursFor(TicketPriority $priority): ?float

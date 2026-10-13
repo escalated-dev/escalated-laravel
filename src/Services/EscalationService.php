@@ -7,6 +7,7 @@ use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Events\TicketEscalated;
 use Escalated\Laravel\Models\EscalationRule;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Support\TicketAccounts;
 use Illuminate\Support\Collection;
 
 class EscalationService
@@ -49,6 +50,9 @@ class EscalationService
                     ->where('created_at', '<=', now()->subHours((int) $condition['value'])),
                 'sla_breached' => $query->breachedSla(),
                 'department_id' => $query->where('department_id', $condition['value']),
+                'ticket_type' => $query->where('ticket_type', $condition['value']),
+                'account' => TicketAccounts::constrain($query, $condition['value'] ?? null),
+                'account_type', 'account_id' => $query->where($condition['field'], $condition['value']),
                 default => null,
             };
         }

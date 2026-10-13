@@ -4,7 +4,9 @@ namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Http\Requests\StoreSlaPolicyRequest;
+use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\SlaPolicy;
+use Escalated\Laravel\Models\Ticket;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 
@@ -23,7 +25,7 @@ class SlaPolicyController extends Controller
 
     public function create(): mixed
     {
-        return $this->renderer->render('Escalated/Admin/SlaPolicies/Form', ['priorities' => config('escalated.priorities')]);
+        return $this->renderer->render('Escalated/Admin/SlaPolicies/Form', $this->formOptions());
     }
 
     public function store(StoreSlaPolicyRequest $request): RedirectResponse
@@ -36,8 +38,18 @@ class SlaPolicyController extends Controller
     public function edit(SlaPolicy $slaPolicy): mixed
     {
         return $this->renderer->render('Escalated/Admin/SlaPolicies/Form', [
-            'policy' => $slaPolicy, 'priorities' => config('escalated.priorities'),
-        ]);
+            'policy' => $slaPolicy,
+        ] + $this->formOptions());
+    }
+
+    private function formOptions(): array
+    {
+        return [
+            'priorities' => config('escalated.priorities'),
+            'targeted' => config('escalated.sla.targeted', false),
+            'departments' => Department::active()->get(['id', 'name']),
+            'ticketTypes' => Ticket::TYPES,
+        ];
     }
 
     public function update(SlaPolicy $slaPolicy, StoreSlaPolicyRequest $request): RedirectResponse

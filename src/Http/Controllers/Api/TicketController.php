@@ -16,6 +16,7 @@ use Escalated\Laravel\Services\AssignmentService;
 use Escalated\Laravel\Services\MacroService;
 use Escalated\Laravel\Services\TicketActionRegistry;
 use Escalated\Laravel\Services\TicketService;
+use Escalated\Laravel\Support\TicketAccounts;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -32,12 +33,13 @@ class TicketController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        $request->validate(TicketAccounts::filterRules());
         Gate::forUser($request->user())->authorize('viewAny', Ticket::class);
         $request->validate([
             'per_page' => 'sometimes|integer|min:1|max:100',
         ]);
 
-        $filters = $request->only(['status', 'priority', 'assigned_to', 'unassigned', 'department_id', 'search', 'sla_breached', 'tag_ids', 'sort_by', 'sort_dir', 'per_page', 'following']);
+        $filters = $request->only(['status', 'priority', 'ticket_type', 'assigned_to', 'unassigned', 'department_id', 'account_type', 'account_id', 'search', 'sla_breached', 'tag_ids', 'sort_by', 'sort_dir', 'per_page', 'following']);
         $filters['per_page'] = min((int) ($filters['per_page'] ?? 15), 100);
 
         $tickets = $this->ticketService->list(

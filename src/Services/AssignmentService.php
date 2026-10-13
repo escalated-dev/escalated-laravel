@@ -6,6 +6,7 @@ use Escalated\Laravel\Contracts\Ticketable;
 use Escalated\Laravel\EscalatedManager;
 use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Support\TicketVisibility;
 
 class AssignmentService
 {
@@ -32,7 +33,8 @@ class AssignmentService
     public function autoAssign(Ticket $ticket): ?Ticket
     {
         $skillRouting = $this->skillRoutingService ??= app(SkillRoutingService::class);
-        $matchedAgent = $skillRouting->findMatchingAgents($ticket)->first();
+        $matchedAgent = $skillRouting->findMatchingAgents($ticket)
+            ->first(fn ($agent) => TicketVisibility::agentCanAccess($agent->getKey(), $ticket));
         if ($matchedAgent) {
             return $this->assign($ticket, $matchedAgent->getKey());
         }
@@ -46,7 +48,7 @@ class AssignmentService
             return null;
         }
 
-        $agents = $department->agents;
+        $agents = $department->agents->filter(fn ($agent) => TicketVisibility::agentCanAccess($agent->getKey(), $ticket));
         if ($agents->isEmpty()) {
             return null;
         }

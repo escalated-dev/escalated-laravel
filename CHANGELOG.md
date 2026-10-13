@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- Opt-in department visibility for agents across ticket queries, policies, API, widget access, bulk actions, reports, notifications, and broadcast authorization. Administrators retain access within their tenant.
+- Nullable polymorphic ticket accounts with host resolution hooks, account filters, and independent account visibility for agents.
+- Account and ticket-type conditions for routing rules, plus opt-in SLA targets by department and type with deterministic fallback.
+- Integration documentation and regression coverage for default behavior, tenant boundaries, separate connections, and custom table prefixes. Run the additive migrations before enabling the new options.
+
 ## [1.9.0] - 2026-10-08
 
 This release contains breaking and behaviour changes. Read **Upgrading** below

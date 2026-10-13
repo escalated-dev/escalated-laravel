@@ -9,6 +9,7 @@ use Escalated\Laravel\Models\SatisfactionRating;
 use Escalated\Laravel\Models\SlaPolicy;
 use Escalated\Laravel\Models\Tag;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Support\TicketVisibility;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -90,7 +91,7 @@ class ReportingService
         $avgResponseRaw = $this->avgHoursDiffRaw("{$ticketsTable}.created_at", "{$ticketsTable}.first_response_at");
         $avgResolutionRaw = $this->avgHoursDiffRaw("{$ticketsTable}.created_at", "{$ticketsTable}.resolved_at");
 
-        $rows = Escalated::query($ticketsTable)
+        $rows = TicketVisibility::query($ticketsTable, 'id')
             ->whereBetween("{$ticketsTable}.created_at", [$startDate, $endDate])
             ->whereNotNull("{$ticketsTable}.assigned_to")
             ->groupBy("{$ticketsTable}.assigned_to")
@@ -239,7 +240,7 @@ class ReportingService
         $ticketsTable = Escalated::table('tickets');
         $ratingsTable = Escalated::table('satisfaction_ratings');
 
-        $rows = Escalated::query($ratingsTable)
+        $rows = TicketVisibility::query($ratingsTable)
             ->join($ticketsTable, "{$ratingsTable}.ticket_id", '=', "{$ticketsTable}.id")
             ->whereBetween("{$ratingsTable}.created_at", [$startDate, $endDate])
             ->whereNotNull("{$ticketsTable}.assigned_to")
@@ -312,7 +313,7 @@ class ReportingService
         $ticketsTable = Escalated::table('tickets');
         $departmentsTable = Escalated::table('departments');
 
-        return Escalated::query($ticketsTable)
+        return TicketVisibility::query($ticketsTable, 'id')
             ->leftJoin($departmentsTable, "{$ticketsTable}.department_id", '=', "{$departmentsTable}.id")
             ->where("{$ticketsTable}.created_at", '>=', $since)
             ->whereNotNull("{$ticketsTable}.sla_policy_id")
@@ -587,7 +588,7 @@ class ReportingService
             $resolutionRate = $totalTickets > 0 ? ($resolvedTickets / $totalTickets) * 100 : 0;
 
             // Get CSAT for this agent
-            $csatAvg = (float) Escalated::query($ratingsTable)
+            $csatAvg = (float) TicketVisibility::query($ratingsTable)
                 ->join($ticketsTable, "{$ratingsTable}.ticket_id", '=', "{$ticketsTable}.id")
                 ->where("{$ticketsTable}.assigned_to", $agentId)
                 ->where("{$ratingsTable}.created_at", '>=', $since)
@@ -635,7 +636,7 @@ class ReportingService
         $since = now()->subDays($days);
         $ticketsTable = Escalated::table('tickets');
 
-        $rows = Escalated::query($ticketsTable)
+        $rows = TicketVisibility::query($ticketsTable, 'id')
             ->where("{$ticketsTable}.created_at", '>=', $since)
             ->whereNotNull("{$ticketsTable}.assigned_to")
             ->selectRaw("{$this->dateExpression("{$ticketsTable}.created_at")} as date")
@@ -700,7 +701,7 @@ class ReportingService
         $userModel = Escalated::newUserModel();
 
         // Replies per agent
-        $replies = Escalated::query($repliesTable)
+        $replies = TicketVisibility::query($repliesTable)
             ->where("{$repliesTable}.created_at", '>=', $since)
             ->where("{$repliesTable}.author_type", $userModel->getMorphClass())
             ->where("{$repliesTable}.is_internal_note", false)
@@ -783,7 +784,7 @@ class ReportingService
         $pivotTable = Escalated::table('ticket_tag');
         $hoursDiff = $this->avgHoursDiffRaw("{$ticketsTable}.created_at", "{$ticketsTable}.resolved_at");
 
-        return Escalated::query($pivotTable)
+        return TicketVisibility::query($pivotTable)
             ->join($ticketsTable, "{$pivotTable}.ticket_id", '=', "{$ticketsTable}.id")
             ->join($tagsTable, "{$pivotTable}.tag_id", '=', "{$tagsTable}.id")
             ->where("{$ticketsTable}.created_at", '>=', $since)
@@ -815,7 +816,7 @@ class ReportingService
         $departmentsTable = Escalated::table('departments');
         $hoursDiff = $this->avgHoursDiffRaw("{$ticketsTable}.created_at", "{$ticketsTable}.resolved_at");
 
-        return Escalated::query($ticketsTable)
+        return TicketVisibility::query($ticketsTable, 'id')
             ->leftJoin($departmentsTable, "{$ticketsTable}.department_id", '=', "{$departmentsTable}.id")
             ->where("{$ticketsTable}.created_at", '>=', $since)
             ->groupBy("{$ticketsTable}.department_id", "{$departmentsTable}.name")

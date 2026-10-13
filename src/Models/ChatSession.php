@@ -18,6 +18,11 @@ class ChatSession extends Model
 
     protected $hidden = ['customer_session_id'];
 
+    protected static function booted(): void
+    {
+        static::addGlobalScope(new Scopes\TicketChildVisibilityScope);
+    }
+
     public function getTable(): string
     {
         return Escalated::table('chat_sessions');

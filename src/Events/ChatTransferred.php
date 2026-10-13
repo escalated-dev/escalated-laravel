@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Events;
 
 use Escalated\Laravel\Events\Concerns\BroadcastsWhenEnabled;
 use Escalated\Laravel\Models\ChatSession;
+use Escalated\Laravel\Support\TicketVisibility;
 use Escalated\Laravel\Tenancy\TenantBroadcast;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
@@ -27,11 +28,11 @@ class ChatTransferred implements ShouldBroadcastNow
             new PrivateChannel(TenantBroadcast::channel('chat.'.$this->session->id, $this->session)),
         ];
 
-        if ($this->toAgentId) {
+        if ($this->toAgentId && TicketVisibility::agentCanAccess($this->toAgentId, $this->session)) {
             $channels[] = new PrivateChannel(TenantBroadcast::channel('agents.'.$this->toAgentId, $this->session));
         }
 
-        if ($this->fromAgentId) {
+        if ($this->fromAgentId && TicketVisibility::agentCanAccess($this->fromAgentId, $this->session)) {
             $channels[] = new PrivateChannel(TenantBroadcast::channel('agents.'.$this->fromAgentId, $this->session));
         }
 

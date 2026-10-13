@@ -15,6 +15,7 @@ use Escalated\Laravel\Models\Workflow;
 use Escalated\Laravel\Models\WorkflowLog;
 use Escalated\Laravel\Support\OutboundUrlGuard;
 use Escalated\Laravel\Support\StaffAccess;
+use Escalated\Laravel\Support\TicketAccounts;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -154,6 +155,18 @@ class WorkflowEngine
 
         $actual = $this->resolveFieldValue($field, $ticket);
 
+        if ($field === 'account') {
+            $identity = TicketAccounts::identity($value);
+
+            return match ($operator) {
+                'equals' => $identity !== null && $actual === $identity,
+                'not_equals' => $identity !== null && $actual !== $identity,
+                'is_empty' => $actual === null,
+                'is_not_empty' => $actual !== null,
+                default => false,
+            };
+        }
+
         return $this->compareValues($actual, $operator, $value);
     }
 
@@ -205,6 +218,9 @@ class WorkflowEngine
         }
 
         return match ($field) {
+            'account' => TicketAccounts::identity(['type' => $ticket->account_type, 'id' => $ticket->account_id]),
+            'account_type' => $ticket->account_type,
+            'account_id' => $ticket->account_id,
             'status' => $ticket->status instanceof TicketStatus ? $ticket->status->value : $ticket->status,
             'priority' => $ticket->priority instanceof TicketPriority ? $ticket->priority->value : $ticket->priority,
             'type' => $ticket->ticket_type,

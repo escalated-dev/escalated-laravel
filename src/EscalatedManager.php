@@ -22,6 +22,12 @@ class EscalatedManager
     {
         $name = $name ?? $this->getDefaultDriver();
 
+        if ($name === 'cloud' && (config('escalated.visibility', 'all') !== 'all'
+            || config('escalated.accounts.enabled', false) || config('escalated.accounts.scope_agents', false)
+            || config('escalated.sla.targeted', false))) {
+            throw new \LogicException('Ticket visibility, accounts and targeted SLAs require locally stored tickets; cloud mode is not supported.');
+        }
+
         if (! isset($this->drivers[$name])) {
             $this->drivers[$name] = $this->createDriver($name);
         }

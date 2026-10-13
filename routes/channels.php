@@ -3,6 +3,7 @@
 use Escalated\Laravel\Models\ChatSession;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Support\StaffAccess;
+use Escalated\Laravel\Support\TicketVisibility;
 use Escalated\Laravel\Tenancy\TenantBroadcast;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Gate;
@@ -21,7 +22,7 @@ foreach (['escalated' => false, 'escalated.tenants.{namespace}' => true] as $pre
             return TenantBroadcast::authorize($user, $namespace, fn () => $callback($user, ...$parameters));
         });
     };
-    $register('tickets', fn ($user) => ! $isPresence() && $isAgent($user));
+    $register('tickets', fn ($user) => ! $isPresence() && $isAgent($user) && ! TicketVisibility::restricted($user));
     $register('tickets.{ticketId}', static function ($user, $ticketId) use ($isPresence, $isAgent) {
         if (! ctype_digit((string) $ticketId) || ! ($ticket = Ticket::find($ticketId))) {
             return false;
@@ -39,9 +40,13 @@ foreach (['escalated' => false, 'escalated.tenants.{namespace}' => true] as $pre
     });
     $register('agents.{agentId}', fn ($user, $agentId) => ! $isPresence() && $isUser($user, $agentId));
     // Exact match must precede the session wildcard ("queue" is not a session ID).
-    $register('chat.queue', fn ($user) => ! $isPresence() && $isAgent($user));
+    $register('chat.queue', fn ($user) => ! $isPresence() && $isAgent($user) && ! TicketVisibility::restricted($user));
     $register('chat.{sessionId}', static function ($user, $sessionId) use ($isPresence, $isAgent, $isUser) {
         if ($isPresence() || ! ctype_digit((string) $sessionId) || ! ($session = ChatSession::find($sessionId))) {
+            return false;
+        }
+
+        if (TicketVisibility::restricted($user) && (! $session->ticket || ! TicketVisibility::allows($user, $session->ticket))) {
             return false;
         }
 

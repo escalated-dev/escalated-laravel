@@ -12,6 +12,10 @@ class TicketCollectionResource extends JsonResource
         return [
             'id' => $this->id,
             'reference' => $this->reference,
+            'ticket_type' => $this->ticket_type,
+            'account' => $this->when(config('escalated.accounts.enabled', false), fn () => $this->account_type !== null ? [
+                'type' => $this->account_type, 'id' => (string) $this->account_id,
+            ] : null),
             'subject' => $this->subject,
             'status' => $this->status->value,
             'status_label' => $this->status->label(),

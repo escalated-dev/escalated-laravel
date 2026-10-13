@@ -22,6 +22,7 @@ use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\AssignmentService;
 use Escalated\Laravel\Services\MacroService;
 use Escalated\Laravel\Services\TicketService;
+use Escalated\Laravel\Support\TicketAccounts;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -40,8 +41,9 @@ class TicketController extends Controller
 
     public function index(Request $request): mixed
     {
+        $request->validate(TicketAccounts::filterRules());
         $tickets = $this->ticketService->list(
-            $request->only(['status', 'priority', 'ticket_type', 'assigned_to', 'unassigned', 'department_id', 'search', 'sla_breached', 'tag_ids', 'sort_by', 'sort_dir', 'per_page', 'following', 'snoozed']),
+            $request->only(['status', 'priority', 'ticket_type', 'assigned_to', 'unassigned', 'department_id', 'account_type', 'account_id', 'search', 'sla_breached', 'tag_ids', 'sort_by', 'sort_dir', 'per_page', 'following', 'snoozed']),
             $request->has('following') ? $request->user() : null,
         );
 
