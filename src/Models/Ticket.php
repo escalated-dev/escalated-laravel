@@ -40,6 +40,9 @@ class Ticket extends Model
 
     protected $guarded = ['id'];
 
+    // Creation listeners run before database defaults are reloaded.
+    protected $attributes = ['ticket_type' => 'question'];
+
     protected $hidden = ['guest_token', 'guest_access_hash', 'guest_verified_email'];
 
     protected $appends = [

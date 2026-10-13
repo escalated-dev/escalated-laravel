@@ -86,6 +86,12 @@ it('does not attach an unmatched targeted default or an inactive policy', functi
     expect(Ticket::factory()->create(['ticket_type' => 'question'])->fresh()->sla_policy_id)->toBeNull();
 });
 
+it('matches the database default ticket type during creation', function () {
+    config(['escalated.sla.targeted' => true]);
+    $policy = SlaPolicy::factory()->create(['ticket_type' => 'question']);
+    expect(Ticket::factory()->create()->fresh()->sla_policy_id)->toBe($policy->id);
+});
+
 it('rejects malformed account rules instead of applying actions to all tickets', function (string $engine) {
     Ticket::factory()->create();
     $attributes = ['name' => 'Invalid account', 'is_active' => true, 'conditions' => [['field' => 'account', 'value' => ['id' => 'north']]], 'actions' => []];

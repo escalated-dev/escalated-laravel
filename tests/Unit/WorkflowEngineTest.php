@@ -688,20 +688,21 @@ it('handles workflow with no actions gracefully', function () {
 });
 
 it('handles unknown action types gracefully', function () {
-    $ticket = Ticket::factory()->create();
+    $ticket = Ticket::factory()->create(['priority' => 'low']);
     $workflow = Workflow::create([
         'name' => 'Unknown action',
         'trigger_event' => 'ticket.created',
         'conditions' => [],
         'actions' => [
             ['type' => 'nonexistent_action', 'value' => 'whatever'],
+            ['type' => 'change_priority', 'value' => 'high'],
         ],
         'is_active' => true,
         'position' => 0,
     ]);
 
-    // Should not throw
     $this->engine->executeActions($workflow, $ticket, $workflow->actions);
+    expect($ticket->fresh()->priority->value)->toBe('high');
 });
 
 // --- workflow-admin-contract: canonical conditions ---
