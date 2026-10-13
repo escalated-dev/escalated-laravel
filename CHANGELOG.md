@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.9.1] - 2026-10-13
+
+### Fixed
+- Preserve exact account identities, including trailing spaces, across MySQL visibility scopes, account filters and routing conditions.
+- Verify department restrictions through customer mobile API tokens used by staff.
+
 ### Added
 - Opt-in department visibility for agents across ticket queries, policies, API, widget access, bulk actions, reports, notifications, and broadcast authorization. Administrators retain access within their tenant.
 - Nullable polymorphic ticket accounts with host resolution hooks, account filters, and independent account visibility for agents.

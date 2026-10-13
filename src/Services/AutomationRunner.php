@@ -82,9 +82,12 @@ class AutomationRunner
 
                 case 'ticket_type':
                 case 'department_id':
+                    $query->where($field, $value);
+                    break;
+
                 case 'account_type':
                 case 'account_id':
-                    $query->where($field, $value);
+                    TicketAccounts::whereIdentity($query, $field, $value);
                     break;
 
                 case 'account':
