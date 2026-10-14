@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Models;
 
 use Escalated\Laravel\Concerns\UsesEscalatedConnection;
 use Escalated\Laravel\Escalated;
+use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\Model;
 
 class EscalatedSettings extends Model
@@ -18,13 +19,38 @@ class EscalatedSettings extends Model
     }
 
     /**
+     * Every setting, read once and kept until flushed, per connection and
+     * tenant.
+     *
+     * A page reads several settings (the shared Inertia props alone read
+     * five), and each read was its own query. They are read together on first
+     * use instead. Writes through the model flush it, and so does the start of
+     * every request, queued job and Octane operation, so a long-running
+     * worker never serves a value another process has since changed.
+     *
+     * @var array<string, array<string, mixed>>
+     */
+    protected static array $memo = [];
+
+    protected static function booted(): void
+    {
+        static::saved(fn () => static::flushCache());
+        static::deleted(fn () => static::flushCache());
+    }
+
+    public static function flushCache(): void
+    {
+        static::$memo = [];
+    }
+
+    /**
      * Get a setting value by key.
      */
     public static function get(string $key, mixed $default = null): mixed
     {
-        $setting = static::where('key', $key)->first();
+        $settings = static::allValues();
 
-        return $setting ? $setting->value : $default;
+        return array_key_exists($key, $settings) ? $settings[$key] : $default;
     }
 
     /**
@@ -33,6 +59,20 @@ class EscalatedSettings extends Model
     public static function set(string $key, mixed $value): void
     {
         static::updateOrCreate(['key' => $key], ['value' => (string) $value]);
+        static::flushCache();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected static function allValues(): array
+    {
+        $query = static::query();
+        $scope = $query->getConnection()->getName().'|'.(app(TenantContext::class)->current() ?? '');
+
+        return static::$memo[$scope] ??= $query->get(['key', 'value'])
+            ->mapWithKeys(fn (self $setting) => [$setting->key => $setting->value])
+            ->all();
     }
 
     /**
