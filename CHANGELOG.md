@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.9.2] - 2026-10-14
+
+### Performance
+- Read every setting with one query per request instead of one query per key. The shared Inertia props alone read five settings on every page. Settings are memoized per connection and tenant, flushed on writes and at the start of each request, queued job and Octane operation.
+
 ## [1.9.1] - 2026-10-13
 
 ### Fixed
