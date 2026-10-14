@@ -660,6 +660,7 @@ class EscalatedServiceProvider extends ServiceProvider
         Event::listen(Events\TicketCreated::class, Listeners\SendNewTicketNotifications::class);
         Event::listen(Events\TicketCreated::class, Listeners\AutoAssignTicket::class);
         Event::listen(Events\TicketCreated::class, Listeners\AttachSlaPolicy::class);
+        Event::listen(Events\DepartmentChanged::class, Listeners\ReselectSlaPolicy::class);
 
         Event::listen(Events\ReplyCreated::class, Listeners\SendReplyNotifications::class);
         Event::listen(Events\ReplyCreated::class, Listeners\RecordFirstResponse::class);
