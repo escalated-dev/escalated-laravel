@@ -12,7 +12,7 @@ class TicketUnassigned
 
     public function __construct(
         public Ticket $ticket,
-        public ?int $previousAgentId = null,
+        public int|string|null $previousAgentId = null,
         public mixed $causer = null,
     ) {}
 }
