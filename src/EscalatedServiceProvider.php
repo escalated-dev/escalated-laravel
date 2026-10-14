@@ -55,6 +55,7 @@ use Escalated\Laravel\Tenancy\UnconfiguredTenantResolver;
 use Escalated\Laravel\UI\InertiaUiRenderer;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Foundation\Http\Events\RequestHandled;
 use Illuminate\Queue\BackgroundQueue;
 use Illuminate\Queue\DeferredQueue;
 use Illuminate\Queue\Events\JobAttempted;
@@ -146,9 +147,28 @@ class EscalatedServiceProvider extends ServiceProvider
         );
     }
 
+    /**
+     * Settings are read once and kept (EscalatedSettings::get). Start each
+     * request, queued job and Octane operation from the database, so a
+     * long-running process never keeps a value another one has changed.
+     */
+    protected function flushSettingsBetweenOperations(): void
+    {
+        EscalatedSettings::flushCache();
+
+        $this->app['events']->listen([
+            RequestHandled::class,
+            JobProcessing::class,
+            'Laravel\Octane\Events\RequestReceived',
+            'Laravel\Octane\Events\TaskReceived',
+            'Laravel\Octane\Events\TickReceived',
+        ], fn () => EscalatedSettings::flushCache());
+    }
+
     public function boot(): void
     {
         GuestRateLimits::register();
+        $this->flushSettingsBetweenOperations();
         Queue::createPayloadUsing(static fn () => app(TenantQueueContext::class)->payload());
         $this->callAfterResolving(Kernel::class, function ($kernel) {
             $kernel->addToMiddlewarePriorityBefore(
