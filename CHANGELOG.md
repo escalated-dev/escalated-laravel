@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.9.3] - 2026-10-14
+
+### Fixed
+- Changing a ticket's department no longer throws a `TypeError`. `Ticket::changeDepartment()` dispatched `DepartmentChanged` with the `Department` model where the event takes the department id, so the agent and admin ticket screens, the API macro endpoint, bulk and macro actions, and escalation rules' `change_department` action all failed after the column had been written. The event's signature is unchanged.
+- `TicketUnassigned` accepts a string (UUID/ULID) previous agent id, matching `TicketAssigned`. Unassigning a ticket on a host with string user keys threw a `TypeError`. `Ticket::assign()` reports the assignee's model key rather than reading `$user->id`.
+
 ## [1.9.2] - 2026-10-14
 
 ### Performance
