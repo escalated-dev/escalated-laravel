@@ -52,7 +52,7 @@ class EscalationService
                 'department_id' => $query->where('department_id', $condition['value']),
                 'ticket_type' => $query->where('ticket_type', $condition['value']),
                 'account' => TicketAccounts::constrain($query, $condition['value'] ?? null),
-                'account_type', 'account_id' => $query->where($condition['field'], $condition['value']),
+                'account_type', 'account_id' => TicketAccounts::whereIdentity($query, $condition['field'], $condition['value']),
                 default => null,
             };
         }

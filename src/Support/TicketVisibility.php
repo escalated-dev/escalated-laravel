@@ -41,8 +41,7 @@ final class TicketVisibility
             if (! $account) {
                 $query->whereRaw('1 = 0');
             } else {
-                $query->where($query->qualifyColumn('account_type'), $account->getMorphClass())
-                    ->where($query->qualifyColumn('account_id'), (string) $account->getKey());
+                TicketAccounts::constrain($query, ['type' => $account->getMorphClass(), 'id' => (string) $account->getKey()]);
             }
         }
     }

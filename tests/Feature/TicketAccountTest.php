@@ -3,12 +3,17 @@
 use Escalated\Laravel\Contracts\TicketAccountResolver;
 use Escalated\Laravel\Events\TicketCreated;
 use Escalated\Laravel\Models\ApiToken;
+use Escalated\Laravel\Models\Automation;
 use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\EscalatedSettings;
+use Escalated\Laravel\Models\EscalationRule;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Policies\TicketPolicy;
 use Escalated\Laravel\Services\AgentTicketCreator;
+use Escalated\Laravel\Services\AutomationRunner;
+use Escalated\Laravel\Services\EscalationService;
 use Escalated\Laravel\Services\ReportingService;
+use Escalated\Laravel\Support\TicketAccounts;
 use Escalated\Laravel\Tests\Fixtures\TestUser;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -198,3 +203,28 @@ it('does not automatically assign tickets to agents who cannot access their acco
     $ticket = Ticket::factory()->create(['department_id' => $department->id, 'account_type' => TestUser::class, 'account_id' => $this->otherAccount->id]);
     expect($ticket->fresh()->assigned_to)->toBeNull();
 });
+
+it('compares account identities exactly in scopes filters and routing', function (string $field, string $suffix) {
+    $identity = ['account_type' => $this->account->getMorphClass(), 'account_id' => (string) $this->account->id];
+    $owned = Ticket::factory()->create($identity);
+    $different = $identity;
+    $different[$field] .= $suffix;
+    Ticket::factory()->create($different);
+    expect(Ticket::forAccount($this->account)->pluck('id')->all())->toBe([$owned->id]);
+    $condition = ['type' => $identity['account_type'], 'id' => $identity['account_id']];
+    expect(TicketAccounts::constrain(Ticket::query(), $condition)->pluck('id')->all())->toBe([$owned->id]);
+
+    foreach ([EscalationService::class, AutomationRunner::class] as $service) {
+        $ruleClass = $service === EscalationService::class
+            ? EscalationRule::class : Automation::class;
+        foreach ([['field' => 'account', 'value' => $condition], ['field' => $field, 'value' => $identity[$field]]] as $rule) {
+            $model = new $ruleClass(['conditions' => [$rule]]);
+            $method = new ReflectionMethod($service, 'findMatchingTickets');
+            $method->setAccessible(true);
+            expect($method->invoke(app($service), $model)->pluck('id')->all())->toBe([$owned->id]);
+        }
+    }
+    config(['escalated.accounts.scope_agents' => true]);
+    $this->actingAs($this->agent);
+    expect(Ticket::pluck('id')->all())->toBe([$owned->id]);
+})->with(['account_type', 'account_id'])->with([' ', '  ']);

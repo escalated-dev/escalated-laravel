@@ -174,8 +174,7 @@ class Ticket extends Model
 
     public function scopeForAccount($query, Model $account)
     {
-        return $query->where('account_type', $account->getMorphClass())
-            ->where('account_id', (string) $account->getKey());
+        return TicketAccounts::constrain($query, ['type' => $account->getMorphClass(), 'id' => (string) $account->getKey()]);
     }
 
     public function contact(): BelongsTo

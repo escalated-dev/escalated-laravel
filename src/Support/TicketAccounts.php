@@ -34,9 +34,29 @@ final class TicketAccounts
     {
         $identity = self::identity($value);
 
-        return $identity
-            ? $query->where('account_type', $identity['type'])->where('account_id', $identity['id'])
-            : $query->whereRaw('1 = 0');
+        if (! $identity) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        self::whereIdentity($query, 'account_type', $identity['type']);
+
+        return self::whereIdentity($query, 'account_id', $identity['id']);
+    }
+
+    /** Preserve opaque identities even on MySQL PAD SPACE collations. */
+    public static function whereIdentity(Builder $query, string $field, mixed $value): Builder
+    {
+        if (! in_array($field, ['account_type', 'account_id'], true)) {
+            throw new \InvalidArgumentException('Unknown account identity field.');
+        }
+        $column = $query->qualifyColumn($field);
+        $query->where($column, $value);
+        if ($value !== null && in_array($query->getModel()->getConnection()->getDriverName(), ['mysql', 'mariadb'], true)) {
+            $wrapped = $query->getQuery()->getGrammar()->wrap($column);
+            $query->whereRaw("CAST({$wrapped} AS BINARY) = CAST(? AS BINARY)", [(string) $value]);
+        }
+
+        return $query;
     }
 
     public static function resolve(?Model $source): ?Model

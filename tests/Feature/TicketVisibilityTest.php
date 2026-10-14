@@ -73,6 +73,21 @@ it('scopes bearer token API lists search dashboard and mutations', function () {
     $this->postJson($url.'/assign', ['agent_id' => $this->agent->id], $headers)->assertNotFound();
 });
 
+it('keeps staff department restrictions on customer mobile tokens', function () {
+    foreach ([$this->visible, $this->hidden] as $ticket) {
+        $ticket->updateQuietly(['requester_type' => $this->agent->getMorphClass(), 'requester_id' => $this->agent->id]);
+    }
+    $headers = ['Authorization' => 'Bearer '.ApiToken::createToken($this->agent, 'Mobile visibility', ['customer'])['plainTextToken']];
+    $this->getJson('/support/api/v1/mobile/tickets', $headers)->assertOk()
+        ->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.id', $this->visible->id);
+    $url = '/support/api/v1/mobile/tickets/'.$this->hidden->reference;
+    $this->getJson($url, $headers)->assertNotFound();
+    $this->postJson($url.'/replies', ['body' => 'Hidden'], $headers)->assertNotFound();
+    $this->postJson($url.'/close', [], $headers)->assertNotFound();
+    $this->postJson($url.'/reopen', [], $headers)->assertNotFound();
+    $this->postJson($url.'/rate', ['rating' => 5], $headers)->assertNotFound();
+});
+
 it('does not mutate hidden tickets in a mixed bulk request', function () {
     $this->actingAs($this->agent)->post(route('escalated.agent.tickets.bulk'), [
         'ticket_ids' => [$this->visible->id, $this->hidden->id], 'action' => 'priority', 'value' => 'critical',
