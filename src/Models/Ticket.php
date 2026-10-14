@@ -618,7 +618,7 @@ class Ticket extends Model
             'new_department_id' => $newDepartment->id,
         ]);
 
-        Events\DepartmentChanged::dispatch($this, $oldDepartmentId, $newDepartment, $causer);
+        Events\DepartmentChanged::dispatch($this, $oldDepartmentId, $newDepartment->id, $causer);
 
         return $this->fresh();
     }
@@ -661,7 +661,7 @@ class Ticket extends Model
 
         $this->logActivity(ActivityType::Assigned, $causer, ['agent_id' => $user->getKey()]);
 
-        Events\TicketAssigned::dispatch($this, $user->id, $causer);
+        Events\TicketAssigned::dispatch($this, $user->getKey(), $causer);
 
         return $this->fresh();
     }
