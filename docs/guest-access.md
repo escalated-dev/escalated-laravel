@@ -27,9 +27,11 @@ Configure working outbound Laravel mail and a shared cache with atomic locks
 across those workers. The key protects stored email addresses, code digests and
 authenticated guest grants. Configure HTTPS and trusted proxies normally. Web
 and widget POST requests retain Laravel CSRF protection; mobile endpoints use
-their existing API middleware. Cross-origin widget installation still requires a
-host CORS/CSRF design; this feature does not release the separate web-widget
-plugin or provide a blanket CORS exception.
+their existing API middleware. Widget requests from sites listed in
+`escalated.widget.allowed_origins` or the `widget_allowed_origins` setting get
+CORS headers and skip CSRF while running as guests; see
+[embedding the widget](embedding-the-widget.md). There is no blanket CORS
+exception, and this does not release the separate web-widget plugin.
 
 `escalated.guest_access.ttl_minutes`
 defaults to 1,440 minutes (24 hours), clamped to 5 minutes through 7 days.

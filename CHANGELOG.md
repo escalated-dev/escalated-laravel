@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- **Embed the widget, ticket form and live chat on other sites.** List the embedding sites in `escalated.widget.allowed_origins` (`ESCALATED_WIDGET_ALLOWED_ORIGINS`) or the new **Sites that can embed the widget** admin setting (`widget_allowed_origins`); `https://*.example.com` subdomain wildcards are supported. Widget requests from a listed origin get CORS headers (including on 422 and 429 answers), skip the CSRF check and always run as a guest. Requests from any other origin are handled exactly as before. Empty by default, so nothing changes until a site is listed. See `docs/embedding-the-widget.md`.
+- `GET {prefix}/widget/embed.js` serves the standalone widget bundle built from `@escalated-dev/escalated`, so other sites need one script tag. `escalated.widget.serve_script` turns the route off.
+- Widget tickets and live chats keep host parameters sent as `metadata` (order number, plan, page URL, ...), sanitised to a flat map of short scalar values, plus a server-recorded `embedded_on` origin. `/config` advertises `accepts_metadata: true`.
+
+### Fixed
+- The admin settings page now saves the Support Widget settings it already showed (`widget_enabled`, colour, position, greeting, departments). The controller dropped them, so the widget could not be switched on from the UI.
+- Live chat `metadata` from the widget was stored unbounded; it is now sanitised like ticket metadata.
+
 ## [1.9.3] - 2026-10-14
 
 ### Fixed

@@ -4,12 +4,12 @@ use Escalated\Laravel\Enums\ChatStatus;
 use Escalated\Laravel\Events\ChatAssigned;
 use Escalated\Laravel\Events\ChatStarted;
 use Escalated\Laravel\Http\Controllers\WidgetScriptController;
+use Escalated\Laravel\Http\Middleware\WidgetCsrf;
 use Escalated\Laravel\Models\AgentProfile;
 use Escalated\Laravel\Models\Article;
 use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Models\Ticket;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
-use Escalated\Laravel\Http\Middleware\WidgetCsrf;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 
@@ -137,6 +137,10 @@ it('adds CORS headers to rate-limit answers for allowed sites', function () {
 
     $limited->assertTooManyRequests()->assertHeader('Access-Control-Allow-Origin', WIDGET_EMBED_SHOP);
     expect($limited->headers->get('Access-Control-Expose-Headers'))->toContain('Retry-After');
+});
+
+it('tells the widget it accepts host parameters', function () {
+    $this->getJson(route('escalated.widget.config'))->assertOk()->assertJson(['accepts_metadata' => true]);
 });
 
 it('stores host parameters sent with a widget ticket', function () {

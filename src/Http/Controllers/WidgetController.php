@@ -42,6 +42,8 @@ class WidgetController extends Controller
             'kb_enabled' => $this->knowledgeBaseAvailable($request),
             'guest_tickets_enabled' => EscalatedSettings::guestTicketsEnabled(),
             'guest_verification_required' => true,
+            // Tickets and chats keep host parameters sent as `metadata`.
+            'accepts_metadata' => true,
         ]);
     }
 

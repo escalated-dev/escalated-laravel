@@ -15,3 +15,6 @@ Dockerfile* text eol=lf
 *.jpeg binary
 *.gif binary
 *.ico binary
+
+# Built by @escalated-dev/escalated (npm run build:widget); served at {prefix}/widget/embed.js
+resources/dist/widget/*.js linguist-generated=true
