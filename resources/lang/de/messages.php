@@ -75,6 +75,7 @@ return [
 
     'settings' => [
         'updated' => 'Einstellungen aktualisiert.',
+        'invalid_widget_origin' => '„:origin“ ist kein Website-Ursprung. Verwenden Sie https://example.com oder https://*.example.com.',
     ],
 
     'plugin' => [

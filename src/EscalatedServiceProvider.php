@@ -64,6 +64,7 @@ use Illuminate\Queue\Events\Looping;
 use Illuminate\Queue\Queue;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Support\Arr;
+use Escalated\Laravel\Http\Middleware\WidgetCors;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
@@ -655,6 +656,7 @@ class EscalatedServiceProvider extends ServiceProvider
 
     protected function registerEvents(): void
     {
+        Event::listen(RequestHandled::class, [WidgetCors::class, 'decorateEarlyResponse']);
         Event::listen(Events\TicketCreated::class, Listeners\SendNewTicketNotifications::class);
         Event::listen(Events\TicketCreated::class, Listeners\AutoAssignTicket::class);
         Event::listen(Events\TicketCreated::class, Listeners\AttachSlaPolicy::class);

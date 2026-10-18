@@ -497,6 +497,34 @@ return [
         'abandoned_timeout_minutes' => 10,
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Embedding the Widget on Other Sites
+    |--------------------------------------------------------------------------
+    |
+    | The support widget, ticket form and live chat can be embedded on a
+    | site other than the one Escalated runs on. List each embedding site's
+    | origin (scheme://host[:port], no path). A leading "*." matches any
+    | subdomain, e.g. "https://*.example.com"; a bare "*" is not accepted.
+    | Admins can add more origins in Admin > Settings > Support Widget.
+    |
+    | Requests from a listed origin get CORS headers and skip the CSRF
+    | check. They always run as a guest: the visitor's Escalated session,
+    | if any, is ignored. Requests from any other origin are handled
+    | exactly as before. Empty (the default) keeps the widget same-origin.
+    |
+    */
+    'widget' => [
+        'allowed_origins' => array_values(array_filter(array_map(
+            'trim',
+            explode(',', (string) env('ESCALATED_WIDGET_ALLOWED_ORIGINS', ''))
+        ))),
+        // How long browsers may cache a preflight answer, in seconds.
+        'preflight_max_age' => 600,
+        // Serve the standalone widget bundle at {prefix}/widget/embed.js.
+        'serve_script' => true,
+    ],
+
     'inbound_email' => [
         'enabled' => env('ESCALATED_INBOUND_EMAIL', false),
         'adapter' => env('ESCALATED_INBOUND_ADAPTER', 'mailgun'),

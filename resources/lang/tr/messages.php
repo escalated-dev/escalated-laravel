@@ -75,6 +75,7 @@ return [
 
     'settings' => [
         'updated' => 'Ayarlar güncellendi.',
+        'invalid_widget_origin' => '":origin" bir site kaynağı değil. https://example.com veya https://*.example.com kullanın.',
     ],
 
     'plugin' => [

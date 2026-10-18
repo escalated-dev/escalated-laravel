@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Models\EscalatedSettings;
+use Escalated\Laravel\Support\WidgetOrigins;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 
@@ -46,6 +47,18 @@ class SettingsController extends Controller
             'knowledge_base_enabled' => ['sometimes', 'boolean'],
             'knowledge_base_public' => ['sometimes', 'boolean'],
             'knowledge_base_feedback_enabled' => ['sometimes', 'boolean'],
+            'widget_enabled' => ['sometimes', 'boolean'],
+            'widget_color' => ['sometimes', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'widget_position' => ['sometimes', 'string', 'in:bottom-right,bottom-left'],
+            'widget_greeting' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'widget_departments' => ['sometimes', 'nullable', 'string', 'max:1000', 'regex:/^[0-9,\s]*$/'],
+            'widget_allowed_origins' => ['sometimes', 'nullable', 'string', 'max:5000', function (string $attribute, mixed $value, \Closure $fail) {
+                foreach (preg_split('/[\s,]+/', (string) $value, -1, PREG_SPLIT_NO_EMPTY) ?: [] as $entry) {
+                    if (WidgetOrigins::normalizePattern($entry) === null) {
+                        $fail(__('escalated::messages.settings.invalid_widget_origin', ['origin' => $entry]));
+                    }
+                }
+            }],
         ]);
 
         $sensitiveKeys = ['mailgun_signing_key', 'postmark_inbound_token', 'imap_password'];
@@ -88,6 +101,12 @@ class SettingsController extends Controller
             'knowledge_base_enabled' => EscalatedSettings::getBool('knowledge_base_enabled', true),
             'knowledge_base_public' => EscalatedSettings::getBool('knowledge_base_public', true),
             'knowledge_base_feedback_enabled' => EscalatedSettings::getBool('knowledge_base_feedback_enabled', true),
+            'widget_enabled' => EscalatedSettings::getBool('widget_enabled', false),
+            'widget_color' => EscalatedSettings::get('widget_color', '#4F46E5'),
+            'widget_position' => EscalatedSettings::get('widget_position', 'bottom-right'),
+            'widget_greeting' => EscalatedSettings::get('widget_greeting', 'Hi there! How can we help?'),
+            'widget_departments' => EscalatedSettings::get('widget_departments', ''),
+            'widget_allowed_origins' => EscalatedSettings::get('widget_allowed_origins', ''),
         ];
     }
 

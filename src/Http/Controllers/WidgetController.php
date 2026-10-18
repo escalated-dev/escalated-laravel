@@ -8,6 +8,7 @@ use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\GuestAccess;
 use Escalated\Laravel\Services\GuestTicketService;
+use Escalated\Laravel\Support\WidgetMetadata;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -137,7 +138,9 @@ class WidgetController extends Controller
             'verification_code' => ['required', 'string', 'max:16'],
             'description' => ['required', 'string', 'max:5000'],
             'department_id' => ['nullable', 'integer', 'exists:'.Department::class.',id'],
+            ...WidgetMetadata::rules(),
         ]);
+        $validated['metadata'] = WidgetMetadata::fromRequest($request);
 
         $result = app(GuestTicketService::class)->create($validated, 'widget');
         $ticket = $result['ticket'];
