@@ -75,6 +75,7 @@ return [
 
     'settings' => [
         'updated' => '설정이 업데이트되었습니다.',
+        'invalid_widget_origin' => '":origin"은(는) 사이트 출처가 아닙니다. https://example.com 또는 https://*.example.com 형식을 사용하세요.',
     ],
 
     'plugin' => [

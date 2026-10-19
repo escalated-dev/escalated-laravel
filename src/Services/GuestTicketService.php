@@ -31,6 +31,7 @@ class GuestTicketService
                         'description' => $data['description'], 'status' => TicketStatus::Open,
                         'priority' => TicketPriority::from($data['priority'] ?? config('escalated.default_priority', 'medium')),
                         'channel' => $channel, 'department_id' => $data['department_id'] ?? null,
+                        'metadata' => $data['metadata'] ?? null,
                     ]);
                     $ticket->deferCreatedEvent = true;
                     $this->applyIdentityPolicy($ticket);

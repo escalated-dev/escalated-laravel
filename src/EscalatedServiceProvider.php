@@ -34,6 +34,7 @@ use Escalated\Laravel\Http\Middleware\CheckPermission;
 use Escalated\Laravel\Http\Middleware\EnsureIsAdmin;
 use Escalated\Laravel\Http\Middleware\ResolveTenant;
 use Escalated\Laravel\Http\Middleware\ResolveTicketByReference;
+use Escalated\Laravel\Http\Middleware\WidgetCors;
 use Escalated\Laravel\Models\AgentProfile;
 use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Services\ImportService;
@@ -655,6 +656,7 @@ class EscalatedServiceProvider extends ServiceProvider
 
     protected function registerEvents(): void
     {
+        Event::listen(RequestHandled::class, [WidgetCors::class, 'decorateEarlyResponse']);
         Event::listen(Events\TicketCreated::class, Listeners\SendNewTicketNotifications::class);
         Event::listen(Events\TicketCreated::class, Listeners\AutoAssignTicket::class);
         Event::listen(Events\TicketCreated::class, Listeners\AttachSlaPolicy::class);

@@ -75,6 +75,7 @@ return [
 
     'settings' => [
         'updated' => '设置已更新。',
+        'invalid_widget_origin' => '“:origin”不是站点来源。请使用 https://example.com 或 https://*.example.com。',
     ],
 
     'plugin' => [

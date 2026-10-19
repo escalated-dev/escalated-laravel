@@ -9,6 +9,7 @@ use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Services\ChatAvailabilityService;
 use Escalated\Laravel\Services\ChatSessionService;
 use Escalated\Laravel\Services\GuestAccess;
+use Escalated\Laravel\Support\WidgetMetadata;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -52,8 +53,9 @@ class WidgetChatController extends Controller
             'subject' => ['nullable', 'string', 'max:255'],
             'message' => ['nullable', 'string', 'max:5000'],
             'department_id' => ['nullable', 'integer', 'exists:'.Department::class.',id'],
-            'metadata' => ['nullable', 'array'],
+            ...WidgetMetadata::rules(),
         ]);
+        $validated['metadata'] = WidgetMetadata::fromRequest($request);
 
         $result = $this->chatSessionService->startChat($validated);
 

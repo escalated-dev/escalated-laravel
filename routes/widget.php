@@ -3,12 +3,29 @@
 use Escalated\Laravel\Http\Controllers\Guest\VerificationController;
 use Escalated\Laravel\Http\Controllers\WidgetChatController;
 use Escalated\Laravel\Http\Controllers\WidgetController;
+use Escalated\Laravel\Http\Controllers\WidgetScriptController;
 use Escalated\Laravel\Http\Middleware\GuestPrivacyHeaders;
+use Escalated\Laravel\Http\Middleware\WidgetCors;
+use Escalated\Laravel\Http\Middleware\WidgetCsrf;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['web', GuestPrivacyHeaders::class, 'throttle:escalated-guest-requests'])
-    ->prefix(config('escalated.routes.prefix', 'support').'/widget')
+$widgetPrefix = config('escalated.routes.prefix', 'support').'/widget';
+
+// The standalone widget bundle, loaded with a <script> tag on any site.
+if (config('escalated.widget.serve_script', true)) {
+    Route::get($widgetPrefix.'/embed.js', WidgetScriptController::class)->name('escalated.widget.script');
+}
+
+// WidgetCors runs first so CORS headers reach every answer, including 419,
+// 422 and 429. WidgetCsrf replaces the host's CSRF middleware: requests
+// from allowed embedding sites skip it, every other request still runs it.
+Route::middleware([WidgetCors::class, 'web', WidgetCsrf::class, GuestPrivacyHeaders::class, 'throttle:escalated-guest-requests'])
+    ->withoutMiddleware(WidgetCsrf::CSRF_MIDDLEWARE)
+    ->prefix($widgetPrefix)
     ->group(function () {
+        // Preflight requests are answered by WidgetCors; this route only
+        // makes sure OPTIONS reaches it instead of the router's default.
+        Route::options('/{path}', fn () => response()->noContent())->where('path', '.*')->name('escalated.widget.preflight');
         Route::post('/verification', [VerificationController::class, 'store'])->middleware('throttle:escalated-guest-submissions')->name('escalated.widget.verification');
         Route::post('/lookup', [VerificationController::class, 'lookup'])->middleware('throttle:escalated-guest-replies')->name('escalated.widget.lookup');
         Route::get('/config', [WidgetController::class, 'config'])->name('escalated.widget.config');
