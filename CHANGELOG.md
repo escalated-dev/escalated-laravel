@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.9.4] - 2026-10-19
+
 ### Added
 - **Embed the widget, ticket form and live chat on other sites.** List the embedding sites in `escalated.widget.allowed_origins` (`ESCALATED_WIDGET_ALLOWED_ORIGINS`) or the new **Sites that can embed the widget** admin setting (`widget_allowed_origins`); `https://*.example.com` subdomain wildcards are supported. Widget requests from a listed origin get CORS headers (including on 422 and 429 answers), skip the CSRF check and always run as a guest. Requests from any other origin are handled exactly as before. Empty by default, so nothing changes until a site is listed. See `docs/embedding-the-widget.md`.
 - `GET {prefix}/widget/embed.js` serves the standalone widget bundle built from `@escalated-dev/escalated`, so other sites need one script tag. `escalated.widget.serve_script` turns the route off.
