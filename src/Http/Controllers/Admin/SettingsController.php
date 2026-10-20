@@ -18,12 +18,19 @@ class SettingsController extends Controller
     {
         return $this->renderer->render('Escalated/Admin/Settings', [
             'settings' => $this->getSettings(),
+            // Exactly the keys update() saves. The shared Settings page hides
+            // the controls this host does not store (live chat and widget
+            // appearance live elsewhere here) instead of discarding them.
+            'supported_settings' => array_keys($this->rules()),
         ]);
     }
 
-    public function update(Request $request)
+    /**
+     * The settings this page saves.
+     */
+    protected function rules(): array
     {
-        $validated = $request->validate([
+        return [
             'guest_tickets_enabled' => ['required', 'boolean'],
             'allow_customer_close' => ['required', 'boolean'],
             'auto_close_resolved_after_days' => ['required', 'integer', 'min:0', 'max:365'],
@@ -59,7 +66,12 @@ class SettingsController extends Controller
                     }
                 }
             }],
-        ]);
+        ];
+    }
+
+    public function update(Request $request)
+    {
+        $validated = $request->validate($this->rules());
 
         $sensitiveKeys = ['mailgun_signing_key', 'postmark_inbound_token', 'imap_password'];
 

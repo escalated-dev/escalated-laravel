@@ -21,6 +21,9 @@ class StoreEscalationRuleRequest extends FormRequest
             'actions' => ['required', 'array'],
             'order' => ['integer'],
             'is_active' => ['boolean'],
+            // Null fires once per ticket; a number lets the rule fire again
+            // that many hours later while the ticket still matches.
+            'repeat_after_hours' => ['nullable', 'integer', 'min:1', 'max:8760'],
         ];
     }
 }

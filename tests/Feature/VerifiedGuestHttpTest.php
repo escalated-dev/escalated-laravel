@@ -91,7 +91,8 @@ it('requires fresh proof for chat and protects polling and replies with an expir
     Reply::factory()->create(['ticket_id' => $ticket->id, 'body' => 'Public message', 'is_internal_note' => false, 'author_type' => null, 'author_id' => null]);
     Reply::factory()->create(['ticket_id' => $ticket->id, 'body' => 'Private note', 'is_internal_note' => true, 'author_type' => null, 'author_id' => null]);
     $path = '/support/widget/chat/'.$created['session_id'];
-    $this->getJson($path.'/messages')->assertOk()->assertJsonCount(1, 'messages')->assertJsonPath('messages.0.body', 'Public message');
+    $this->getJson($path.'/messages')->assertOk()->assertJsonCount(2, 'messages')
+        ->assertJsonPath('messages.0.body', 'Hello')->assertJsonPath('messages.1.body', 'Public message');
     $this->postJson($path.'/messages', ['body' => 'Customer reply'])->assertOk();
     $this->getJson('/support/api/v1/mobile/guest/tickets/'.$created['session_id'])->assertNotFound();
     $session = ChatSession::where('ticket_id', $ticket->id)->first();
