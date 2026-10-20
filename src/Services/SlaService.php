@@ -3,6 +3,8 @@
 namespace Escalated\Laravel\Services;
 
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
+use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Events\SlaBreached;
 use Escalated\Laravel\Events\SlaWarning;
 use Escalated\Laravel\Models\SlaPolicy;
@@ -11,6 +13,22 @@ use Escalated\Laravel\Models\Ticket;
 class SlaService
 {
     public function attachDefaultPolicy(Ticket $ticket): void
+    {
+        $policy = $this->selectPolicy($ticket);
+
+        if (! $policy) {
+            return;
+        }
+
+        $this->attachPolicy($ticket, $policy);
+    }
+
+    /**
+     * The policy a ticket would get at creation: the most specific active
+     * targeted match when escalated.sla.targeted is on, otherwise the
+     * untargeted default.
+     */
+    public function selectPolicy(Ticket $ticket): ?SlaPolicy
     {
         $query = SlaPolicy::active();
         if (config('escalated.sla.targeted', false)) {
@@ -21,13 +39,51 @@ class SlaService
         } else {
             $query->default()->whereNull('department_id')->whereNull('ticket_type');
         }
-        $policy = $query->orderBy('id')->first();
 
-        if (! $policy) {
+        return $query->orderBy('id')->first();
+    }
+
+    /**
+     * Select the policy again after the ticket's routing changed, anchoring
+     * the new deadlines on $at (the time of the change) rather than on
+     * created_at, so a ticket moved late in its life is not born breached.
+     *
+     * - Resolved and closed tickets keep the SLA they finished under.
+     * - When the same policy is selected, the deadlines are left alone.
+     * - A deadline the new policy has no figure for is cleared; when no
+     *   policy matches, the policy and both deadlines are cleared.
+     * - A first response that already happened keeps its deadline, so the
+     *   record of whether it was met is not rewritten.
+     * - Recorded breaches are kept.
+     */
+    public function reselectPolicy(Ticket $ticket, ?CarbonInterface $at = null): void
+    {
+        if (in_array($ticket->status, [TicketStatus::Resolved, TicketStatus::Closed], true)) {
             return;
         }
 
-        $this->attachPolicy($ticket, $policy);
+        $policy = $this->selectPolicy($ticket);
+
+        if ($policy?->getKey() === $ticket->sla_policy_id) {
+            return;
+        }
+
+        $at = Carbon::instance($at ?? now());
+        $ticket->sla_policy_id = $policy?->getKey();
+
+        if ($ticket->first_response_at === null) {
+            $firstResponseHours = $policy?->getFirstResponseHoursFor($ticket->priority);
+            $ticket->first_response_due_at = $firstResponseHours
+                ? $this->calculateDueDate($at, $firstResponseHours, $policy->business_hours_only)
+                : null;
+        }
+
+        $resolutionHours = $policy?->getResolutionHoursFor($ticket->priority);
+        $ticket->resolution_due_at = $resolutionHours
+            ? $this->calculateDueDate($at, $resolutionHours, $policy->business_hours_only)
+            : null;
+
+        $ticket->save();
     }
 
     public function attachPolicy(Ticket $ticket, SlaPolicy $policy): void
