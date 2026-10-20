@@ -3,8 +3,10 @@
 namespace Escalated\Laravel\Services;
 
 use Escalated\Laravel\Models\Automation;
+use Escalated\Laravel\Models\RuleExecution;
 use Escalated\Laravel\Models\Tag;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Support\ImportContext;
 use Escalated\Laravel\Support\TicketAccounts;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -12,20 +14,55 @@ use Illuminate\Support\Facades\Log;
 
 class AutomationRunner
 {
+    public function __construct(
+        protected SystemTicketActions $actions,
+        protected RuleFireLog $fireLog,
+    ) {}
+
     /**
      * Evaluate all active automations against open tickets.
+     *
+     * An automation acts on a ticket once; it acts again only after the ticket
+     * has stopped matching, or after the automation's `repeat_after_hours`.
      */
     public function run(): int
     {
+        if (ImportContext::isImporting()) {
+            return 0;
+        }
+
         $automations = Automation::active()->get();
         $affected = 0;
 
         foreach ($automations as $automation) {
-            $tickets = $this->findMatchingTickets($automation);
+            try {
+                $tickets = $this->fireLog->due(
+                    RuleExecution::AUTOMATION,
+                    $automation->getKey(),
+                    $automation->repeat_after_hours,
+                    $this->findMatchingTickets($automation),
+                );
+            } catch (\Throwable $e) {
+                Log::error('Escalated automation could not be evaluated', [
+                    'automation_id' => $automation->getKey(),
+                    'error' => $e->getMessage(),
+                ]);
+
+                continue;
+            }
 
             foreach ($tickets as $ticket) {
-                $this->executeActions($automation, $ticket);
-                $affected++;
+                try {
+                    $this->executeActions($automation, $ticket);
+                    $this->fireLog->record(RuleExecution::AUTOMATION, $automation->getKey(), $ticket);
+                    $affected++;
+                } catch (\Throwable $e) {
+                    Log::error('Escalated automation failed for a ticket', [
+                        'automation_id' => $automation->getKey(),
+                        'ticket_id' => $ticket->getKey(),
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             }
 
             $automation->update(['last_run_at' => now()]);
@@ -108,6 +145,8 @@ class AutomationRunner
      */
     protected function executeActions(Automation $automation, Ticket $ticket): void
     {
+        $context = ['automation_id' => $automation->id];
+
         foreach ($automation->actions ?? [] as $action) {
             $type = $action['type'] ?? '';
             $value = $action['value'] ?? null;
@@ -115,11 +154,11 @@ class AutomationRunner
             try {
                 switch ($type) {
                     case 'change_status':
-                        $ticket->update(['status' => $value]);
+                        $ticket = $this->actions->changeStatus($ticket, $value, $context) ?? $ticket;
                         break;
 
                     case 'assign':
-                        $ticket->update(['assigned_to' => $value]);
+                        $ticket = $this->actions->assign($ticket, $value, $context) ?? $ticket;
                         break;
 
                     case 'add_tag':
@@ -130,7 +169,7 @@ class AutomationRunner
                         break;
 
                     case 'change_priority':
-                        $ticket->update(['priority' => $value]);
+                        $ticket = $this->actions->changePriority($ticket, $value, $context) ?? $ticket;
                         break;
 
                     case 'add_note':

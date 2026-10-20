@@ -51,6 +51,14 @@ Auto-escalate unresponded tickets after 4 hours:
 }
 ```
 
+## How often a rule fires
+
+A rule acts on a ticket once. The sweep records each firing in the `escalated_rule_executions` table and skips tickets the rule has already acted on. When a ticket stops matching (for example it is answered, resolved, or moves out of the matched status), its record is removed, so the rule fires again if the ticket matches later.
+
+Set `repeat_after_hours` on a rule to let it fire again after that many hours while the ticket still matches. Leave it null (the default) to fire once. Automations follow the same rules and accept the same `repeat_after_hours` field.
+
+Each ticket is handled on its own. An action that cannot apply (escalating a ticket that is already escalated, a transition `escalated.transitions` does not allow, an unknown priority) is skipped and logged, and the sweep continues. A rule escalation dispatches `TicketEscalated` once, with `Escalation rule: <name>` as the reason.
+
 ## Scheduling
 
 Add to your `app/Console/Kernel.php`:
