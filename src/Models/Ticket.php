@@ -38,6 +38,15 @@ class Ticket extends Model
     /** Aggregate creators dispatch only after related records have committed. */
     public bool $deferCreatedEvent = false;
 
+    /** Depth of {@see withoutUpdatedEvent()} calls in progress. */
+    protected static int $quietUpdatedDepth = 0;
+
+    /** Reason handed to TicketEscalated by {@see withEscalationReason()}. */
+    protected static ?string $pendingEscalationReason = null;
+
+    /** Whether markEscalated() consumed the pending reason. */
+    protected static bool $escalationReasonConsumed = false;
+
     protected $guarded = ['id'];
 
     // Creation listeners run before database defaults are reloaded.
@@ -103,6 +112,52 @@ class Ticket extends Model
     public function getRouteKeyName(): string
     {
         return 'reference';
+    }
+
+    /**
+     * Run internal bookkeeping writes (SLA deadlines and the like) without
+     * dispatching TicketUpdated, which means "ticket details changed" to
+     * webhooks and ticket.updated workflows. Other model events still fire.
+     */
+    public static function withoutUpdatedEvent(callable $callback): mixed
+    {
+        static::$quietUpdatedDepth++;
+
+        try {
+            return $callback();
+        } finally {
+            static::$quietUpdatedDepth--;
+        }
+    }
+
+    protected function fireCustomModelEvent($event, $method)
+    {
+        if ($event === 'updated' && static::$quietUpdatedDepth > 0) {
+            return null;
+        }
+
+        return parent::fireCustomModelEvent($event, $method);
+    }
+
+    /**
+     * Escalate inside the callback with this reason on TicketEscalated.
+     * Returns whether TicketEscalated was dispatched locally (it is not when
+     * a remote driver performs the transition).
+     */
+    public static function withEscalationReason(?string $reason, callable $callback): bool
+    {
+        [$previousReason, $previousConsumed] = [static::$pendingEscalationReason, static::$escalationReasonConsumed];
+        static::$pendingEscalationReason = $reason;
+        static::$escalationReasonConsumed = false;
+
+        try {
+            $callback();
+
+            return static::$escalationReasonConsumed;
+        } finally {
+            static::$pendingEscalationReason = $previousReason;
+            static::$escalationReasonConsumed = $previousConsumed;
+        }
     }
 
     public function dispatchCreatedAfterCommit(): void
@@ -806,7 +861,12 @@ class Ticket extends Model
         // Moved logging to Listener of TicketStatusChanged event
 
         Events\TicketStatusChanged::dispatch($this, $oldStatus, $newStatus, $causer);
-        Events\TicketEscalated::dispatch($this, $causer);
+
+        // The reason is free text (an escalation rule name); the causer is
+        // recorded on the TicketStatusChanged event and the activity log.
+        $reason = static::$pendingEscalationReason;
+        static::$escalationReasonConsumed = true;
+        Events\TicketEscalated::dispatch($this, $reason);
 
         return $this->fresh();
     }

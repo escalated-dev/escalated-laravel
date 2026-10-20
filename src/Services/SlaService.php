@@ -49,7 +49,9 @@ class SlaService
             );
         }
 
-        $ticket->save();
+        // Deadline bookkeeping, not a change to the ticket's details: do not
+        // announce it as ticket.updated to webhooks and workflows.
+        Ticket::withoutUpdatedEvent(fn () => $ticket->save());
     }
 
     public function checkBreaches(): int

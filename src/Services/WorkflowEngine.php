@@ -24,15 +24,63 @@ use Illuminate\Support\Str;
 class WorkflowEngine
 {
     /**
+     * How many workflow events may nest for one ticket. Actions run by a
+     * workflow raise events of their own (a status change raises
+     * ticket.status_changed, any write raises ticket.updated), and those may
+     * run further workflows, but only to this depth.
+     */
+    public const MAX_DEPTH = 3;
+
+    /**
+     * Events whose workflows are running, per ticket, innermost last.
+     *
+     * @var array<string, list<string>>
+     */
+    protected static array $running = [];
+
+    /**
      * Process all active workflows for a given event and ticket.
+     *
+     * Re-entrancy guard: while the workflows for an event are running on a
+     * ticket, the same event on the same ticket does not run them again (a
+     * ticket.updated workflow that writes the ticket would otherwise trigger
+     * itself without end), and nesting stops at MAX_DEPTH.
      */
     public function processEvent(string $event, Ticket $ticket, array $context = []): void
     {
-        $workflows = Workflow::active()->forEvent($event)->get();
+        $key = (string) $ticket->getKey();
+        $stack = static::$running[$key] ?? [];
 
-        foreach ($workflows as $workflow) {
-            $this->runWorkflow($workflow, $ticket, $event, $context);
+        if (in_array($event, $stack, true) || count($stack) >= static::MAX_DEPTH) {
+            Log::debug('Escalated workflow event skipped: already running for this ticket', [
+                'ticket_id' => $ticket->getKey(),
+                'event' => $event,
+                'running' => $stack,
+            ]);
+
+            return;
         }
+
+        static::$running[$key][] = $event;
+
+        try {
+            $workflows = Workflow::active()->forEvent($event)->get();
+
+            foreach ($workflows as $workflow) {
+                $this->runWorkflow($workflow, $ticket, $event, $context);
+            }
+        } finally {
+            array_pop(static::$running[$key]);
+
+            if (static::$running[$key] === []) {
+                unset(static::$running[$key]);
+            }
+        }
+    }
+
+    protected function systemActions(): SystemTicketActions
+    {
+        return app(SystemTicketActions::class);
     }
 
     /**
@@ -402,10 +450,10 @@ class WorkflowEngine
             }
 
             if ($agentId) {
-                $ticket->update(['assigned_to' => $agentId]);
+                $this->systemActions()->assign($ticket, $agentId, ['workflow' => true]);
             }
         } else {
-            $ticket->update(['assigned_to' => $value]);
+            $this->systemActions()->assign($ticket, $value, ['workflow' => true]);
         }
     }
 
@@ -457,20 +505,12 @@ class WorkflowEngine
 
     protected function actionChangeStatus(Ticket $ticket, mixed $value): void
     {
-        $status = TicketStatus::tryFrom($value);
-
-        if ($status) {
-            $ticket->update(['status' => $status]);
-        }
+        $this->systemActions()->changeStatus($ticket, $value, ['workflow' => true]);
     }
 
     protected function actionChangePriority(Ticket $ticket, mixed $value): void
     {
-        $priority = TicketPriority::tryFrom($value);
-
-        if ($priority) {
-            $ticket->update(['priority' => $priority]);
-        }
+        $this->systemActions()->changePriority($ticket, $value, ['workflow' => true]);
     }
 
     protected function actionAddTag(Ticket $ticket, mixed $value): void
@@ -494,11 +534,7 @@ class WorkflowEngine
     protected function actionMoveDepartment(Ticket $ticket, mixed $value): void
     {
         // The builder sends the id as a string, e.g. "4".
-        $departmentId = is_array($value) ? ($value['department_id'] ?? null) : $value;
-
-        if (is_numeric($departmentId) && (int) $departmentId > 0) {
-            $ticket->update(['department_id' => (int) $departmentId]);
-        }
+        $this->systemActions()->changeDepartment($ticket, $value, ['workflow' => true]);
     }
 
     protected function actionAddInternalNote(Ticket $ticket, mixed $value, Workflow $workflow): void
@@ -701,14 +737,16 @@ class WorkflowEngine
             $type = $action['type'] ?? null;
             $actionValue = $action['value'] ?? null;
 
+            $context = ['workflow' => true, 'macro_id' => $macro->getKey()];
+
             match ($type) {
-                'status' => $ticket->update(['status' => TicketStatus::tryFrom($actionValue) ?? $ticket->status]),
-                'priority' => $ticket->update(['priority' => TicketPriority::tryFrom($actionValue) ?? $ticket->priority]),
-                'assign' => $ticket->update(['assigned_to' => $actionValue]),
+                'status' => $this->systemActions()->changeStatus($ticket, $actionValue, $context),
+                'priority' => $this->systemActions()->changePriority($ticket, $actionValue, $context),
+                'assign' => $this->systemActions()->assign($ticket, $actionValue, $context),
                 'tags' => $ticket->tags()->syncWithoutDetaching(
                     Tag::whereIn('name', (array) $actionValue)->pluck('id')->toArray()
                 ),
-                'department' => $ticket->update(['department_id' => (int) $actionValue]),
+                'department' => $this->systemActions()->changeDepartment($ticket, $actionValue, $context),
                 default => null,
             };
 
@@ -718,10 +756,7 @@ class WorkflowEngine
 
     protected function actionCloseTicket(Ticket $ticket): void
     {
-        $ticket->update([
-            'status' => TicketStatus::Closed,
-            'closed_at' => now(),
-        ]);
+        $this->systemActions()->changeStatus($ticket, TicketStatus::Closed, ['workflow' => true, 'action' => 'close_ticket']);
 
         DelayedAction::where('ticket_id', $ticket->id)
             ->pending()
