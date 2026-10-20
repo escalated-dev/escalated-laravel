@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.9.6] - 2026-10-20
+
 ### Added
 - **Escalation rules and automations fire once per ticket.** A new `escalated_rule_executions` table (prefix and `escalated.connection` aware, tenant-scoped) records when a rule or automation acted on a ticket. The sweep skips a ticket the rule has already acted on, and re-arms the rule once the ticket stops matching. An optional `repeat_after_hours` column on `escalation_rules` and `automations` (null by default, meaning once) lets a rule fire again after that many hours while the ticket still matches. Run `php artisan migrate`.
 
