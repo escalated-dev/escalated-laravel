@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- With `escalated.sla.targeted` (and `escalated.sla.enabled`) on, a ticket that changes department now gets the SLA policy the new department would have assigned at creation. A new `ReselectSlaPolicy` listener on `DepartmentChanged` calls `SlaService::reselectPolicy()`, which anchors the new deadlines on the time of the change, clears a deadline the new policy does not set, keeps a recorded first response's deadline and recorded breaches, and leaves resolved and closed tickets alone. Previously the ticket kept the policy it was created under. Hosts with targeted SLAs off are unaffected. `SlaService::selectPolicy()` exposes the creation-time selection.
+
 ## [1.9.5] - 2026-10-19
 
 ### Changed

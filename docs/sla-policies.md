@@ -21,6 +21,7 @@ In the admin panel (`/support/admin/sla-policies`), create policies with:
 3. The `escalated:check-sla` command (run every minute) checks for breaches
 4. When a breach occurs, `SlaBreached` event is dispatched
 5. Warnings are dispatched when breach is approaching (configurable threshold)
+6. With `escalated.sla.targeted` on, a department change selects the policy again and re-anchors the deadlines on the time of the change (see [targeted SLAs](ticket-access-and-routing.md#targeted-slas))
 
 ## Business Hours
 
