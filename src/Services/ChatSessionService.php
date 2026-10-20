@@ -67,6 +67,23 @@ class ChatSessionService
             'metadata' => $data['metadata'] ?? null,
         ]);
 
+        // The opening message is also the first line of the transcript. The
+        // widget and the agent's chat read replies, so record it as the
+        // visitor's first chat reply. It is the ticket's description too, and
+        // TicketCreated already announces it, so no ReplyCreated is raised.
+        $message = trim((string) ($data['message'] ?? ''));
+        if ($message !== '') {
+            $opening = new Reply([
+                'ticket_id' => $ticket->id,
+                'body' => $data['message'],
+                'is_internal_note' => false,
+                'type' => 'reply',
+                'metadata' => ['chat_opening_message' => true],
+            ]);
+            $opening->deferCreatedEvent = true;
+            $opening->save();
+        }
+
         $ticket->dispatchCreatedAfterCommit();
         $tenant = app(TenantContext::class)->enabled() ? (string) $ticket->tenant_id : null;
         Escalated::db()->afterCommit(function () use ($session, $tenant) {

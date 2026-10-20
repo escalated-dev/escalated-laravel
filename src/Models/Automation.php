@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Models;
 
 use Escalated\Laravel\Concerns\UsesEscalatedConnection;
 use Escalated\Laravel\Escalated;
+use Escalated\Laravel\Services\RuleFireLog;
 use Illuminate\Database\Eloquent\Model;
 
 class Automation extends Model
@@ -25,7 +26,13 @@ class Automation extends Model
             'active' => 'boolean',
             'position' => 'integer',
             'last_run_at' => 'datetime',
+            'repeat_after_hours' => 'integer',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::deleted(fn (self $automation) => app(RuleFireLog::class)->forget(RuleExecution::AUTOMATION, $automation->getKey()));
     }
 
     public function scopeActive($query)

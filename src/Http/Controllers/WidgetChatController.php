@@ -27,7 +27,8 @@ class WidgetChatController extends Controller
     public function availability(Request $request): JsonResponse
     {
         if (! EscalatedSettings::getBool('chat_enabled', false)) {
-            return response()->json(['available' => false, 'reason' => 'Chat is disabled.']);
+            // The widget reads `message`; `reason` is kept for older clients.
+            return response()->json(['available' => false, 'message' => 'Chat is disabled.', 'reason' => 'Chat is disabled.']);
         }
 
         $departmentId = $request->input('department_id') ? (int) $request->input('department_id') : null;

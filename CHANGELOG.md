@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- **Escalation rules and automations fire once per ticket.** A new `escalated_rule_executions` table (prefix and `escalated.connection` aware, tenant-scoped) records when a rule or automation acted on a ticket. The sweep skips a ticket the rule has already acted on, and re-arms the rule once the ticket stops matching. An optional `repeat_after_hours` column on `escalation_rules` and `automations` (null by default, meaning once) lets a rule fire again after that many hours while the ticket still matches. Run `php artisan migrate`.
+
+### Changed
+- Workflow, automation and escalation-rule actions that change status, priority, assignee or department now go through the same domain methods as an agent (`changeStatus`, `changePriority`, `assign`, `changeDepartment`). Transitions are checked against `escalated.transitions`, `resolved_at`/`closed_at` are stamped (so `escalated:close-resolved` closes workflow-resolved tickets), activity is logged and the status/priority/assignment/department events, notifications and webhooks fire. A change to the current value is a no-op. A transition the config does not allow, an unknown value, or a missing user or department is logged and skipped; previously the column was written regardless.
+- `TicketUpdated` (`ticket.updated` webhooks and workflows) is no longer dispatched for the SLA deadline write when a policy is attached at ticket creation.
+
+### Fixed
+- One ticket that could not be escalated (already escalated, `waiting_on_customer`, an invalid priority value) aborted `escalated:evaluate-escalations` for every later rule and ticket. Each ticket and action is now isolated: failures are logged and the sweep continues; an already-escalated ticket is skipped.
+- Escalation rules and automations re-ran on every sweep, re-adding notes, re-assigning and re-dispatching events every few minutes (see Added).
+- A workflow on `ticket.updated` that wrote the ticket (e.g. `snooze_ticket`) re-triggered itself without end. `WorkflowEngine::processEvent()` now has a re-entrancy guard: the same event does not re-run workflows for the same ticket while they are running, and nesting stops at `WorkflowEngine::MAX_DEPTH` (3).
+- `TicketEscalated` was dispatched twice per rule escalation, and a manual escalation put the agent's serialized user record into the event's `reason` (broadcast payload and notification). It is now dispatched once; the reason is the rule name for rule escalations and null for manual ones.
+- Live chat: the visitor's opening message is now stored as the first chat reply, so it appears in the widget transcript and the agent's chat (it remains the ticket description; no extra `ReplyCreated` is dispatched).
+- `GET widget/chat/availability` returns `message` (the key the widget reads) alongside `reason` when chat is disabled.
+- Admin Settings passes `supported_settings` listing exactly the keys it saves, so the shared page no longer shows live-chat and widget-appearance controls that were silently discarded.
+
 ## [1.9.5] - 2026-10-19
 
 ### Changed

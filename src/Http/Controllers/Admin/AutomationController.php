@@ -35,6 +35,7 @@ class AutomationController extends Controller
             'conditions' => 'required|array|min:1',
             'actions' => 'required|array|min:1',
             'active' => 'boolean',
+            'repeat_after_hours' => 'nullable|integer|min:1|max:8760',
         ]);
 
         Automation::create([
@@ -43,6 +44,7 @@ class AutomationController extends Controller
             'actions' => $request->input('actions'),
             'active' => $request->boolean('active', true),
             'position' => Automation::max('position') + 1,
+            'repeat_after_hours' => $request->input('repeat_after_hours'),
         ]);
 
         return redirect()->route('escalated.admin.automations.index')
@@ -63,6 +65,7 @@ class AutomationController extends Controller
             'conditions' => 'required|array|min:1',
             'actions' => 'required|array|min:1',
             'active' => 'boolean',
+            'repeat_after_hours' => 'nullable|integer|min:1|max:8760',
         ]);
 
         $automation->update([
@@ -70,6 +73,8 @@ class AutomationController extends Controller
             'conditions' => $request->input('conditions'),
             'actions' => $request->input('actions'),
             'active' => $request->boolean('active', true),
+            // Only touched when sent, so an older form keeps the stored value.
+            ...($request->has('repeat_after_hours') ? ['repeat_after_hours' => $request->input('repeat_after_hours')] : []),
         ]);
 
         return redirect()->route('escalated.admin.automations.index')
