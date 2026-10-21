@@ -8,6 +8,7 @@ use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Models\Workflow;
 use Escalated\Laravel\Models\WorkflowLog;
 use Escalated\Laravel\Services\WorkflowEngine;
+use Escalated\Laravel\Support\EventVocabulary;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -64,7 +65,7 @@ class WorkflowController extends Controller
         $workflow = Workflow::create([
             'name' => $request->input('name'),
             'description' => $request->input('description'),
-            'trigger_event' => $request->input('trigger_event'),
+            'trigger_event' => EventVocabulary::canonical((string) $request->input('trigger_event')),
             'conditions' => $this->conditionsFrom($request),
             'actions' => $request->input('actions'),
             'is_active' => $request->boolean('is_active', true),
@@ -101,7 +102,7 @@ class WorkflowController extends Controller
         $workflow->update([
             'name' => $request->input('name'),
             'description' => $request->input('description'),
-            'trigger_event' => $request->input('trigger_event'),
+            'trigger_event' => EventVocabulary::canonical((string) $request->input('trigger_event')),
             'conditions' => $this->conditionsFrom($request),
             'actions' => $request->input('actions'),
             'is_active' => $request->boolean('is_active', true),
@@ -272,21 +273,32 @@ class WorkflowController extends Controller
     }
 
     /**
-     * The events Listeners\ProcessWorkflows fires. The builder offers exactly
-     * this list, so an event that is not fired must not appear here.
+     * The events Listeners\ProcessWorkflows fires, under the canonical names of
+     * ADR 2026-10-21-event-vocabulary. The builder offers exactly this list, so
+     * an event that is not fired must not appear here. A legacy name posted by
+     * an older client is accepted and stored canonically.
      */
     protected function availableTriggerEvents(): array
     {
         return [
             'ticket.created' => 'Ticket Created',
             'ticket.updated' => 'Ticket Updated',
-            'ticket.replied' => 'Ticket Replied',
+            'reply.created' => 'Reply Created',
+            'note.created' => 'Internal Note Added',
             'ticket.status_changed' => 'Ticket Status Changed',
             'ticket.assigned' => 'Ticket Assigned',
+            'ticket.unassigned' => 'Ticket Unassigned',
+            'ticket.priority_changed' => 'Ticket Priority Changed',
+            'ticket.department_changed' => 'Ticket Department Changed',
+            'ticket.tag_added' => 'Tag Added',
+            'ticket.tag_removed' => 'Tag Removed',
             'ticket.escalated' => 'Ticket Escalated',
             'sla.breached' => 'SLA Breached',
             'sla.warning' => 'SLA Warning',
             'chat.started' => 'Chat Started',
+            'chat.assigned' => 'Chat Assigned',
+            'chat.transferred' => 'Chat Transferred',
+            'chat.message' => 'Chat Message',
             'chat.ended' => 'Chat Ended',
         ];
     }

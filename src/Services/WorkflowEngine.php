@@ -554,7 +554,7 @@ class WorkflowEngine
      *
      * A workflow has no author, so, like add_note, the reply has none and
      * records the workflow in its metadata. ProcessWorkflows reads that marker
-     * so the reply does not trigger ticket.replied workflows, which could
+     * so the reply does not trigger reply.created workflows, which could
      * otherwise answer their own reply forever.
      */
     protected function actionInsertCannedReply(Ticket $ticket, mixed $value, Workflow $workflow): void

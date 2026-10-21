@@ -6,6 +6,14 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - **Required department.** New `escalated.tickets.require_department` (default `false`, env `ESCALATED_REQUIRE_DEPARTMENT`) and `escalated.tickets.default_department_id` (env `ESCALATED_DEFAULT_DEPARTMENT_ID`). When required, a ticket created without a department gets the default; with no default (or a default that no longer exists) creation fails with a `department_id` validation error: a 422 on the API, widget, mobile and guest endpoints, a redirect back with errors on web forms, and a `failed` inbound email. Enforced centrally when the `Ticket` model is created; imports are exempt. Existing installs are unaffected. See `docs/ticket-access-and-routing.md`.
+- **More workflow triggers.** Workflows can now run on `note.created`, `ticket.unassigned`, `ticket.priority_changed`, `ticket.department_changed`, `ticket.tag_added`, `ticket.tag_removed`, `chat.assigned`, `chat.transferred` and `chat.message`, and the builder offers them. A note or reply written by a workflow does not trigger `note.created` / `reply.created` workflows.
+
+### Changed
+- **Event vocabulary (ADR 2026-10-21-event-vocabulary).** The reply workflow trigger is now `reply.created`, the name webhooks already use. The builder offers `reply.created` instead of `ticket.replied`, and workflows fire under it. Upgrade note: run `php artisan migrate`; the new migration rewrites stored workflow `trigger_event` values from legacy names (`ticket.replied`, `internal_note.added`, `internal_note.created`, `tag.added`, `ticket.tagged`, `tag.removed`, `ticket.untagged`, `chat.session_started`, `chat.session_ended`) to their canonical names. Workflows saved under a legacy name keep firing without the migration, and a legacy name posted to the workflow form is stored canonically. `WorkflowLog.trigger_event` records the canonical name from now on.
+- Webhook subscriptions saved under any of those legacy names now receive the canonical event (previously only `internal_note.added`, `tag.added` and `tag.removed` were mapped). `Webhook::LEGACY_EVENT_NAMES` now equals the new `Support\EventVocabulary::LEGACY`.
+
+### Fixed
+- Test suite: `tests/Feature/Api/SecurityTest.php` no longer fails intermittently. Its tickets took a random `ESC-nnnnn` reference that could collide with another random pick or with a reference generated from a primary key; they now get the model-generated reference, and test emails use a counter instead of `uniqid()`. No runtime change.
 
 ## [1.9.6] - 2026-10-20
 
