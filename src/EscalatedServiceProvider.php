@@ -695,6 +695,11 @@ class EscalatedServiceProvider extends ServiceProvider
             Events\SlaWarning::class,
             Events\TagAddedToTicket::class,
             Events\TagRemovedFromTicket::class,
+            Events\ChatStarted::class,
+            Events\ChatAssigned::class,
+            Events\ChatTransferred::class,
+            Events\ChatMessage::class,
+            Events\ChatEnded::class,
         ];
 
         foreach ($webhookEvents as $event) {

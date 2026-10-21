@@ -3,6 +3,7 @@
 namespace Escalated\Laravel\Listeners;
 
 use Escalated\Laravel\Events;
+use Escalated\Laravel\Models\ChatSession;
 use Escalated\Laravel\Services\NotificationService;
 use Escalated\Laravel\Services\WebhookDispatcher;
 use Escalated\Laravel\Support\ImportContext;
@@ -38,6 +39,11 @@ class DispatchWebhook
             $event instanceof Events\SlaWarning => 'sla.warning',
             $event instanceof Events\TagAddedToTicket => 'ticket.tag_added',
             $event instanceof Events\TagRemovedFromTicket => 'ticket.tag_removed',
+            $event instanceof Events\ChatStarted => 'chat.started',
+            $event instanceof Events\ChatAssigned => 'chat.assigned',
+            $event instanceof Events\ChatTransferred => 'chat.transferred',
+            $event instanceof Events\ChatMessage => 'chat.message',
+            $event instanceof Events\ChatEnded => 'chat.ended',
             default => null,
         };
 
@@ -56,6 +62,10 @@ class DispatchWebhook
 
     protected function buildPayload(object $event): array
     {
+        if (property_exists($event, 'session') && $event->session instanceof ChatSession) {
+            return ['chat' => $this->chatPayload($event)];
+        }
+
         $payload = [];
 
         if (property_exists($event, 'ticket')) {
@@ -91,5 +101,40 @@ class DispatchWebhook
         }
 
         return $payload;
+    }
+
+    /**
+     * The chat fields that leave the process. The visitor's session token (or
+     * its hash) and the visitor's email never do, and neither do message
+     * bodies: a subscriber reads those through the API.
+     */
+    protected function chatPayload(object $event): array
+    {
+        $session = $event->session;
+
+        $chat = [
+            'session_id' => $session->id,
+            'ticket_id' => $session->ticket_id,
+            'status' => $session->status?->value,
+            'agent_id' => $session->agent_id,
+            'department_id' => $session->ticket?->department_id,
+        ];
+
+        if ($event instanceof Events\ChatTransferred) {
+            $chat['from_agent_id'] = $event->fromAgentId;
+            $chat['to_agent_id'] = $event->toAgentId;
+            $chat['to_department_id'] = $event->toDepartmentId;
+        }
+
+        if ($event instanceof Events\ChatMessage) {
+            $chat['reply_id'] = $event->reply->id;
+            $chat['author_type'] = $event->isAgent ? 'agent' : 'visitor';
+        }
+
+        if ($event instanceof Events\ChatEnded) {
+            $chat['ended_by'] = $event->endedBy;
+        }
+
+        return $chat;
     }
 }
