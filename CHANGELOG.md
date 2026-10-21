@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.9.7] - 2026-10-21
+
+### Upgrading
+- Run `php artisan migrate`. The new migration rewrites stored workflow `trigger_event` values from legacy names (`ticket.replied`, `internal_note.added`, `tag.added`, `chat.session_started`, ...) to their canonical names (ADR 2026-10-21-event-vocabulary). Workflows saved under a legacy name keep firing without it.
+- The endpoint in `escalated.notifications.webhook_url` receives every event, so it now also receives `chat.started`, `chat.assigned`, `chat.transferred`, `chat.message` and `chat.ended`. Admin webhooks receive them only once subscribed.
+- The workflow builder offers `reply.created` instead of `ticket.replied`.
+- Required department is opt-in (`escalated.tickets.require_department`, default `false`); existing installs are unaffected.
+
 ### Added
 - **Required department.** New `escalated.tickets.require_department` (default `false`, env `ESCALATED_REQUIRE_DEPARTMENT`) and `escalated.tickets.default_department_id` (env `ESCALATED_DEFAULT_DEPARTMENT_ID`). When required, a ticket created without a department gets the default; with no default (or a default that no longer exists) creation fails with a `department_id` validation error: a 422 on the API, widget, mobile and guest endpoints, a redirect back with errors on web forms, and a `failed` inbound email. Enforced centrally when the `Ticket` model is created; imports are exempt. Existing installs are unaffected. See `docs/ticket-access-and-routing.md`.
 - **Live chat webhooks.** Outbound webhooks now receive `chat.started`, `chat.assigned`, `chat.transferred`, `chat.message` and `chat.ended`, and the webhook form offers them (workflows already ran on them). The payload is `{"chat": {"session_id", "ticket_id", "status", "agent_id", "department_id"}}`, plus `from_agent_id`/`to_agent_id`/`to_department_id` for a transfer, `reply_id`/`author_type` (`agent` or `visitor`) for a message and `ended_by` for an end. It never carries the visitor's session token (or its hash), the visitor's email or the message body. Upgrade note: admin webhooks receive them only once subscribed, but the endpoint in `escalated.notifications.webhook_url` receives every event, so it now gets these five as well. A subscription stored as `chat.session_started` / `chat.session_ended` receives `chat.started` / `chat.ended`.
