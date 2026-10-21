@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Models;
 
 use Escalated\Laravel\Concerns\UsesEscalatedConnection;
 use Escalated\Laravel\Escalated;
+use Escalated\Laravel\Support\EventVocabulary;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -58,8 +59,12 @@ class Workflow extends Model
         return $query->where('is_active', true)->orderBy('position');
     }
 
+    /**
+     * Workflows saved under a legacy name for the event (e.g. ticket.replied
+     * for reply.created) still match.
+     */
     public function scopeForEvent($query, string $event)
     {
-        return $query->where('trigger_event', $event);
+        return $query->whereIn('trigger_event', EventVocabulary::namesFor(EventVocabulary::canonical($event)));
     }
 }
