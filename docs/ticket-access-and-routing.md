@@ -11,8 +11,10 @@ Run the package migrations before enabling these options. The additive migration
 | `escalated.accounts.resolver` | `null` | Resolver class; alternatively bind `TicketAccountResolver` in the container. |
 | `escalated.accounts.scope_agents` | `false` | Restrict an agent to the account returned by the resolver. |
 | `escalated.sla.targeted` | `false` | Select SLAs by department and ticket type. |
+| `escalated.tickets.require_department` | `false` | Every new ticket must have a department. |
+| `escalated.tickets.default_department_id` | `null` | Department given to a new ticket created without one when a department is required. |
 
-The corresponding environment variables are `ESCALATED_VISIBILITY`, `ESCALATED_ACCOUNTS_ENABLED`, `ESCALATED_ACCOUNT_VISIBILITY`, and `ESCALATED_TARGETED_SLA`.
+The corresponding environment variables are `ESCALATED_VISIBILITY`, `ESCALATED_ACCOUNTS_ENABLED`, `ESCALATED_ACCOUNT_VISIBILITY`, `ESCALATED_TARGETED_SLA`, `ESCALATED_REQUIRE_DEPARTMENT`, and `ESCALATED_DEFAULT_DEPARTMENT_ID`.
 
 ## Department visibility
 
@@ -42,6 +44,29 @@ Ticket::withoutGlobalScope(\Escalated\Laravel\Models\Scopes\TicketVisibilityScop
 ```
 
 Keep normal scopes on user-facing queries. This feature is an application access boundary, not database row-level security; raw host SQL and custom ticket drivers must enforce the same rules.
+
+## Required department
+
+```php
+// config/escalated.php
+'tickets' => [
+    // ...
+    'require_department' => true,
+    'default_department_id' => 3, // optional
+],
+```
+
+With `require_department` on, a new ticket created without a department gets `default_department_id`. If no default is set, or the default department no longer exists, the ticket is not created and a validation error is raised on `department_id`.
+
+The check runs when the `Ticket` model is created, so it covers every path:
+
+- **Web, API, mobile, widget and guest forms**: the request fails with a `department_id` validation error (a 422 JSON response, or a redirect back with errors for form posts). A department chosen in the form is kept.
+- **Live chat**: starting a chat fails with the same 422 unless a default is set.
+- **Inbound email**: the email is recorded as `failed` with the error and no ticket is created. Set a default department if you accept tickets by email.
+- **Imports** (`ImportService`, anything run inside `ImportContext::suppress()`) are exempt and keep the department of the source record, including none.
+- **Host code** calling `Ticket::create()` or a ticket driver gets an `Illuminate\Validation\ValidationException`.
+
+Existing tickets are not changed. Staff can still clear or change a ticket's department later; the option only applies at creation. Use it with department visibility (`'visibility' => 'department'`) so no new ticket is hidden from every agent.
 
 ## Account association
 

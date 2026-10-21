@@ -180,6 +180,13 @@ return [
         'auto_close_resolved_after_days' => 7,
         'max_attachments_per_reply' => 5,
         'max_attachment_size_kb' => 10240,
+
+        // Require every new ticket to have a department. A ticket created
+        // without one gets default_department_id; with no (existing) default,
+        // creation fails with a department_id validation error. Imports are
+        // exempt. See docs/ticket-access-and-routing.md.
+        'require_department' => env('ESCALATED_REQUIRE_DEPARTMENT', false),
+        'default_department_id' => env('ESCALATED_DEFAULT_DEPARTMENT_ID'),
     ],
 
     /*

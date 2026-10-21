@@ -14,6 +14,7 @@ use Escalated\Laravel\Events;
 use Escalated\Laravel\Services\GuestEmailVerification;
 use Escalated\Laravel\Services\TicketSubjectResolver;
 use Escalated\Laravel\Services\TicketSubjectService;
+use Escalated\Laravel\Support\RequiredDepartment;
 use Escalated\Laravel\Support\TicketAccounts;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Escalated\Laravel\Tenancy\TenantReferences;
@@ -85,6 +86,8 @@ class Ticket extends Model
                 && ($account = TicketAccounts::resolve($ticket->requester))) {
                 $ticket->account()->associate($account);
             }
+            RequiredDepartment::apply($ticket);
+
             if (empty($ticket->reference)) {
                 $ticket->reference = 'TEMP-'.Str::uuid()->toString();
             }
