@@ -145,6 +145,11 @@ class WebhookController extends Controller
             'sla.warning',
             'ticket.tag_added',
             'ticket.tag_removed',
+            'chat.started',
+            'chat.assigned',
+            'chat.transferred',
+            'chat.message',
+            'chat.ended',
         ];
     }
 }
