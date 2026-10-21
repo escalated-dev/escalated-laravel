@@ -213,6 +213,12 @@ it('delivers to a webhook saved under an event name the admin form used to offer
     ['internal_note.added', 'note.created'],
     ['tag.added', 'ticket.tag_added'],
     ['tag.removed', 'ticket.tag_removed'],
+    ['ticket.replied', 'reply.created'],
+    ['internal_note.created', 'note.created'],
+    ['ticket.tagged', 'ticket.tag_added'],
+    ['ticket.untagged', 'ticket.tag_removed'],
+    ['chat.session_started', 'chat.started'],
+    ['chat.session_ended', 'chat.ended'],
 ]);
 
 it('sends nothing when an admin retries a delivery to a private address', function () {

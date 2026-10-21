@@ -467,8 +467,10 @@ it('renders the create form with the option lists this backend supports', functi
 
     // Exactly the events ProcessWorkflows fires.
     expect(array_column($props['trigger_events'], 'value'))->toEqualCanonicalizing([
-        'ticket.created', 'ticket.updated', 'ticket.replied', 'ticket.status_changed', 'ticket.assigned',
-        'ticket.escalated', 'sla.breached', 'sla.warning', 'chat.started', 'chat.ended',
+        'ticket.created', 'ticket.updated', 'reply.created', 'note.created', 'ticket.status_changed',
+        'ticket.assigned', 'ticket.unassigned', 'ticket.priority_changed', 'ticket.department_changed',
+        'ticket.tag_added', 'ticket.tag_removed', 'ticket.escalated', 'sla.breached', 'sla.warning',
+        'chat.started', 'chat.assigned', 'chat.transferred', 'chat.message', 'chat.ended',
     ]);
 
     // The core catalog plus the optional actions this executor handles.

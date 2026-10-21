@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Models;
 
 use Escalated\Laravel\Concerns\UsesEscalatedConnection;
 use Escalated\Laravel\Escalated;
+use Escalated\Laravel\Support\EventVocabulary;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -12,15 +13,10 @@ class Webhook extends Model
     use UsesEscalatedConnection;
 
     /**
-     * Names the admin form used to offer for three events, which never
-     * matched the names those events are dispatched under. Rows saved with
-     * them still match.
+     * Legacy event names (ADR 2026-10-21-event-vocabulary), including three
+     * the admin form used to offer. Rows saved with them still match.
      */
-    public const LEGACY_EVENT_NAMES = [
-        'internal_note.added' => 'note.created',
-        'tag.added' => 'ticket.tag_added',
-        'tag.removed' => 'ticket.tag_removed',
-    ];
+    public const LEGACY_EVENT_NAMES = EventVocabulary::LEGACY;
 
     protected $guarded = ['id'];
 
