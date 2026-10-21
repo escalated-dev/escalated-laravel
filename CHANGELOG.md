@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- Test suite: `tests/Feature/Api/SecurityTest.php` no longer fails intermittently. Its tickets took a random `ESC-nnnnn` reference that could collide with another random pick or with a reference generated from a primary key; they now get the model-generated reference, and test emails use a counter instead of `uniqid()`. No runtime change.
+
 ## [1.9.6] - 2026-10-20
 
 ### Added

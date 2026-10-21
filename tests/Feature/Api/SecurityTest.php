@@ -20,11 +20,19 @@ beforeEach(function () {
     Gate::define('escalated-admin', fn ($user) => $user->is_admin);
 });
 
+/** A per-process counter, so generated emails never collide (uniqid() can repeat within a microsecond). */
+function secSeq(): int
+{
+    static $n = 0;
+
+    return ++$n;
+}
+
 function secAgent(array $attrs = []): array
 {
     $user = TestUser::create(array_merge([
         'name' => 'Sec Agent',
-        'email' => 'sec-agent-'.uniqid().'@example.com',
+        'email' => 'sec-agent-'.secSeq().'@example.com',
         'password' => bcrypt('password'),
         'is_agent' => true,
     ], $attrs));
@@ -42,7 +50,7 @@ function secAdmin(array $attrs = []): array
 {
     $user = TestUser::create(array_merge([
         'name' => 'Sec Admin',
-        'email' => 'sec-admin-'.uniqid().'@example.com',
+        'email' => 'sec-admin-'.secSeq().'@example.com',
         'password' => bcrypt('password'),
         'is_agent' => true,
         'is_admin' => true,
@@ -59,8 +67,10 @@ function secAdmin(array $attrs = []): array
 
 function secTicket(TestUser $requester, array $overrides = []): Ticket
 {
+    // No random reference: two random picks (or a pick and a reference the
+    // model generates from a primary key, e.g. ESC-00002) could collide on the
+    // unique index. Leaving it empty lets Ticket generate one from its id.
     return Ticket::create(array_merge([
-        'reference' => 'ESC-'.str_pad(random_int(1, 99999), 5, '0', STR_PAD_LEFT),
         'requester_type' => $requester->getMorphClass(),
         'requester_id' => $requester->getKey(),
         'subject' => 'Security Test Ticket',
@@ -111,7 +121,7 @@ it('returns 404 for non-existent ticket reference', function () {
 it('token with no abilities cannot access any endpoint', function () {
     $user = TestUser::create([
         'name' => 'No Abilities',
-        'email' => 'noab-'.uniqid().'@example.com',
+        'email' => 'noab-'.secSeq().'@example.com',
         'password' => bcrypt('password'),
         'is_agent' => true,
     ]);
@@ -134,7 +144,7 @@ it('admin ability required for ticket deletion', function () {
 it('agent with admin token ability but without admin gate is denied admin routes', function () {
     $user = TestUser::create([
         'name' => 'Fake Admin',
-        'email' => 'fakeadmin-'.uniqid().'@example.com',
+        'email' => 'fakeadmin-'.secSeq().'@example.com',
         'password' => bcrypt('password'),
         'is_agent' => true,
         'is_admin' => false,
@@ -443,7 +453,7 @@ it('logs failed authentication attempts', function () {
 it('logs when expired token is used', function () {
     $user = TestUser::create([
         'name' => 'Expired User',
-        'email' => 'expired-'.uniqid().'@example.com',
+        'email' => 'expired-'.secSeq().'@example.com',
         'password' => bcrypt('password'),
         'is_agent' => true,
     ]);
@@ -530,7 +540,7 @@ it('agents endpoint excludes non-agent users', function () {
     // Create a non-agent user
     TestUser::create([
         'name' => 'Customer Only',
-        'email' => 'customer-'.uniqid().'@example.com',
+        'email' => 'customer-'.secSeq().'@example.com',
         'password' => bcrypt('password'),
         'is_agent' => false,
     ]);
@@ -558,7 +568,7 @@ it('realtime config returns null when no broadcasting configured', function () {
 it('admin token creation rejects invalid abilities', function () {
     $admin = TestUser::create([
         'name' => 'Admin',
-        'email' => 'tokenadmin-'.uniqid().'@example.com',
+        'email' => 'tokenadmin-'.secSeq().'@example.com',
         'password' => bcrypt('password'),
         'is_admin' => true,
         'is_agent' => true,
@@ -566,7 +576,7 @@ it('admin token creation rejects invalid abilities', function () {
 
     $target = TestUser::create([
         'name' => 'Target',
-        'email' => 'target-'.uniqid().'@example.com',
+        'email' => 'target-'.secSeq().'@example.com',
         'password' => bcrypt('password'),
         'is_agent' => true,
     ]);
@@ -583,7 +593,7 @@ it('admin token creation rejects invalid abilities', function () {
 it('admin token creation rejects expires_in_days of 0', function () {
     $admin = TestUser::create([
         'name' => 'Admin',
-        'email' => 'tokenadmin2-'.uniqid().'@example.com',
+        'email' => 'tokenadmin2-'.secSeq().'@example.com',
         'password' => bcrypt('password'),
         'is_admin' => true,
         'is_agent' => true,
@@ -591,7 +601,7 @@ it('admin token creation rejects expires_in_days of 0', function () {
 
     $target = TestUser::create([
         'name' => 'Target',
-        'email' => 'target2-'.uniqid().'@example.com',
+        'email' => 'target2-'.secSeq().'@example.com',
         'password' => bcrypt('password'),
         'is_agent' => true,
     ]);
@@ -609,7 +619,7 @@ it('admin token creation rejects expires_in_days of 0', function () {
 it('admin token creation rejects expires_in_days over 365', function () {
     $admin = TestUser::create([
         'name' => 'Admin',
-        'email' => 'tokenadmin3-'.uniqid().'@example.com',
+        'email' => 'tokenadmin3-'.secSeq().'@example.com',
         'password' => bcrypt('password'),
         'is_admin' => true,
         'is_agent' => true,
@@ -617,7 +627,7 @@ it('admin token creation rejects expires_in_days over 365', function () {
 
     $target = TestUser::create([
         'name' => 'Target',
-        'email' => 'target3-'.uniqid().'@example.com',
+        'email' => 'target3-'.secSeq().'@example.com',
         'password' => bcrypt('password'),
         'is_agent' => true,
     ]);
