@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Required department.** New `escalated.tickets.require_department` (default `false`, env `ESCALATED_REQUIRE_DEPARTMENT`) and `escalated.tickets.default_department_id` (env `ESCALATED_DEFAULT_DEPARTMENT_ID`). When required, a ticket created without a department gets the default; with no default (or a default that no longer exists) creation fails with a `department_id` validation error: a 422 on the API, widget, mobile and guest endpoints, a redirect back with errors on web forms, and a `failed` inbound email. Enforced centrally when the `Ticket` model is created; imports are exempt. Existing installs are unaffected. See `docs/ticket-access-and-routing.md`.
 - **More workflow triggers.** Workflows can now run on `note.created`, `ticket.unassigned`, `ticket.priority_changed`, `ticket.department_changed`, `ticket.tag_added`, `ticket.tag_removed`, `chat.assigned`, `chat.transferred` and `chat.message`, and the builder offers them. A note or reply written by a workflow does not trigger `note.created` / `reply.created` workflows.
 
 ### Changed
