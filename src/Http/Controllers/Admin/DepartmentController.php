@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Http\Requests\StoreDepartmentRequest;
+use Escalated\Laravel\Models\BusinessSchedule;
 use Escalated\Laravel\Models\Department;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
@@ -23,7 +24,7 @@ class DepartmentController extends Controller
 
     public function create(): mixed
     {
-        return $this->renderer->render('Escalated/Admin/Departments/Form');
+        return $this->renderer->render('Escalated/Admin/Departments/Form', $this->formOptions());
     }
 
     public function store(StoreDepartmentRequest $request): RedirectResponse
@@ -37,7 +38,14 @@ class DepartmentController extends Controller
     {
         $department->load('agents');
 
-        return $this->renderer->render('Escalated/Admin/Departments/Form', ['department' => $department]);
+        return $this->renderer->render('Escalated/Admin/Departments/Form', ['department' => $department] + $this->formOptions());
+    }
+
+    private function formOptions(): array
+    {
+        return [
+            'schedules' => BusinessSchedule::orderBy('name')->get(['id', 'name']),
+        ];
     }
 
     public function update(Department $department, StoreDepartmentRequest $request): RedirectResponse
