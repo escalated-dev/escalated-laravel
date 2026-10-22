@@ -93,3 +93,46 @@ it('clears policy and department references when a schedule is deleted', functio
         ->and($policy->fresh()->business_schedule_id)->toBeNull()
         ->and($department->fresh()->business_schedule_id)->toBeNull();
 });
+
+/** The props an Inertia visit to an admin form receives. */
+function formProps($test, string $url): array
+{
+    $response = $test->withHeaders(['X-Inertia' => 'true', 'X-Inertia-Version' => ''])->get($url);
+    $response->assertOk();
+
+    return $response->json('props');
+}
+
+it('hands the SLA policy and department forms the schedules to pick from', function (string $routeName, bool $edit) {
+    $weekend = BusinessSchedule::create(['name' => 'Alpha weekend', 'timezone' => 'UTC', 'schedule' => []]);
+    $parameter = match (true) {
+        ! $edit => [],
+        str_contains($routeName, 'sla-policies') => SlaPolicy::factory()->create(),
+        default => Department::factory()->create(),
+    };
+
+    $props = formProps($this->actingAs($this->admin), route($routeName, $parameter));
+
+    // Only what the picker shows: id and name, alphabetical.
+    expect($props['schedules'])->toBe([
+        ['id' => $weekend->id, 'name' => 'Alpha weekend'],
+        ['id' => $this->schedule->id, 'name' => 'Office'],
+    ]);
+})->with([
+    'new SLA policy' => ['escalated.admin.sla-policies.create', false],
+    'edit SLA policy' => ['escalated.admin.sla-policies.edit', true],
+    'new department' => ['escalated.admin.departments.create', false],
+    'edit department' => ['escalated.admin.departments.edit', true],
+]);
+
+it('sends the saved schedule with the record being edited', function () {
+    $policy = SlaPolicy::factory()->create(['business_schedule_id' => $this->schedule->id]);
+    $department = Department::factory()->create(['business_schedule_id' => $this->schedule->id]);
+
+    $this->actingAs($this->admin);
+
+    expect(formProps($this, route('escalated.admin.sla-policies.edit', $policy))['policy']['business_schedule_id'])
+        ->toBe($this->schedule->id)
+        ->and(formProps($this, route('escalated.admin.departments.edit', $department))['department']['business_schedule_id'])
+        ->toBe($this->schedule->id);
+});

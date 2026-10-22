@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Http\Requests\StoreSlaPolicyRequest;
+use Escalated\Laravel\Models\BusinessSchedule;
 use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\SlaPolicy;
 use Escalated\Laravel\Models\Ticket;
@@ -49,6 +50,7 @@ class SlaPolicyController extends Controller
             'targeted' => config('escalated.sla.targeted', false),
             'departments' => Department::active()->get(['id', 'name']),
             'ticketTypes' => Ticket::TYPES,
+            'schedules' => BusinessSchedule::orderBy('name')->get(['id', 'name']),
         ];
     }
 
