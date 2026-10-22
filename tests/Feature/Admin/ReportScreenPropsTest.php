@@ -101,7 +101,9 @@ it('sends the agent detail screen the props it reads, and the figures behind the
     $admin = $this->createAdmin();
     $agent = $this->createAgent(['name' => 'Ada Agent', 'email' => 'ada@example.com']);
 
-    $created = now()->subDays(2)->startOfHour();
+    // 10:00 two days ago: the reply and resolution (up to four hours later) land on
+    // the same day whatever time the suite runs, so the day buckets are stable.
+    $created = now()->subDays(2)->setTime(10, 0);
     $answered = Ticket::factory()->create([
         'assigned_to' => $agent->id,
         'created_at' => $created,
