@@ -30,6 +30,12 @@ interface ImportAdapter
     /** Available source fields for an entity type (fetched from API using credentials). */
     public function availableSourceFields(string $entityType, array $credentials): array;
 
-    /** Extract a batch of records. Returns null cursor in ExtractResult when exhausted. */
+    /**
+     * Extract a batch of records. Returns null cursor in ExtractResult when exhausted.
+     *
+     * Attachment records carry the file's bytes as `content`. A `path` is
+     * accepted instead only inside `escalated.attachments.import_path` on the
+     * import disk.
+     */
     public function extract(string $entityType, array $credentials, ?string $cursor): ExtractResult;
 }

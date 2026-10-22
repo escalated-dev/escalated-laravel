@@ -17,6 +17,7 @@ use Escalated\Laravel\Models\Tag;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Support\ImportContext;
 use Escalated\Laravel\Tenancy\TenantContext;
+use Illuminate\Support\Facades\Storage;
 
 class ImportService
 {
@@ -272,7 +273,8 @@ class ImportService
         $ticket = new Ticket;
         $ticket->timestamps = false;
         $ticket->fill([
-            'title' => $record['title'] ?? 'Imported ticket',
+            'subject' => $record['subject'] ?? $record['title'] ?? 'Imported ticket',
+            'description' => $record['description'] ?? '',
             'status' => TicketStatus::tryFrom($record['status'] ?? 'open') ?? TicketStatus::Open,
             'priority' => TicketPriority::tryFrom($record['priority'] ?? 'medium') ?? TicketPriority::Medium,
             'assigned_to' => $assigneeId,
@@ -350,21 +352,87 @@ class ImportService
             throw new \RuntimeException("Parent {$parentType} not found for attachment.");
         }
 
-        $parentModel = $parentType === 'ticket'
-            ? Ticket::class
-            : Reply::class;
+        $parent = $parentType === 'ticket'
+            ? Ticket::findOrFail($parentId)
+            : Reply::findOrFail($parentId);
+
+        $filename = basename(str_replace('\\', '/', (string) ($record['filename'] ?? ''))) ?: 'attachment';
+        $mimeType = (string) ($record['mime_type'] ?? 'application/octet-stream');
+        $content = $record['content'] ?? null;
+
+        // Preferred: the adapter hands over the file's bytes and Escalated
+        // stores them like any other upload.
+        if (is_string($content) && $content !== '') {
+            $limitKb = (int) config('escalated.tickets.max_attachment_size_kb', 10240);
+            if ($limitKb > 0 && strlen($content) > $limitKb * 1024) {
+                throw new \RuntimeException("Attachment exceeds the {$limitKb} KB size limit.");
+            }
+
+            return app(AttachmentService::class)
+                ->storeContent($parent, $content, $filename, $mimeType)
+                ->getKey();
+        }
+
+        // Otherwise the adapter may name a file it already stored on the
+        // import disk, but only inside the configured import directory.
+        $disk = config('escalated.attachments.disk', 'local');
+        $path = $this->confinedImportPath($record['path'] ?? null);
+
+        if (! Storage::disk($disk)->exists($path)) {
+            throw new \RuntimeException('Attachment file does not exist in the import directory.');
+        }
 
         $attachment = Attachment::create([
-            'attachable_type' => $parentModel,
-            'attachable_id' => $parentId,
-            'filename' => $record['filename'] ?? 'unknown',
-            'mime_type' => $record['mime_type'] ?? 'application/octet-stream',
-            'size' => $record['size'] ?? 0,
-            'path' => $record['path'] ?? '',
-            'disk' => config('escalated.attachments.disk', 'local'),
+            'attachable_type' => $parent->getMorphClass(),
+            'attachable_id' => $parent->getKey(),
+            'filename' => basename($path),
+            'original_filename' => $filename,
+            'mime_type' => $mimeType,
+            'size' => Storage::disk($disk)->size($path),
+            'path' => $path,
+            'disk' => $disk,
         ]);
 
         return $attachment->getKey();
+    }
+
+    /**
+     * An adapter-supplied path, accepted only when it is a plain relative path
+     * inside `escalated.attachments.import_path` on the import disk: no
+     * absolute or drive paths, stream wrappers, backslashes, NUL bytes, `.`
+     * or `..` segments.
+     */
+    private function confinedImportPath(mixed $path): string
+    {
+        $root = trim((string) config('escalated.attachments.import_path', 'escalated/imports'), '/');
+        $reject = fn () => new \RuntimeException(
+            "Attachment has no content and its path is not inside the import directory ({$root}/)."
+        );
+
+        if (! is_string($path) || $path === '' || $root === '') {
+            throw $reject();
+        }
+
+        if (str_starts_with($path, '/')
+            || str_contains($path, '\\')
+            || str_contains($path, "\0")
+            || str_contains($path, ':')
+            || preg_match('/[\x00-\x1F\x7F]/', $path)) {
+            throw $reject();
+        }
+
+        $segments = explode('/', $path);
+        foreach ($segments as $segment) {
+            if ($segment === '' || $segment === '.' || $segment === '..') {
+                throw $reject();
+            }
+        }
+
+        if (! str_starts_with($path, $root.'/')) {
+            throw $reject();
+        }
+
+        return $path;
     }
 
     private function persistCustomField(array $record, array $mappings): string|int

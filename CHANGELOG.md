@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Upgrading
+- Import adapters should send each attachment's bytes as `content` (a string of the file's bytes); the importer stores them on the attachment disk like any upload, subject to `escalated.tickets.max_attachment_size_kb`. An attachment record that sends only a `path` is now accepted only when that path is a plain relative path inside `escalated.attachments.import_path` (default `escalated/imports`, env `ESCALATED_IMPORT_ATTACHMENTS_PATH`) on the import disk and the file exists; any other path fails that record and is logged on the import job. Adapters that wrote files elsewhere on the disk should move them under that directory or send `content`.
+
+### Security
+- **Import adapters can no longer point attachments at arbitrary files.** The importer saved whatever `path` an adapter returned as the attachment's path on the import disk, so a misbehaving or compromised adapter could make an imported attachment serve any file on that disk (the host's own files, or another ticket's private attachment) to whoever can download it. Paths are now confined to the import directory: absolute and drive paths, stream wrappers, backslashes, NUL bytes, `.`/`..` segments and look-alike prefixes are rejected.
+
+### Fixed
+- Imported tickets failed to save: the importer wrote the adapter's `title` to a `title` column the tickets table does not have. It now writes `subject` (from `subject`, else `title`) and `description`.
+- Imported attachments failed to save because `original_filename` was never set. It now records the adapter's `filename`.
+
 ## [1.9.9] - 2026-10-22
 
 ### Fixed
