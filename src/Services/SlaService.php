@@ -7,6 +7,8 @@ use Carbon\CarbonInterface;
 use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Events\SlaBreached;
 use Escalated\Laravel\Events\SlaWarning;
+use Escalated\Laravel\Models\BusinessSchedule;
+use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\SlaPolicy;
 use Escalated\Laravel\Models\Ticket;
 
@@ -70,17 +72,18 @@ class SlaService
 
         $at = Carbon::instance($at ?? now());
         $ticket->sla_policy_id = $policy?->getKey();
+        $schedule = $policy?->business_hours_only ? $this->scheduleFor($policy, $ticket) : null;
 
         if ($ticket->first_response_at === null) {
             $firstResponseHours = $policy?->getFirstResponseHoursFor($ticket->priority);
             $ticket->first_response_due_at = $firstResponseHours
-                ? $this->calculateDueDate($at, $firstResponseHours, $policy->business_hours_only)
+                ? $this->calculateDueDate($at, $firstResponseHours, $policy->business_hours_only, $schedule)
                 : null;
         }
 
         $resolutionHours = $policy?->getResolutionHoursFor($ticket->priority);
         $ticket->resolution_due_at = $resolutionHours
-            ? $this->calculateDueDate($at, $resolutionHours, $policy->business_hours_only)
+            ? $this->calculateDueDate($at, $resolutionHours, $policy->business_hours_only, $schedule)
             : null;
 
         $ticket->save();
@@ -92,16 +95,17 @@ class SlaService
 
         $firstResponseHours = $policy->getFirstResponseHoursFor($ticket->priority);
         $resolutionHours = $policy->getResolutionHoursFor($ticket->priority);
+        $schedule = $policy->business_hours_only ? $this->scheduleFor($policy, $ticket) : null;
 
         if ($firstResponseHours) {
             $ticket->first_response_due_at = $this->calculateDueDate(
-                $ticket->created_at, $firstResponseHours, $policy->business_hours_only
+                $ticket->created_at, $firstResponseHours, $policy->business_hours_only, $schedule
             );
         }
 
         if ($resolutionHours) {
             $ticket->resolution_due_at = $this->calculateDueDate(
-                $ticket->created_at, $resolutionHours, $policy->business_hours_only
+                $ticket->created_at, $resolutionHours, $policy->business_hours_only, $schedule
             );
         }
 
@@ -177,12 +181,57 @@ class SlaService
         return $warned;
     }
 
-    protected function calculateDueDate(Carbon $from, float $hours, bool $businessHoursOnly): Carbon
+    /**
+     * The business schedule a business-hours policy counts against: the
+     * policy's own, else the ticket department's, else the default schedule.
+     * Null when none applies, which keeps the configured
+     * escalated.sla.business_hours.
+     */
+    public function scheduleFor(SlaPolicy $policy, Ticket $ticket): ?BusinessSchedule
+    {
+        $ids = [];
+        if ($policy->business_schedule_id) {
+            $ids[] = $policy->business_schedule_id;
+        }
+        if ($ticket->department_id) {
+            $departmentScheduleId = Department::whereKey($ticket->department_id)->value('business_schedule_id');
+            if ($departmentScheduleId) {
+                $ids[] = $departmentScheduleId;
+            }
+        }
+
+        foreach ($ids as $id) {
+            $schedule = BusinessSchedule::with('holidays')->find($id);
+            if ($schedule) {
+                return $schedule;
+            }
+        }
+
+        return BusinessSchedule::with('holidays')->default()->orderBy('id')->first();
+    }
+
+    protected function calculateDueDate(Carbon $from, float $hours, bool $businessHoursOnly, ?BusinessSchedule $schedule = null): Carbon
     {
         if (! $businessHoursOnly) {
             return $from->copy()->addHours($hours);
         }
 
+        if ($schedule) {
+            return app(BusinessHoursCalculator::class)->addBusinessHours($from, $hours, $schedule);
+        }
+
+        // Back in the zone $from came in: the datetime cast stores a Carbon's
+        // wall time, so a deadline left in the configured zone was saved as
+        // that zone's clock reading rather than the instant.
+        return $this->calculateConfiguredDueDate($from, $hours)->setTimezone($from->getTimezone());
+    }
+
+    /**
+     * Business hours from escalated.sla.business_hours, for installs with no
+     * business schedule.
+     */
+    protected function calculateConfiguredDueDate(Carbon $from, float $hours): Carbon
+    {
         $config = config('escalated.sla.business_hours');
         $start = $config['start'] ?? '09:00';
         $end = $config['end'] ?? '17:00';

@@ -140,3 +140,11 @@ it('accepts a department from the prefixed table on the ticket form', function (
 
     expect($validator->passes())->toBeTrue();
 });
+
+it('adds the business schedule references under the configured prefix', function () {
+    foreach (['helpdesk_sla_policies', 'helpdesk_departments'] as $table) {
+        expect(Escalated::schema()->hasColumn($table, 'business_schedule_id'))->toBeTrue("[{$table}] has no business_schedule_id")
+            ->and(collect(Escalated::schema()->getForeignKeys($table))->pluck('foreign_table')->all())
+            ->toContain('helpdesk_business_schedules');
+    }
+});

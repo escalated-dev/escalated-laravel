@@ -3,6 +3,7 @@
 use Escalated\Laravel\Contracts\TenantResolver;
 use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Events;
+use Escalated\Laravel\Models\BusinessSchedule;
 use Escalated\Laravel\Models\Contact;
 use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\Reply;
@@ -126,6 +127,20 @@ it('rejects tenant reassignment and cross-tenant child and host references', fun
         expect(fn () => Ticket::whereKey($this->ticketA->id)->update(['tenant_id' => 'merchant-b']))->toThrow(AuthorizationException::class);
         expect(fn () => Ticket::whereKey($this->ticketA->id)->update(['assigned_to' => $this->agentB->id]))->toThrow(AuthorizationException::class);
         expect(fn () => Reply::create(['ticket_id' => $this->ticketB->id, 'body' => 'foreign']))->toThrow(AuthorizationException::class);
+    });
+});
+
+it('rejects a business schedule from another tenant on a department', function () {
+    $foreign = $this->context->run('merchant-b', fn () => BusinessSchedule::create([
+        'name' => 'B hours', 'timezone' => 'UTC', 'schedule' => [],
+    ]));
+
+    $this->context->run('merchant-a', function () use ($foreign) {
+        expect(fn () => Department::create(['name' => 'A', 'slug' => 'a', 'business_schedule_id' => $foreign->id]))
+            ->toThrow(AuthorizationException::class);
+        $own = BusinessSchedule::create(['name' => 'A hours', 'timezone' => 'UTC', 'schedule' => []]);
+        expect(Department::create(['name' => 'A2', 'slug' => 'a2', 'business_schedule_id' => $own->id])->business_schedule_id)
+            ->toBe($own->id);
     });
 });
 

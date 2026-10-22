@@ -241,3 +241,8 @@ it('drops a pivot row whose host user has since been deleted', function () {
 
     expect($ticket->fresh()->followers->pluck('name')->all())->toBe(['Kept']);
 });
+
+it('adds the business schedule references on the configured connection', function () {
+    expect(Schema::connection('escalated')->hasColumn('escalated_sla_policies', 'business_schedule_id'))->toBeTrue()
+        ->and(Schema::connection('escalated')->hasColumn('escalated_departments', 'business_schedule_id'))->toBeTrue();
+});
