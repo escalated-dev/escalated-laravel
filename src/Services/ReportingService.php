@@ -181,6 +181,107 @@ class ReportingService
     }
 
     /**
+     * One agent's figures over a window, under the names the shared
+     * Reports/AgentDetail screen reads: the KPI cards, the response-time
+     * percentiles, and the productivity, workload and CSAT charts as
+     * `{label, value}` rows (productivity adds `values: [replies, resolved]`).
+     *
+     * Computed from plucked rows rather than SQL date functions, so it reads
+     * the same on every database the package supports. `csat_score` is null
+     * when the agent's tickets have no ratings, rather than a zero that reads
+     * like a rating.
+     */
+    public function agentDetail(int|string $agentId, Carbon $from, Carbon $to): array
+    {
+        $tickets = Ticket::query()
+            ->where('assigned_to', $agentId)
+            ->whereBetween('created_at', [$from, $to])
+            ->orderBy('created_at')
+            ->get(['id', 'created_at', 'first_response_at', 'resolved_at']);
+
+        $hoursTo = fn (string $column) => $tickets
+            ->filter(fn (Ticket $ticket) => $ticket->{$column} !== null)
+            ->map(fn (Ticket $ticket) => $ticket->created_at->diffInSeconds($ticket->{$column}) / 3600)
+            ->values();
+
+        $response = $hoursTo('first_response_at')->sort()->values();
+        $resolution = $hoursTo('resolved_at');
+
+        $ratings = $tickets->isEmpty()
+            ? collect()
+            : SatisfactionRating::query()->whereIn('ticket_id', $tickets->pluck('id'))->pluck('rating')->map(fn ($r) => (int) $r);
+
+        $percentiles = [];
+        foreach ([50, 75, 90, 95, 99] as $p) {
+            $percentiles['p'.$p] = round($this->percentile($response, $p), 1);
+        }
+
+        return [
+            'total_tickets' => $tickets->count(),
+            'resolved_tickets' => $tickets->whereNotNull('resolved_at')->count(),
+            'avg_frt' => round((float) ($response->avg() ?? 0), 1),
+            'avg_resolution' => round((float) ($resolution->avg() ?? 0), 1),
+            'csat_score' => $ratings->isEmpty() ? null : round((float) $ratings->avg(), 1),
+            'response_percentiles' => $percentiles,
+            'productivity' => $this->agentDailyProductivity($agentId, $from, $to),
+            'workload' => $tickets
+                ->groupBy(fn (Ticket $ticket) => $ticket->created_at->toDateString())
+                ->map(fn (Collection $day, string $date) => ['label' => $date, 'value' => $day->count()])
+                ->sortKeys()
+                ->values()
+                ->all(),
+            'csat_breakdown' => $ratings
+                ->countBy()
+                ->sortKeys()
+                ->map(fn (int $count, int $rating) => ['label' => "{$rating} stars", 'value' => $count])
+                ->values()
+                ->all(),
+        ];
+    }
+
+    /**
+     * Public replies the agent wrote and the agent's tickets resolved, per day.
+     *
+     * @return list<array{label: string, value: int, values: array{0: int, 1: int}}>
+     */
+    protected function agentDailyProductivity(int|string $agentId, Carbon $from, Carbon $to): array
+    {
+        $repliesTable = Escalated::table('replies');
+
+        $replies = TicketVisibility::query($repliesTable)
+            ->where("{$repliesTable}.author_type", Escalated::newUserModel()->getMorphClass())
+            ->where("{$repliesTable}.author_id", $agentId)
+            ->where("{$repliesTable}.is_internal_note", false)
+            ->whereBetween("{$repliesTable}.created_at", [$from, $to])
+            ->pluck("{$repliesTable}.created_at");
+
+        $resolved = Ticket::query()
+            ->where('assigned_to', $agentId)
+            ->whereBetween('resolved_at', [$from, $to])
+            ->pluck('resolved_at');
+
+        $days = [];
+        foreach ($replies as $at) {
+            $date = Carbon::parse($at)->toDateString();
+            $days[$date] ??= [0, 0];
+            $days[$date][0]++;
+        }
+        foreach ($resolved as $at) {
+            $date = Carbon::parse($at)->toDateString();
+            $days[$date] ??= [0, 0];
+            $days[$date][1]++;
+        }
+        ksort($days);
+
+        $rows = [];
+        foreach ($days as $date => [$written, $closed]) {
+            $rows[] = ['label' => $date, 'value' => $written + $closed, 'values' => [$written, $closed]];
+        }
+
+        return $rows;
+    }
+
+    /**
      * Get SLA breach details.
      */
     public function getSlaBreachDetails(Carbon $startDate, Carbon $endDate): array

@@ -224,19 +224,36 @@ class ReportController extends Controller
     }
 
     /**
-     * Individual agent deep-dive.
+     * Individual agent deep-dive: the period against the period of the same
+     * length before it, under the names Reports/AgentDetail declares. It used
+     * to send `agent_id`, `metrics` and `percentiles`, which the screen does
+     * not read, so it rendered an unknown agent and zeroes.
      */
     public function agentDetail(Request $request, int $id): mixed
     {
         $days = $this->periodDays($request);
-        $start = now()->subDays($days);
         $end = now();
+        $start = $end->copy()->subDays($days);
+
+        $current = $this->reporting->agentDetail($id, $start, $end);
+        $previous = $this->reporting->agentDetail($id, $start->copy()->subDays($days), $start);
+
+        $user = Escalated::userQuery()->whereKey($id)->first();
+        $column = Escalated::userSearchableDisplayColumn();
 
         return $this->renderer->render('Escalated/Admin/Reports/AgentDetail', [
             'period_days' => $days,
-            'agent_id' => $id,
-            'metrics' => $this->reporting->getAgentMetrics($id, $start, $end),
-            'percentiles' => $this->reporting->agentResponseTimePercentiles($id, $days),
+            'agent' => [
+                'id' => $id,
+                'name' => $user ? ($user->{$column} ?? $user->email ?? null) : null,
+                'email' => $user?->email,
+            ],
+            ...$current,
+            'prev_total_tickets' => $previous['total_tickets'],
+            'prev_resolved_tickets' => $previous['resolved_tickets'],
+            'prev_avg_frt' => $previous['avg_frt'],
+            'prev_avg_resolution' => $previous['avg_resolution'],
+            'prev_csat_score' => $previous['csat_score'],
         ]);
     }
 

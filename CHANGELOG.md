@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- **The agent detail report shows the agent.** `GET admin/reports/agent/{id}/detail` (`Escalated/Admin/Reports/AgentDetail`) sent `agent_id`, `metrics` and `percentiles`, none of which the shared screen reads, so it rendered "Unknown Agent" and zeroes. It now sends what the screen declares: `period_days`, `agent {id, name, email}`, `total_tickets`, `resolved_tickets`, `avg_frt`, `avg_resolution`, `csat_score` (null without ratings), `response_percentiles {p50..p99}`, `productivity` (per day, `{label, value, values: [replies, resolved]}`), `workload` (tickets created per day), `csat_breakdown` (`N stars` counts), and `prev_*` for the same number of days before. Nothing else read the old keys. New `ReportingService::agentDetail()` computes them.
+
 ## [1.9.8] - 2026-10-22
 
 ### Upgrading
