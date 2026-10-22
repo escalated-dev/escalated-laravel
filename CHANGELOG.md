@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.9.8] - 2026-10-22
+
 ### Upgrading
 - Run `php artisan migrate`. The new migration adds a nullable `business_schedule_id` (foreign key to `business_schedules`, `ON DELETE SET NULL`) to `sla_policies` and `departments`, honouring the table prefix and `escalated.connection`. Until an admin creates a business schedule, business-hours deadlines are counted exactly as before, against `escalated.sla.business_hours`.
 - Saving a webhook with the secret field left blank now keeps the stored secret, because the form no longer receives it. Send `clear_secret: true` to remove it.
