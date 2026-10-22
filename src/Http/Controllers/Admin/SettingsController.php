@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Models\EscalatedSettings;
+use Escalated\Laravel\Support\SecretMask;
 use Escalated\Laravel\Support\WidgetOrigins;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -127,29 +128,15 @@ class SettingsController extends Controller
      */
     protected function isMaskedValue(?string $value): bool
     {
-        if (empty($value)) {
-            return false;
-        }
-
-        // Masked values have the format: 3 chars + asterisks, or all asterisks
-        return (bool) preg_match('/^.{0,3}\*{3,}$/', $value);
+        return SecretMask::isMasked($value);
     }
 
     /**
-     * Mask a secret value for display — shows whether it's set without exposing the value.
+     * Mask a secret value for display: shows whether it is set, and nothing
+     * of the value itself.
      */
     protected function maskSecret(?string $value): string
     {
-        if (empty($value)) {
-            return '';
-        }
-
-        $len = strlen($value);
-
-        if ($len <= 6) {
-            return str_repeat('*', $len);
-        }
-
-        return substr($value, 0, 3).str_repeat('*', min($len - 3, 12));
+        return SecretMask::mask($value);
     }
 }

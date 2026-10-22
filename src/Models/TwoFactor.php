@@ -18,6 +18,9 @@ class TwoFactor extends Model
         return Escalated::table('two_factor');
     }
 
+    /** Never serialized: the TOTP seed and recovery codes. */
+    protected $hidden = ['secret', 'recovery_codes'];
+
     protected function casts(): array
     {
         return [
