@@ -25,7 +25,23 @@ In the admin panel (`/support/admin/sla-policies`), create policies with:
 
 ## Business Hours
 
-Configure business hours in `config/escalated.php`:
+When a policy is **Business Hours Only**, its deadlines are counted in a business schedule (admin, `/support/admin/business-hours`): opening hours per weekday in the schedule's time zone, plus holidays. The schedule is chosen as:
+
+1. the policy's `business_schedule_id`,
+2. else the ticket department's `business_schedule_id`,
+3. else the default schedule (`is_default`),
+4. else the configured hours below, exactly as before schedules were used.
+
+How a schedule is counted:
+
+- Hours are wall-clock times in the schedule's zone (UTC when the zone is unknown), counted in real elapsed time, so a window on a daylight-saving change day is an hour shorter or longer. An opening time skipped by spring-forward opens at the change.
+- A holiday (one-off, or recurring every year on its month and day) closes the window that opens on that local date, including the part of an overnight window after midnight.
+- `24:00` is the next midnight; an end before the start is an overnight window (`22:00` to `06:00`); an equal start and end, an empty start or end, or `enabled: false` closes the day.
+- A schedule with no open day counts calendar time.
+
+SLA policy and department saves accept `business_schedule_id` (nullable, must exist); it changes only when sent. Deleting a schedule clears it from the policies and departments that used it.
+
+With no schedule, configure business hours in `config/escalated.php`:
 
 ```php
 'sla' => [

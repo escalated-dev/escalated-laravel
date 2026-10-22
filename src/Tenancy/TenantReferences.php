@@ -26,6 +26,7 @@ class TenantReferences
         'custom_field_id' => Models\CustomField::class,
         'object_id' => Models\CustomObject::class,
         'schedule_id' => Models\BusinessSchedule::class,
+        'business_schedule_id' => Models\BusinessSchedule::class,
         'category_id' => Models\ArticleCategory::class,
         'import_job_id' => Models\ImportJob::class,
         'side_conversation_id' => Models\SideConversation::class,

@@ -7,6 +7,7 @@ use Escalated\Laravel\Database\Factories\DepartmentFactory;
 use Escalated\Laravel\Escalated;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
@@ -27,6 +28,12 @@ class Department extends Model
     public function getTable(): string
     {
         return Escalated::table('departments');
+    }
+
+    /** The schedule this record's business hours are counted in, if any. */
+    public function businessSchedule(): BelongsTo
+    {
+        return $this->belongsTo(BusinessSchedule::class, 'business_schedule_id');
     }
 
     public function tickets(): HasMany

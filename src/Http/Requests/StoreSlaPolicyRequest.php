@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Http\Requests;
 
+use Escalated\Laravel\Models\BusinessSchedule;
 use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\Ticket;
 use Illuminate\Foundation\Http\FormRequest;
@@ -26,6 +27,7 @@ class StoreSlaPolicyRequest extends FormRequest
             'is_active' => ['boolean'],
             'department_id' => ['nullable', 'integer', Rule::exists(Department::class, 'id')],
             'ticket_type' => ['nullable', 'string', Rule::in(Ticket::TYPES)],
+            'business_schedule_id' => ['nullable', 'integer', Rule::exists(BusinessSchedule::class, 'id')],
         ];
     }
 }

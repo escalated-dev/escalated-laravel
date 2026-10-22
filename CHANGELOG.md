@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Upgrading
+- Run `php artisan migrate`. The new migration adds a nullable `business_schedule_id` (foreign key to `business_schedules`, `ON DELETE SET NULL`) to `sla_policies` and `departments`, honouring the table prefix and `escalated.connection`. Until an admin creates a business schedule, business-hours deadlines are counted exactly as before, against `escalated.sla.business_hours`.
+
+### Added
+- **Business schedules count SLA deadlines.** For a `business_hours_only` policy, `SlaService` counts in the policy's business schedule, else the ticket department's, else the default schedule, and only falls back to `escalated.sla.business_hours` when none applies. This applies when a policy is attached and when a department change selects it again. `BusinessHoursCalculator` now honours the schedule's time zone and holidays (one-off and recurring), counts real elapsed time across daylight-saving changes, and supports overnight windows and `24:00`; a schedule with no open day counts calendar time. See `docs/sla-policies.md#business-hours`.
+- SLA policy and department saves accept `business_schedule_id` (nullable, must exist; tenant-checked). It changes only when sent, so forms that do not send it leave it as it is. Deleting a business schedule clears it from policies and departments. The shared SLA policy and department forms do not have a schedule picker yet.
+
+### Fixed
+- A business-hours deadline counted against `escalated.sla.business_hours` whose `timezone` differs from the app time zone was stored as that zone's wall-clock time, so it was off by the difference between the two zones. It is now stored at the right instant. Installs whose configured zone matches the app zone (the defaults are both UTC) are unaffected.
+
 ## [1.9.7] - 2026-10-21
 
 ### Upgrading

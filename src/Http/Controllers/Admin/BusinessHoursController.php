@@ -4,6 +4,8 @@ namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Models\BusinessSchedule;
+use Escalated\Laravel\Models\Department;
+use Escalated\Laravel\Models\SlaPolicy;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -112,6 +114,10 @@ class BusinessHoursController extends Controller
 
     public function destroy(BusinessSchedule $businessHour): RedirectResponse
     {
+        // The foreign keys clear these too; doing it here does not depend on
+        // the database enforcing them (SQLite with foreign keys off).
+        SlaPolicy::where('business_schedule_id', $businessHour->id)->update(['business_schedule_id' => null]);
+        Department::where('business_schedule_id', $businessHour->id)->update(['business_schedule_id' => null]);
         $businessHour->delete();
 
         return redirect()->route('escalated.admin.business-hours.index')

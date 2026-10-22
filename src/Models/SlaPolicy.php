@@ -33,6 +33,12 @@ class SlaPolicy extends Model
         return Escalated::table('sla_policies');
     }
 
+    /** The schedule this record's business hours are counted in, if any. */
+    public function businessSchedule(): BelongsTo
+    {
+        return $this->belongsTo(BusinessSchedule::class, 'business_schedule_id');
+    }
+
     public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class, 'sla_policy_id');
