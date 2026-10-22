@@ -20,6 +20,14 @@ class Webhook extends Model
 
     protected $guarded = ['id'];
 
+    /**
+     * The signing secret is used to sign deliveries and never serialized.
+     * Pages see `has_secret` instead.
+     */
+    protected $hidden = ['secret'];
+
+    protected $appends = ['has_secret'];
+
     public function getTable(): string
     {
         return Escalated::table('webhooks');
@@ -31,6 +39,11 @@ class Webhook extends Model
             'events' => 'array',
             'active' => 'boolean',
         ];
+    }
+
+    public function getHasSecretAttribute(): bool
+    {
+        return filled($this->attributes['secret'] ?? null);
     }
 
     public function deliveries(): HasMany

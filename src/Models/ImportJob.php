@@ -14,6 +14,12 @@ class ImportJob extends Model
 
     protected $guarded = ['id'];
 
+    /**
+     * The source platform's credentials are used server-side by the import
+     * run and never serialized to a page or JSON response.
+     */
+    protected $hidden = ['credentials'];
+
     protected static array $validTransitions = [
         'pending' => ['authenticating'],
         'authenticating' => ['mapping', 'failed'],
@@ -110,6 +116,27 @@ class ImportJob extends Model
             ];
             $this->update(['error_log' => $log]);
         }
+    }
+
+    /**
+     * The fields the admin import pages read. Built from an explicit list so
+     * a column added later is not sent to the browser by default.
+     *
+     * @return array<string, mixed>
+     */
+    public function toPageProps(): array
+    {
+        return [
+            'id' => $this->id,
+            'platform' => $this->platform,
+            'status' => $this->status,
+            'progress' => $this->progress,
+            'field_mappings' => $this->field_mappings,
+            'error_log' => array_slice($this->error_log ?? [], -50),
+            'started_at' => $this->started_at?->toIso8601String(),
+            'completed_at' => $this->completed_at?->toIso8601String(),
+            'created_at' => $this->created_at?->toIso8601String(),
+        ];
     }
 
     public function purgeCredentials(): void

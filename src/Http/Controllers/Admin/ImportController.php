@@ -24,7 +24,9 @@ class ImportController extends Controller
                 'credential_fields' => $a->credentialFields(),
             ]);
 
-        $jobs = ImportJob::orderByDesc('created_at')->limit(20)->get();
+        $jobs = ImportJob::orderByDesc('created_at')->limit(20)->get()
+            ->map(fn (ImportJob $job) => $job->toPageProps())
+            ->all();
 
         return $this->renderer->render('Escalated/Admin/Import/Index', [
             'adapters' => $adapters,
@@ -157,7 +159,7 @@ class ImportController extends Controller
         $job = ImportJob::findOrFail($jobId);
 
         return $this->renderer->render('Escalated/Admin/Import/Progress', [
-            'job' => $job,
+            'job' => $job->toPageProps(),
         ]);
     }
 

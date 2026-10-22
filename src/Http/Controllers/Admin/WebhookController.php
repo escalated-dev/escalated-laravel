@@ -72,10 +72,21 @@ class WebhookController extends Controller
             'events' => 'required|array|min:1',
             'events.*' => 'string',
             'secret' => 'nullable|string|max:255',
+            'clear_secret' => 'sometimes|boolean',
             'active' => 'boolean',
         ]);
 
-        $webhook->update($request->only(['url', 'events', 'secret', 'active']));
+        // The form never receives the stored secret, so a blank one means
+        // "leave it as it is". `clear_secret` removes it.
+        $attributes = $request->only(['url', 'events', 'active']);
+
+        if ($request->boolean('clear_secret')) {
+            $attributes['secret'] = null;
+        } elseif (filled($request->input('secret'))) {
+            $attributes['secret'] = $request->input('secret');
+        }
+
+        $webhook->update($attributes);
 
         return redirect()->route('escalated.admin.webhooks.index')
             ->with('success', 'Webhook updated.');

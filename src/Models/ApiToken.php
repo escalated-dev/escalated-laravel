@@ -13,6 +13,9 @@ class ApiToken extends Model
 
     protected $guarded = ['id'];
 
+    /** The token hash is only for lookups; never serialized. */
+    protected $hidden = ['token'];
+
     protected function casts(): array
     {
         return [

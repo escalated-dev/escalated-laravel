@@ -4,19 +4,29 @@ namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Services\SsoService;
+use Escalated\Laravel\Support\SecretMask;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 
 class SsoSettingsController extends Controller
 {
+    /** Stored secrets the page sees only as a mask. */
+    protected const SECRET_KEYS = ['sso_jwt_secret', 'sso_oauth_client_secret'];
+
     public function __construct(
         protected EscalatedUiRenderer $renderer,
     ) {}
 
     public function index(SsoService $sso): mixed
     {
+        $settings = $sso->getConfig();
+
+        foreach (self::SECRET_KEYS as $key) {
+            $settings[$key] = SecretMask::mask($settings[$key] ?? null);
+        }
+
         return $this->renderer->render('Escalated/Admin/Settings/SsoSettings', [
-            'settings' => $sso->getConfig(),
+            'settings' => $settings,
         ]);
     }
 
@@ -64,6 +74,13 @@ class SsoSettingsController extends Controller
                 'sso_oauth_userinfo_url' => ['required', 'url', 'max:500'],
                 'sso_oauth_client_id' => ['required', 'string', 'max:255'],
             ]);
+        }
+
+        // The page posts the mask back for a secret the admin did not change.
+        foreach (self::SECRET_KEYS as $key) {
+            if (SecretMask::isMasked($validated[$key] ?? null)) {
+                unset($validated[$key]);
+            }
         }
 
         $sso->saveConfig($validated);
