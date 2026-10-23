@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.9.10] - 2026-10-22
+
 ### Upgrading
 - Import adapters should send each attachment's bytes as `content` (a string of the file's bytes); the importer stores them on the attachment disk like any upload, subject to `escalated.tickets.max_attachment_size_kb`. An attachment record that sends only a `path` is now accepted only when that path is a plain relative path inside `escalated.attachments.import_path` (default `escalated/imports`, env `ESCALATED_IMPORT_ATTACHMENTS_PATH`) on the import disk and the file exists; any other path fails that record and is logged on the import job. Adapters that wrote files elsewhere on the disk should move them under that directory or send `content`.
 
