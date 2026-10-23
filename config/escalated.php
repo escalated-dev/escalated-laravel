@@ -341,13 +341,16 @@ return [
     | Imported Attachments
     |--------------------------------------------------------------------------
     |
-    | The disk recorded on attachments created by `escalated:import`. The
-    | importer stores the path the import source gives and does not copy the
-    | file, so this names the disk those paths live on.
+    | An import adapter should send each attachment's bytes as `content`;
+    | the importer stores them like any upload (`storage` above). An adapter
+    | may instead send a `path` to a file it already put on `disk`, but only
+    | a plain relative path inside `import_path` is accepted: absolute paths,
+    | `..` segments, backslashes and anything outside that directory fail.
     |
     */
     'attachments' => [
         'disk' => env('ESCALATED_IMPORT_ATTACHMENTS_DISK', 'local'),
+        'import_path' => env('ESCALATED_IMPORT_ATTACHMENTS_PATH', 'escalated/imports'),
     ],
 
     /*
