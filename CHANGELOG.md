@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.9.11] - 2026-10-28
+
 ### Upgrading
 - **Disabled guest, widget and chat routes answer 404.** These features are switched by admin settings stored in the database, so their routes stay registered (route caching cannot read settings) and now answer 404 while the feature is off, through the new `EnsureFeatureEnabled` middleware:
   - `guest_tickets_enabled` (default on): every `{prefix}/guest/*` route, including viewing, replying to and rating an existing guest ticket by its link, and widget ticket creation, verification and lookup for tickets. Before, viewing, replying and rating kept working with guest tickets off, and widget ticket creation, verification and lookup answered 403.
