@@ -22,11 +22,11 @@ it('config endpoint returns widget settings when enabled', function () {
     ]);
 });
 
-it('returns 403 when widget is disabled', function () {
+it('returns 404 when widget is disabled', function () {
     EscalatedSettings::set('widget_enabled', '0');
 
     $response = $this->getJson(route('escalated.widget.config'));
-    $response->assertStatus(403);
+    $response->assertNotFound();
 });
 
 it('article search returns published articles only', function () {
@@ -213,19 +213,19 @@ it('rate limiting is applied to widget routes', function () {
     expect($response->headers->has('X-RateLimit-Limit'))->toBeTrue();
 });
 
-it('returns 403 for all endpoints when widget disabled', function () {
+it('returns 404 for all endpoints when widget disabled', function () {
     EscalatedSettings::set('widget_enabled', '0');
 
-    $this->getJson(route('escalated.widget.config'))->assertStatus(403);
-    $this->getJson(route('escalated.widget.articles.search', ['q' => 'test']))->assertStatus(403);
-    $this->getJson(route('escalated.widget.articles.show', 'any-slug'))->assertStatus(403);
+    $this->getJson(route('escalated.widget.config'))->assertNotFound();
+    $this->getJson(route('escalated.widget.articles.search', ['q' => 'test']))->assertNotFound();
+    $this->getJson(route('escalated.widget.articles.show', 'any-slug'))->assertNotFound();
     $this->postJson(route('escalated.widget.tickets.store'), [
         ...$this->guestProof('test@test.com'),
         'name' => 'Test',
         'email' => 'test@test.com',
         'subject' => 'Test',
         'description' => 'Test',
-    ])->assertStatus(403);
+    ])->assertNotFound();
 });
 
 // --- Guest policy integration with widget ticket creation ---

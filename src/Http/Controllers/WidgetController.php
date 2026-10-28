@@ -22,7 +22,7 @@ class WidgetController extends Controller
     public function config(Request $request): JsonResponse
     {
         if (! EscalatedSettings::getBool('widget_enabled', false)) {
-            return response()->json(['enabled' => false], 403);
+            return response()->json(['enabled' => false], 404);
         }
 
         $departmentIds = array_filter(
@@ -53,7 +53,7 @@ class WidgetController extends Controller
     public function searchArticles(Request $request): JsonResponse
     {
         if (! EscalatedSettings::getBool('widget_enabled', false)) {
-            abort(403);
+            abort(404);
         }
 
         $this->ensureKnowledgeBaseAvailable($request);
@@ -81,7 +81,7 @@ class WidgetController extends Controller
     public function showArticle(Request $request, string $slug): JsonResponse
     {
         if (! EscalatedSettings::getBool('widget_enabled', false)) {
-            abort(403);
+            abort(404);
         }
 
         $this->ensureKnowledgeBaseAvailable($request);
@@ -125,11 +125,11 @@ class WidgetController extends Controller
     public function createTicket(Request $request): JsonResponse
     {
         if (! EscalatedSettings::getBool('widget_enabled', false)) {
-            abort(403);
+            abort(404);
         }
 
         if (! EscalatedSettings::guestTicketsEnabled()) {
-            return response()->json(['message' => 'Guest tickets are disabled.'], 403);
+            return response()->json(['message' => 'Guest tickets are disabled.'], 404);
         }
 
         $validated = $request->validate([
@@ -161,7 +161,7 @@ class WidgetController extends Controller
     public function ticketStatus(string $reference, Request $request): JsonResponse
     {
         if (! EscalatedSettings::getBool('widget_enabled', false)) {
-            abort(403);
+            abort(404);
         }
 
         $token = $request->bearerToken();
