@@ -43,7 +43,7 @@ class WidgetChatController extends Controller
     public function start(Request $request): JsonResponse
     {
         if (! EscalatedSettings::getBool('chat_enabled', false)) {
-            return response()->json(['message' => 'Chat is disabled.'], 403);
+            return response()->json(['message' => 'Chat is disabled.'], 404);
         }
 
         $validated = $request->validate([

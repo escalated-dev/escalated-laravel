@@ -4,10 +4,15 @@ use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Models\Ticket;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Testing\TestResponse;
 
 beforeEach(function () {
     config(['escalated.hosted.signing_secret' => 'whsec_site']);
+    // The receiver is registered only when a signing secret is configured at
+    // boot; register it the way the provider would.
+    Route::group([], __DIR__.'/../../routes/cloud.php');
+    Route::getRoutes()->refreshNameLookups();
     Cache::flush();
 });
 
@@ -46,7 +51,7 @@ function cloudEvent(string $event, array $ticket, string $eventId = 'evt-1'): ar
     return ['event' => $event, 'event_id' => $eventId, 'ticket' => $ticket, 'timestamp' => now()->toIso8601String()];
 }
 
-it('answers 503 until a signing secret is configured', function () {
+it('answers 503 if the signing secret is removed after the route was registered', function () {
     config(['escalated.hosted.signing_secret' => null]);
     $ticket = Ticket::factory()->create();
 

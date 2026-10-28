@@ -3,10 +3,13 @@
 use Escalated\Laravel\Http\Controllers\Guest\TicketController;
 use Escalated\Laravel\Http\Controllers\Guest\VerificationController;
 use Escalated\Laravel\Http\Controllers\SatisfactionRatingController;
+use Escalated\Laravel\Http\Middleware\EnsureFeatureEnabled;
 use Escalated\Laravel\Http\Middleware\GuestPrivacyHeaders;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['web', GuestPrivacyHeaders::class, 'throttle:escalated-guest-requests'])
+// Guest tickets are switched by the guest_tickets_enabled setting (default
+// on); every route here answers 404 while it is off.
+Route::middleware(['web', GuestPrivacyHeaders::class, 'throttle:escalated-guest-requests', EnsureFeatureEnabled::class.':guest'])
     ->prefix(config('escalated.routes.prefix', 'support').'/guest')
     ->group(function () {
         Route::post('/verification', [VerificationController::class, 'store'])->middleware('throttle:escalated-guest-submissions')->name('escalated.guest.verification');

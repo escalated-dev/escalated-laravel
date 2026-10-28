@@ -31,7 +31,7 @@ Extends self-hosted. After every write operation, events are synced server-to-se
 
 If the cloud is unreachable, the app continues working normally. Events are delivered by the `SyncEventToCloud` queued job (5 attempts with exponential backoff, `ESCALATED_SYNC_QUEUE` picks a queue) and each carries a stable `event_id` so the cloud ignores redeliveries.
 
-Sync is two-way. Agent actions taken in the cloud portal come back as signed webhooks to `POST /escalated/cloud/webhook`; set `ESCALATED_CLOUD_SIGNING_SECRET` to the signing secret minted for the connected site on cloud.escalated.dev (Sites → Generate Secret). The receiver applies `ticket.updated` and `ticket.status_changed` to the local ticket through the normal driver, so listeners, notifications and workflows fire as for a local edit.
+Sync is two-way. Agent actions taken in the cloud portal come back as signed webhooks to `POST /escalated/cloud/webhook`; set `ESCALATED_CLOUD_SIGNING_SECRET` to the signing secret minted for the connected site on cloud.escalated.dev (Sites → Generate Secret). The receiver route is registered only while that secret is set (re-cache routes after setting it). The receiver applies `ticket.updated` and `ticket.status_changed` to the local ticket through the normal driver, so listeners, notifications and workflows fire as for a local edit.
 
 ```bash
 # .env

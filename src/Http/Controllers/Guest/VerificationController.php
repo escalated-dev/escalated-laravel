@@ -21,7 +21,7 @@ class VerificationController extends Controller
         ]);
         abort_unless($data['purpose'] === 'chat'
             ? EscalatedSettings::getBool('chat_enabled', false)
-            : EscalatedSettings::guestTicketsEnabled(), 403);
+            : EscalatedSettings::guestTicketsEnabled(), 404);
 
         return response()->json([
             'verification_id' => $verification->challenge($data['email'], $data['purpose'], $request->ip()),
@@ -32,7 +32,7 @@ class VerificationController extends Controller
 
     public function lookup(Request $request, GuestEmailVerification $verification): JsonResponse
     {
-        abort_unless(EscalatedSettings::guestTicketsEnabled(), 403);
+        abort_unless(EscalatedSettings::guestTicketsEnabled(), 404);
         $data = $request->validate([
             'email' => ['required', 'email', 'max:255'], 'reference' => ['required', 'string', 'max:255'],
             'verification_id' => ['required', 'uuid'], 'verification_code' => ['required', 'string', 'max:16'],
