@@ -12,6 +12,9 @@ All notable changes to this project will be documented in this file.
   Hosts that expected 403 from these routes should treat 404 the same way. Nothing changes while the features are on, and guest tickets stay on by default.
 - **The cloud webhook receiver is registered only when `escalated.hosted.signing_secret` (`ESCALATED_CLOUD_SIGNING_SECRET`) is set.** Without it, `POST /escalated/cloud/webhook` now answers 404 instead of 503. Synced installs that already set the secret are unaffected; if you cache routes, run `php artisan route:cache` again after setting it.
 
+### Security
+- **`escalated:tenant-retry` again refuses a failed job whose tenant does not own its models.** Laravel 13's `queue:retry` now catches `ModelNotFoundException` while it reads the job's retry deadline and re-queues the job anyway, so a payload tagged with one tenant but carrying another tenant's models went back on the queue instead of staying failed. The command now restores the job's models under the job's own tenant before re-queuing it; a mismatch fails that ID and leaves it in the failed-jobs table, as before.
+
 ## [1.9.10] - 2026-10-22
 
 ### Upgrading

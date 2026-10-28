@@ -3,6 +3,7 @@
 namespace Escalated\Laravel\Console\Commands;
 
 use Escalated\Laravel\Tenancy\TenantContext;
+use Illuminate\Contracts\Encryption\Encrypter;
 use Illuminate\Queue\Console\RetryCommand;
 use Illuminate\Queue\Events\JobRetryRequested;
 
@@ -44,11 +45,30 @@ class RetryTenantJobsCommand extends RetryCommand
         $context = app(TenantContext::class);
         $previous = $context->current();
         try {
-            $context->set(json_decode($job->payload, true, flags: JSON_THROW_ON_ERROR)['escalated_tenant'] ?? null);
+            $payload = json_decode($job->payload, true, flags: JSON_THROW_ON_ERROR);
+            $context->set($payload['escalated_tenant'] ?? null);
+            // Restore the job's models under its own tenant before it goes
+            // back on the queue. A payload whose tenant does not own its
+            // models fails here with ModelNotFoundException. Laravel 13's
+            // RetryCommand swallows that exception and re-queues the job, so
+            // the check cannot be left to it.
+            $this->restoreCommand($payload);
 
             return parent::retryJob($job);
         } finally {
             $context->set($previous);
         }
+    }
+
+    protected function restoreCommand(array $payload): void
+    {
+        $command = $payload['data']['command'] ?? null;
+        if (! is_string($command)) {
+            return;
+        }
+        if (! str_starts_with($command, 'O:')) {
+            $command = $this->laravel->make(Encrypter::class)->decrypt($command);
+        }
+        unserialize($command);
     }
 }
