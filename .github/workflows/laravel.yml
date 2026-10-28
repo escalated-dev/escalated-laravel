@@ -23,10 +23,18 @@ jobs:
             testbench: 10.*
             pest: ^3.0
             pest-laravel: ^3.0
+          # Laravel 11 is out of security support: no 11.x release fixes
+          # PKSA-b41t-wbzk-9q51, PKSA-d5tc-s1qs-h781, PKSA-m5cs-t1y6-qpcs,
+          # PKSA-3r5d-mb8f-1qw9, PKSA-mdq4-51ck-6kdq (and, for older 11.x,
+          # PKSA-8qx3-n5y5-vvnd, PKSA-q46n-4fdk-zjr4, PKSA-qzrn-rnz3-85w1,
+          # PKSA-w7xr-vk7n-rstm), so Composer refuses to install it. These
+          # legs keep testing the package against it; hosts on 11.x carry
+          # those advisories themselves.
           - laravel: ^11.0
             testbench: 9.*
             pest: ^3.0
             pest-laravel: ^3.0
+            allow-insecure: true
           # Minimum version for queue cleanup, middleware ordering, pivot
           # ownership and translation loader APIs used by the package.
           - php: '8.3'
@@ -34,6 +42,7 @@ jobs:
             testbench: 9.*
             pest: ^3.0
             pest-laravel: ^3.0
+            allow-insecure: true
           - php: '8.3'
             laravel: ^13.0
             testbench: 11.*
@@ -46,11 +55,15 @@ jobs:
             pest-laravel: ^4.0
           # Keep the merchant host's exact framework version covered, not just
           # the newest compatible 13.x. Composer selects compatible Testbench.
+          # 13.8.0 is affected by PKSA-b41t-wbzk-9q51, PKSA-4hy6-m98j-dz9f,
+          # PKSA-d5tc-s1qs-h781, PKSA-m5cs-t1y6-qpcs, PKSA-3r5d-mb8f-1qw9 and
+          # PKSA-mdq4-51ck-6kdq (fixed in 13.10-13.30); the pin is deliberate.
           - php: '8.3'
             laravel: 13.8.0
             testbench: 11.*
             pest: ^4.4.1
             pest-laravel: ^4.0
+            allow-insecure: true
 
     name: P${{ matrix.php }} - L${{ matrix.laravel }} - sqlite
 
@@ -67,6 +80,11 @@ jobs:
 
       - name: Install dependencies
         run: |
+          # Only the pinned/EOL legs above opt out of Composer's advisory
+          # install block; every other leg still refuses insecure versions.
+          if [ "${{ matrix.allow-insecure }}" = "true" ]; then
+            composer config audit.block-insecure false
+          fi
           composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" "pestphp/pest:${{ matrix.pest }}" "pestphp/pest-plugin-laravel:${{ matrix.pest-laravel }}" --dev --no-interaction --no-update
           # Historical Laravel only overrides Console::add; Symfony 7.4's lazy
           # loader uses addCommand and skips its container injection entirely.
