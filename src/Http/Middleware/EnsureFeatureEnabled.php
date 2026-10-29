@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\Response;
  * Guest tickets, the support widget and live chat are turned on and off in
  * Admin > Settings, so their routes stay registered (route caching cannot
  * see the database) and this middleware hides them while the feature is off.
- * The access features (roles & permissions, two-factor) are config switches handled the
+ * The access features (roles & permissions, two-factor, SSO) are config switches handled the
  * same way, so a cached route list follows the switch too.
  *
  * Usage: EnsureFeatureEnabled::class.':widget'
@@ -38,6 +38,7 @@ class EnsureFeatureEnabled
             // Install-level switches (config only), ADR 2026-10-29-configurable-access-features.
             'roles_permissions' => AccessFeatures::rolesPermissions(),
             'two_factor' => AccessFeatures::twoFactor(),
+            'sso' => AccessFeatures::sso(),
             default => throw new InvalidArgumentException("Unknown Escalated feature [{$feature}]."),
         };
     }

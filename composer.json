@@ -13,9 +13,12 @@
     "require": {
         "php": "^8.2",
         "escalated-dev/locale": "^0.1.8",
+        "firebase/php-jwt": "^6.10|^7.0",
         "illuminate/contracts": "^11.39|^12.0|^13.0",
         "inertiajs/inertia-laravel": "^2.0|^3.0",
         "league/commonmark": "^2.0",
+        "league/oauth2-client": "^2.7",
+        "onelogin/php-saml": "^4.3",
         "pragmarx/google2fa": "^8.0|^9.0",
         "symfony/dom-crawler": "^6.0|^7.0"
     },

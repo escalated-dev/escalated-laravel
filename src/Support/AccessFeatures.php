@@ -21,12 +21,18 @@ final class AccessFeatures
         return (bool) config('escalated.access.two_factor', false);
     }
 
+    public static function sso(): bool
+    {
+        return (bool) config('escalated.access.sso', false);
+    }
+
     /** @return array<string, bool> the `features` shared with every page */
     public static function shared(): array
     {
         return [
             'roles_permissions' => self::rolesPermissions(),
             'two_factor' => self::twoFactor(),
+            'sso' => self::sso(),
         ];
     }
 }

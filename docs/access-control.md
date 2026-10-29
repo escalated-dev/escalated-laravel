@@ -14,6 +14,7 @@ changes them.
 |---|---|---|
 | Roles & permissions | `escalated.access.roles_permissions` | `ESCALATED_ROLES_PERMISSIONS` |
 | Two-factor authentication | `escalated.access.two_factor` | `ESCALATED_TWO_FACTOR` |
+| Single sign-on | `escalated.access.sso` | `ESCALATED_SSO` |
 
 ## Roles & permissions
 
@@ -125,4 +126,71 @@ nobody is challenged. Enrolments are kept.
 2. Set `ESCALATED_TWO_FACTOR=true`. Anyone who enrolled while it was not
    enforced is challenged from their next visit.
 3. Optionally require it, after telling your staff.
+
+## Single sign-on
+
+### What is enforced
+
+With `ESCALATED_SSO=true`, users sign in at `GET {prefix}/sso/login` through
+the provider chosen in **Admin > Settings > SSO** (`sso_provider`: `saml`,
+`oauth` or `jwt`). With `none`, and for any provider other than the chosen
+one, the sign-in routes answer 404.
+
+| Route | Name | Use |
+|---|---|---|
+| `GET sso/login` | `escalated.sso.login` | Start sign-in |
+| `GET sso/saml/metadata` | `escalated.sso.saml.metadata` | SP metadata; its URL is the default SP entity ID |
+| `POST sso/saml/acs` | `escalated.sso.saml.acs` | SAML assertion consumer (HTTP-POST) |
+| `GET sso/oauth/callback` | `escalated.sso.oauth.callback` | OAuth 2 / OIDC redirect URI |
+| `GET\|POST sso/jwt/callback` | `escalated.sso.jwt.callback` | JWT hand-off (`jwt` parameter) |
+
+The SSO settings page receives these as `endpoints` to give the IdP.
+
+**SAML** (`onelogin/php-saml`, strict). Refused unless: the IdP certificate is
+configured; the **assertion** is signed by it (a signed Response alone is not
+enough; `KeyInfo` keys are ignored); there is exactly one assertion and it is
+not encrypted; `Issuer` is `sso_entity_id`; `Audience` includes the SP entity
+ID; `Destination` and the bearer `Recipient` are the ACS URL (as configured,
+not as forwarded by a proxy); the validity windows hold (php-saml allows 180
+seconds of drift); `InResponseTo` names an AuthnRequest this install issued in
+the last 10 minutes, used once (IdP-initiated responses only with
+`escalated.sso.allow_idp_initiated`); and the assertion ID has not been used
+before. Request and assertion IDs are kept in `escalated_sso_message_ids`,
+server-side, because the IdP's cross-site POST does not carry a SameSite=Lax
+session cookie.
+
+**OAuth 2 / OIDC** (`league/oauth2-client`). Authorization-code flow with a
+single-use `state` in the session and PKCE `S256`. The code is exchanged at
+the token URL server to server and the profile read from the userinfo URL. A
+profile with `email_verified: false` is refused.
+
+**JWT** (`firebase/php-jwt`). The IdP sends the user back to the callback with
+`jwt`. The algorithm is pinned to `sso_jwt_algorithm` (HS* with the secret,
+RS* with the public key in the same field), so `alg: none` and algorithm
+switching fail. `exp`, `aud` (= `escalated.sso.jwt_audience`, default
+`app.url`) and `jti` are required; a `jti` works once.
+
+### Users and roles
+
+- The email comes from `sso_attr_email` (SAML falls back to an email-shaped
+  NameID), the name from `sso_attr_name`, the role from `sso_attr_role`.
+- The email is matched to a host user case-insensitively. An unknown email is
+  refused unless `escalated.sso.create_users` is on, which creates the user
+  with an unusable random password.
+- With roles & permissions on and `escalated.sso.sync_roles` on, a role value
+  naming an Escalated role slug replaces the user's roles; unknown values
+  change nothing. SSO never changes the host's admin or agent gates.
+- The user is signed in on `escalated.sso.guard` (default guard), the session
+  is regenerated, and they land on `escalated.sso.redirect_to` or their
+  dashboard. With two-factor on, they still pass the challenge.
+- Refusals answer 403 with a generic message; the reason is logged.
+
+Escalated does not switch off the host's password login.
+
+### Turning it on
+
+1. Run `php artisan migrate` (creates `escalated_sso_message_ids`).
+2. Set `ESCALATED_SSO=true`, choose the provider in Admin > Settings > SSO and
+   give the IdP the endpoints shown there. SAML needs the IdP certificate.
+3. Decide on `create_users` and `sync_roles`.
 

@@ -2,10 +2,34 @@
 
 namespace Escalated\Laravel\Services;
 
+use Escalated\Laravel\Exceptions\SsoException;
 use Escalated\Laravel\Models\EscalatedSettings;
+use Escalated\Laravel\Support\AccessFeatures;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
+use League\OAuth2\Client\Provider\GenericProvider;
+use League\OAuth2\Client\Token\AccessToken;
+use OneLogin\Saml2\AuthnRequest;
+use OneLogin\Saml2\Constants as SamlConstants;
+use OneLogin\Saml2\Response as SamlResponse;
+use OneLogin\Saml2\Settings as SamlSettings;
+use OneLogin\Saml2\Utils as SamlUtils;
 
+/**
+ * Single sign-on through the provider an admin picks in Admin > Settings > SSO
+ * (ADR 2026-10-29-configurable-access-features). Crypto is left to
+ * maintained libraries: onelogin/php-saml (SAML 2.0), league/oauth2-client
+ * (OAuth 2 / OIDC with PKCE) and firebase/php-jwt (JWT).
+ *
+ * Every validate method returns the same identity shape,
+ * ['email' => string, 'name' => string, 'role' => string], or throws an
+ * SsoException whose message is for the log, never for the user.
+ */
 class SsoService
 {
+    /** How long an AuthnRequest ID stays answerable. */
+    public const SAML_REQUEST_TTL = 600;
+
     /**
      * SSO configuration keys and their defaults.
      */
@@ -29,6 +53,10 @@ class SsoService
         'sso_oauth_client_secret' => '',
         'sso_oauth_scopes' => 'openid profile email',
     ];
+
+    public function __construct(
+        protected SsoMessageIds $messageIds,
+    ) {}
 
     /**
      * Get the current SSO configuration.
@@ -73,303 +101,10 @@ class SsoService
         }
     }
 
-    /**
-     * Validate a SAML assertion.
-     *
-     * @param  string  $samlResponse  The base64-encoded SAML response
-     * @return array Parsed user attributes from the assertion
-     *
-     * @throws \RuntimeException If validation fails
-     */
-    public function validateSamlAssertion(string $samlResponse): array
-    {
-        $config = $this->getConfig();
-
-        $xml = base64_decode($samlResponse, true);
-        if ($xml === false) {
-            throw new \RuntimeException('Invalid SAML response: base64 decode failed.');
-        }
-
-        $doc = new \DOMDocument;
-        $prevUseErrors = libxml_use_internal_errors(true);
-        $loaded = $doc->loadXML($xml);
-        libxml_use_internal_errors($prevUseErrors);
-        if (! $loaded) {
-            throw new \RuntimeException('Invalid SAML response: malformed XML.');
-        }
-
-        // Verify signature if certificate is configured
-        $certificate = trim($config['sso_certificate']);
-        if ($certificate !== '') {
-            $this->verifySamlSignature($doc, $certificate);
-        }
-
-        $xpath = new \DOMXPath($doc);
-        $xpath->registerNamespace('saml', 'urn:oasis:names:tc:SAML:2.0:assertion');
-        $xpath->registerNamespace('samlp', 'urn:oasis:names:tc:SAML:2.0:protocol');
-
-        // Check issuer matches configured entity ID
-        $entityId = trim($config['sso_entity_id']);
-        if ($entityId !== '') {
-            $issuerNodes = $xpath->query('//saml:Issuer');
-            if ($issuerNodes->length === 0) {
-                throw new \RuntimeException('SAML assertion missing Issuer element.');
-            }
-            $issuer = trim($issuerNodes->item(0)->textContent);
-            if ($issuer !== $entityId) {
-                throw new \RuntimeException("SAML Issuer mismatch: expected '{$entityId}', got '{$issuer}'.");
-            }
-        }
-
-        // Validate conditions (NotBefore / NotOnOrAfter)
-        $conditionNodes = $xpath->query('//saml:Conditions');
-        if ($conditionNodes->length > 0) {
-            $conditions = $conditionNodes->item(0);
-            $now = time();
-            $skew = 120; // 2 minute clock skew tolerance
-
-            $notBefore = $conditions->getAttribute('NotBefore');
-            if ($notBefore !== '' && strtotime($notBefore) > ($now + $skew)) {
-                throw new \RuntimeException('SAML assertion is not yet valid.');
-            }
-
-            $notOnOrAfter = $conditions->getAttribute('NotOnOrAfter');
-            if ($notOnOrAfter !== '' && strtotime($notOnOrAfter) < ($now - $skew)) {
-                throw new \RuntimeException('SAML assertion has expired.');
-            }
-        }
-
-        // Extract user attributes
-        $attrEmail = $config['sso_attr_email'];
-        $attrName = $config['sso_attr_name'];
-        $attrRole = $config['sso_attr_role'];
-
-        $attributes = $this->extractSamlAttributes($xpath);
-
-        $email = $attributes[$attrEmail] ?? null;
-        if (! $email) {
-            // Fall back to NameID
-            $nameIdNodes = $xpath->query('//saml:Subject/saml:NameID');
-            if ($nameIdNodes->length > 0) {
-                $email = trim($nameIdNodes->item(0)->textContent);
-            }
-        }
-
-        if (! $email) {
-            throw new \RuntimeException('SAML assertion missing email attribute.');
-        }
-
-        return [
-            'email' => $email,
-            'name' => $attributes[$attrName] ?? '',
-            'role' => $attributes[$attrRole] ?? '',
-            'attributes' => $attributes,
-        ];
-    }
-
-    /**
-     * Verify the XML signature on a SAML response.
-     */
-    protected function verifySamlSignature(\DOMDocument $doc, string $certificate): void
-    {
-        $xpath = new \DOMXPath($doc);
-        $xpath->registerNamespace('ds', 'http://www.w3.org/2000/09/xmldsig#');
-
-        $signatureNodes = $xpath->query('//ds:Signature');
-        if ($signatureNodes->length === 0) {
-            throw new \RuntimeException('SAML response is not signed.');
-        }
-
-        $signedInfoNodes = $xpath->query('//ds:SignedInfo', $signatureNodes->item(0));
-        $signatureValueNodes = $xpath->query('//ds:SignatureValue', $signatureNodes->item(0));
-
-        if ($signedInfoNodes->length === 0 || $signatureValueNodes->length === 0) {
-            throw new \RuntimeException('SAML signature is incomplete.');
-        }
-
-        $signatureValue = base64_decode(
-            preg_replace('/\s+/', '', $signatureValueNodes->item(0)->textContent)
-        );
-
-        // Canonicalize SignedInfo
-        $signedInfoXml = $signedInfoNodes->item(0)->C14N(true, false);
-
-        // Prepare certificate
-        $certPem = $certificate;
-        if (strpos($certPem, '-----BEGIN CERTIFICATE-----') === false) {
-            $certPem = "-----BEGIN CERTIFICATE-----\n"
-                .chunk_split($certPem, 64, "\n")
-                ."-----END CERTIFICATE-----\n";
-        }
-
-        $pubKey = openssl_pkey_get_public($certPem);
-        if ($pubKey === false) {
-            throw new \RuntimeException('Invalid SSO certificate.');
-        }
-
-        $result = openssl_verify($signedInfoXml, $signatureValue, $pubKey, OPENSSL_ALGO_SHA256);
-        if ($result === 0) {
-            // Try SHA1 as fallback (common in SAML)
-            $result = openssl_verify($signedInfoXml, $signatureValue, $pubKey, OPENSSL_ALGO_SHA1);
-        }
-
-        if ($result !== 1) {
-            throw new \RuntimeException('SAML signature verification failed.');
-        }
-    }
-
-    /**
-     * Extract attribute name-value pairs from SAML assertion.
-     */
-    protected function extractSamlAttributes(\DOMXPath $xpath): array
-    {
-        $attributes = [];
-
-        $attrNodes = $xpath->query('//saml:AttributeStatement/saml:Attribute');
-        foreach ($attrNodes as $attr) {
-            $name = $attr->getAttribute('Name');
-            $valueNodes = $xpath->query('saml:AttributeValue', $attr);
-            if ($valueNodes->length > 0) {
-                $attributes[$name] = trim($valueNodes->item(0)->textContent);
-            }
-        }
-
-        return $attributes;
-    }
-
-    /**
-     * Validate a JWT token.
-     *
-     * @param  string  $token  The JWT token string
-     * @return array Decoded token payload with mapped user attributes
-     *
-     * @throws \RuntimeException If validation fails
-     */
-    public function validateJwtToken(string $token): array
-    {
-        $config = $this->getConfig();
-
-        $parts = explode('.', $token);
-        if (count($parts) !== 3) {
-            throw new \RuntimeException('Invalid JWT: expected 3 segments.');
-        }
-
-        [$headerB64, $payloadB64, $signatureB64] = $parts;
-
-        // Decode header
-        $header = json_decode($this->base64UrlDecode($headerB64), true);
-        if (! $header || ! isset($header['alg'])) {
-            throw new \RuntimeException('Invalid JWT: malformed header.');
-        }
-
-        // Decode payload
-        $payload = json_decode($this->base64UrlDecode($payloadB64), true);
-        if (! $payload) {
-            throw new \RuntimeException('Invalid JWT: malformed payload.');
-        }
-
-        // Verify signature
-        $secret = $config['sso_jwt_secret'];
-        $algorithm = $config['sso_jwt_algorithm'] ?: 'HS256';
-
-        if ($secret === '') {
-            throw new \RuntimeException('JWT secret is not configured.');
-        }
-
-        $signature = $this->base64UrlDecode($signatureB64);
-        $signingInput = $headerB64.'.'.$payloadB64;
-
-        if (! $this->verifyJwtSignature($signingInput, $signature, $secret, $algorithm)) {
-            throw new \RuntimeException('Invalid JWT: signature verification failed.');
-        }
-
-        // Check expiration
-        $now = time();
-        $skew = 60; // 1 minute clock skew tolerance
-
-        if (isset($payload['exp']) && $payload['exp'] < ($now - $skew)) {
-            throw new \RuntimeException('JWT has expired.');
-        }
-
-        if (isset($payload['nbf']) && $payload['nbf'] > ($now + $skew)) {
-            throw new \RuntimeException('JWT is not yet valid.');
-        }
-
-        // Extract user attributes
-        $attrEmail = $config['sso_attr_email'];
-        $attrName = $config['sso_attr_name'];
-        $attrRole = $config['sso_attr_role'];
-
-        $email = $payload[$attrEmail] ?? $payload['email'] ?? $payload['sub'] ?? null;
-        if (! $email) {
-            throw new \RuntimeException('JWT missing email claim.');
-        }
-
-        return [
-            'email' => $email,
-            'name' => $payload[$attrName] ?? $payload['name'] ?? '',
-            'role' => $payload[$attrRole] ?? $payload['role'] ?? '',
-            'claims' => $payload,
-        ];
-    }
-
-    /**
-     * Verify a JWT signature.
-     */
-    protected function verifyJwtSignature(string $input, string $signature, string $secret, string $algorithm): bool
-    {
-        $algoMap = [
-            'HS256' => 'sha256',
-            'HS384' => 'sha384',
-            'HS512' => 'sha512',
-        ];
-
-        if (isset($algoMap[$algorithm])) {
-            $expected = hash_hmac($algoMap[$algorithm], $input, $secret, true);
-
-            return hash_equals($expected, $signature);
-        }
-
-        // RSA algorithms
-        $rsaAlgoMap = [
-            'RS256' => OPENSSL_ALGO_SHA256,
-            'RS384' => OPENSSL_ALGO_SHA384,
-            'RS512' => OPENSSL_ALGO_SHA512,
-        ];
-
-        if (isset($rsaAlgoMap[$algorithm])) {
-            $pubKey = openssl_pkey_get_public($secret);
-            if ($pubKey === false) {
-                throw new \RuntimeException("Invalid public key for {$algorithm}.");
-            }
-
-            return openssl_verify($input, $signature, $pubKey, $rsaAlgoMap[$algorithm]) === 1;
-        }
-
-        throw new \RuntimeException("Unsupported JWT algorithm: {$algorithm}");
-    }
-
-    /**
-     * Base64url decode (JWT variant without padding).
-     */
-    protected function base64UrlDecode(string $input): string
-    {
-        $remainder = strlen($input) % 4;
-        if ($remainder) {
-            $input .= str_repeat('=', 4 - $remainder);
-        }
-
-        return base64_decode(strtr($input, '-_', '+/'), true) ?: '';
-    }
-
-    /**
-     * Check if SSO is enabled.
-     */
+    /** Whether SSO is switched on for the install and a provider is chosen. */
     public function isEnabled(): bool
     {
-        $provider = EscalatedSettings::get('sso_provider', 'none');
-
-        return $provider !== 'none';
+        return AccessFeatures::sso() && $this->getProvider() !== 'none';
     }
 
     /**
@@ -377,6 +112,370 @@ class SsoService
      */
     public function getProvider(): string
     {
-        return EscalatedSettings::get('sso_provider', 'none');
+        $provider = (string) EscalatedSettings::get('sso_provider', 'none');
+
+        return in_array($provider, ['saml', 'oauth', 'jwt'], true) ? $provider : 'none';
+    }
+
+    /**
+     * The URLs an admin gives the identity provider.
+     *
+     * @return array<string, string>
+     */
+    public function endpoints(): array
+    {
+        return [
+            'login' => route('escalated.sso.login'),
+            'sp_entity_id' => $this->spEntityId(),
+            'metadata' => route('escalated.sso.saml.metadata'),
+            'acs' => route('escalated.sso.saml.acs'),
+            'oauth_redirect' => route('escalated.sso.oauth.callback'),
+            'jwt_callback' => route('escalated.sso.jwt.callback'),
+        ];
+    }
+
+    public function spEntityId(): string
+    {
+        return (string) (config('escalated.sso.sp_entity_id') ?: route('escalated.sso.saml.metadata'));
+    }
+
+    // ------------------------------------------------------------------ SAML
+
+    /**
+     * onelogin/php-saml settings. Strict: signatures, Issuer, Audience,
+     * Destination, Recipient, validity windows and InResponseTo are checked.
+     *
+     * @throws SsoException
+     */
+    public function samlSettings(bool $spOnly = false): SamlSettings
+    {
+        $config = $this->getConfig();
+        $certificate = trim((string) $config['sso_certificate']);
+
+        if (! $spOnly && $certificate === '') {
+            throw new SsoException('SAML refused: no IdP certificate is configured.');
+        }
+
+        try {
+            return new SamlSettings([
+                'strict' => true,
+                'debug' => false,
+                'sp' => [
+                    'entityId' => $this->spEntityId(),
+                    'assertionConsumerService' => [
+                        'url' => route('escalated.sso.saml.acs'),
+                        'binding' => SamlConstants::BINDING_HTTP_POST,
+                    ],
+                    'NameIDFormat' => SamlConstants::NAMEID_UNSPECIFIED,
+                ],
+                'idp' => [
+                    'entityId' => (string) $config['sso_entity_id'],
+                    'singleSignOnService' => [
+                        'url' => (string) $config['sso_login_url'],
+                        'binding' => SamlConstants::BINDING_HTTP_REDIRECT,
+                    ],
+                    'x509cert' => $certificate,
+                ],
+                'security' => [
+                    // The assertion itself must carry the IdP's signature; a
+                    // signed Response around an unsigned assertion is refused.
+                    'wantAssertionsSigned' => true,
+                    'wantMessagesSigned' => false,
+                    'wantNameId' => false,
+                    'requestedAuthnContext' => false,
+                    'rejectUnsolicitedResponsesWithInResponseTo' => true,
+                    'destinationStrictlyMatches' => true,
+                    'relaxDestinationValidation' => false,
+                    'signatureAlgorithm' => 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256',
+                    'digestAlgorithm' => 'http://www.w3.org/2001/04/xmlenc#sha256',
+                ],
+            ], $spOnly);
+        } catch (\Throwable $e) {
+            throw new SsoException('SAML settings are invalid: '.$e->getMessage(), 0, $e);
+        }
+    }
+
+    /**
+     * The IdP sign-in URL for a new AuthnRequest. Its ID is stored server-side
+     * (the IdP's cross-site POST back carries no SameSite=Lax session cookie)
+     * and must come back as InResponseTo within SAML_REQUEST_TTL.
+     *
+     * @throws SsoException
+     */
+    public function samlLoginUrl(): string
+    {
+        $settings = $this->samlSettings();
+        $request = new AuthnRequest($settings);
+
+        $this->messageIds->remember('saml_request', $request->getId(), time() + self::SAML_REQUEST_TTL);
+
+        $query = http_build_query(['SAMLRequest' => $request->getRequest()]);
+        $url = (string) $settings->getIdPData()['singleSignOnService']['url'];
+
+        return $url.(str_contains($url, '?') ? '&' : '?').$query;
+    }
+
+    /** @throws SsoException */
+    public function samlMetadata(): string
+    {
+        $settings = $this->samlSettings(true);
+        $metadata = $settings->getSPMetadata();
+        $errors = $settings->validateMetadata($metadata);
+
+        if ($errors !== []) {
+            throw new SsoException('SAML metadata is invalid: '.implode(', ', $errors));
+        }
+
+        return $metadata;
+    }
+
+    /**
+     * Validate a base64 SAMLResponse posted to the ACS.
+     *
+     * @return array{email: string, name: string, role: string}
+     *
+     * @throws SsoException
+     */
+    public function validateSamlResponse(string $samlResponse): array
+    {
+        $settings = $this->samlSettings();
+        $config = $this->getConfig();
+
+        $xml = base64_decode($samlResponse, true);
+        if ($xml === false || $xml === '') {
+            throw new SsoException('SAML refused: the response is not base64.');
+        }
+        if (str_contains($xml, 'EncryptedAssertion')) {
+            throw new SsoException('SAML refused: encrypted assertions are not supported.');
+        }
+
+        $requestId = $this->samlInResponseTo($xml);
+        if ($requestId === null) {
+            if (! config('escalated.sso.allow_idp_initiated', false)) {
+                throw new SsoException('SAML refused: unsolicited response (no InResponseTo) and IdP-initiated sign-in is off.');
+            }
+        } elseif (! $this->messageIds->consume('saml_request', $requestId)) {
+            throw new SsoException("SAML refused: InResponseTo [{$requestId}] is not a pending request.");
+        }
+
+        $response = $this->atAcsUrl(function () use ($settings, $samlResponse, $requestId) {
+            try {
+                $response = new SamlResponse($settings, $samlResponse);
+            } catch (\Throwable $e) {
+                throw new SsoException('SAML refused: '.$e->getMessage(), 0, $e);
+            }
+
+            if (! $response->isValid($requestId)) {
+                throw new SsoException('SAML refused: '.$response->getError(false));
+            }
+
+            return $response;
+        });
+
+        $assertionId = (string) $response->getAssertionId();
+        $expires = (int) ($response->getAssertionNotOnOrAfter() ?: time() + 300) + SamlConstants::ALLOWED_CLOCK_DRIFT;
+        if ($assertionId === '' || ! $this->messageIds->claim('saml_assertion', $assertionId, $expires)) {
+            throw new SsoException("SAML refused: assertion [{$assertionId}] was already used.");
+        }
+
+        $attributes = $response->getAttributes();
+        $first = fn (string $name) => isset($attributes[$name][0]) ? trim((string) $attributes[$name][0]) : '';
+
+        $email = $first((string) $config['sso_attr_email']);
+        if ($email === '') {
+            $nameId = trim((string) $response->getNameId());
+            $email = filter_var($nameId, FILTER_VALIDATE_EMAIL) ? $nameId : '';
+        }
+
+        return $this->identity($email, $first((string) $config['sso_attr_name']), $first((string) $config['sso_attr_role']));
+    }
+
+    /**
+     * Run a php-saml check as if the request arrived at the configured ACS
+     * URL, so Destination and Recipient are compared with that URL and not
+     * with whatever host and path a proxy happened to forward.
+     */
+    protected function atAcsUrl(callable $callback): mixed
+    {
+        $acs = parse_url(route('escalated.sso.saml.acs'));
+        $scheme = $acs['scheme'] ?? 'https';
+        $savedUri = $_SERVER['REQUEST_URI'] ?? null;
+        $savedQuery = $_SERVER['QUERY_STRING'] ?? null;
+
+        SamlUtils::setSelfProtocol($scheme);
+        SamlUtils::setSelfHost($acs['host'] ?? 'localhost');
+        SamlUtils::setSelfPort((string) ($acs['port'] ?? ($scheme === 'https' ? 443 : 80)));
+        SamlUtils::setBaseURLPath(null);
+        $_SERVER['REQUEST_URI'] = $acs['path'] ?? '/';
+        unset($_SERVER['QUERY_STRING']);
+
+        try {
+            return $callback();
+        } finally {
+            SamlUtils::setSelfProtocol(null);
+            SamlUtils::setSelfHost(null);
+            SamlUtils::setSelfPort(null);
+            $savedUri === null ? $_SERVER['REQUEST_URI'] = '' : $_SERVER['REQUEST_URI'] = $savedUri;
+            if ($savedQuery !== null) {
+                $_SERVER['QUERY_STRING'] = $savedQuery;
+            }
+        }
+    }
+
+    protected function samlInResponseTo(string $xml): ?string
+    {
+        $doc = new \DOMDocument;
+        $previous = libxml_use_internal_errors(true);
+        $loaded = $doc->loadXML($xml, LIBXML_NONET);
+        libxml_use_internal_errors($previous);
+
+        if (! $loaded || ! $doc->documentElement) {
+            throw new SsoException('SAML refused: malformed XML.');
+        }
+
+        $value = trim($doc->documentElement->getAttribute('InResponseTo'));
+
+        return $value === '' ? null : $value;
+    }
+
+    // ----------------------------------------------------------------- OAuth
+
+    public function oauthProvider(): GenericProvider
+    {
+        $config = $this->getConfig();
+        $scopes = preg_split('/[\s,]+/', trim((string) $config['sso_oauth_scopes'])) ?: [];
+
+        $collaborators = [];
+        if (app()->bound('escalated.sso.http_client')) {
+            $collaborators['httpClient'] = app('escalated.sso.http_client');
+        }
+
+        return new GenericProvider([
+            'clientId' => (string) $config['sso_oauth_client_id'],
+            'clientSecret' => (string) $config['sso_oauth_client_secret'],
+            'redirectUri' => route('escalated.sso.oauth.callback'),
+            'urlAuthorize' => (string) $config['sso_oauth_authorize_url'],
+            'urlAccessToken' => (string) $config['sso_oauth_token_url'],
+            'urlResourceOwnerDetails' => (string) $config['sso_oauth_userinfo_url'],
+            'scopes' => array_values(array_filter($scopes)),
+            'scopeSeparator' => ' ',
+            'pkceMethod' => GenericProvider::PKCE_METHOD_S256,
+        ], $collaborators);
+    }
+
+    /**
+     * Exchange the authorization code (with the PKCE verifier) server to
+     * server and read the profile from the userinfo endpoint.
+     *
+     * @return array{email: string, name: string, role: string}
+     *
+     * @throws SsoException
+     */
+    public function oauthIdentity(string $code, string $pkceVerifier): array
+    {
+        $config = $this->getConfig();
+        $provider = $this->oauthProvider();
+        $provider->setPkceCode($pkceVerifier);
+
+        try {
+            /** @var AccessToken $token */
+            $token = $provider->getAccessToken('authorization_code', ['code' => $code]);
+            $profile = $provider->getResourceOwner($token)->toArray();
+        } catch (\Throwable $e) {
+            throw new SsoException('OAuth refused: '.$e->getMessage(), 0, $e);
+        }
+
+        if (array_key_exists('email_verified', $profile) && in_array($profile['email_verified'], [false, 'false', 0, '0'], true)) {
+            throw new SsoException('OAuth refused: the provider says the email is not verified.');
+        }
+
+        $claim = fn (string $name, string $fallback = '') => trim((string) (data_get($profile, $name) ?? data_get($profile, $fallback) ?? ''));
+
+        return $this->identity(
+            $claim((string) $config['sso_attr_email'], 'email'),
+            $claim((string) $config['sso_attr_name'], 'name'),
+            $claim((string) $config['sso_attr_role']),
+        );
+    }
+
+    // ------------------------------------------------------------------- JWT
+
+    /**
+     * Validate a JWT handed back by the identity provider.
+     *
+     * @return array{email: string, name: string, role: string}
+     *
+     * @throws SsoException
+     */
+    public function validateJwtToken(string $token): array
+    {
+        $config = $this->getConfig();
+        $algorithm = (string) ($config['sso_jwt_algorithm'] ?: 'HS256');
+        $secret = (string) $config['sso_jwt_secret'];
+
+        if (! in_array($algorithm, ['HS256', 'HS384', 'HS512', 'RS256', 'RS384', 'RS512'], true)) {
+            throw new SsoException("JWT refused: unsupported algorithm {$algorithm}.");
+        }
+        if ($secret === '') {
+            throw new SsoException('JWT refused: no secret or public key is configured.');
+        }
+
+        $previousLeeway = JWT::$leeway;
+        JWT::$leeway = $this->clockSkew();
+
+        try {
+            // The Key pins the algorithm: a token naming any other alg
+            // (including "none") is refused by the library.
+            $claims = (array) JWT::decode($token, new Key($secret, $algorithm));
+        } catch (\Throwable $e) {
+            throw new SsoException('JWT refused: '.$e->getMessage(), 0, $e);
+        } finally {
+            JWT::$leeway = $previousLeeway;
+        }
+
+        if (! isset($claims['exp']) || ! is_numeric($claims['exp'])) {
+            throw new SsoException('JWT refused: no exp claim.');
+        }
+
+        $audience = (string) (config('escalated.sso.jwt_audience') ?: config('app.url'));
+        $tokenAudiences = array_map('strval', (array) ($claims['aud'] ?? []));
+        if ($audience === '' || ! in_array($audience, $tokenAudiences, true)) {
+            throw new SsoException('JWT refused: aud does not name this application.');
+        }
+
+        $jti = isset($claims['jti']) ? (string) $claims['jti'] : '';
+        if ($jti === '') {
+            throw new SsoException('JWT refused: no jti claim.');
+        }
+        if (! $this->messageIds->claim('jwt', $jti, (int) $claims['exp'] + $this->clockSkew())) {
+            throw new SsoException("JWT refused: jti [{$jti}] was already used.");
+        }
+
+        $claim = fn (string $name, string $fallback = '') => trim((string) ($claims[$name] ?? ($fallback !== '' ? ($claims[$fallback] ?? '') : '')));
+
+        return $this->identity(
+            $claim((string) $config['sso_attr_email'], 'email'),
+            $claim((string) $config['sso_attr_name'], 'name'),
+            $claim((string) $config['sso_attr_role']),
+        );
+    }
+
+    public function clockSkew(): int
+    {
+        return max(0, min(300, (int) config('escalated.sso.clock_skew', 120)));
+    }
+
+    /**
+     * @return array{email: string, name: string, role: string}
+     *
+     * @throws SsoException
+     */
+    protected function identity(string $email, string $name, string $role): array
+    {
+        if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new SsoException('SSO refused: no valid email in the identity.');
+        }
+
+        return ['email' => $email, 'name' => $name, 'role' => $role];
     }
 }

@@ -27,6 +27,8 @@ class SsoSettingsController extends Controller
 
         return $this->renderer->render('Escalated/Admin/Settings/SsoSettings', [
             'settings' => $settings,
+            // What the admin gives the identity provider.
+            'endpoints' => $sso->endpoints(),
         ]);
     }
 
