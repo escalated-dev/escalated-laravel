@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Upgrading
+- **Roles & permissions is now an install-level switch, off by default** (`escalated.access.roles_permissions`, env `ESCALATED_ROLES_PERMISSIONS`; ADR 2026-10-29-configurable-access-features). Roles were stored but never enforced, so off is how every install already behaved, with two visible differences:
+  - While it is off, the roles screens (`{prefix}/admin/roles*`) answer 404.
+  - While it is off, the newsletter screens no longer check `newsletters.manage` / `newsletters.send`; the admin gate decides, like every other screen. Installs that used those permissions to restrict admins must turn the switch on.
+  To enforce roles: seed the permissions (`php artisan db:seed --class="Escalated\Laravel\Database\Seeders\PermissionSeeder"`), give every staff user a role (`php artisan escalated:roles:assign you@example.com admin`), then set `ESCALATED_ROLES_PERMISSIONS=true`. Passing the admin gate grants no permissions by itself, so an admin without a role is refused everywhere but their own two-factor screen. See `docs/access-control.md`.
+- The shared `escalated.permissions` prop is `['*']` for staff while the switch is off (it was the user's role slugs, which nothing enforced), and `escalated.features.roles_permissions` tells the frontend whether roles are on.
+
+### Added
+- **Roles & permissions are enforced when switched on.** Every admin, agent and staff API route needs its permission from the user's roles as well as the host gate (`EnforceRoutePermissions`, map in `src/Support/RoutePermissions.php`; unmapped routes are refused, and a test checks every route is mapped). Status changes to `resolved`/`closed`/`reopened` also need `ticket.close`, bulk actions need each action's permission, and the staff API checks the token owner's permissions. Failing answers 403.
+- `php artisan escalated:roles:assign {user} {role=admin}` gives a user a role by email or ID.
+- `PUT {prefix}/admin/users/{user}/roles` (`escalated.admin.users.roles`, needs `role.manage`) replaces a user's roles; you cannot remove your own `role.manage`. While roles are on, the users page also receives each user's `roles` and the assignable `roles`.
+
 ## [1.9.11] - 2026-10-28
 
 ### Upgrading

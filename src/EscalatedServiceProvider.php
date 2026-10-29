@@ -4,6 +4,7 @@ namespace Escalated\Laravel;
 
 use Escalated\Laravel\Bridge\PluginBridge;
 use Escalated\Laravel\Console\Commands\AssignLegacyTenantCommand;
+use Escalated\Laravel\Console\Commands\AssignRoleCommand;
 use Escalated\Laravel\Console\Commands\CheckSlaCommand;
 use Escalated\Laravel\Console\Commands\CleanupAbandonedChatsCommand;
 use Escalated\Laravel\Console\Commands\CloseIdleChatsCommand;
@@ -31,6 +32,7 @@ use Escalated\Laravel\Contracts\TenantCatalog;
 use Escalated\Laravel\Contracts\TenantResolver;
 use Escalated\Laravel\Http\Controllers\Admin\ApiTokenController;
 use Escalated\Laravel\Http\Middleware\CheckPermission;
+use Escalated\Laravel\Http\Middleware\EnforceRoutePermissions;
 use Escalated\Laravel\Http\Middleware\EnsureIsAdmin;
 use Escalated\Laravel\Http\Middleware\ResolveTenant;
 use Escalated\Laravel\Http\Middleware\ResolveTicketByReference;
@@ -41,6 +43,7 @@ use Escalated\Laravel\Services\ImportService;
 use Escalated\Laravel\Services\PluginService;
 use Escalated\Laravel\Services\PluginUIService;
 use Escalated\Laravel\Services\TicketActionRegistry;
+use Escalated\Laravel\Support\AccessFeatures;
 use Escalated\Laravel\Support\GuestRateLimits;
 use Escalated\Laravel\Support\HookManager;
 use Escalated\Laravel\Support\StaffAccess;
@@ -509,7 +512,7 @@ class EscalatedServiceProvider extends ServiceProvider
         $middleware = array_merge(
             config('escalated.routes.admin_middleware', ['web', 'auth']),
             $this->tenantMiddleware(),
-            [EnsureIsAdmin::class]
+            [EnsureIsAdmin::class, EnforceRoutePermissions::class]
         );
 
         Route::middleware($middleware)
@@ -530,6 +533,7 @@ class EscalatedServiceProvider extends ServiceProvider
 
         $this->commands([
             AssignLegacyTenantCommand::class,
+            AssignRoleCommand::class,
             ProvisionTenantCommand::class,
             RetryTenantJobsCommand::class,
             RetryTenantBatchCommand::class,
@@ -607,9 +611,10 @@ class EscalatedServiceProvider extends ServiceProvider
                 'broadcasting' => ['channel_prefix' => TenantBroadcast::prefix()],
                 'is_agent' => $user ? StaffAccess::isAgent($user) : false,
                 'is_admin' => $user ? StaffAccess::isAdmin($user) : false,
-                'permissions' => $user ? CheckPermission::userPermissions($user->getKey()) : [],
+                'permissions' => $this->sharedPermissions($user),
                 'features' => [
                     'newsletters' => (bool) config('escalated.enable_newsletters', false),
+                    ...AccessFeatures::shared(),
                 ],
             ];
 
@@ -652,6 +657,25 @@ class EscalatedServiceProvider extends ServiceProvider
 
             return $data;
         });
+    }
+
+    /**
+     * The permission slugs the shared frontend checks. While roles &
+     * permissions is off the gates decide everything, so staff get `*`.
+     *
+     * @return list<string>
+     */
+    protected function sharedPermissions(mixed $user): array
+    {
+        if (! $user) {
+            return [];
+        }
+
+        if (! AccessFeatures::rolesPermissions()) {
+            return StaffAccess::isStaff($user) ? ['*'] : [];
+        }
+
+        return CheckPermission::userPermissions($user->getKey());
     }
 
     protected function registerEvents(): void

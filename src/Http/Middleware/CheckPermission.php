@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Http\Middleware;
 
 use Closure;
 use Escalated\Laravel\Escalated;
+use Escalated\Laravel\Support\AccessFeatures;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -17,11 +18,21 @@ class CheckPermission
             abort(403, 'Unauthorized.');
         }
 
-        if (self::userHasPermission($user->id, $permission)) {
+        if (self::allows($user->getKey(), $permission)) {
             return $next($request);
         }
 
         abort(403, 'You do not have the required permission: '.$permission);
+    }
+
+    /**
+     * Whether the user may do what the permission covers. While roles &
+     * permissions is switched off the host gates decide everything, so this
+     * is always true; callers have already checked the gate.
+     */
+    public static function allows(int|string $userId, string $permissionSlug): bool
+    {
+        return ! AccessFeatures::rolesPermissions() || self::userHasPermission($userId, $permissionSlug);
     }
 
     public static function userHasPermission(int|string $userId, string $permissionSlug): bool

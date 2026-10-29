@@ -42,11 +42,13 @@ use Escalated\Laravel\Http\Controllers\Admin\WebhookController;
 use Escalated\Laravel\Http\Controllers\Admin\WorkflowController;
 use Escalated\Laravel\Http\Controllers\BulkActionController;
 use Escalated\Laravel\Http\Controllers\PresenceController;
+use Escalated\Laravel\Http\Middleware\EnforceRoutePermissions;
+use Escalated\Laravel\Http\Middleware\EnsureFeatureEnabled;
 use Escalated\Laravel\Http\Middleware\EnsureIsAdmin;
 use Escalated\Laravel\Http\Middleware\ResolveTicketByReference;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web', 'auth']), [EnsureIsAdmin::class]))
+Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web', 'auth']), [EnsureIsAdmin::class, EnforceRoutePermissions::class]))
     ->prefix(config('escalated.routes.prefix', 'support').'/admin')
     ->group(function () {
         Route::get('/agents/search', AgentSearchController::class)->name('escalated.admin.agents.search');
@@ -137,14 +139,18 @@ Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web'
             ->names('escalated.admin.business-hours')
             ->except(['show']);
 
-        // Roles
+        // Roles: only while roles & permissions is switched on (404 otherwise).
         Route::resource('roles', RoleController::class)
             ->names('escalated.admin.roles')
-            ->except(['show']);
+            ->except(['show'])
+            ->middleware(EnsureFeatureEnabled::class.':roles_permissions');
 
         // Users (host User model: list + grant/revoke admin/agent)
         Route::get('/users', [UserController::class, 'index'])->name('escalated.admin.users.index');
         Route::patch('/users/{user}/role', [UserController::class, 'updateRole'])->name('escalated.admin.users.role');
+        Route::put('/users/{user}/roles', [UserController::class, 'updateRoles'])
+            ->middleware(EnsureFeatureEnabled::class.':roles_permissions')
+            ->name('escalated.admin.users.roles');
 
         // Audit Log
         Route::get('/audit-log', [AuditLogController::class, 'index'])

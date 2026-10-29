@@ -374,6 +374,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Access features
+    |--------------------------------------------------------------------------
+    |
+    | Roles & permissions, two-factor authentication and single sign-on are
+    | switched per installation (ADR 2026-10-29-configurable-access-features).
+    | Off (the default): the feature's admin screens and routes answer 404 and
+    | nothing is enforced; the host's escalated-admin / escalated-agent gates
+    | decide everything, as before. On: the feature is enforced.
+    |
+    | These are read from configuration only. No admin setting changes them.
+    |
+    | roles_permissions: every admin, agent and staff API route also requires
+    | its permission (src/Support/RoutePermissions.php) from the user's roles.
+    | Seed the permissions and give every staff user a role first, e.g.
+    | `php artisan escalated:roles:assign you@example.com admin`.
+    |
+    */
+    'access' => [
+        'roles_permissions' => (bool) env('ESCALATED_ROLES_PERMISSIONS', false),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Scheduling
     |--------------------------------------------------------------------------
     |
