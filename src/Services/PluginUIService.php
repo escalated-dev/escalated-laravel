@@ -2,6 +2,10 @@
 
 namespace Escalated\Laravel\Services;
 
+use Escalated\Laravel\Bridge\PluginBridge;
+use Escalated\Laravel\Support\StaffAccess;
+use Illuminate\Support\Facades\Route;
+
 /**
  * Service for plugins to register custom UI elements (pages, menus, widgets, etc.)
  */
@@ -221,6 +225,180 @@ class PluginUIService
     public function getAllPageComponents(string $page): array
     {
         return $this->pageComponents[$page] ?? [];
+    }
+
+    /**
+     * `escalated.plugins` for the shared screens: the shape the frontend's
+     * usePluginExtensions() reads (domain-model/plugin-contract.md), built
+     * from what active native plugins registered and from the SDK plugins'
+     * manifests. Items whose permission or capability the viewer lacks are
+     * left out, and admin menu items go to admins only. Empty when there is
+     * nothing to show.
+     */
+    public function sharedExtensions(mixed $user): array
+    {
+        $isAdmin = $user ? StaffAccess::isAdmin($user) : false;
+        $allows = fn (?string $ability) => $ability === null || $ability === '' || ($user && $user->can($ability));
+
+        $menuItems = [];
+        $dashboardWidgets = [];
+        $pageComponents = [];
+
+        foreach ($this->getMenuItems() as $item) {
+            $section = $item['section'] ?? ($item['target'] ?? 'admin');
+            if (($section === 'admin' && ! $isAdmin) || ! $allows($item['permission'] ?? null)) {
+                continue;
+            }
+            $menuItems[] = [
+                'label' => $item['label'],
+                'route' => $this->menuHref($item),
+                'icon' => $item['icon'] ?? null,
+                'position' => $item['priority'] ?? $item['position'] ?? 100,
+                'section' => $section,
+                'plugin' => $item['plugin'] ?? null,
+                'badge' => $item['badge'] ?? null,
+                'submenu' => $item['submenu'] ?? [],
+            ];
+        }
+
+        foreach ($this->getDashboardWidgets() as $widget) {
+            if ((($widget['section'] ?? $widget['target'] ?? 'agent') === 'admin' && ! $isAdmin) || ! $allows($widget['permission'] ?? null)) {
+                continue;
+            }
+            $dashboardWidgets[] = [
+                'id' => $widget['id'],
+                'title' => $widget['label'] ?? $widget['title'] ?? null,
+                'component' => $widget['component'] ?? null,
+                'plugin' => $widget['plugin'] ?? null,
+                'data' => $widget['props'] ?? $widget['data'] ?? [],
+                'position' => $widget['priority'] ?? $widget['position'] ?? 100,
+                'width' => $widget['width'] ?? 'full',
+            ];
+        }
+
+        foreach ($this->pageComponents as $page => $slots) {
+            foreach (array_keys($slots) as $slot) {
+                foreach ($this->getPageComponents($page, $slot) as $component) {
+                    if (! $allows($component['permission'] ?? null)) {
+                        continue;
+                    }
+                    $pageComponents["{$page}.{$slot}"][] = [
+                        'plugin' => $component['plugin'] ?? null,
+                        'component' => $component['component'] ?? null,
+                        'data' => $component['props'] ?? $component['data'] ?? [],
+                        'position' => $component['priority'] ?? $component['position'] ?? 100,
+                    ];
+                }
+            }
+        }
+
+        $prefix = trim((string) config('escalated.routes.prefix', 'support'), '/');
+
+        foreach ($this->sdkManifests() as $name => $manifest) {
+            $slug = self::slug((string) $name);
+
+            foreach ((array) ($manifest['pages'] ?? []) as $page) {
+                $route = ltrim((string) ($page['route'] ?? ''), '/');
+                $menu = $page['menu'] ?? null;
+                if (! is_array($menu) || $route === '' || empty($page['component'])) {
+                    continue;
+                }
+                $section = $menu['section'] ?? 'admin';
+                if (($section === 'admin' && ! $isAdmin) || ! $allows($page['capability'] ?? null)) {
+                    continue;
+                }
+                $menuItems[] = [
+                    'label' => $menu['label'] ?? $page['component'],
+                    // Where RouteRegistrar mounts the page.
+                    'route' => '/'.ltrim("{$prefix}/admin/plugins/{$name}/{$route}", '/'),
+                    'icon' => $menu['icon'] ?? null,
+                    'position' => $menu['position'] ?? 100,
+                    'section' => $section,
+                    'plugin' => $slug,
+                ];
+            }
+
+            foreach ((array) ($manifest['widgets'] ?? []) as $widget) {
+                if (empty($widget['component']) || ! $allows($widget['capability'] ?? null)) {
+                    continue;
+                }
+                $dashboardWidgets[] = [
+                    'id' => "{$slug}.{$widget['component']}",
+                    'title' => $widget['label'] ?? null,
+                    'component' => $widget['component'],
+                    'plugin' => $slug,
+                    'position' => $widget['order'] ?? 100,
+                    'width' => $widget['size'] ?? 'half',
+                ];
+            }
+
+            foreach ((array) ($manifest['components'] ?? []) as $component) {
+                if (empty($component['page']) || empty($component['slot']) || empty($component['component'])
+                    || ! $allows($component['capability'] ?? null)) {
+                    continue;
+                }
+                $pageComponents["{$component['page']}.{$component['slot']}"][] = [
+                    'plugin' => $slug,
+                    'component' => $component['component'],
+                    'data' => $component['props'] ?? [],
+                    'position' => $component['order'] ?? 100,
+                ];
+            }
+        }
+
+        if ($menuItems === [] && $dashboardWidgets === [] && $pageComponents === []) {
+            return [];
+        }
+
+        usort($menuItems, fn ($a, $b) => $a['position'] <=> $b['position']);
+        usort($dashboardWidgets, fn ($a, $b) => $a['position'] <=> $b['position']);
+        foreach ($pageComponents as $key => $list) {
+            usort($list, fn ($a, $b) => $a['position'] <=> $b['position']);
+            $pageComponents[$key] = $list;
+        }
+
+        return ['menuItems' => $menuItems, 'pageComponents' => $pageComponents, 'dashboardWidgets' => $dashboardWidgets];
+    }
+
+    /**
+     * The contract's URL-safe slug for an SDK plugin name:
+     * `@escalated-dev/plugin-slack` is `escalated-dev--plugin-slack`.
+     */
+    public static function slug(string $name): string
+    {
+        $slug = str_replace('/', '--', ltrim($name, '@'));
+
+        return (string) preg_replace('/[^A-Za-z0-9_-]/', '-', $slug);
+    }
+
+    private function menuHref(array $item): ?string
+    {
+        if (! empty($item['url'])) {
+            return $item['url'];
+        }
+        $route = $item['route'] ?? null;
+        if (is_string($route) && $route !== '' && Route::has($route)) {
+            return route($route, [], false);
+        }
+
+        return $route;
+    }
+
+    /**
+     * @return array<string, array>
+     */
+    private function sdkManifests(): array
+    {
+        try {
+            if (! config('escalated.plugins.sdk_enabled', true) || ! app()->bound(PluginBridge::class)) {
+                return [];
+            }
+            $bridge = app(PluginBridge::class);
+
+            return $bridge->isBooted() ? $bridge->getManifests() : [];
+        } catch (\Throwable) {
+            return [];
+        }
     }
 
     /**

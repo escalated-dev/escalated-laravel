@@ -10,6 +10,7 @@ use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Tag;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\SlackInbox;
+use Escalated\Laravel\Support\PluginEvents;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -35,6 +36,37 @@ class ContextHandler
     ];
 
     private const PLUGIN_CONTACT_FILLABLE = ['name', 'email'];
+
+    /**
+     * ctx.tickets.query filter keys (plugin contract) and the column each
+     * reads. Any other key is an error, never a column name.
+     */
+    private const TICKET_FILTERS = [
+        'id' => 'id',
+        'reference' => 'reference',
+        'status' => 'status',
+        'priority' => 'priority',
+        'channel' => 'channel',
+        'ticket_type' => 'ticket_type',
+        'department_id' => 'department_id',
+        'requester_id' => 'requester_id',
+        'contact_id' => 'contact_id',
+        'assigned_to' => 'assigned_to',
+    ];
+
+    /**
+     * ctx.replies.query filter keys (plugin contract) and their columns.
+     */
+    private const REPLY_FILTERS = [
+        'ticket_id' => 'ticket_id',
+        'is_internal' => 'is_internal_note',
+        'type' => 'type',
+    ];
+
+    /**
+     * The most rows a ticket or reply query hands back.
+     */
+    private const QUERY_LIMIT = 500;
 
     /**
      * ctx.store.query comparison operators and the SQL operator for each.
@@ -489,14 +521,32 @@ class ContextHandler
 
     private function ticketsQuery(array $params): array
     {
-        $filter = $params['filter'] ?? [];
-        $query = Ticket::query();
+        $query = $this->whereFilters(Ticket::query(), $params['filter'] ?? [], self::TICKET_FILTERS, 'ctx.tickets.query');
 
-        foreach ($filter as $column => $value) {
-            $query->where($column, $value);
+        return $query->orderBy('id')->limit(self::QUERY_LIMIT)->get()->toArray();
+    }
+
+    /**
+     * Equality filters on whitelisted keys only.
+     */
+    private function whereFilters(Builder $query, mixed $filter, array $columns, string $method): Builder
+    {
+        if (! is_array($filter)) {
+            throw new \InvalidArgumentException("{$method} requires an object filter");
         }
 
-        return $query->get()->toArray();
+        foreach ($filter as $key => $value) {
+            $column = $columns[$key] ?? null;
+            if ($column === null) {
+                throw new \InvalidArgumentException("{$method} cannot filter by \"{$key}\"");
+            }
+            if ($value !== null && ! is_scalar($value)) {
+                throw new \InvalidArgumentException("{$method} filter \"{$key}\" must be a single value");
+            }
+            $value === null ? $query->whereNull($column) : $query->where($column, $value);
+        }
+
+        return $query;
     }
 
     private function ticketsCreate(array $params): array
@@ -535,13 +585,12 @@ class ContextHandler
     private function repliesQuery(array $params): array
     {
         $filter = $params['filter'] ?? [];
-        $query = Reply::query();
-
-        foreach ($filter as $column => $value) {
-            $query->where($column, $value);
+        if (is_array($filter) && array_key_exists('is_internal', $filter) && is_scalar($filter['is_internal'])) {
+            $filter['is_internal'] = (bool) $filter['is_internal'];
         }
+        $query = $this->whereFilters(Reply::query(), $filter, self::REPLY_FILTERS, 'ctx.replies.query');
 
-        return $query->get()->toArray();
+        return $query->orderBy('id')->limit(self::QUERY_LIMIT)->get()->toArray();
     }
 
     private function repliesCreate(array $params): array
@@ -697,6 +746,15 @@ class ContextHandler
             // Re-authenticate the original bytes at the host; no plugin's
             // asserted tenant, user or verification flag is authoritative.
             return app(SlackInbox::class)->receivePlugin($data);
+        }
+
+        // A plugin may not impersonate a host event or lifecycle action.
+        if (PluginEvents::isReserved($hook)) {
+            Log::warning("Escalated PluginBridge: dropped ctx.emit of reserved hook '{$hook}'", [
+                'plugin' => $this->currentPlugin,
+            ]);
+
+            return null;
         }
 
         if ($this->bridge !== null) {

@@ -14,6 +14,9 @@ All notable changes to this project will be documented in this file.
 - `SsoService::validateSamlAssertion()` is replaced by `validateSamlResponse()`, and `validateJwtToken()` now requires `exp`, `aud` and a single-use `jti` and returns `{email, name, role}` without `claims`. Neither was called anywhere in the package; hosts that called them directly must update.
 - The two-factor screen (`escalated.admin.two-factor.*`, same URLs) is now open to every staff user, not only admins, since it manages the signed-in user's own account.
 - The shared `escalated.permissions` prop is `['*']` for staff while the switch is off (it was the user's role slugs, which nothing enforced), and `escalated.features.roles_permissions` tells the frontend whether roles are on.
+- **Plugin UI extensions are shared as `escalated.plugins`** (`menuItems`, `pageComponents`, `dashboardWidgets`), the shape the shared frontend reads. The old `plugin_menu_items`, `plugin_dashboard_widgets` and `plugin_pages` shared props are gone; the bundled pages never read them. Admin menu items go to admins only, and items with a `permission` (or an SDK `capability`) the viewer lacks are left out. With nothing to show, `escalated.plugins` is `{}`.
+- **Plugins now receive the canonical domain events.** `ticket.created`, `reply.created`, `note.created`, `ticket.status_changed` and the rest of the event vocabulary are delivered after commit to native plugins' `escalated_add_action()` callbacks and to SDK plugins' `actions`, with the payload in `docs/plugins.md`. The documented `escalated_ticket_created` hook was never fired; listen for `ticket.created` instead. A throwing plugin action is logged and no longer reaches the request.
+- **`ctx.tickets.query` and `ctx.replies.query` only accept the plugin contract's filter keys.** Tickets: `id`, `reference`, `status`, `priority`, `channel`, `ticket_type`, `department_id`, `requester_id`, `contact_id`, `assigned_to`. Replies: `ticket_id`, `is_internal` (the internal-note flag), `type`. Any other key, or a non-scalar value, is an error instead of a column name. Results are capped at 500 rows.
 
 ### Added
 - **Roles & permissions are enforced when switched on.** Every admin, agent and staff API route needs its permission from the user's roles as well as the host gate (`EnforceRoutePermissions`, map in `src/Support/RoutePermissions.php`; unmapped routes are refused, and a test checks every route is mapped). Status changes to `resolved`/`closed`/`reopened` also need `ticket.close`, bulk actions need each action's permission, and the staff API checks the token owner's permissions. Failing answers 403.
@@ -24,6 +27,8 @@ All notable changes to this project will be documented in this file.
 
 ### Security
 - The old SAML check verified the signature over `SignedInfo` without checking the reference digests, so the signed content was not bound to the assertion, and it checked no Audience, Destination, InResponseTo or replay. It is replaced by `onelogin/php-saml` as above.
+- Plugin ticket and reply queries used the filter's keys as column names, so an SDK plugin could filter on any column (such as `guest_token`) or pass an arbitrary column expression. Keys are now mapped through a whitelist.
+- `ctx.emit` drops hook names that would impersonate a canonical event, a legacy alias of one, or a plugin lifecycle action.
 
 ### Changed
 - TOTP uses `pragmarx/google2fa` (new dependency) instead of hand-written code, and new secrets are 32 base32 characters (160 bits) instead of 16. Existing secrets keep working.
