@@ -206,6 +206,33 @@ class PluginBridge
     }
 
     /**
+     * Run one of a plugin's cron schedules (`cron {plugin, schedule}`) within
+     * the action timeout. Fire-and-forget: a failure is logged, never thrown.
+     */
+    public function cron(string $plugin, string $schedule): void
+    {
+        if (! $this->ensureAlive()) {
+            return;
+        }
+
+        try {
+            $this->contextHandler->setCurrentPlugin($plugin);
+
+            $this->rpc->call(
+                'cron',
+                ['plugin' => $plugin, 'schedule' => $schedule],
+                self::TIMEOUT_ACTION,
+                [$this->contextHandler, 'handle']
+            );
+        } catch (\Throwable $e) {
+            Log::warning("Escalated PluginBridge: {$plugin} cron '{$schedule}' failed", [
+                'error' => $e->getMessage(),
+            ]);
+            $this->handleCrash();
+        }
+    }
+
+    /**
      * Call a plugin's data endpoint (used by API route handlers and page props).
      */
     public function callEndpoint(string $plugin, string $method, string $path, array $request = []): mixed

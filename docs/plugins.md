@@ -240,6 +240,29 @@ escalated_register_dashboard_widget([
 ]);
 ```
 
+### Scheduled Work (Cron)
+
+SDK plugins declare `cron` schedules: five-field cron expressions, evaluated in
+UTC. `php artisan escalated:plugins:cron`, run every minute, sends each schedule
+that is due that minute to the runtime as `cron {plugin, schedule}`, as no
+user, within 30 seconds. An expression that cannot be read is logged and
+skipped, and a failing schedule never stops the others. Nothing runs in tenant
+mode. With `escalated.scheduling.auto_register` on, the package schedules the
+command for you; otherwise add it to your scheduler:
+
+```php
+Schedule::command('escalated:plugins:cron')->everyMinute();
+```
+
+Native plugins use Laravel's scheduler directly. `Plugin.php` is loaded only
+for active plugins, so an inactive plugin schedules nothing:
+
+```php
+app()->afterResolving(\Illuminate\Console\Scheduling\Schedule::class, function ($schedule) {
+    $schedule->call(fn () => app(InvoiceReminder::class)->send())->dailyAt('09:00');
+});
+```
+
 ### Page Components (Slots)
 
 Inject components into existing pages:
