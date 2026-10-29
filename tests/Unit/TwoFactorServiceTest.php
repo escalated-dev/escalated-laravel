@@ -9,7 +9,8 @@ beforeEach(function () {
 it('generates a base32 secret', function () {
     $secret = $this->service->generateSecret();
 
-    expect($secret)->toHaveLength(16);
+    // 32 base32 characters: 160 bits, the RFC 4226 recommendation.
+    expect($secret)->toHaveLength(32);
     expect($secret)->toMatch('/^[A-Z2-7]+$/');
 });
 
