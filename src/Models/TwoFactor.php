@@ -27,6 +27,7 @@ class TwoFactor extends Model
             'secret' => 'encrypted',
             'recovery_codes' => 'encrypted:array',
             'confirmed_at' => 'datetime',
+            'last_used_step' => 'integer',
         ];
     }
 

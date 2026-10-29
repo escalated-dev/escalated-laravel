@@ -42,13 +42,16 @@ use Escalated\Laravel\Http\Controllers\Admin\WebhookController;
 use Escalated\Laravel\Http\Controllers\Admin\WorkflowController;
 use Escalated\Laravel\Http\Controllers\BulkActionController;
 use Escalated\Laravel\Http\Controllers\PresenceController;
+use Escalated\Laravel\Http\Controllers\TwoFactorChallengeController;
 use Escalated\Laravel\Http\Middleware\EnforceRoutePermissions;
 use Escalated\Laravel\Http\Middleware\EnsureFeatureEnabled;
 use Escalated\Laravel\Http\Middleware\EnsureIsAdmin;
+use Escalated\Laravel\Http\Middleware\EnsureIsStaff;
+use Escalated\Laravel\Http\Middleware\RequireTwoFactor;
 use Escalated\Laravel\Http\Middleware\ResolveTicketByReference;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web', 'auth']), [EnsureIsAdmin::class, EnforceRoutePermissions::class]))
+Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web', 'auth']), [EnsureIsAdmin::class, RequireTwoFactor::class, EnforceRoutePermissions::class]))
     ->prefix(config('escalated.routes.prefix', 'support').'/admin')
     ->group(function () {
         Route::get('/agents/search', AgentSearchController::class)->name('escalated.admin.agents.search');
@@ -220,12 +223,6 @@ Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web'
         Route::get('/settings/sso', [SsoSettingsController::class, 'index'])->name('escalated.admin.settings.sso');
         Route::post('/settings/sso', [SsoSettingsController::class, 'update'])->name('escalated.admin.settings.sso.update');
 
-        // Two-Factor Authentication
-        Route::get('/settings/two-factor', [TwoFactorController::class, 'index'])->name('escalated.admin.two-factor.index');
-        Route::post('/settings/two-factor/setup', [TwoFactorController::class, 'setup'])->name('escalated.admin.two-factor.setup');
-        Route::post('/settings/two-factor/confirm', [TwoFactorController::class, 'confirm'])->name('escalated.admin.two-factor.confirm');
-        Route::post('/settings/two-factor/disable', [TwoFactorController::class, 'disable'])->name('escalated.admin.two-factor.disable');
-
         // Database connection. Read-only when escalated.connection pins it in
         // config; see DatabaseConnectionController for why the choice is stored
         // in a file rather than in the database it selects.
@@ -305,4 +302,32 @@ Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web'
             Route::post('/resume/{jobId}', [ImportController::class, 'resume'])->name('resume');
             Route::post('/cancel/{jobId}', [ImportController::class, 'cancel'])->name('cancel');
         });
+    });
+
+// Two-factor authentication (ADR 2026-10-29-configurable-access-features).
+// 404 while escalated.access.two_factor is off.
+//
+// Enrolment is about the signed-in user's own account, so every staff user
+// reaches it, not only admins. It keeps its /admin/settings URL and names.
+Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web', 'auth']), [
+    EnsureFeatureEnabled::class.':two_factor', EnsureIsStaff::class, RequireTwoFactor::class,
+]))
+    ->prefix(config('escalated.routes.prefix', 'support').'/admin')
+    ->group(function () {
+        Route::get('/settings/two-factor', [TwoFactorController::class, 'index'])->name('escalated.admin.two-factor.index');
+        Route::post('/settings/two-factor/setup', [TwoFactorController::class, 'setup'])->name('escalated.admin.two-factor.setup');
+        Route::post('/settings/two-factor/confirm', [TwoFactorController::class, 'confirm'])->name('escalated.admin.two-factor.confirm');
+        Route::post('/settings/two-factor/disable', [TwoFactorController::class, 'disable'])->name('escalated.admin.two-factor.disable');
+    });
+
+// The challenge after the host's password login.
+Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web', 'auth']), [
+    EnsureFeatureEnabled::class.':two_factor',
+]))
+    ->prefix(config('escalated.routes.prefix', 'support'))
+    ->group(function () {
+        Route::get('/two-factor/challenge', [TwoFactorChallengeController::class, 'show'])->name('escalated.two-factor.challenge');
+        Route::post('/two-factor/challenge', [TwoFactorChallengeController::class, 'verify'])
+            ->middleware('throttle:escalated-two-factor')
+            ->name('escalated.two-factor.verify');
     });

@@ -2,11 +2,14 @@
 
 use Escalated\Laravel\Models\TwoFactor;
 use Escalated\Laravel\Services\TwoFactorService;
+use Escalated\Laravel\Support\TwoFactorSession;
 use Illuminate\Support\Facades\Gate;
 
 beforeEach(function () {
     Gate::define('escalated-agent', fn ($user) => $user->is_agent || $user->is_admin);
     Gate::define('escalated-admin', fn ($user) => $user->is_admin);
+    // These screens exist only while two-factor is switched on.
+    config(['escalated.access.two_factor' => true]);
 });
 
 it('shows the two-factor settings page', function () {
@@ -62,7 +65,9 @@ it('disables two-factor for the current user', function () {
         'confirmed_at' => now(),
     ]);
 
+    // Switching it off needs a session that has passed the challenge.
     $this->actingAs($admin)
+        ->withSession([TwoFactorSession::KEY => (string) $admin->getKey()])
         ->post(route('escalated.admin.two-factor.disable'))
         ->assertRedirect();
 

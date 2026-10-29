@@ -9,11 +9,17 @@ All notable changes to this project will be documented in this file.
   - While it is off, the roles screens (`{prefix}/admin/roles*`) answer 404.
   - While it is off, the newsletter screens no longer check `newsletters.manage` / `newsletters.send`; the admin gate decides, like every other screen. Installs that used those permissions to restrict admins must turn the switch on.
   To enforce roles: seed the permissions (`php artisan db:seed --class="Escalated\Laravel\Database\Seeders\PermissionSeeder"`), give every staff user a role (`php artisan escalated:roles:assign you@example.com admin`), then set `ESCALATED_ROLES_PERMISSIONS=true`. Passing the admin gate grants no permissions by itself, so an admin without a role is refused everywhere but their own two-factor screen. See `docs/access-control.md`.
+- **Two-factor authentication is now an install-level switch, off by default** (`escalated.access.two_factor`, env `ESCALATED_TWO_FACTOR`). Enrolment was possible but no login was ever challenged. While it is off, the two-factor screen and its setup/confirm/disable routes answer 404 (they answered 200 before) and nobody is challenged; enrolments are kept. To enforce it, run `php artisan migrate` (adds the nullable `last_used_step` column to `two_factor`), then set `ESCALATED_TWO_FACTOR=true`; users who already enrolled are challenged from their next visit. See `docs/access-control.md`.
+- The two-factor screen (`escalated.admin.two-factor.*`, same URLs) is now open to every staff user, not only admins, since it manages the signed-in user's own account.
 - The shared `escalated.permissions` prop is `['*']` for staff while the switch is off (it was the user's role slugs, which nothing enforced), and `escalated.features.roles_permissions` tells the frontend whether roles are on.
 
 ### Added
 - **Roles & permissions are enforced when switched on.** Every admin, agent and staff API route needs its permission from the user's roles as well as the host gate (`EnforceRoutePermissions`, map in `src/Support/RoutePermissions.php`; unmapped routes are refused, and a test checks every route is mapped). Status changes to `resolved`/`closed`/`reopened` also need `ticket.close`, bulk actions need each action's permission, and the staff API checks the token owner's permissions. Failing answers 403.
 - `php artisan escalated:roles:assign {user} {role=admin}` gives a user a role by email or ID.
+- **Two-factor is enforced when switched on.** A staff user with a confirmed enrolment must pass `Auth/TwoFactorChallenge` (`GET|POST {prefix}/two-factor/challenge`, throttled to 5 a minute) with a TOTP or single-use recovery code before any admin or agent route, once per login. A TOTP code cannot be used twice. `escalated.two_factor.required` (`ESCALATED_TWO_FACTOR_REQUIRED`) or the `two_factor_required` setting makes every staff user enrol first. `php artisan escalated:two-factor:reset {user}` clears an enrolment. The page props are `action` and `error`; shared props gain `features.two_factor` and `two_factor_required`, and `Admin/Settings/TwoFactor` gains `required`.
+
+### Changed
+- TOTP uses `pragmarx/google2fa` (new dependency) instead of hand-written code, and new secrets are 32 base32 characters (160 bits) instead of 16. Existing secrets keep working.
 - `PUT {prefix}/admin/users/{user}/roles` (`escalated.admin.users.roles`, needs `role.manage`) replaces a user's roles; you cannot remove your own `role.manage`. While roles are on, the users page also receives each user's `roles` and the assignable `roles`.
 
 ## [1.9.11] - 2026-10-28
