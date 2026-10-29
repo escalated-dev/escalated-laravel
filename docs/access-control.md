@@ -13,6 +13,7 @@ changes them.
 | Feature | Config key | Env var |
 |---|---|---|
 | Roles & permissions | `escalated.access.roles_permissions` | `ESCALATED_ROLES_PERMISSIONS` |
+| Two-factor authentication | `escalated.access.two_factor` | `ESCALATED_TWO_FACTOR` |
 
 ## Roles & permissions
 
@@ -80,3 +81,48 @@ Staff without a role can still reach their personal screens and nothing else.
 Every page gets `escalated.features.roles_permissions` (boolean) and
 `escalated.permissions`: the user's slugs while on, `['*']` for staff while
 off, `[]` for everyone else.
+
+## Two-factor authentication
+
+### What is enforced
+
+With `ESCALATED_TWO_FACTOR=true`:
+
+- **Enrolment.** Every staff user (agents too, not only admins) can set up
+  TOTP at `{prefix}/admin/settings/two-factor` (`Admin/Settings/TwoFactor`):
+  `setup` issues a 160-bit secret, an `otpauth://` URI and eight recovery
+  codes; `confirm` takes a 6-digit code; `disable` removes the enrolment.
+  Secrets and recovery codes are stored encrypted. TOTP is RFC 6238 (SHA-1,
+  6 digits, 30 s) via `pragmarx/google2fa`, accepting one step of clock drift.
+- **Challenge.** Escalated does not own your login form. After the host signs
+  someone in, a staff user with a confirmed enrolment who opens any admin or
+  agent route is redirected to `GET {prefix}/two-factor/challenge`, which
+  renders the shared `Auth/TwoFactorChallenge` page (props: `action`,
+  `error`). It posts `code` or `recovery_code` to
+  `POST {prefix}/two-factor/challenge`. Success regenerates the session and
+  returns to the page they asked for. JSON requests get 403 with
+  `two_factor_required: true` instead of a redirect.
+- Every login and logout (Laravel's `Login` / `Logout` events) clears the
+  mark, so each new login is challenged. The mark is tied to the user ID.
+- A code works once: its time step is recorded and that step or any earlier
+  one is refused. Recovery codes are removed when used.
+- The challenge is throttled to 5 attempts a minute per user.
+- **Required.** `ESCALATED_TWO_FACTOR_REQUIRED=true`, or the
+  `two_factor_required` setting (Admin > Settings; the setting wins once
+  saved), sends staff without an enrolment to the enrolment page, and they can
+  use nothing else until they enrol. Shared prop `escalated.two_factor_required`
+  is true for a user in that position.
+- **Lost device.** `php artisan escalated:two-factor:reset you@example.com`
+  removes a user's enrolment.
+- The token API is not session-based and is not challenged.
+
+While the switch is off, the enrolment and challenge routes answer 404 and
+nobody is challenged. Enrolments are kept.
+
+### Turning it on
+
+1. Run `php artisan migrate` (adds `two_factor.last_used_step`).
+2. Set `ESCALATED_TWO_FACTOR=true`. Anyone who enrolled while it was not
+   enforced is challenged from their next visit.
+3. Optionally require it, after telling your staff.
+

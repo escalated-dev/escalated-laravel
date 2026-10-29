@@ -390,9 +390,30 @@ return [
     | Seed the permissions and give every staff user a role first, e.g.
     | `php artisan escalated:roles:assign you@example.com admin`.
     |
+    | two_factor: staff with a confirmed TOTP enrolment must pass the
+    | Auth/TwoFactorChallenge page after signing in, before any admin or agent
+    | route. Run the migrations first.
+    |
     */
     'access' => [
         'roles_permissions' => (bool) env('ESCALATED_ROLES_PERMISSIONS', false),
+        'two_factor' => (bool) env('ESCALATED_TWO_FACTOR', false),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Two-factor authentication
+    |--------------------------------------------------------------------------
+    |
+    | Used while access.two_factor is on. `required` sends every staff user
+    | without an enrolment to set one up; admins can also switch it at runtime
+    | with the `two_factor_required` setting, which wins once saved. `issuer`
+    | is the name authenticator apps show (default: app.name).
+    |
+    */
+    'two_factor' => [
+        'required' => (bool) env('ESCALATED_TWO_FACTOR_REQUIRED', false),
+        'issuer' => env('ESCALATED_TWO_FACTOR_ISSUER'),
     ],
 
     /*

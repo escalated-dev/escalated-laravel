@@ -22,6 +22,7 @@ use Escalated\Laravel\Console\Commands\ProcessSlackInboxCommand;
 use Escalated\Laravel\Console\Commands\ProvisionTenantCommand;
 use Escalated\Laravel\Console\Commands\PurgeActivitiesCommand;
 use Escalated\Laravel\Console\Commands\PurgeExpiredDataCommand;
+use Escalated\Laravel\Console\Commands\ResetTwoFactorCommand;
 use Escalated\Laravel\Console\Commands\RetryTenantBatchCommand;
 use Escalated\Laravel\Console\Commands\RetryTenantJobsCommand;
 use Escalated\Laravel\Console\Commands\RunAutomationsCommand;
@@ -34,6 +35,7 @@ use Escalated\Laravel\Http\Controllers\Admin\ApiTokenController;
 use Escalated\Laravel\Http\Middleware\CheckPermission;
 use Escalated\Laravel\Http\Middleware\EnforceRoutePermissions;
 use Escalated\Laravel\Http\Middleware\EnsureIsAdmin;
+use Escalated\Laravel\Http\Middleware\RequireTwoFactor;
 use Escalated\Laravel\Http\Middleware\ResolveTenant;
 use Escalated\Laravel\Http\Middleware\ResolveTicketByReference;
 use Escalated\Laravel\Http\Middleware\WidgetCors;
@@ -43,10 +45,12 @@ use Escalated\Laravel\Services\ImportService;
 use Escalated\Laravel\Services\PluginService;
 use Escalated\Laravel\Services\PluginUIService;
 use Escalated\Laravel\Services\TicketActionRegistry;
+use Escalated\Laravel\Services\TwoFactorService;
 use Escalated\Laravel\Support\AccessFeatures;
 use Escalated\Laravel\Support\GuestRateLimits;
 use Escalated\Laravel\Support\HookManager;
 use Escalated\Laravel\Support\StaffAccess;
+use Escalated\Laravel\Support\TwoFactorSession;
 use Escalated\Laravel\Tenancy\TenantBackgroundConnector;
 use Escalated\Laravel\Tenancy\TenantBroadcast;
 use Escalated\Laravel\Tenancy\TenantContext;
@@ -57,6 +61,9 @@ use Escalated\Laravel\Tenancy\TenantSyncConnector;
 use Escalated\Laravel\Tenancy\UnconfiguredTenantCatalog;
 use Escalated\Laravel\Tenancy\UnconfiguredTenantResolver;
 use Escalated\Laravel\UI\InertiaUiRenderer;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Foundation\Http\Events\RequestHandled;
@@ -70,6 +77,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Translation\Translator;
@@ -172,6 +180,8 @@ class EscalatedServiceProvider extends ServiceProvider
     public function boot(): void
     {
         GuestRateLimits::register();
+        RateLimiter::for('escalated-two-factor', fn ($request) => Limit::perMinute(5)
+            ->by('escalated-two-factor:'.($request->user()?->getAuthIdentifier() ?? $request->ip())));
         $this->flushSettingsBetweenOperations();
         Queue::createPayloadUsing(static fn () => app(TenantQueueContext::class)->payload());
         $this->callAfterResolving(Kernel::class, function ($kernel) {
@@ -262,7 +272,7 @@ class EscalatedServiceProvider extends ServiceProvider
             return;
         }
 
-        Route::middleware(array_merge(['web'], $this->tenantMiddleware(), [EnsureIsAdmin::class, CheckPermission::class.':newsletters.manage']))
+        Route::middleware(array_merge(['web'], $this->tenantMiddleware(), [EnsureIsAdmin::class, RequireTwoFactor::class, CheckPermission::class.':newsletters.manage']))
             ->prefix('admin/newsletters')
             ->name('escalated.admin.newsletters.')
             ->group(__DIR__.'/../routes/newsletter-admin.php');
@@ -512,7 +522,7 @@ class EscalatedServiceProvider extends ServiceProvider
         $middleware = array_merge(
             config('escalated.routes.admin_middleware', ['web', 'auth']),
             $this->tenantMiddleware(),
-            [EnsureIsAdmin::class, EnforceRoutePermissions::class]
+            [EnsureIsAdmin::class, RequireTwoFactor::class, EnforceRoutePermissions::class]
         );
 
         Route::middleware($middleware)
@@ -534,6 +544,7 @@ class EscalatedServiceProvider extends ServiceProvider
         $this->commands([
             AssignLegacyTenantCommand::class,
             AssignRoleCommand::class,
+            ResetTwoFactorCommand::class,
             ProvisionTenantCommand::class,
             RetryTenantJobsCommand::class,
             RetryTenantBatchCommand::class,
@@ -616,6 +627,8 @@ class EscalatedServiceProvider extends ServiceProvider
                     'newsletters' => (bool) config('escalated.enable_newsletters', false),
                     ...AccessFeatures::shared(),
                 ],
+                'two_factor_required' => $user && TwoFactorService::required() && StaffAccess::isStaff($user)
+                    && ! TwoFactorService::confirmedFor($user),
             ];
 
             // Share guest tickets setting for frontend (check table exists first)
@@ -680,6 +693,12 @@ class EscalatedServiceProvider extends ServiceProvider
 
     protected function registerEvents(): void
     {
+        // Every login (and logout) has to pass the two-factor challenge afresh.
+        Event::listen([Login::class, Logout::class], function () {
+            if ($this->app->bound('session.store')) {
+                TwoFactorSession::forget($this->app['session.store']);
+            }
+        });
         Event::listen(RequestHandled::class, [WidgetCors::class, 'decorateEarlyResponse']);
         Event::listen(Events\TicketCreated::class, Listeners\SendNewTicketNotifications::class);
         Event::listen(Events\TicketCreated::class, Listeners\AutoAssignTicket::class);

@@ -3,9 +3,10 @@
 use Escalated\Laravel\Http\Controllers\Admin\PluginController;
 use Escalated\Laravel\Http\Middleware\EnforceRoutePermissions;
 use Escalated\Laravel\Http\Middleware\EnsureIsAdmin;
+use Escalated\Laravel\Http\Middleware\RequireTwoFactor;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web', 'auth']), [EnsureIsAdmin::class, EnforceRoutePermissions::class]))
+Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web', 'auth']), [EnsureIsAdmin::class, RequireTwoFactor::class, EnforceRoutePermissions::class]))
     ->prefix(config('escalated.routes.prefix', 'support').'/admin')
     ->group(function () {
         Route::get('/plugins', [PluginController::class, 'index'])->name('escalated.admin.plugins.index');

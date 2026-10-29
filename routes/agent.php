@@ -6,10 +6,11 @@ use Escalated\Laravel\Http\Controllers\BulkActionController;
 use Escalated\Laravel\Http\Controllers\PresenceController;
 use Escalated\Laravel\Http\Middleware\EnforceRoutePermissions;
 use Escalated\Laravel\Http\Middleware\EnsureIsAgent;
+use Escalated\Laravel\Http\Middleware\RequireTwoFactor;
 use Escalated\Laravel\Http\Middleware\ResolveTicketByReference;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web', 'auth']), [EnsureIsAgent::class, EnforceRoutePermissions::class]))
+Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web', 'auth']), [EnsureIsAgent::class, RequireTwoFactor::class, EnforceRoutePermissions::class]))
     ->prefix(config('escalated.routes.prefix', 'support').'/agent')
     ->group(function () {
         Route::get('/', DashboardController::class)->name('escalated.agent.dashboard');

@@ -16,11 +16,17 @@ final class AccessFeatures
         return (bool) config('escalated.access.roles_permissions', false);
     }
 
+    public static function twoFactor(): bool
+    {
+        return (bool) config('escalated.access.two_factor', false);
+    }
+
     /** @return array<string, bool> the `features` shared with every page */
     public static function shared(): array
     {
         return [
             'roles_permissions' => self::rolesPermissions(),
+            'two_factor' => self::twoFactor(),
         ];
     }
 }

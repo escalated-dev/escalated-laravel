@@ -5,6 +5,7 @@ namespace Escalated\Laravel\Http\Controllers\Admin;
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Models\TwoFactor;
 use Escalated\Laravel\Services\TwoFactorService;
+use Escalated\Laravel\Support\TwoFactorSession;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 
@@ -22,12 +23,17 @@ class TwoFactorController extends Controller
         return $this->renderer->render('Escalated/Admin/Settings/TwoFactor', [
             'enabled' => $twoFactor?->isConfirmed() ?? false,
             'pending' => $twoFactor && ! $twoFactor->isConfirmed(),
+            'required' => TwoFactorService::required(),
         ]);
     }
 
     public function setup(Request $request, TwoFactorService $service)
     {
         $user = $request->user();
+
+        if (TwoFactorService::confirmedFor($user)) {
+            return back()->with('error', 'Two-factor authentication is already enabled. Disable it first to set it up again.');
+        }
 
         // Remove any existing unconfirmed setup
         TwoFactor::where('user_id', $user->getKey())
@@ -64,12 +70,15 @@ class TwoFactorController extends Controller
             return back()->withErrors(['code' => 'No pending two-factor setup found.']);
         }
 
-        if (! $service->verify($twoFactor->secret, $request->code)) {
+        if (! $service->verifyAndConsume($twoFactor, (string) $request->code)) {
             return back()->withErrors(['code' => 'Invalid verification code.']);
         }
 
         $recoveryCodes = $twoFactor->recovery_codes ?? [];
         $twoFactor->update(['confirmed_at' => now()]);
+
+        // The code just entered proves the second factor for this session.
+        TwoFactorSession::markPassed($request->session(), $user);
 
         return back()
             ->with('success', 'Two-factor authentication enabled.')
