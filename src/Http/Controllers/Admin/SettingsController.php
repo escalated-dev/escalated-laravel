@@ -27,17 +27,20 @@ class SettingsController extends Controller
     }
 
     /**
-     * The settings this page saves.
+     * The settings this page saves. Every key is optional so another page can
+     * save just its own (Admin/Settings/TwoFactor posts only
+     * `two_factor_required`); a key that is sent is still validated, and keys
+     * left out keep their stored value.
      */
     protected function rules(): array
     {
         return [
-            'guest_tickets_enabled' => ['required', 'boolean'],
-            'allow_customer_close' => ['required', 'boolean'],
-            'auto_close_resolved_after_days' => ['required', 'integer', 'min:0', 'max:365'],
-            'max_attachments_per_reply' => ['required', 'integer', 'min:1', 'max:20'],
-            'max_attachment_size_kb' => ['required', 'integer', 'min:512', 'max:102400'],
-            'ticket_reference_prefix' => ['required', 'string', 'max:10', 'alpha_num'],
+            'guest_tickets_enabled' => ['sometimes', 'required', 'boolean'],
+            'allow_customer_close' => ['sometimes', 'required', 'boolean'],
+            'auto_close_resolved_after_days' => ['sometimes', 'required', 'integer', 'min:0', 'max:365'],
+            'max_attachments_per_reply' => ['sometimes', 'required', 'integer', 'min:1', 'max:20'],
+            'max_attachment_size_kb' => ['sometimes', 'required', 'integer', 'min:512', 'max:102400'],
+            'ticket_reference_prefix' => ['sometimes', 'required', 'string', 'max:10', 'alpha_num'],
             'show_powered_by' => ['sometimes', 'boolean'],
             'inbound_email_enabled' => ['sometimes', 'boolean'],
             'inbound_email_adapter' => ['sometimes', 'string', 'in:mailgun,postmark,ses,imap'],
