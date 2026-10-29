@@ -394,10 +394,47 @@ return [
     | Auth/TwoFactorChallenge page after signing in, before any admin or agent
     | route. Run the migrations first.
     |
+    | sso: users sign in through the provider chosen in Admin > Settings > SSO
+    | (SAML, OAuth 2 / OIDC or JWT), at {prefix}/sso/login. See `sso` below.
+    |
     */
     'access' => [
         'roles_permissions' => (bool) env('ESCALATED_ROLES_PERMISSIONS', false),
         'two_factor' => (bool) env('ESCALATED_TWO_FACTOR', false),
+        'sso' => (bool) env('ESCALATED_SSO', false),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Single sign-on
+    |--------------------------------------------------------------------------
+    |
+    | Used while access.sso is on. The provider and its fields are chosen in
+    | Admin > Settings > SSO; these are the install-level rules around it.
+    |
+    | sp_entity_id         SAML SP entity ID (default: the SP metadata URL).
+    | allow_idp_initiated  Accept SAML responses that answer no request.
+    | jwt_audience         The `aud` a JWT must carry (default: app.url).
+    | clock_skew           Seconds of JWT clock skew (max 300). SAML uses
+    |                      php-saml's fixed 180 seconds.
+    | create_users         Create a host user for an unknown email. Off:
+    |                      unknown emails are refused.
+    | sync_roles           With roles & permissions on, replace the user's
+    |                      roles with the role the IdP asserts (by slug).
+    | guard                Auth guard to sign in on (default guard if null).
+    | redirect_to          Where to land after sign-in (default: the agent
+    |                      dashboard, or admin reports for admin-only users).
+    |
+    */
+    'sso' => [
+        'sp_entity_id' => env('ESCALATED_SSO_SP_ENTITY_ID'),
+        'allow_idp_initiated' => (bool) env('ESCALATED_SSO_ALLOW_IDP_INITIATED', false),
+        'jwt_audience' => env('ESCALATED_SSO_JWT_AUDIENCE'),
+        'clock_skew' => (int) env('ESCALATED_SSO_CLOCK_SKEW', 120),
+        'create_users' => (bool) env('ESCALATED_SSO_CREATE_USERS', false),
+        'sync_roles' => (bool) env('ESCALATED_SSO_SYNC_ROLES', false),
+        'guard' => env('ESCALATED_SSO_GUARD'),
+        'redirect_to' => env('ESCALATED_SSO_REDIRECT_TO'),
     ],
 
     /*

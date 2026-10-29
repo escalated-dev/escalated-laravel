@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Gate;
 beforeEach(function () {
     Gate::define('escalated-agent', fn ($user) => $user->is_agent || $user->is_admin);
     Gate::define('escalated-admin', fn ($user) => $user->is_admin);
+    // The SSO screens exist only while SSO is switched on.
+    config(['escalated.access.sso' => true]);
 });
 
 it('shows the sso settings page', function () {

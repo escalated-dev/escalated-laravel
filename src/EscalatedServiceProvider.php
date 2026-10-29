@@ -460,6 +460,9 @@ class EscalatedServiceProvider extends ServiceProvider
 
         $this->loadRoutesFrom(__DIR__.'/../routes/slack.php');
 
+        // Single sign-on; every route answers 404 while escalated.access.sso is off.
+        $this->loadTenantRoutesFrom(__DIR__.'/../routes/sso.php');
+
         // REST API routes (token auth, no session)
         if (config('escalated.api.enabled', false)) {
             $this->loadTenantRoutesFrom(__DIR__.'/../routes/api.php');

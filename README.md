@@ -45,7 +45,7 @@ A full-featured, embeddable support ticket system for Laravel. Drop it into any 
 - **Tagging system** — Categorize tickets with colored tags
 - **Guest tickets** — Email-verified submission, expiring private links, and host-supplied tracking lookup; see [verified guest access and upgrade requirements](docs/guest-access.md)
 - **Embed on other sites** — Put the widget, ticket form or live chat on a store or marketing site with one script tag and host parameters; see [embedding the widget](docs/embedding-the-widget.md)
-- **Access control** — Roles & permissions and two-factor authentication as install-level switches that is enforced on every staff route when on and hidden when off; see [access control](docs/access-control.md)
+- **Access control** — Roles & permissions, two-factor authentication and SSO (SAML, OAuth/OIDC, JWT) as install-level switches that is enforced on every staff route when on and hidden when off; see [access control](docs/access-control.md)
 - **Agent integration API** — Create tickets for host users or named contacts with metadata, tracking references and ordered host-model subjects in one call; see [the API contract](docs/agent-ticket-api.md)
 - **Inbound email** — Create and reply to tickets via email (Mailgun, Postmark, AWS SES, IMAP)
 - **Inertia.js + Vue 3 UI** — Shared frontend via [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated)

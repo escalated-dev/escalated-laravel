@@ -220,8 +220,10 @@ Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web'
             ->name('escalated.admin.settings.public-tickets.update');
 
         // SSO Settings
-        Route::get('/settings/sso', [SsoSettingsController::class, 'index'])->name('escalated.admin.settings.sso');
-        Route::post('/settings/sso', [SsoSettingsController::class, 'update'])->name('escalated.admin.settings.sso.update');
+        Route::middleware(EnsureFeatureEnabled::class.':sso')->group(function () {
+            Route::get('/settings/sso', [SsoSettingsController::class, 'index'])->name('escalated.admin.settings.sso');
+            Route::post('/settings/sso', [SsoSettingsController::class, 'update'])->name('escalated.admin.settings.sso.update');
+        });
 
         // Database connection. Read-only when escalated.connection pins it in
         // config; see DatabaseConnectionController for why the choice is stored

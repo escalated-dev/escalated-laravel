@@ -9,7 +9,7 @@ class TenantTables
 {
     // Installation administration, immutable permission vocabulary and host
     // identity security. None carries merchant correspondence or credentials.
-    public const PLATFORM = ['plugins', 'permissions', 'two_factor', 'attachment_migration_locks'];
+    public const PLATFORM = ['plugins', 'permissions', 'two_factor', 'attachment_migration_locks', 'sso_message_ids'];
 
     // Frozen table set used by the initial tenant migration. Later tables own
     // their tenant column in their creation migration.

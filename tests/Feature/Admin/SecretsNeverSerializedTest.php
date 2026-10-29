@@ -229,6 +229,7 @@ it('replaces the webhook secret when a new one is entered, and clears it on requ
 // --- SSO ---------------------------------------------------------------------
 
 it('keeps the sso jwt secret and oauth client secret out of the sso settings page', function () {
+    config(['escalated.access.sso' => true]);
     EscalatedSettings::set('sso_provider', 'oauth');
     EscalatedSettings::set('sso_jwt_secret', 'jwt-secret-5e6f7a8b9c');
     EscalatedSettings::set('sso_oauth_client_secret', 'oauth-secret-1a2b3c4d5e');
@@ -245,6 +246,7 @@ it('keeps the sso jwt secret and oauth client secret out of the sso settings pag
 });
 
 it('keeps the stored sso secrets when the form posts back the masked values', function () {
+    config(['escalated.access.sso' => true]);
     EscalatedSettings::set('sso_jwt_secret', 'jwt-secret-5e6f7a8b9c');
     EscalatedSettings::set('sso_oauth_client_secret', 'oauth-secret-1a2b3c4d5e');
 
