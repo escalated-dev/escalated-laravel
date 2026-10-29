@@ -8,11 +8,12 @@ use Escalated\Laravel\Http\Controllers\Api\TicketController;
 use Escalated\Laravel\Http\Controllers\Api\TicketSubjectController;
 use Escalated\Laravel\Http\Middleware\ApiRateLimit;
 use Escalated\Laravel\Http\Middleware\AuthenticateApiToken;
+use Escalated\Laravel\Http\Middleware\EnforceRoutePermissions;
 use Escalated\Laravel\Http\Middleware\ResolveTicketByReference;
 use Illuminate\Support\Facades\Route;
 
 // Agent-level routes (require 'agent' ability)
-Route::middleware([AuthenticateApiToken::class.':agent', ApiRateLimit::class])
+Route::middleware([AuthenticateApiToken::class.':agent', ApiRateLimit::class, EnforceRoutePermissions::class])
     ->prefix(config('escalated.api.prefix', 'support/api/v1'))
     ->group(function () {
         Route::post('/auth/validate', [AuthController::class, 'validate'])->name('escalated.api.auth.validate');
@@ -46,7 +47,7 @@ Route::middleware([AuthenticateApiToken::class.':agent', ApiRateLimit::class])
     });
 
 // Admin-level routes (require 'admin' ability)
-Route::middleware([AuthenticateApiToken::class.':admin', ApiRateLimit::class])
+Route::middleware([AuthenticateApiToken::class.':admin', ApiRateLimit::class, EnforceRoutePermissions::class])
     ->prefix(config('escalated.api.prefix', 'support/api/v1'))
     ->group(function () {
         Route::middleware(ResolveTicketByReference::class)->group(function () {

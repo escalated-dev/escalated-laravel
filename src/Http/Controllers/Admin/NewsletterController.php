@@ -29,7 +29,7 @@ class NewsletterController extends Controller
     private function requireSendPermission(): void
     {
         abort_unless(
-            CheckPermission::userHasPermission(Auth::id(), 'newsletters.send'),
+            CheckPermission::allows(Auth::id(), 'newsletters.send'),
             403,
             'You do not have the required permission: newsletters.send'
         );

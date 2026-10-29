@@ -4,6 +4,8 @@ namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Escalated;
+use Escalated\Laravel\Models\Role;
+use Escalated\Laravel\Support\AccessFeatures;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
@@ -51,11 +53,59 @@ class UserController extends Controller
                 'is_agent' => (bool) ($user->is_agent ?? false),
             ]);
 
-        return $this->renderer->render('Escalated/Admin/Users/Index', [
+        $props = [
             'users' => $users,
             'filters' => ['search' => $search ?: ''],
             'currentUserId' => $request->user()?->getKey(),
+        ];
+
+        // Escalated roles, only while roles & permissions is enforced: each
+        // user's role slugs, and the roles an admin can give them.
+        if (AccessFeatures::rolesPermissions()) {
+            $roles = Role::orderBy('name')->get(['id', 'name', 'slug']);
+            $assigned = Escalated::query(Escalated::table('role_user'))
+                ->whereIn('user_id', $users->getCollection()->pluck('id')->all())
+                ->get(['user_id', 'role_id'])
+                ->groupBy('user_id');
+            $slugs = $roles->pluck('slug', 'id');
+
+            $users->through(fn (array $row) => $row + [
+                'roles' => collect($assigned->get($row['id'], []))
+                    ->map(fn ($pivot) => $slugs[$pivot->role_id] ?? null)
+                    ->filter()->sort()->values()->all(),
+            ]);
+            $props['roles'] = $roles->map(fn (Role $role) => $role->only(['id', 'name', 'slug']))->all();
+        }
+
+        return $this->renderer->render('Escalated/Admin/Users/Index', $props);
+    }
+
+    /**
+     * Replace a user's Escalated roles (roles & permissions on only).
+     */
+    public function updateRoles(Request $request, int|string $user): RedirectResponse
+    {
+        $validated = $request->validate([
+            'role_ids' => 'present|array',
+            'role_ids.*' => 'integer|exists:'.Role::class.',id',
         ]);
+
+        /** @var Model $target */
+        $target = Escalated::userQuery()->findOrFail($user);
+        $roleIds = array_values(array_unique(array_map('intval', $validated['role_ids'])));
+
+        // Taking away your own role management would leave nobody able to undo it.
+        if ((string) $request->user()?->getKey() === (string) $target->getKey()
+            && ! Role::whereIn('id', $roleIds)->whereHas('permissions', fn ($q) => $q->where('slug', 'role.manage'))->exists()) {
+            return back()->with('error', __('You cannot remove your own role management.'));
+        }
+
+        Escalated::query(Escalated::table('role_user'))->where('user_id', $target->getKey())->delete();
+        foreach ($roleIds as $roleId) {
+            Escalated::query(Escalated::table('role_user'))->insert(['user_id' => $target->getKey(), 'role_id' => $roleId]);
+        }
+
+        return back()->with('success', __('User updated.'));
     }
 
     public function updateRole(Request $request, int|string $user): RedirectResponse
