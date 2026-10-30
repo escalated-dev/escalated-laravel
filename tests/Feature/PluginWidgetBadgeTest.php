@@ -28,6 +28,7 @@ function dashboardWidgetsFor($user): array
 }
 
 it('asks SDK widget badges from the runtime as the viewer', function () {
+    activateSdkPlugins('@acme/plugin-crm');
     $bridge = Mockery::mock(PluginBridge::class);
     $bridge->shouldReceive('isBooted')->andReturn(true);
     $bridge->shouldReceive('getManifests')->andReturn(['@acme/plugin-crm' => ['widgets' => [
@@ -62,6 +63,7 @@ it('asks SDK widget badges from the runtime as the viewer', function () {
 });
 
 it('does not ask the badge of a widget the viewer cannot see', function () {
+    activateSdkPlugins('@acme/plugin-crm');
     $bridge = Mockery::mock(PluginBridge::class);
     $bridge->shouldReceive('isBooted')->andReturn(true);
     $bridge->shouldReceive('getManifests')->andReturn(['@acme/plugin-crm' => ['widgets' => [

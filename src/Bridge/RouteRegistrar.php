@@ -18,7 +18,8 @@ use Illuminate\Support\Facades\Route;
  *  - Endpoints  → API routes:       api/plugins/{plugin}/{path}
  *  - Webhooks   → Public routes:   webhooks/plugins/{plugin}/{path}
  *
- * All routes are registered lazily after the manifest exchange during bridge boot.
+ * All routes are registered lazily after the manifest exchange during bridge boot,
+ * for every installed plugin; each answers 404 while its plugin is inactive.
  */
 class RouteRegistrar
 {
@@ -98,6 +99,9 @@ class RouteRegistrar
                     $routeName = "escalated.plugin.{$pluginName}.page.{$route}";
 
                     Route::get($route, function () use ($pluginName, $component, $layout, $capability) {
+                        // Inactive plugins have no pages.
+                        abort_unless(SdkPluginActivation::isActive($pluginName), 404);
+
                         if ($capability !== null) {
                             abort_unless(
                                 auth()->check() && auth()->user()->can($capability),
@@ -163,6 +167,8 @@ class RouteRegistrar
                         [strtolower($httpMethod)],
                         $this->laravelUri($path),
                         function (Request $request) use ($pluginName, $httpMethod, $path, $capability) {
+                            abort_unless(SdkPluginActivation::isActive($pluginName), 404);
+
                             if ($capability !== null) {
                                 abort_unless(
                                     auth()->check() && auth()->user()->can($capability),
@@ -218,6 +224,8 @@ class RouteRegistrar
                         [strtolower($httpMethod)],
                         $this->laravelUri($path),
                         function (Request $request) use ($pluginName, $httpMethod, $path) {
+                            abort_unless(SdkPluginActivation::isActive($pluginName), 404);
+
                             $transport = PluginHttp::request($request);
                             $result = $this->bridge->callWebhook(
                                 $pluginName,

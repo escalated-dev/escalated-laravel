@@ -3,6 +3,7 @@
 namespace Escalated\Laravel\Services;
 
 use Escalated\Laravel\Bridge\PluginBridge;
+use Escalated\Laravel\Bridge\SdkPluginActivation;
 use Escalated\Laravel\Support\StaffAccess;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
@@ -426,6 +427,8 @@ class PluginUIService
     }
 
     /**
+     * The manifests of the active SDK plugins: inactive ones add nothing.
+     *
      * @return array<string, array>
      */
     private function sdkManifests(): array
@@ -436,7 +439,7 @@ class PluginUIService
             }
             $bridge = app(PluginBridge::class);
 
-            return $bridge->isBooted() ? $bridge->getManifests() : [];
+            return $bridge->isBooted() ? SdkPluginActivation::activeManifests($bridge->getManifests()) : [];
         } catch (\Throwable) {
             return [];
         }

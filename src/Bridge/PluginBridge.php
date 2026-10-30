@@ -152,6 +152,13 @@ class PluginBridge
             return;
         }
 
+        // Only active plugins get hooks. The runtime loads every installed
+        // plugin, so the active names go along for a runtime that gates on them.
+        $active = SdkPluginActivation::activeNames(array_keys($this->manifests));
+        if ($active === []) {
+            return;
+        }
+
         $this->pendingActionCount++;
 
         try {
@@ -159,7 +166,7 @@ class PluginBridge
 
             $this->rpc->call(
                 'action',
-                ['hook' => $hook, 'event' => $event],
+                ['hook' => $hook, 'event' => $event, 'plugins' => $active],
                 self::TIMEOUT_ACTION,
                 [$this->contextHandler, 'handle']
             );
@@ -184,12 +191,17 @@ class PluginBridge
             return $value;
         }
 
+        $active = SdkPluginActivation::activeNames(array_keys($this->manifests));
+        if ($active === []) {
+            return $value;
+        }
+
         try {
             $this->contextHandler->setCurrentPlugin('__host__');
 
             $result = $this->rpc->call(
                 'filter',
-                ['hook' => $hook, 'value' => $value],
+                ['hook' => $hook, 'value' => $value, 'plugins' => $active],
                 self::TIMEOUT_FILTER,
                 [$this->contextHandler, 'handle']
             );
@@ -211,7 +223,7 @@ class PluginBridge
      */
     public function cron(string $plugin, string $schedule): void
     {
-        if (! $this->ensureAlive()) {
+        if (! $this->ensureAlive() || ! SdkPluginActivation::isActive($plugin)) {
             return;
         }
 
@@ -239,7 +251,7 @@ class PluginBridge
      */
     public function badge(string $plugin, string $component): int|float|string|null
     {
-        if (! $this->ensureAlive()) {
+        if (! $this->ensureAlive() || ! SdkPluginActivation::isActive($plugin)) {
             return null;
         }
 
@@ -273,6 +285,9 @@ class PluginBridge
             throw new RuntimeException('Plugin runtime is not available');
         }
 
+        // An inactive plugin's endpoints and pages do not exist.
+        abort_unless(SdkPluginActivation::isActive($plugin), 404);
+
         $this->contextHandler->setCurrentPlugin($plugin);
 
         $this->requireHttpContract($request);
@@ -303,6 +318,8 @@ class PluginBridge
             throw new RuntimeException('Plugin runtime is not available');
         }
 
+        abort_unless(SdkPluginActivation::isActive($plugin), 404);
+
         $this->contextHandler->setCurrentPlugin($plugin);
 
         $this->requireHttpContract($transport);
@@ -322,6 +339,49 @@ class PluginBridge
             self::TIMEOUT_WEBHOOK,
             [$this->contextHandler, 'handle']
         );
+    }
+
+    /**
+     * Tell the runtime a plugin was activated (`activate {plugin}`), which
+     * calls its onActivate(ctx). A failure is logged, never thrown: it does
+     * not undo the activation.
+     */
+    public function activate(string $plugin): void
+    {
+        $this->lifecycle('activate', $plugin);
+    }
+
+    /**
+     * Tell the runtime a plugin is being deactivated (`deactivate {plugin}`),
+     * which calls its onDeactivate(ctx) while it is still active.
+     */
+    public function deactivate(string $plugin): void
+    {
+        $this->lifecycle('deactivate', $plugin);
+    }
+
+    private function lifecycle(string $method, string $plugin): void
+    {
+        if (! $this->ensureAlive()) {
+            return;
+        }
+
+        try {
+            $this->contextHandler->setCurrentPlugin($plugin);
+
+            $this->rpc->call(
+                $method,
+                ['plugin' => $plugin],
+                self::TIMEOUT_ACTION,
+                [$this->contextHandler, 'handle']
+            );
+        } catch (\Throwable $e) {
+            Log::warning("Escalated PluginBridge: {$plugin} {$method} failed", [
+                'plugin' => $plugin,
+                'error' => $e->getMessage(),
+            ]);
+            $this->handleCrash();
+        }
     }
 
     /**
@@ -465,6 +525,8 @@ class PluginBridge
         Log::info('Escalated PluginBridge: received manifests', [
             'plugins' => array_keys($this->manifests),
         ]);
+
+        SdkPluginActivation::recordInstalled(array_keys($this->manifests));
     }
 
     /**

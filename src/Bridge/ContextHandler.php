@@ -108,6 +108,16 @@ class ContextHandler
     {
         app(TenantContext::class)->assertPluginRuntimeSupported();
 
+        // The runtime loads every installed plugin, active or not, and may
+        // still hand an inactive one a hook: it gets no host data and makes
+        // no writes. It may still log.
+        $plugin = $params['plugin'] ?? $this->currentPlugin;
+        if ($method !== 'ctx.log' && is_string($plugin) && $this->bridge !== null
+            && array_key_exists($plugin, $this->bridge->getManifests())
+            && ! SdkPluginActivation::isActive($plugin)) {
+            throw new \RuntimeException("Plugin {$plugin} is not active.");
+        }
+
         return match (true) {
             // Config
             $method === 'ctx.config.all' => $this->configAll($params),

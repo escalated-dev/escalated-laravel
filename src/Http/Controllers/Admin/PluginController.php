@@ -3,8 +3,10 @@
 namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
+use Escalated\Laravel\Exceptions\UnknownPluginException;
 use Escalated\Laravel\Services\PluginService;
 use Escalated\Laravel\Tenancy\TenantContext;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
@@ -32,6 +34,7 @@ class PluginController extends Controller
 
         return $this->renderer->render('Escalated/Admin/Plugins/Index', [
             'plugins' => $plugins,
+            'can_upload' => true,
         ]);
     }
 
@@ -63,42 +66,42 @@ class PluginController extends Controller
     /**
      * Activate a plugin.
      */
-    public function activate(string $slug)
+    public function activate(Request $request, string $slug)
     {
         try {
             $this->pluginService->activatePlugin($slug);
 
-            return redirect()->back()
-                ->with('success', 'Plugin activated successfully.');
+            return $this->toIndex()->with('success', 'Plugin activated successfully.');
+        } catch (UnknownPluginException $e) {
+            return $this->unknown($request, $e);
         } catch (\Exception $e) {
             Log::error('Escalated: Plugin activation failed', [
                 'slug' => $slug,
                 'error' => $e->getMessage(),
             ]);
 
-            return redirect()->back()
-                ->with('error', 'Failed to activate plugin: '.$e->getMessage());
+            return $this->toIndex()->with('error', 'Failed to activate plugin: '.$e->getMessage());
         }
     }
 
     /**
      * Deactivate a plugin.
      */
-    public function deactivate(string $slug)
+    public function deactivate(Request $request, string $slug)
     {
         try {
             $this->pluginService->deactivatePlugin($slug);
 
-            return redirect()->back()
-                ->with('success', 'Plugin deactivated successfully.');
+            return $this->toIndex()->with('success', 'Plugin deactivated successfully.');
+        } catch (UnknownPluginException $e) {
+            return $this->unknown($request, $e);
         } catch (\Exception $e) {
             Log::error('Escalated: Plugin deactivation failed', [
                 'slug' => $slug,
                 'error' => $e->getMessage(),
             ]);
 
-            return redirect()->back()
-                ->with('error', 'Failed to deactivate plugin: '.$e->getMessage());
+            return $this->toIndex()->with('error', 'Failed to deactivate plugin: '.$e->getMessage());
         }
     }
 
@@ -130,5 +133,23 @@ class PluginController extends Controller
             return redirect()->back()
                 ->with('error', 'Failed to delete plugin: '.$e->getMessage());
         }
+    }
+
+    /**
+     * Plugin transitions answer with a 303 to the index (the Inertia protocol).
+     */
+    private function toIndex(): RedirectResponse
+    {
+        return redirect()->route('escalated.admin.plugins.index', [], 303);
+    }
+
+    /**
+     * An unknown slug: an `error` flash, or a 404 for a JSON request.
+     */
+    private function unknown(Request $request, UnknownPluginException $e): RedirectResponse
+    {
+        abort_if($request->expectsJson() && ! $request->header('X-Inertia'), 404, $e->getMessage());
+
+        return $this->toIndex()->with('error', $e->getMessage());
     }
 }

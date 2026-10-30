@@ -2,6 +2,9 @@
 
 namespace Escalated\Laravel\Services;
 
+use Escalated\Laravel\Bridge\PluginBridge;
+use Escalated\Laravel\Bridge\SdkPluginActivation;
+use Escalated\Laravel\Exceptions\UnknownPluginException;
 use Escalated\Laravel\Facades\Hook;
 use Escalated\Laravel\Models\Plugin;
 use Escalated\Laravel\Tenancy\TenantContext;
@@ -25,11 +28,25 @@ class PluginService
     }
 
     /**
-     * Get all installed plugins with their metadata.
+     * Get all installed plugins with their metadata: native plugins (local
+     * and Composer) and the SDK plugins the runtime loaded.
      */
     public function getAllPlugins(): array
     {
-        return array_merge($this->getLocalPlugins(), $this->getComposerPlugins());
+        $native = array_merge($this->getLocalPlugins(), $this->getComposerPlugins());
+        $taken = array_column($native, 'slug');
+        $sdk = [];
+
+        foreach ($this->getSdkPlugins() as $plugin) {
+            if (in_array($plugin['slug'], $taken, true)) {
+                Log::error("Escalated: SDK plugin '{$plugin['name']}' and a native plugin share the slug '{$plugin['slug']}'; the SDK plugin is not listed.");
+
+                continue;
+            }
+            $sdk[] = $plugin;
+        }
+
+        return array_merge($native, $sdk);
     }
 
     /**
@@ -133,28 +150,38 @@ class PluginService
     }
 
     /**
-     * Activate a plugin.
+     * Activate a plugin (domain-model/plugin-contract.md, Lifecycle): record
+     * it active, let it set itself up (native: load it and fire
+     * `escalated_plugin_activated`; SDK: the runtime's `activate`), then fire
+     * `plugin.activated`. Activating an active plugin does nothing.
+     *
+     * @throws UnknownPluginException
      */
     public function activatePlugin(string $slug): bool
     {
         app(TenantContext::class)->assertPluginRuntimeSupported();
-        $plugin = Plugin::where('slug', $slug)->first();
+        $sdkName = $this->sdkPluginName($slug);
 
-        if (! $plugin) {
-            // Create new plugin record if it doesn't exist
-            $plugin = Plugin::create([
-                'slug' => $slug,
-                'is_active' => false,
-            ]);
+        if ($sdkName === null && $this->resolvePluginPath($slug) === null) {
+            throw new UnknownPluginException($slug);
         }
 
-        if (! $plugin->is_active) {
-            $plugin->update([
-                'is_active' => true,
-                'activated_at' => now(),
-                'deactivated_at' => null,
-            ]);
+        $plugin = Plugin::where('slug', $slug)->first();
 
+        if ($plugin?->is_active) {
+            return true;
+        }
+
+        $plugin ??= new Plugin(['slug' => $slug]);
+        $plugin->fill([
+            'is_active' => true,
+            'activated_at' => now(),
+            'deactivated_at' => null,
+        ])->save();
+
+        if ($sdkName !== null) {
+            $this->sdkBridge()?->activate($sdkName);
+        } else {
             // Load the plugin first so its hooks are registered
             $this->loadPlugin($slug);
 
@@ -163,21 +190,38 @@ class PluginService
             Hook::doAction("escalated_plugin_activated_{$slug}");
         }
 
+        $this->fireLifecycle('plugin.activated', $slug, $sdkName);
+
         return true;
     }
 
     /**
-     * Deactivate a plugin.
+     * Deactivate a plugin: fire `plugin.deactivated` and let it clean up
+     * while it is still active, then record it inactive. Deactivating an
+     * inactive plugin does nothing.
+     *
+     * @throws UnknownPluginException
      */
     public function deactivatePlugin(string $slug): bool
     {
         app(TenantContext::class)->assertPluginRuntimeSupported();
+        $sdkName = $this->sdkPluginName($slug);
         $plugin = Plugin::where('slug', $slug)->first();
 
+        if ($plugin === null && $sdkName === null && $this->resolvePluginPath($slug) === null) {
+            throw new UnknownPluginException($slug);
+        }
+
         if ($plugin && $plugin->is_active) {
-            // Fire deactivation action hooks BEFORE deactivating
-            Hook::doAction('escalated_plugin_deactivated', $slug);
-            Hook::doAction("escalated_plugin_deactivated_{$slug}");
+            $this->fireLifecycle('plugin.deactivated', $slug, $sdkName);
+
+            if ($sdkName !== null) {
+                $this->sdkBridge()?->deactivate($sdkName);
+            } else {
+                // Fire deactivation action hooks BEFORE deactivating
+                Hook::doAction('escalated_plugin_deactivated', $slug);
+                Hook::doAction("escalated_plugin_deactivated_{$slug}");
+            }
 
             $plugin->update([
                 'is_active' => false,
@@ -199,7 +243,9 @@ class PluginService
         $pluginData = collect($allPlugins)->firstWhere('slug', $slug);
 
         if ($pluginData && $pluginData['source'] === 'composer') {
-            throw new \Exception('Composer plugins cannot be deleted. Remove the package via Composer instead.');
+            throw new \Exception(($pluginData['sdk'] ?? false)
+                ? 'SDK plugins are installed with npm. Remove the package with npm instead.'
+                : 'Composer plugins cannot be deleted. Remove the package via Composer instead.');
         }
 
         $pluginPath = $this->pluginsPath.'/'.$slug;
@@ -216,6 +262,7 @@ class PluginService
         }
 
         // Fire uninstall action hooks
+        $this->fireLifecycle('plugin.uninstalling', $slug, null);
         Hook::doAction('escalated_plugin_uninstalling', $slug);
         Hook::doAction("escalated_plugin_uninstalling_{$slug}");
 
@@ -231,6 +278,110 @@ class PluginService
         File::deleteDirectory($pluginPath);
 
         return true;
+    }
+
+    /**
+     * Fire a lifecycle action (`plugin.activated` and so on) with
+     * `{plugin, slug}` to active native and SDK plugins. A plugin that throws
+     * is logged and never undoes the transition.
+     */
+    protected function fireLifecycle(string $hook, string $slug, ?string $sdkName): void
+    {
+        try {
+            escalated_do_action($hook, ['plugin' => $sdkName ?? $this->nativePluginName($slug), 'slug' => $slug]);
+        } catch (\Throwable $e) {
+            Log::error("Escalated: plugin action '{$hook}' failed", ['plugin' => $slug, 'error' => $e->getMessage()]);
+        }
+    }
+
+    protected function nativePluginName(string $slug): string
+    {
+        $path = $this->resolvePluginPath($slug);
+        $manifest = $path ? json_decode((string) File::get($path.'/plugin.json'), true) : null;
+
+        return is_array($manifest) && is_string($manifest['name'] ?? null) ? $manifest['name'] : $slug;
+    }
+
+    /**
+     * SDK plugins the runtime loaded, listed with the native ones. They are
+     * installed with npm, so their source is `composer` (managed by a package
+     * manager) and the admin cannot delete them.
+     */
+    protected function getSdkPlugins(): array
+    {
+        $manifests = $this->sdkManifests();
+
+        if ($manifests === []) {
+            return [];
+        }
+
+        $slugs = array_map(fn ($name) => SdkPluginActivation::slug((string) $name), array_keys($manifests));
+        $rows = Plugin::whereIn('slug', $slugs)->get()->keyBy('slug');
+        $plugins = [];
+
+        foreach ($manifests as $name => $manifest) {
+            $slug = SdkPluginActivation::slug((string) $name);
+            $row = $rows->get($slug);
+            $pages = (array) ($manifest['pages'] ?? []);
+
+            $plugins[] = [
+                'slug' => $slug,
+                'name' => (string) $name,
+                'description' => $manifest['description'] ?? null,
+                'version' => (string) ($manifest['version'] ?? '0.0.0'),
+                'author' => $manifest['author'] ?? null,
+                'author_url' => $manifest['homepage'] ?? null,
+                'homepage' => $manifest['homepage'] ?? null,
+                'is_active' => (bool) $row?->is_active,
+                'activated_at' => $row?->is_active ? $row->activated_at : null,
+                'installed_at' => $row?->created_at,
+                'source' => 'composer',
+                'sdk' => true,
+                'provides' => [
+                    'menu_items' => count(array_filter($pages, fn ($page) => is_array($page['menu'] ?? null))),
+                    'widgets' => count((array) ($manifest['widgets'] ?? [])),
+                    'page_components' => count((array) ($manifest['components'] ?? [])),
+                ],
+            ];
+        }
+
+        return $plugins;
+    }
+
+    /**
+     * The SDK plugin name behind a slug, or null.
+     */
+    protected function sdkPluginName(string $slug): ?string
+    {
+        foreach (array_keys($this->sdkManifests()) as $name) {
+            if (SdkPluginActivation::slug((string) $name) === $slug) {
+                return (string) $name;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array<string, array>
+     */
+    protected function sdkManifests(): array
+    {
+        return $this->sdkBridge()?->getManifests() ?? [];
+    }
+
+    protected function sdkBridge(): ?PluginBridge
+    {
+        try {
+            if (! config('escalated.plugins.sdk_enabled', true) || ! app()->bound(PluginBridge::class)) {
+                return null;
+            }
+            $bridge = app(PluginBridge::class);
+
+            return $bridge->isBooted() ? $bridge : null;
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /**
