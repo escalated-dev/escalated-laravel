@@ -26,6 +26,7 @@ use Escalated\Laravel\Console\Commands\ResetTwoFactorCommand;
 use Escalated\Laravel\Console\Commands\RetryTenantBatchCommand;
 use Escalated\Laravel\Console\Commands\RetryTenantJobsCommand;
 use Escalated\Laravel\Console\Commands\RunAutomationsCommand;
+use Escalated\Laravel\Console\Commands\RunPluginCronCommand;
 use Escalated\Laravel\Console\Commands\RunTenantCommand;
 use Escalated\Laravel\Console\Commands\WakeSnoozedTicketsCommand;
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
@@ -237,6 +238,12 @@ class EscalatedServiceProvider extends ServiceProvider
             $schedule->command($scheduled('escalated:wake-snoozed-tickets'))->everyMinute();
             $schedule->command($scheduled('escalated:close-resolved'))->daily();
             $schedule->command($scheduled('escalated:purge-activities'))->weekly();
+
+            // SDK plugins' cron schedules. No plugin code runs in tenant mode.
+            if (config('escalated.plugins.enabled', true) && config('escalated.plugins.sdk_enabled', true)
+                && ! app(TenantContext::class)->enabled()) {
+                $schedule->command('escalated:plugins:cron')->everyMinute();
+            }
 
             if (config('escalated.slack.enabled', false)) {
                 $schedule->command($scheduled('escalated:slack:process'))->everyMinute()->withoutOverlapping();
@@ -555,6 +562,7 @@ class EscalatedServiceProvider extends ServiceProvider
             InstallCommand::class,
             PluginCommand::class,
             PluginInstallCommand::class,
+            RunPluginCronCommand::class,
             CheckSlaCommand::class,
             EvaluateEscalationsCommand::class,
             CloseResolvedCommand::class,

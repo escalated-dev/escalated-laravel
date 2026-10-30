@@ -206,6 +206,65 @@ class PluginBridge
     }
 
     /**
+     * Run one of a plugin's cron schedules (`cron {plugin, schedule}`) within
+     * the action timeout. Fire-and-forget: a failure is logged, never thrown.
+     */
+    public function cron(string $plugin, string $schedule): void
+    {
+        if (! $this->ensureAlive()) {
+            return;
+        }
+
+        try {
+            $this->contextHandler->setCurrentPlugin($plugin);
+
+            $this->rpc->call(
+                'cron',
+                ['plugin' => $plugin, 'schedule' => $schedule],
+                self::TIMEOUT_ACTION,
+                [$this->contextHandler, 'handle']
+            );
+        } catch (\Throwable $e) {
+            Log::warning("Escalated PluginBridge: {$plugin} cron '{$schedule}' failed", [
+                'error' => $e->getMessage(),
+            ]);
+            $this->handleCrash();
+        }
+    }
+
+    /**
+     * Ask a widget's badge (`badge {plugin, component}`) within the filter
+     * timeout, as the signed-in user of the current request. A number or a
+     * string; null when the runtime fails or answers anything else.
+     */
+    public function badge(string $plugin, string $component): int|float|string|null
+    {
+        if (! $this->ensureAlive()) {
+            return null;
+        }
+
+        try {
+            $this->contextHandler->setCurrentPlugin($plugin);
+
+            $answer = $this->rpc->call(
+                'badge',
+                ['plugin' => $plugin, 'component' => $component],
+                self::TIMEOUT_FILTER,
+                [$this->contextHandler, 'handle']
+            );
+        } catch (\Throwable $e) {
+            Log::warning("Escalated PluginBridge: {$plugin} badge '{$component}' failed", [
+                'error' => $e->getMessage(),
+            ]);
+            $this->handleCrash();
+
+            return null;
+        }
+
+        return is_int($answer) || is_float($answer) || is_string($answer) ? $answer : null;
+    }
+
+    /**
      * Call a plugin's data endpoint (used by API route handlers and page props).
      */
     public function callEndpoint(string $plugin, string $method, string $path, array $request = []): mixed

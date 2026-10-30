@@ -12,6 +12,7 @@
     ],
     "require": {
         "php": "^8.2",
+        "dragonmantank/cron-expression": "^3.3",
         "escalated-dev/locale": "^0.1.8",
         "firebase/php-jwt": "^6.10|^7.0",
         "illuminate/contracts": "^11.39|^12.0|^13.0",
