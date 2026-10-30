@@ -90,7 +90,7 @@ it('shares SDK plugin manifest menus, widgets and slots keyed by slug', function
         ->get(route('escalated.agent.dashboard'))->assertOk()->json('props.escalated.plugins');
 
     expect($plugins['menuItems'])->toBe([[
-        'label' => 'CRM', 'route' => '/support/admin/plugins/@acme/plugin-crm/settings', 'icon' => 'users',
+        'label' => 'CRM', 'route' => '/support/admin/plugins/acme--plugin-crm/settings', 'icon' => 'users',
         'position' => 7, 'section' => 'admin', 'plugin' => 'acme--plugin-crm',
     ]])->and($plugins['dashboardWidgets'])->toBe([[
         'id' => 'acme--plugin-crm.CrmWidget', 'title' => 'CRM deals', 'component' => 'CrmWidget',

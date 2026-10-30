@@ -85,6 +85,22 @@ class ContextHandler
     private string $currentPlugin = '';
 
     /**
+     * The plugins the host call being served was sent to: one for an
+     * endpoint, webhook, cron, badge or lifecycle call, the active ones for
+     * an action or filter. A ctx call acts for one of these, never for a
+     * plugin the runtime merely names.
+     *
+     * @var list<string>
+     */
+    private array $serving = [];
+
+    /**
+     * Whether the call being served is a hook (action or filter), sent to
+     * several plugins at once.
+     */
+    private bool $servingHook = false;
+
+    /**
      * Reference back to the bridge for ctx.emit support.
      */
     private ?PluginBridge $bridge = null;
@@ -97,6 +113,49 @@ class ContextHandler
     public function setCurrentPlugin(string $plugin): void
     {
         $this->currentPlugin = $plugin;
+        $this->serving = $plugin === '' ? [] : [$plugin];
+        $this->servingHook = false;
+    }
+
+    /**
+     * Run a host call that is sent to $plugins, so the ctx calls the runtime
+     * makes while serving it act only for those plugins. $hook marks an
+     * action or filter, sent to every plugin in $plugins at once. Restores
+     * what was being served before, since a ctx.emit nests one call inside
+     * another.
+     *
+     * @param  list<string>  $plugins
+     */
+    public function serve(array $plugins, callable $call, bool $hook = false): mixed
+    {
+        $before = [$this->serving, $this->currentPlugin, $this->servingHook];
+        $this->serving = array_values($plugins);
+        $this->servingHook = $hook;
+        $this->currentPlugin = count($this->serving) === 1 ? $this->serving[0] : '';
+
+        try {
+            return $call();
+        } finally {
+            [$this->serving, $this->currentPlugin, $this->servingHook] = $before;
+        }
+    }
+
+    /**
+     * The plugin a ctx call acts for (plugin contract, The plugin context).
+     * For a call sent to one plugin (endpoint, webhook, cron, badge,
+     * lifecycle) that plugin, whatever the runtime names. For a hook, the
+     * plugin the runtime names if the hook was sent to it, and nothing
+     * otherwise: an older runtime runs every plugin's handlers.
+     */
+    private function servedPlugin(array $params): ?string
+    {
+        $claimed = $params['plugin'] ?? null;
+
+        if (count($this->serving) === 1 && (! $this->servingHook || $claimed === null)) {
+            return $this->serving[0];
+        }
+
+        return is_string($claimed) && in_array($claimed, $this->serving, true) ? $claimed : null;
     }
 
     /**
@@ -108,14 +167,24 @@ class ContextHandler
     {
         app(TenantContext::class)->assertPluginRuntimeSupported();
 
-        // The runtime loads every installed plugin, active or not, and may
-        // still hand an inactive one a hook: it gets no host data and makes
-        // no writes. It may still log.
-        $plugin = $params['plugin'] ?? $this->currentPlugin;
-        if ($method !== 'ctx.log' && is_string($plugin) && $this->bridge !== null
-            && array_key_exists($plugin, $this->bridge->getManifests())
-            && ! SdkPluginActivation::isActive($plugin)) {
-            throw new \RuntimeException("Plugin {$plugin} is not active.");
+        // Never trust the runtime's `plugin` param: the plugin is the one the
+        // served call went to. A call for any other plugin, or made outside a
+        // call, gets no host data and makes no writes. It may still log.
+        $plugin = $this->servedPlugin($params);
+        if ($method !== 'ctx.log') {
+            if ($plugin === null) {
+                throw new \RuntimeException('ctx call does not belong to a plugin this call was sent to.');
+            }
+
+            // An older runtime may still hand an inactive plugin a hook.
+            if ($this->bridge !== null && array_key_exists($plugin, $this->bridge->getManifests())
+                && ! SdkPluginActivation::isActive($plugin)) {
+                throw new \RuntimeException("Plugin {$plugin} is not active.");
+            }
+        }
+
+        if ($plugin !== null) {
+            $params['plugin'] = $plugin;
         }
 
         return match (true) {

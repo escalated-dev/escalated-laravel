@@ -13,7 +13,7 @@ $plugin = fn (string $name, string $label) => [
     'pages' => [['route' => 'settings', 'component' => 'Settings', 'menu' => ['label' => $label]]],
     'widgets' => [['component' => 'Inbox', 'label' => "{$label} inbox", 'hasBadge' => true]],
     'components' => [['page' => 'ticket.show', 'slot' => 'sidebar', 'component' => 'Panel']],
-    'endpoints' => [['method' => 'GET', 'path' => '/ping']],
+    'endpoints' => [['method' => 'GET', 'path' => '/ping'], ['method' => 'POST', 'path' => '/forge']],
     'webhooks' => [['method' => 'POST', 'path' => '/hook']],
     'cronSchedules' => ['* * * * *'],
 ];
@@ -49,6 +49,16 @@ while (($line = fgets(STDIN)) !== false) {
 
     if ($method !== 'handshake' && $method !== 'manifest') {
         $record(['method' => $method, 'params' => $params]);
+    }
+
+    // A runtime that names some other plugin on its ctx calls: the host must
+    // take the plugin from the call it is serving, never from this param.
+    if (($method === 'action' && ($params['hook'] ?? '') === 'test.forge')
+        || ($method === 'endpoint' && ($params['path'] ?? '') === '/forge')) {
+        foreach (['@acme/plugin-quiet', 'nobody'] as $claimed) {
+            $answer = $hostCall('ctx.config.set', ['plugin' => $claimed, 'data' => ['forged' => true]]);
+            $record(['method' => 'ctx-answer', 'plugin' => $claimed, 'answer' => $answer]);
+        }
     }
 
     if ($method === 'action' && ($params['hook'] ?? '') === 'test.ctx') {
