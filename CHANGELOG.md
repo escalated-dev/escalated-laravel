@@ -31,6 +31,7 @@ All notable changes to this project will be documented in this file.
 - `ctx.emit` drops hook names that would impersonate a canonical event, a legacy alias of one, or a plugin lifecycle action.
 
 ### Changed
+- `POST {prefix}/admin/settings` (`escalated.admin.settings.update`) now accepts a partial payload: every key is optional, a key that is sent is validated as before, and keys left out keep their stored value. The shared `Admin/Settings/TwoFactor` page uses this to save `two_factor_required` on its own. The full Settings page still sends every key, so nothing changes for it.
 - TOTP uses `pragmarx/google2fa` (new dependency) instead of hand-written code, and new secrets are 32 base32 characters (160 bits) instead of 16. Existing secrets keep working.
 - `PUT {prefix}/admin/users/{user}/roles` (`escalated.admin.users.roles`, needs `role.manage`) replaces a user's roles; you cannot remove your own `role.manage`. While roles are on, the users page also receives each user's `roles` and the assignable `roles`.
 

@@ -3,6 +3,7 @@
 use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Models\TwoFactor;
+use Escalated\Laravel\Support\TwoFactorSession;
 use Escalated\Laravel\Tests\Fixtures\TestUser;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Gate;
@@ -284,6 +285,44 @@ it('lets an admin require two-factor at runtime', function () {
 
     $this->actingAs($admin)->get(route('escalated.agent.dashboard'))
         ->assertRedirect(route('escalated.admin.two-factor.index'));
+});
+
+it('saves the requirement from the two-factor page on its own', function () {
+    // Admin/Settings/TwoFactor posts only this key to the settings route.
+    tfOn();
+    $admin = tfUser(true);
+    EscalatedSettings::set('ticket_reference_prefix', 'KEEP');
+
+    $this->actingAs($admin)
+        ->post(route('escalated.admin.settings.update'), ['two_factor_required' => true])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect();
+
+    expect(EscalatedSettings::getBool('two_factor_required', false))->toBeTrue()
+        ->and(EscalatedSettings::get('ticket_reference_prefix'))->toBe('KEEP');
+
+    // Once required, the admin must enrol before reaching any other screen.
+    $this->actingAs($admin)
+        ->post(route('escalated.admin.settings.update'), ['two_factor_required' => false])
+        ->assertRedirect(route('escalated.admin.two-factor.index'));
+    expect(EscalatedSettings::getBool('two_factor_required', false))->toBeTrue();
+
+    tfEnrol($admin);
+    $this->actingAs($admin)
+        ->withSession([TwoFactorSession::KEY => (string) $admin->getKey()])
+        ->post(route('escalated.admin.settings.update'), ['two_factor_required' => false])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect();
+
+    expect(EscalatedSettings::getBool('two_factor_required', true))->toBeFalse();
+});
+
+it('still validates the settings a partial save sends', function () {
+    $admin = tfUser(true);
+
+    $this->actingAs($admin)
+        ->post(route('escalated.admin.settings.update'), ['ticket_reference_prefix' => ''])
+        ->assertSessionHasErrors('ticket_reference_prefix');
 });
 
 it('ignores the requirement while two-factor is off', function () {
