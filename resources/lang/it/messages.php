@@ -90,6 +90,15 @@ return [
         'delete_failed' => 'Eliminazione del plugin fallita: :error',
     ],
 
+    'errors' => [
+        '403' => 'Non sei autorizzato a eseguire questa azione.',
+        '404' => 'La risorsa richiesta non è stata trovata.',
+        '419' => 'La sessione è scaduta. Aggiorna la pagina e riprova.',
+        '429' => 'Troppe richieste. Attendi un momento e riprova.',
+        '500' => 'Si è verificato un errore da parte nostra.',
+        '503' => 'Il servizio non è temporaneamente disponibile. Riprova a breve.',
+    ],
+
     'middleware' => [
         'not_admin' => 'Non sei autorizzato come amministratore del supporto.',
         'not_agent' => 'Non sei autorizzato come agente del supporto.',

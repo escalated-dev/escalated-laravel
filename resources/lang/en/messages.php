@@ -90,6 +90,15 @@ return [
         'delete_failed' => 'Failed to delete plugin: :error',
     ],
 
+    'errors' => [
+        '403' => 'You are not authorized to perform this action.',
+        '404' => 'The requested resource was not found.',
+        '419' => 'Your session has expired. Refresh the page and try again.',
+        '429' => 'Too many requests. Wait a moment and try again.',
+        '500' => 'Something went wrong on our end.',
+        '503' => 'The service is temporarily unavailable. Try again shortly.',
+    ],
+
     'middleware' => [
         'not_admin' => 'You are not authorized as a support administrator.',
         'not_agent' => 'You are not authorized as a support agent.',

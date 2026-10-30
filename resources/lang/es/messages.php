@@ -90,6 +90,15 @@ return [
         'delete_failed' => 'Error al eliminar el plugin: :error',
     ],
 
+    'errors' => [
+        '403' => 'No está autorizado para realizar esta acción.',
+        '404' => 'No se encontró el recurso solicitado.',
+        '419' => 'Su sesión ha caducado. Actualice la página e inténtelo de nuevo.',
+        '429' => 'Demasiadas solicitudes. Espere un momento e inténtelo de nuevo.',
+        '500' => 'Algo salió mal por nuestra parte.',
+        '503' => 'El servicio no está disponible temporalmente. Inténtelo de nuevo en breve.',
+    ],
+
     'middleware' => [
         'not_admin' => 'No está autorizado como administrador de soporte.',
         'not_agent' => 'No está autorizado como agente de soporte.',

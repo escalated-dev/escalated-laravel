@@ -90,6 +90,15 @@ return [
         'delete_failed' => 'Eklenti silinemedi: :error',
     ],
 
+    'errors' => [
+        '403' => 'Bu işlemi gerçekleştirme yetkiniz yok.',
+        '404' => 'İstenen kaynak bulunamadı.',
+        '419' => 'Oturumunuzun süresi doldu. Sayfayı yenileyip tekrar deneyin.',
+        '429' => 'Çok fazla istek. Biraz bekleyip tekrar deneyin.',
+        '500' => 'Bizim tarafımızda bir sorun oluştu.',
+        '503' => 'Hizmet geçici olarak kullanılamıyor. Kısa süre sonra tekrar deneyin.',
+    ],
+
     'middleware' => [
         'not_admin' => 'Destek yöneticisi olarak yetkiniz yok.',
         'not_agent' => 'Destek temsilcisi olarak yetkiniz yok.',

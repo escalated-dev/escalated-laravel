@@ -90,6 +90,15 @@ return [
         'delete_failed' => 'Plugin verwijderen mislukt: :error',
     ],
 
+    'errors' => [
+        '403' => 'U bent niet gemachtigd om deze actie uit te voeren.',
+        '404' => 'De gevraagde bron is niet gevonden.',
+        '419' => 'Uw sessie is verlopen. Vernieuw de pagina en probeer het opnieuw.',
+        '429' => 'Te veel verzoeken. Wacht even en probeer het opnieuw.',
+        '500' => 'Er is aan onze kant iets misgegaan.',
+        '503' => 'De dienst is tijdelijk niet beschikbaar. Probeer het straks opnieuw.',
+    ],
+
     'middleware' => [
         'not_admin' => 'U bent niet geautoriseerd als supportbeheerder.',
         'not_agent' => 'U bent niet geautoriseerd als supportmedewerker.',
