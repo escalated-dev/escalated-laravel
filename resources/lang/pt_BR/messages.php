@@ -90,6 +90,15 @@ return [
         'delete_failed' => 'Falha ao excluir o plugin: :error',
     ],
 
+    'errors' => [
+        '403' => 'Você não tem autorização para realizar esta ação.',
+        '404' => 'O recurso solicitado não foi encontrado.',
+        '419' => 'Sua sessão expirou. Atualize a página e tente novamente.',
+        '429' => 'Muitas solicitações. Aguarde um momento e tente novamente.',
+        '500' => 'Algo deu errado do nosso lado.',
+        '503' => 'O serviço está temporariamente indisponível. Tente novamente em breve.',
+    ],
+
     'middleware' => [
         'not_admin' => 'Você não está autorizado como administrador de suporte.',
         'not_agent' => 'Você não está autorizado como agente de suporte.',

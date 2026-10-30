@@ -90,6 +90,15 @@ return [
         'delete_failed' => 'Échec de la suppression du plugin : :error',
     ],
 
+    'errors' => [
+        '403' => 'Vous n\'êtes pas autorisé à effectuer cette action.',
+        '404' => 'La ressource demandée est introuvable.',
+        '419' => 'Votre session a expiré. Actualisez la page et réessayez.',
+        '429' => 'Trop de requêtes. Patientez un instant et réessayez.',
+        '500' => 'Une erreur s\'est produite de notre côté.',
+        '503' => 'Le service est temporairement indisponible. Réessayez sous peu.',
+    ],
+
     'middleware' => [
         'not_admin' => 'Vous n\'êtes pas autorisé en tant qu\'administrateur de support.',
         'not_agent' => 'Vous n\'êtes pas autorisé en tant qu\'agent de support.',

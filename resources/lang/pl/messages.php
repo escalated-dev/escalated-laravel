@@ -90,6 +90,15 @@ return [
         'delete_failed' => 'Nie udało się usunąć wtyczki: :error',
     ],
 
+    'errors' => [
+        '403' => 'Nie masz uprawnień do wykonania tej czynności.',
+        '404' => 'Nie znaleziono żądanego zasobu.',
+        '419' => 'Twoja sesja wygasła. Odśwież stronę i spróbuj ponownie.',
+        '429' => 'Zbyt wiele żądań. Poczekaj chwilę i spróbuj ponownie.',
+        '500' => 'Coś poszło nie tak po naszej stronie.',
+        '503' => 'Usługa jest tymczasowo niedostępna. Spróbuj ponownie za chwilę.',
+    ],
+
     'middleware' => [
         'not_admin' => 'Nie masz uprawnień administratora wsparcia.',
         'not_agent' => 'Nie masz uprawnień agenta wsparcia.',

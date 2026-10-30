@@ -33,6 +33,7 @@ use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Contracts\TenantCatalog;
 use Escalated\Laravel\Contracts\TenantResolver;
 use Escalated\Laravel\Http\Controllers\Admin\ApiTokenController;
+use Escalated\Laravel\Http\InertiaErrorPage;
 use Escalated\Laravel\Http\Middleware\CheckPermission;
 use Escalated\Laravel\Http\Middleware\EnforceRoutePermissions;
 use Escalated\Laravel\Http\Middleware\EnsureIsAdmin;
@@ -66,6 +67,7 @@ use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Foundation\Http\Events\RequestHandled;
 use Illuminate\Queue\BackgroundQueue;
@@ -208,9 +210,24 @@ class EscalatedServiceProvider extends ServiceProvider
         if ($this->uiEnabled()) {
             $this->registerUiRoutes();
             $this->shareInertiaData();
+            $this->renderErrorsAsInertiaPages();
         }
 
         $this->registerNewsletterRoutes();
+    }
+
+    /**
+     * Answer an Inertia visit to an Escalated route that ends in 403, 404,
+     * 419, 429, 500 or 503 with the shared Escalated/Error page instead of the
+     * host's HTML error page (see InertiaErrorPage for what it leaves alone).
+     */
+    protected function renderErrorsAsInertiaPages(): void
+    {
+        $this->callAfterResolving(ExceptionHandler::class, function ($handler): void {
+            if (method_exists($handler, 'renderable')) {
+                $handler->renderable(fn (\Throwable $e, $request) => (new InertiaErrorPage)($e, $request));
+            }
+        });
     }
 
     /**

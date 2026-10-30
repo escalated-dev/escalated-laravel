@@ -90,6 +90,15 @@ return [
         'delete_failed' => 'Plugin-Löschung fehlgeschlagen: :error',
     ],
 
+    'errors' => [
+        '403' => 'Sie sind nicht berechtigt, diese Aktion auszuführen.',
+        '404' => 'Die angeforderte Ressource wurde nicht gefunden.',
+        '419' => 'Ihre Sitzung ist abgelaufen. Laden Sie die Seite neu und versuchen Sie es erneut.',
+        '429' => 'Zu viele Anfragen. Warten Sie einen Moment und versuchen Sie es erneut.',
+        '500' => 'Bei uns ist etwas schiefgelaufen.',
+        '503' => 'Der Dienst ist vorübergehend nicht verfügbar. Versuchen Sie es in Kürze erneut.',
+    ],
+
     'middleware' => [
         'not_admin' => 'Sie sind nicht als Support-Administrator autorisiert.',
         'not_agent' => 'Sie sind nicht als Support-Mitarbeiter autorisiert.',
