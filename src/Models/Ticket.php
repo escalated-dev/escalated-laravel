@@ -751,12 +751,16 @@ class Ticket extends Model
         $this->activities()->create($data);
     }
 
-    public function addReply(Ticketable $author, string $body, bool $isNote = false): Reply
+    /**
+     * Add a reply or note. $author is null for a system reply (a plugin
+     * acting outside a signed-in request).
+     */
+    public function addReply(?Ticketable $author, string $body, bool $isNote = false): Reply
     {
         $reply = $this->replies()->create([
             'ticket_id' => $this->id,
-            'author_type' => $author->getMorphClass(),
-            'author_id' => $author->getKey(),
+            'author_type' => $author?->getMorphClass(),
+            'author_id' => $author?->getKey(),
             'body' => $body,
             'is_internal_note' => $isNote,
             'type' => $isNote ? 'note' : 'reply',

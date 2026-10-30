@@ -24,6 +24,49 @@ class TicketService
         return $this->manager->driver()->createTicket($requester, $data);
     }
 
+    /**
+     * Open a ticket for a system caller (an SDK or native plugin) whose
+     * requester is a contact or nobody, never a user it names. The same
+     * bookkeeping as create(): the default priority and type, the
+     * TicketCreated event (SLA, workflows, webhooks, plugins) and the opening
+     * activity by $causer; a status other than open is reached through
+     * changeStatus(), so it is announced and logged like any status change.
+     *
+     * @param  array<string, mixed>  $attributes  subject, description, priority, status, ticket_type, channel, department_id, metadata, contact_id
+     */
+    public function createForSystem(array $attributes, ?Ticketable $causer = null): Ticket
+    {
+        $status = $attributes['status'] ?? TicketStatus::Open;
+        $status = $status instanceof TicketStatus ? $status : TicketStatus::from($status);
+        if ($status !== TicketStatus::Open && ! TicketStatus::Open->canTransitionTo($status)) {
+            throw new \InvalidArgumentException("A new ticket cannot be {$status->value}");
+        }
+
+        $priority = $attributes['priority'] ?? null;
+        $ticket = Ticket::create([
+            'subject' => $attributes['subject'],
+            'description' => $attributes['description'] ?? '',
+            'status' => TicketStatus::Open,
+            'priority' => $priority instanceof TicketPriority ? $priority
+                : (TicketPriority::tryFrom((string) $priority) ?? TicketPriority::from(config('escalated.default_priority', 'medium'))),
+            'ticket_type' => in_array($attributes['ticket_type'] ?? '', Ticket::TYPES, true) ? $attributes['ticket_type'] : 'question',
+            'channel' => $attributes['channel'] ?? 'api',
+            'department_id' => $attributes['department_id'] ?? null,
+            'contact_id' => $attributes['contact_id'] ?? null,
+            'metadata' => $attributes['metadata'] ?? null,
+        ]);
+
+        $ticket->logActivity(ActivityType::StatusChanged, $causer, [
+            'new_status' => TicketStatus::Open->value,
+        ]);
+
+        if ($status !== TicketStatus::Open) {
+            $ticket = $this->changeStatus($ticket->fresh(), $status, $causer);
+        }
+
+        return $ticket->fresh();
+    }
+
     public function update(Ticket $ticket, array $data): Ticket
     {
         return $this->manager->driver()->updateTicket($ticket, $data);

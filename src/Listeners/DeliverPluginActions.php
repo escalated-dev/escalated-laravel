@@ -5,6 +5,7 @@ namespace Escalated\Laravel\Listeners;
 use Escalated\Laravel\Bridge\PluginBridge;
 use Escalated\Laravel\Facades\Hook;
 use Escalated\Laravel\Support\ImportContext;
+use Escalated\Laravel\Support\PluginActionGuard;
 use Escalated\Laravel\Support\PluginEvents;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
@@ -45,21 +46,25 @@ class DeliverPluginActions implements ShouldHandleEventsAfterCommit
             return;
         }
 
-        try {
-            Hook::doAction($name, $payload);
-        } catch (\Throwable $e) {
-            Log::error("Escalated: plugin action '{$name}' failed", ['error' => $e->getMessage()]);
-        }
-
-        try {
-            if (app()->bound(PluginBridge::class)) {
-                $bridge = app(PluginBridge::class);
-                if ($bridge->isBooted()) {
-                    $bridge->dispatchAction($name, $payload);
-                }
+        // A plugin's own ctx write raises events while it handles one; the
+        // same action is not handed back to plugins (PluginActionGuard).
+        PluginActionGuard::run($name, function () use ($name, $payload) {
+            try {
+                Hook::doAction($name, $payload);
+            } catch (\Throwable $e) {
+                Log::error("Escalated: plugin action '{$name}' failed", ['error' => $e->getMessage()]);
             }
-        } catch (\Throwable $e) {
-            Log::warning("Escalated: SDK plugin action '{$name}' failed", ['error' => $e->getMessage()]);
-        }
+
+            try {
+                if (app()->bound(PluginBridge::class)) {
+                    $bridge = app(PluginBridge::class);
+                    if ($bridge->isBooted()) {
+                        $bridge->dispatchAction($name, $payload);
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning("Escalated: SDK plugin action '{$name}' failed", ['error' => $e->getMessage()]);
+            }
+        });
     }
 }
