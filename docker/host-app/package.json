@@ -16,7 +16,7 @@
         "laravel-vite-plugin": "^3.2.0",
         "postcss": "^8.5.30",
         "tailwindcss": "^4.3.3",
-        "vite": "^8.3.4",
+        "vite": "^8.3.5",
         "vue": "^3.5.43"
     }
 }
