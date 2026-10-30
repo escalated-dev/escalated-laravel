@@ -3,7 +3,11 @@
 namespace Escalated\Laravel\Bridge;
 
 use Escalated\Laravel\Bridge\Events\PluginBroadcastEvent;
+use Escalated\Laravel\Enums\TicketChannel;
+use Escalated\Laravel\Enums\TicketPriority;
+use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Escalated;
+use Escalated\Laravel\Models\Contact;
 use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\PluginStoreRecord;
 use Escalated\Laravel\Models\Reply;
@@ -13,6 +17,7 @@ use Escalated\Laravel\Services\SlackInbox;
 use Escalated\Laravel\Support\PluginEvents;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Log;
@@ -31,9 +36,29 @@ use Illuminate\Support\Facades\Log;
  */
 class ContextHandler
 {
-    private const PLUGIN_TICKET_FILLABLE = [
-        'subject', 'body', 'priority', 'status', 'department_id', 'ticket_type',
+    /**
+     * The fields ctx.tickets.update takes (plugin contract). title and body
+     * are the SDK's names for subject and description.
+     */
+    private const TICKET_UPDATE_FIELDS = [
+        'subject', 'title', 'body', 'description', 'priority', 'status',
+        'department_id', 'ticket_type', 'metadata',
     ];
+
+    /**
+     * ctx.tickets.create takes the update fields plus the channel and the
+     * requester, which is a contact: never a user id the plugin names.
+     */
+    private const TICKET_CREATE_FIELDS = [
+        ...self::TICKET_UPDATE_FIELDS, 'channel', 'contact_id', 'requester_email', 'requester_name',
+    ];
+
+    /**
+     * ctx.replies.create: the author is the acting user, never a field.
+     */
+    private const REPLY_CREATE_FIELDS = ['ticket_id', 'body', 'is_internal'];
+
+    private const TAG_CREATE_FIELDS = ['name', 'slug', 'color'];
 
     private const PLUGIN_CONTACT_FILLABLE = ['name', 'email'];
 
@@ -630,23 +655,125 @@ class ContextHandler
 
     private function ticketsCreate(array $params): array
     {
-        $data = $params['data'] ?? throw new \InvalidArgumentException('ctx.tickets.create requires data');
-        $data = array_intersect_key($data, array_flip(self::PLUGIN_TICKET_FILLABLE));
-        $ticket = Ticket::create($data);
+        $data = $this->contractFields($params['data'] ?? null, self::TICKET_CREATE_FIELDS, 'ctx.tickets.create');
+        $attributes = $this->ticketAttributes($data, 'ctx.tickets.create');
+        if (! isset($attributes['subject'])) {
+            throw new \InvalidArgumentException('ctx.tickets.create requires subject');
+        }
+        $attributes['description'] ??= '';
+        $channel = $this->optionalText($data, 'channel', 'ctx.tickets.create') ?? TicketChannel::Api->value;
+        $attributes['channel'] = TicketChannel::tryFrom($channel)
+            ?? throw new \InvalidArgumentException("ctx.tickets.create: unknown channel \"{$channel}\"");
 
-        return $ticket->toArray();
+        if (isset($data['contact_id'])) {
+            $attributes['contact_id'] = (is_scalar($data['contact_id']) ? Contact::find($data['contact_id'])?->getKey() : null)
+                ?? throw new \InvalidArgumentException('ctx.tickets.create: no such contact');
+        } elseif (($email = $this->optionalText($data, 'requester_email', 'ctx.tickets.create')) !== null) {
+            if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+                throw new \InvalidArgumentException('ctx.tickets.create: requester_email is not an email address');
+            }
+            $attributes['contact_id'] = Contact::findOrCreateByEmail(
+                $email,
+                $this->optionalText($data, 'requester_name', 'ctx.tickets.create'),
+            )->getKey();
+        }
+
+        return Ticket::create($attributes)->toArray();
     }
 
     private function ticketsUpdate(array $params): array
     {
         $id = $params['id'] ?? throw new \InvalidArgumentException('ctx.tickets.update requires id');
-        $data = $params['data'] ?? throw new \InvalidArgumentException('ctx.tickets.update requires data');
+        $data = $this->contractFields($params['data'] ?? null, self::TICKET_UPDATE_FIELDS, 'ctx.tickets.update');
 
         $ticket = Ticket::findOrFail($id);
-        $data = array_intersect_key($data, array_flip(self::PLUGIN_TICKET_FILLABLE));
-        $ticket->update($data);
+        $ticket->update($this->ticketAttributes($data, 'ctx.tickets.update'));
 
         return $ticket->fresh()->toArray();
+    }
+
+    /**
+     * Ticket columns from the contract fields a plugin sent.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function ticketAttributes(array $data, string $method): array
+    {
+        $attributes = [];
+        if (($subject = $this->optionalText($data, 'subject', $method) ?? $this->optionalText($data, 'title', $method)) !== null) {
+            $attributes['subject'] = $subject;
+        }
+        if (array_key_exists('description', $data) || array_key_exists('body', $data)) {
+            $description = $data['description'] ?? $data['body'] ?? null;
+            if ($description !== null && ! is_string($description)) {
+                throw new \InvalidArgumentException("{$method}: description must be a string");
+            }
+            $attributes['description'] = (string) $description;
+        }
+        if (($priority = $this->optionalText($data, 'priority', $method)) !== null) {
+            $attributes['priority'] = TicketPriority::tryFrom($priority)
+                ?? throw new \InvalidArgumentException("{$method}: unknown priority \"{$priority}\"");
+        }
+        if (($status = $this->optionalText($data, 'status', $method)) !== null) {
+            $attributes['status'] = TicketStatus::tryFrom($status)
+                ?? throw new \InvalidArgumentException("{$method}: unknown status \"{$status}\"");
+        }
+        if (array_key_exists('department_id', $data)) {
+            $attributes['department_id'] = $data['department_id'] === null ? null
+                : ((is_scalar($data['department_id']) ? Department::find($data['department_id'])?->getKey() : null)
+                    ?? throw new \InvalidArgumentException("{$method}: no such department"));
+        }
+        if (array_key_exists('ticket_type', $data)) {
+            $attributes['ticket_type'] = $this->optionalText($data, 'ticket_type', $method);
+        }
+        if (array_key_exists('metadata', $data)) {
+            if ($data['metadata'] !== null && ! is_array($data['metadata'])) {
+                throw new \InvalidArgumentException("{$method}: metadata must be an object");
+            }
+            $attributes['metadata'] = $data['metadata'];
+        }
+
+        return $attributes;
+    }
+
+    /**
+     * The plugin's data, refused when it holds a key outside the contract,
+     * so a plugin never sets a column the contract does not give it.
+     *
+     * @param  list<string>  $allowed
+     * @return array<string, mixed>
+     */
+    private function contractFields(mixed $data, array $allowed, string $method): array
+    {
+        if (! is_array($data) || ($data !== [] && array_is_list($data))) {
+            throw new \InvalidArgumentException("{$method} requires a data object");
+        }
+        $unknown = array_diff(array_map('strval', array_keys($data)), $allowed);
+        if ($unknown !== []) {
+            throw new \InvalidArgumentException("{$method} does not accept: ".implode(', ', $unknown));
+        }
+
+        return $data;
+    }
+
+    /**
+     * A trimmed, non-empty string field, or null when absent or blank.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function optionalText(array $data, string $key, string $method): ?string
+    {
+        $value = $data[$key] ?? null;
+        if ($value === null) {
+            return null;
+        }
+        if (! is_string($value) && ! is_int($value)) {
+            throw new \InvalidArgumentException("{$method}: {$key} must be a string");
+        }
+        $value = trim((string) $value);
+
+        return $value === '' ? null : $value;
     }
 
     // -------------------------------------------------------------------------
@@ -674,8 +801,27 @@ class ContextHandler
 
     private function repliesCreate(array $params): array
     {
-        $data = $params['data'] ?? throw new \InvalidArgumentException('ctx.replies.create requires data');
-        $reply = Reply::create($data);
+        $data = $this->contractFields($params['data'] ?? null, self::REPLY_CREATE_FIELDS, 'ctx.replies.create');
+        $ticket = isset($data['ticket_id']) && is_scalar($data['ticket_id']) ? Ticket::find($data['ticket_id']) : null;
+        if ($ticket === null) {
+            throw new \InvalidArgumentException('ctx.replies.create requires an existing ticket_id');
+        }
+        $body = $this->optionalText($data, 'body', 'ctx.replies.create')
+            ?? throw new \InvalidArgumentException('ctx.replies.create requires body');
+        $internal = filter_var($data['is_internal'] ?? false, FILTER_VALIDATE_BOOL);
+
+        // The author is the acting user (the signed-in user of the request
+        // the plugin is serving), or nobody: a plugin never names it.
+        $reply = new Reply([
+            'ticket_id' => $ticket->getKey(),
+            'body' => $body,
+            'is_internal_note' => $internal,
+            'type' => $internal ? 'note' : 'reply',
+        ]);
+        if (($user = Auth::user()) instanceof Model) {
+            $reply->author()->associate($user);
+        }
+        $reply->save();
 
         return $reply->toArray();
     }
@@ -724,8 +870,14 @@ class ContextHandler
 
     private function tagsCreate(array $params): array
     {
-        $data = $params['data'] ?? throw new \InvalidArgumentException('ctx.tags.create requires data');
-        $tag = Tag::create($data);
+        $data = $this->contractFields($params['data'] ?? null, self::TAG_CREATE_FIELDS, 'ctx.tags.create');
+        $name = $this->optionalText($data, 'name', 'ctx.tags.create')
+            ?? throw new \InvalidArgumentException('ctx.tags.create requires name');
+        $tag = Tag::create(array_filter([
+            'name' => $name,
+            'slug' => $this->optionalText($data, 'slug', 'ctx.tags.create'),
+            'color' => $this->optionalText($data, 'color', 'ctx.tags.create'),
+        ], fn ($value) => $value !== null));
 
         return $tag->toArray();
     }

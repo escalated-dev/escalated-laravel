@@ -9,9 +9,14 @@ enum TicketChannel: string
     case Chat = 'chat';
     case Widget = 'widget';
     case Slack = 'slack';
+    case Api = 'api';
 
     public function label(): string
     {
-        return $this === self::Slack ? 'Slack' : __('escalated::enums.ticket_channel.'.$this->value);
+        return match ($this) {
+            self::Slack => 'Slack',
+            self::Api => 'API',
+            default => __('escalated::enums.ticket_channel.'.$this->value),
+        };
     }
 }
