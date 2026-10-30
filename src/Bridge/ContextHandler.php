@@ -3,6 +3,8 @@
 namespace Escalated\Laravel\Bridge;
 
 use Escalated\Laravel\Bridge\Events\PluginBroadcastEvent;
+use Escalated\Laravel\Contracts\Ticketable;
+use Escalated\Laravel\Enums\ActivityType;
 use Escalated\Laravel\Enums\TicketChannel;
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
@@ -14,6 +16,8 @@ use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Tag;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\SlackInbox;
+use Escalated\Laravel\Services\TicketService;
+use Escalated\Laravel\Support\PluginActionGuard;
 use Escalated\Laravel\Support\PluginEvents;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\Builder;
@@ -678,7 +682,9 @@ class ContextHandler
             )->getKey();
         }
 
-        return Ticket::create($attributes)->toArray();
+        // Through the ticket service, like a ticket opened over the API:
+        // opening activity, SLA, canonical events, workflows and webhooks.
+        return $this->tickets()->createForSystem($attributes, $this->actor())->toArray();
     }
 
     private function ticketsUpdate(array $params): array
@@ -687,9 +693,70 @@ class ContextHandler
         $data = $this->contractFields($params['data'] ?? null, self::TICKET_UPDATE_FIELDS, 'ctx.tickets.update');
 
         $ticket = Ticket::findOrFail($id);
-        $ticket->update($this->ticketAttributes($data, 'ctx.tickets.update'));
+        $attributes = $this->ticketAttributes($data, 'ctx.tickets.update');
+        $service = $this->tickets();
+        $causer = $this->actor();
+
+        // Checked before anything is written: a refused status changes nothing.
+        $status = $attributes['status'] ?? null;
+        if ($status !== null && $status !== $ticket->status && ! $ticket->status->canTransitionTo($status)) {
+            throw new \InvalidArgumentException("ctx.tickets.update: cannot change status from {$ticket->status->value} to {$status->value}");
+        }
+
+        // Each change goes the way the API makes it, so it is logged and
+        // announced (ticket.updated, ticket.priority_changed, ...).
+        $details = array_intersect_key($attributes, array_flip(['subject', 'description', 'ticket_type', 'metadata']));
+        if ($details !== []) {
+            $ticket = $service->update($ticket, $details);
+        }
+        if (isset($attributes['priority']) && $attributes['priority'] !== $ticket->priority) {
+            $ticket = $service->changePriority($ticket, $attributes['priority'], $causer);
+        }
+        if (array_key_exists('department_id', $attributes)
+            && (string) $attributes['department_id'] !== (string) $ticket->department_id) {
+            $ticket = $this->changeDepartment($ticket, $attributes['department_id'], $causer);
+        }
+        if ($status !== null && $status !== $ticket->status) {
+            $ticket = $service->changeStatus($ticket, $status, $causer);
+        }
 
         return $ticket->fresh()->toArray();
+    }
+
+    /**
+     * A department change through the service; clearing the department
+     * (which no API endpoint does) is logged but has no department event.
+     */
+    private function changeDepartment(Ticket $ticket, mixed $departmentId, ?Ticketable $causer): Ticket
+    {
+        if ($departmentId !== null) {
+            return $this->tickets()->changeDepartment($ticket, (int) $departmentId, $causer);
+        }
+
+        $old = $ticket->department_id;
+        $ticket->update(['department_id' => null]);
+        $ticket->logActivity(ActivityType::DepartmentChanged, $causer, [
+            'old_department_id' => $old,
+            'new_department_id' => null,
+        ]);
+
+        return $ticket->fresh();
+    }
+
+    private function tickets(): TicketService
+    {
+        return app(TicketService::class);
+    }
+
+    /**
+     * The acting user (the signed-in user of the request the plugin is
+     * serving), or nobody: a plugin never names it.
+     */
+    private function actor(): ?Ticketable
+    {
+        $user = Auth::user();
+
+        return $user instanceof Ticketable ? $user : null;
     }
 
     /**
@@ -725,7 +792,11 @@ class ContextHandler
                     ?? throw new \InvalidArgumentException("{$method}: no such department"));
         }
         if (array_key_exists('ticket_type', $data)) {
-            $attributes['ticket_type'] = $this->optionalText($data, 'ticket_type', $method);
+            $type = $this->optionalText($data, 'ticket_type', $method);
+            if ($type !== null && ! in_array($type, Ticket::TYPES, true)) {
+                throw new \InvalidArgumentException("{$method}: unknown ticket_type \"{$type}\"");
+            }
+            $attributes['ticket_type'] = $type;
         }
         if (array_key_exists('metadata', $data)) {
             if ($data['metadata'] !== null && ! is_array($data['metadata'])) {
@@ -810,18 +881,15 @@ class ContextHandler
             ?? throw new \InvalidArgumentException('ctx.replies.create requires body');
         $internal = filter_var($data['is_internal'] ?? false, FILTER_VALIDATE_BOOL);
 
-        // The author is the acting user (the signed-in user of the request
-        // the plugin is serving), or nobody: a plugin never names it.
-        $reply = new Reply([
-            'ticket_id' => $ticket->getKey(),
-            'body' => $body,
-            'is_internal_note' => $internal,
-            'type' => $internal ? 'note' : 'reply',
-        ]);
-        if (($user = Auth::user()) instanceof Model) {
-            $reply->author()->associate($user);
-        }
-        $reply->save();
+        // The author is the acting user, or nobody. Through the ticket
+        // service, like a reply over the API: activity log, mentions,
+        // reply.created / note events, workflows and webhooks.
+        $author = $this->actor();
+        $reply = match (true) {
+            $author === null => $ticket->addReply(null, $body, $internal),
+            $internal => $this->tickets()->addNote($ticket, $author, $body),
+            default => $this->tickets()->reply($ticket, $author, $body),
+        };
 
         return $reply->toArray();
     }
@@ -989,7 +1057,7 @@ class ContextHandler
         }
 
         if ($this->bridge !== null) {
-            $this->bridge->dispatchAction($hook, $data);
+            PluginActionGuard::run($hook, fn () => $this->bridge->dispatchAction($hook, $data));
         }
 
         return null;
