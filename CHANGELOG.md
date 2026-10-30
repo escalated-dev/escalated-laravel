@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.9.14] - 2026-10-30
+
 ### Upgrading
 - **An Inertia visit to an Escalated route that ends in 403, 404, 419, 429, 500 or 503 now gets the shared `Escalated/Error` page** (props `status` and a translated `message`, as Rails sends them) instead of the host's HTML error page, which the Inertia client could only show in a modal. Full page loads, JSON and API requests, and the host's own routes are untouched, and so are validation, authentication and redirect responses. The message is generic per status (`escalated::messages.errors.*`, publishable); an exception's own message never reaches the page. While `app.debug` is on, a 500 is left to the framework's debug page. It is a render callback on the host's exception handler, registered only while the built-in UI is enabled.
 
