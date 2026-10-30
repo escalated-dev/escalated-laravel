@@ -13,6 +13,7 @@ beforeEach(function () {
     $this->registrar = new RouteRegistrar($this->bridge, app(EscalatedUiRenderer::class));
     $this->manifest = json_decode(file_get_contents(__DIR__.'/../Fixtures/plugin-http-manifest.json'), true);
     $this->registrar->registerPlugin('http-fixture', $this->manifest);
+    activateSdkPlugins('http-fixture', 'legacy', 'colon');
     Gate::define('escalated-admin', fn ($user) => (bool) $user->is_admin);
     Gate::define('plugin.manage', fn () => true);
     $this->raw = " {\"message\": \"📦\", \"id\": \"body\"}\r\n";

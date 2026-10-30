@@ -6,6 +6,7 @@ use Cron\CronExpression;
 use DateTimeImmutable;
 use DateTimeZone;
 use Escalated\Laravel\Bridge\PluginBridge;
+use Escalated\Laravel\Bridge\SdkPluginActivation;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Auth;
@@ -54,7 +55,8 @@ class RunPluginCronCommand extends Command
         $minute = $at->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:00');
         $ran = 0;
 
-        foreach ($bridge->getManifests() as $name => $manifest) {
+        // Inactive plugins run no cron.
+        foreach (SdkPluginActivation::activeManifests($bridge->getManifests()) as $name => $manifest) {
             foreach ((array) ($manifest['cronSchedules'] ?? []) as $schedule) {
                 if (! is_string($schedule) || ! CronExpression::isValidExpression($schedule)) {
                     Log::warning('Escalated plugins: '.$name.' cron "'.(is_string($schedule) ? $schedule : json_encode($schedule)).'" skipped: not a five-field cron expression');

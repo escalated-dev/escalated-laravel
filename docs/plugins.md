@@ -97,6 +97,33 @@ Composer plugins appear in the admin panel with a **composer** badge. They canno
 
 **Composer plugin slugs** are derived from the package name: `acme/escalated-billing` becomes `acme--escalated-billing`.
 
+### SDK Plugins (npm)
+
+SDK plugins (`@escalated-dev/plugin-sdk`, `definePlugin()`) are npm packages
+run by `@escalated-dev/plugin-runtime` in a Node.js subprocess. They are listed
+on **Admin > Plugins** with the others, under a slug made from the package
+name: `@escalated-dev/plugin-slack` is `escalated-dev--plugin-slack`. They
+show the **composer** badge (managed by a package manager) and cannot be
+deleted from the UI; use `npm uninstall`.
+
+An SDK plugin is inactive until an admin activates it. Activating records it
+in `escalated_plugins`, calls its `onActivate` through the runtime, then fires
+`plugin.activated`; deactivating fires `plugin.deactivated` and calls
+`onDeactivate` while it is still active, then records it inactive. An inactive
+SDK plugin gets no hooks, cron or badges, its menus, widgets and slots are not
+shared, its pages, endpoints and webhooks answer 404, and its `ctx` calls are
+refused (except `ctx.log`).
+
+The first time the host sees SDK plugins (the first runtime start after
+upgrading, or on a new install), every SDK plugin installed at that moment is
+recorded active, because earlier versions ran every SDK plugin. Plugins
+installed after that start inactive.
+
+The runtime loads every installed plugin. The host sends `action` and
+`filter` only when at least one SDK plugin is active, naming the active ones
+as `plugins`; a runtime that does not honour that list still runs an inactive
+plugin's handler, which then cannot read or write anything through `ctx`.
+
 ## Hook API
 
 ### Action Hooks
@@ -179,6 +206,13 @@ A plugin action that throws is logged and does not fail the request.
 Nothing is delivered while an import is running or in tenant mode.
 
 ### Plugin Lifecycle
+
+Every plugin, native or SDK, also gets the contract's lifecycle actions, with
+`['plugin' => <name>, 'slug' => <slug>]`: `plugin.activated` after activation,
+`plugin.deactivated` before deactivation, and `plugin.uninstalling` before
+deletion. A callback that throws is logged and does not undo the change.
+Native plugins also get the legacy hooks below; SDK plugins only the dotted
+ones.
 
 | Hook | Args | When |
 |------|------|------|

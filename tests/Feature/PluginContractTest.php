@@ -76,6 +76,7 @@ it('sends escalated.plugins as a JSON object when empty', function () {
 });
 
 it('shares SDK plugin manifest menus, widgets and slots keyed by slug', function () {
+    activateSdkPlugins('@acme/plugin-crm');
     fakeSdkBridge(['@acme/plugin-crm' => [
         'pages' => [
             ['route' => '/settings', 'component' => 'Settings', 'menu' => ['label' => 'CRM', 'icon' => 'users', 'position' => 7]],

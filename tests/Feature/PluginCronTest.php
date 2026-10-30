@@ -33,6 +33,7 @@ function fakeCronBridge(array $schedules, array &$calls, ?callable $onCron = nul
         }
     })->byDefault();
     app()->instance(PluginBridge::class, $bridge);
+    activateSdkPlugins(...array_keys($schedules));
 
     return $bridge;
 }
