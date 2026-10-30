@@ -7,6 +7,7 @@ use Escalated\Laravel\Models\ChatSession;
 use Escalated\Laravel\Services\NotificationService;
 use Escalated\Laravel\Services\WebhookDispatcher;
 use Escalated\Laravel\Support\ImportContext;
+use Escalated\Laravel\Support\PluginEvents;
 
 class DispatchWebhook
 {
@@ -21,31 +22,7 @@ class DispatchWebhook
             return;
         }
 
-        $eventName = match (true) {
-            $event instanceof Events\TicketCreated => 'ticket.created',
-            $event instanceof Events\TicketUpdated => 'ticket.updated',
-            $event instanceof Events\TicketStatusChanged => 'ticket.status_changed',
-            $event instanceof Events\TicketResolved => 'ticket.resolved',
-            $event instanceof Events\TicketClosed => 'ticket.closed',
-            $event instanceof Events\TicketReopened => 'ticket.reopened',
-            $event instanceof Events\TicketAssigned => 'ticket.assigned',
-            $event instanceof Events\TicketUnassigned => 'ticket.unassigned',
-            $event instanceof Events\TicketEscalated => 'ticket.escalated',
-            $event instanceof Events\TicketPriorityChanged => 'ticket.priority_changed',
-            $event instanceof Events\DepartmentChanged => 'ticket.department_changed',
-            $event instanceof Events\ReplyCreated => 'reply.created',
-            $event instanceof Events\InternalNoteAdded => 'note.created',
-            $event instanceof Events\SlaBreached => 'sla.breached',
-            $event instanceof Events\SlaWarning => 'sla.warning',
-            $event instanceof Events\TagAddedToTicket => 'ticket.tag_added',
-            $event instanceof Events\TagRemovedFromTicket => 'ticket.tag_removed',
-            $event instanceof Events\ChatStarted => 'chat.started',
-            $event instanceof Events\ChatAssigned => 'chat.assigned',
-            $event instanceof Events\ChatTransferred => 'chat.transferred',
-            $event instanceof Events\ChatMessage => 'chat.message',
-            $event instanceof Events\ChatEnded => 'chat.ended',
-            default => null,
-        };
+        $eventName = PluginEvents::nameOf($event);
 
         if (! $eventName) {
             return;

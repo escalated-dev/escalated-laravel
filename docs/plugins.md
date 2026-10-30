@@ -46,9 +46,9 @@ The main file is loaded via `require_once` when the plugin is activated. Use it 
 <?php
 
 // Runs every time a ticket is created
-escalated_add_action('escalated_ticket_created', function ($ticket) {
+escalated_add_action('ticket.created', function (array $ticket) {
     // Send a Slack notification, create a Jira issue, etc.
-    \Log::info("New ticket: {$ticket->reference}");
+    \Log::info("New ticket: {$ticket['reference']}");
 });
 
 // Modify ticket data before it's saved
@@ -141,17 +141,42 @@ Lower numbers run first. The default priority is `10`. Use lower values (e.g. `5
 
 ```php
 // This runs first
-escalated_add_action('escalated_ticket_created', function ($ticket) {
+escalated_add_action('ticket.created', function (array $ticket) {
     // early processing
 }, 5);
 
 // This runs second
-escalated_add_action('escalated_ticket_created', function ($ticket) {
+escalated_add_action('ticket.created', function (array $ticket) {
     // later processing
 }, 20);
 ```
 
 ## Available Hooks
+
+### Domain events
+
+Active plugins receive the canonical events of the event vocabulary
+(`ticket.created`, `ticket.updated`, `ticket.status_changed`,
+`ticket.resolved`, `ticket.closed`, `ticket.reopened`, `ticket.assigned`,
+`ticket.unassigned`, `ticket.escalated`, `ticket.priority_changed`,
+`ticket.department_changed`, `ticket.tag_added`, `ticket.tag_removed`,
+`reply.created`, `note.created`, `sla.warning`, `sla.breached` and the
+`chat.*` events) as actions, after the change is committed. Native plugins
+get them through `escalated_add_action()`; SDK plugins get them in their
+`actions`. Legacy names such as `ticket.replied` are never delivered.
+
+The payload is an array. Ticket events carry the ticket's fields flat
+(`id`, `reference`, `subject`, `title`, `status`, `priority`,
+`department_id`, `assigned_to`, `requester_id`, `metadata`, ...) and the
+same object under `ticket`, plus the event's extras: `old_status` and
+`new_status`, `agent_id`, `old_priority` and `new_priority`,
+`old_department_id` and `new_department_id`, `tag`, or `type` for SLA
+events. `reply.created` and `note.created` carry the reply flat plus
+`reply` and `ticket`. Chat events carry `session`, without the visitor's
+token or email.
+
+A plugin action that throws is logged and does not fail the request.
+Nothing is delivered while an import is running or in tenant mode.
 
 ### Plugin Lifecycle
 
@@ -262,7 +287,7 @@ escalated_add_action('escalated_plugin_activated_slack-notifier', function () {
     Log::info('Slack Notifier plugin activated');
 });
 
-escalated_add_action('escalated_ticket_created', function ($ticket) {
+escalated_add_action('ticket.created', function (array $ticket) {
     $webhookUrl = config('services.slack.webhook_url');
 
     if (! $webhookUrl) {
@@ -270,7 +295,7 @@ escalated_add_action('escalated_ticket_created', function ($ticket) {
     }
 
     Http::post($webhookUrl, [
-        'text' => "New ticket *{$ticket->reference}*: {$ticket->subject}",
+        'text' => "New ticket *{$ticket['reference']}*: {$ticket['subject']}",
     ]);
 });
 
@@ -318,8 +343,8 @@ A Composer-distributed plugin follows the same conventions. Your `composer.json`
 
 use Acme\EscalatedBilling\BillingService;
 
-escalated_add_action('escalated_ticket_created', function ($ticket) {
-    app(BillingService::class)->trackTicket($ticket);
+escalated_add_action('ticket.created', function (array $ticket) {
+    app(BillingService::class)->trackTicket($ticket['id']);
 });
 
 escalated_register_menu_item([

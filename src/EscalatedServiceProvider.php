@@ -662,10 +662,8 @@ class EscalatedServiceProvider extends ServiceProvider
             // Share plugin UI extensions if plugins are enabled
             if (config('escalated.plugins.enabled', true)) {
                 try {
-                    $pluginUI = $this->app->make(PluginUIService::class);
-                    $data['plugin_menu_items'] = $pluginUI->getMenuItems();
-                    $data['plugin_dashboard_widgets'] = $pluginUI->getDashboardWidgets();
-                    $data['plugin_pages'] = $pluginUI->getCustomPages();
+                    // The shape usePluginExtensions() reads (plugin contract).
+                    $data['plugins'] = $this->app->make(PluginUIService::class)->sharedExtensions($user) ?: new \stdClass;
                 } catch (\Throwable) {
                     // Plugin UI service may not be available
                 }
@@ -750,6 +748,8 @@ class EscalatedServiceProvider extends ServiceProvider
 
         foreach ($webhookEvents as $event) {
             Event::listen($event, Listeners\DispatchWebhook::class);
+            // The same canonical events go to active plugins' actions.
+            Event::listen($event, Listeners\DeliverPluginActions::class);
         }
 
         // Cancel pending delayed actions when a ticket is resolved or closed
