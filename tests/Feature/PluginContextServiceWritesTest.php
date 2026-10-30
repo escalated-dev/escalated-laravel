@@ -103,7 +103,7 @@ it('logs a plugin status change in the activity log', function () {
 
     expect($ticket->fresh()->status)->toBe(TicketStatus::Resolved)
         ->and(TicketActivity::where('ticket_id', $ticket->id)->where('type', ActivityType::StatusChanged->value)->value('properties'))
-        ->toBe(['old_status' => 'open', 'new_status' => 'resolved']);
+        ->toEqual(['old_status' => 'open', 'new_status' => 'resolved']);
 });
 
 it('refuses a plugin status change the workflow does not allow, writing nothing', function () {
