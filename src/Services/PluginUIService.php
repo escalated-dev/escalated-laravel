@@ -315,7 +315,7 @@ class PluginUIService
                 $menuItems[] = [
                     'label' => $menu['label'] ?? $page['component'],
                     // Where RouteRegistrar mounts the page.
-                    'route' => '/'.ltrim("{$prefix}/admin/plugins/{$name}/{$route}", '/'),
+                    'route' => '/'.ltrim("{$prefix}/admin/plugins/{$slug}/{$route}", '/'),
                     'icon' => $menu['icon'] ?? null,
                     'position' => $menu['position'] ?? 100,
                     'section' => $section,

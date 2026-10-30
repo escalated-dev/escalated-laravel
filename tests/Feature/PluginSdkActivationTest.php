@@ -1,12 +1,15 @@
 <?php
 
 use Escalated\Laravel\Bridge\PluginBridge;
+use Escalated\Laravel\Bridge\RouteRegistrar;
 use Escalated\Laravel\Bridge\SdkPluginActivation;
+use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Models\Plugin;
 use Escalated\Laravel\Models\PluginStoreRecord;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -241,16 +244,59 @@ it('answers an inactive plugin\'s pages, endpoints and webhooks 404 without aski
     runtimeSaw();
     $this->actingAs($this->createAdmin());
 
-    $this->get('/support/admin/plugins/@acme/plugin-quiet/settings')->assertNotFound();
-    $this->getJson('/support/api/plugins/@acme/plugin-quiet/ping')->assertNotFound();
-    $this->postJson('/support/webhooks/plugins/@acme/plugin-quiet/hook')->assertNotFound();
+    $this->get('/support/admin/plugins/acme--plugin-quiet/settings')->assertNotFound();
+    $this->getJson('/support/api/plugins/acme--plugin-quiet/ping')->assertNotFound();
+    $this->postJson('/support/webhooks/plugins/acme--plugin-quiet/hook')->assertNotFound();
     expect(runtimeSaw())->toBe([]);
 
-    $this->getJson('/support/api/plugins/@acme/plugin-crm/ping')->assertOk()->assertJsonPath('plugin', '@acme/plugin-crm');
-    $this->postJson('/support/webhooks/plugins/@acme/plugin-crm/hook')->assertOk();
-    $this->withHeaders(['X-Inertia' => 'true'])->get('/support/admin/plugins/@acme/plugin-crm/settings')
+    $this->getJson('/support/api/plugins/acme--plugin-crm/ping')->assertOk()->assertJsonPath('plugin', '@acme/plugin-crm');
+    $this->postJson('/support/webhooks/plugins/acme--plugin-crm/hook')->assertOk();
+    $this->withHeaders(['X-Inertia' => 'true'])->get('/support/admin/plugins/acme--plugin-crm/settings')
         ->assertOk()->assertJsonPath('component', 'Escalated/Plugin/Page')->assertJsonPath('props.plugin', '@acme/plugin-crm');
     expect(collect(runtimeSaw())->pluck('params.plugin')->unique()->values()->all())->toBe(['@acme/plugin-crm']);
+});
+
+it('mounts SDK plugin pages, endpoints and webhooks on the slug, not the raw name', function () {
+    bootActivationRuntime();
+    activateSdkPlugins('@acme/plugin-crm');
+    runtimeSaw();
+    $this->actingAs($this->createAdmin());
+
+    expect(route('escalated.plugin.acme--plugin-crm.page.settings', [], false))->toBe('/support/admin/plugins/acme--plugin-crm/settings');
+    $this->getJson('/support/api/plugins/@acme/plugin-crm/ping')->assertNotFound();
+    $this->postJson('/support/webhooks/plugins/@acme/plugin-crm/hook')->assertNotFound();
+    $this->get('/support/admin/plugins/@acme/plugin-crm/settings')->assertNotFound();
+    expect(runtimeSaw())->toBe([]);
+
+    $menu = $this->withHeaders(['X-Inertia' => 'true'])->get(route('escalated.agent.dashboard'))
+        ->assertOk()->json('props.escalated.plugins.menuItems');
+    expect(array_column($menu, 'route'))->toBe(['/support/admin/plugins/acme--plugin-crm/settings']);
+});
+
+it('takes the plugin of a ctx call from the call it serves, not from the runtime\'s plugin param', function () {
+    bootActivationRuntime();
+    activateSdkPlugins('@acme/plugin-crm', '@acme/plugin-quiet');
+    runtimeSaw();
+
+    // An endpoint call serves one plugin: whatever the runtime names, the
+    // write is that plugin's.
+    $this->actingAs($this->createAdmin())->postJson('/support/api/plugins/acme--plugin-crm/forge')->assertOk();
+    expect(PluginStoreRecord::where('plugin', '@acme/plugin-crm')->count())->toBe(1)
+        ->and(PluginStoreRecord::where('plugin', '@acme/plugin-quiet')->exists())->toBeFalse()
+        ->and(PluginStoreRecord::where('plugin', 'nobody')->exists())->toBeFalse();
+});
+
+it('refuses a ctx call during a hook naming a plugin the hook was not sent to', function () {
+    $bridge = bootActivationRuntime();
+    activateSdkPlugins('@acme/plugin-quiet');
+    runtimeSaw();
+
+    $bridge->dispatchAction('test.forge', []);
+
+    $answers = collect(runtimeSaw())->where('method', 'ctx-answer')->keyBy('plugin');
+    expect($answers['@acme/plugin-quiet']['answer'])->toBe(['result' => null])
+        ->and($answers['nobody']['answer'])->toHaveKey('error')
+        ->and(PluginStoreRecord::where('plugin', 'nobody')->exists())->toBeFalse();
 });
 
 it('runs cron only for active plugins', function () {
@@ -307,4 +353,17 @@ it('fires plugin.activated, plugin.deactivated and plugin.uninstalling for a nat
     $payload = ['plugin' => 'Native Life', 'slug' => 'native-life'];
     expect($seen)->toBe([['plugin.activated', $payload], ['plugin.uninstalling', $payload], ['plugin.deactivated', $payload]])
         ->and(Plugin::where('slug', 'native-life')->exists())->toBeFalse();
+});
+
+it('mounts neither of two SDK plugins whose names share a slug, and logs both names', function () {
+    Log::spy();
+    $registrar = new RouteRegistrar(Mockery::mock(PluginBridge::class), app(EscalatedUiRenderer::class));
+    $manifest = ['endpoints' => [['method' => 'GET', 'path' => '/ping']]];
+
+    $registrar->registerAll(['@twin/a' => $manifest, 'twin/a' => $manifest, 'solo' => $manifest]);
+    Route::getRoutes()->refreshNameLookups();
+
+    expect(Route::has('escalated.plugin.twin--a.endpoint.get.ping'))->toBeFalse()
+        ->and(Route::has('escalated.plugin.solo.endpoint.get.ping'))->toBeTrue();
+    Log::shouldHaveReceived('error')->withArgs(fn ($message) => str_contains($message, '@twin/a') && str_contains($message, 'twin/a'));
 });

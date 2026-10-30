@@ -162,14 +162,12 @@ class PluginBridge
         $this->pendingActionCount++;
 
         try {
-            $this->contextHandler->setCurrentPlugin('__host__');
-
-            $this->rpc->call(
+            $this->contextHandler->serve($active, fn () => $this->rpc->call(
                 'action',
                 ['hook' => $hook, 'event' => $event, 'plugins' => $active],
                 self::TIMEOUT_ACTION,
                 [$this->contextHandler, 'handle']
-            );
+            ), hook: true);
         } catch (\Throwable $e) {
             Log::warning("Escalated PluginBridge: action '{$hook}' failed", [
                 'error' => $e->getMessage(),
@@ -197,14 +195,12 @@ class PluginBridge
         }
 
         try {
-            $this->contextHandler->setCurrentPlugin('__host__');
-
-            $result = $this->rpc->call(
+            $result = $this->contextHandler->serve($active, fn () => $this->rpc->call(
                 'filter',
                 ['hook' => $hook, 'value' => $value, 'plugins' => $active],
                 self::TIMEOUT_FILTER,
                 [$this->contextHandler, 'handle']
-            );
+            ), hook: true);
 
             return $result ?? $value;
         } catch (\Throwable $e) {
@@ -228,14 +224,12 @@ class PluginBridge
         }
 
         try {
-            $this->contextHandler->setCurrentPlugin($plugin);
-
-            $this->rpc->call(
+            $this->contextHandler->serve([$plugin], fn () => $this->rpc->call(
                 'cron',
                 ['plugin' => $plugin, 'schedule' => $schedule],
                 self::TIMEOUT_ACTION,
                 [$this->contextHandler, 'handle']
-            );
+            ));
         } catch (\Throwable $e) {
             Log::warning("Escalated PluginBridge: {$plugin} cron '{$schedule}' failed", [
                 'error' => $e->getMessage(),
@@ -256,14 +250,12 @@ class PluginBridge
         }
 
         try {
-            $this->contextHandler->setCurrentPlugin($plugin);
-
-            $answer = $this->rpc->call(
+            $answer = $this->contextHandler->serve([$plugin], fn () => $this->rpc->call(
                 'badge',
                 ['plugin' => $plugin, 'component' => $component],
                 self::TIMEOUT_FILTER,
                 [$this->contextHandler, 'handle']
-            );
+            ));
         } catch (\Throwable $e) {
             Log::warning("Escalated PluginBridge: {$plugin} badge '{$component}' failed", [
                 'error' => $e->getMessage(),
@@ -288,11 +280,9 @@ class PluginBridge
         // An inactive plugin's endpoints and pages do not exist.
         abort_unless(SdkPluginActivation::isActive($plugin), 404);
 
-        $this->contextHandler->setCurrentPlugin($plugin);
-
         $this->requireHttpContract($request);
 
-        return $this->rpc->call(
+        return $this->contextHandler->serve([$plugin], fn () => $this->rpc->call(
             'endpoint',
             [
                 'plugin' => $plugin,
@@ -306,7 +296,7 @@ class PluginBridge
             ],
             self::TIMEOUT_ENDPOINT,
             [$this->contextHandler, 'handle']
-        );
+        ));
     }
 
     /**
@@ -320,11 +310,9 @@ class PluginBridge
 
         abort_unless(SdkPluginActivation::isActive($plugin), 404);
 
-        $this->contextHandler->setCurrentPlugin($plugin);
-
         $this->requireHttpContract($transport);
 
-        return $this->rpc->call(
+        return $this->contextHandler->serve([$plugin], fn () => $this->rpc->call(
             'webhook',
             [
                 'plugin' => $plugin,
@@ -338,7 +326,7 @@ class PluginBridge
             ],
             self::TIMEOUT_WEBHOOK,
             [$this->contextHandler, 'handle']
-        );
+        ));
     }
 
     /**
@@ -367,14 +355,12 @@ class PluginBridge
         }
 
         try {
-            $this->contextHandler->setCurrentPlugin($plugin);
-
-            $this->rpc->call(
+            $this->contextHandler->serve([$plugin], fn () => $this->rpc->call(
                 $method,
                 ['plugin' => $plugin],
                 self::TIMEOUT_ACTION,
                 [$this->contextHandler, 'handle']
-            );
+            ));
         } catch (\Throwable $e) {
             Log::warning("Escalated PluginBridge: {$plugin} {$method} failed", [
                 'plugin' => $plugin,
@@ -470,7 +456,7 @@ class PluginBridge
      */
     private function handshake(): void
     {
-        $result = $this->rpc->call(
+        $result = $this->contextHandler->serve([], fn () => $this->rpc->call(
             'handshake',
             [
                 'protocol_version' => self::PROTOCOL_VERSION,
@@ -479,7 +465,7 @@ class PluginBridge
             ],
             self::TIMEOUT_HANDSHAKE,
             [$this->contextHandler, 'handle']
-        );
+        ));
 
         if (! ($result['compatible'] ?? false)) {
             $runtimeVer = $result['runtime_version'] ?? 'unknown';
@@ -503,12 +489,12 @@ class PluginBridge
      */
     private function fetchManifests(): void
     {
-        $result = $this->rpc->call(
+        $result = $this->contextHandler->serve([], fn () => $this->rpc->call(
             'manifest',
             [],
             self::TIMEOUT_MANIFEST,
             [$this->contextHandler, 'handle']
-        );
+        ));
 
         // The runtime returns an array of plugin manifest objects.
         // Normalise to a map keyed by plugin name.

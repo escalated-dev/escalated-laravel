@@ -627,9 +627,9 @@ For each installed SDK plugin the bridge automatically registers:
 
 | Category | URL Pattern | Auth |
 |----------|-------------|------|
-| Admin pages | `{prefix}/admin/plugins/{plugin}/{route}` | Admin |
-| Data endpoints | `{prefix}/api/plugins/{plugin}/{path}` | Admin |
-| Webhook endpoints | `{prefix}/webhooks/plugins/{plugin}/{path}` | None |
+| Admin pages | `{prefix}/admin/plugins/{slug}/{route}` | Admin |
+| Data endpoints | `{prefix}/api/plugins/{slug}/{path}` | Admin |
+| Webhook endpoints | `{prefix}/webhooks/plugins/{slug}/{path}` | None |
 
 ### Despacho Duplo (Compatibilidade Retroativa)
 

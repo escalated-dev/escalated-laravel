@@ -806,9 +806,11 @@ For each installed SDK plugin the bridge automatically registers:
 
 | Category | URL Pattern | Auth |
 |----------|-------------|------|
-| Admin pages | `{prefix}/admin/plugins/{plugin}/{route}` | Admin |
-| Data endpoints | `{prefix}/api/plugins/{plugin}/{path}` | Admin |
-| Webhook endpoints | `{prefix}/webhooks/plugins/{plugin}/{path}` | None |
+| Admin pages | `{prefix}/admin/plugins/{slug}/{route}` | Admin |
+| Data endpoints | `{prefix}/api/plugins/{slug}/{path}` | Admin |
+| Webhook endpoints | `{prefix}/webhooks/plugins/{slug}/{path}` | None |
+
+`{slug}` is the plugin name with the leading `@` dropped and `/` replaced by `--` (`@acme/plugin-crm` is `acme--plugin-crm`). Only active plugins answer; the rest are 404.
 
 ### Dual Dispatch (Backward Compatibility)
 

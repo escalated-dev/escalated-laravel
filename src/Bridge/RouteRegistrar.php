@@ -12,14 +12,16 @@ use Illuminate\Support\Facades\Route;
 /**
  * Reads plugin manifests returned by the runtime and registers Laravel routes.
  *
- * Three route categories are generated per plugin:
+ * Three route categories are generated per plugin, all on the plugin's slug
+ * (domain-model/plugin-contract.md, Identity), never its raw name:
  *
- *  - Pages      → Inertia routes:  admin/plugins/{plugin}/{route}
- *  - Endpoints  → API routes:       api/plugins/{plugin}/{path}
- *  - Webhooks   → Public routes:   webhooks/plugins/{plugin}/{path}
+ *  - Pages      → Inertia routes:  admin/plugins/{slug}/{route}
+ *  - Endpoints  → API routes:       api/plugins/{slug}/{path}
+ *  - Webhooks   → Public routes:   webhooks/plugins/{slug}/{path}
  *
  * All routes are registered lazily after the manifest exchange during bridge boot,
- * for every installed plugin; each answers 404 while its plugin is inactive.
+ * for every installed plugin; each answers 404 while its plugin is inactive, so
+ * activating or deactivating one takes effect without re-registering routes.
  */
 class RouteRegistrar
 {
@@ -35,8 +37,25 @@ class RouteRegistrar
      */
     public function registerAll(array $manifests): void
     {
+        // Two plugins with one slug would answer on each other's URLs: a
+        // configuration error (plugin contract, Identity). Mount neither.
+        $bySlug = [];
+        foreach (array_keys($manifests) as $pluginName) {
+            $bySlug[SdkPluginActivation::slug((string) $pluginName)][] = (string) $pluginName;
+        }
+
         foreach ($manifests as $pluginName => $manifest) {
-            $this->registerPlugin($pluginName, $manifest);
+            $names = $bySlug[SdkPluginActivation::slug((string) $pluginName)];
+            if (count($names) > 1) {
+                if ($names[0] === (string) $pluginName) {
+                    Log::error('Escalated PluginBridge: plugins '.implode(' and ', $names)
+                        .' share the slug '.SdkPluginActivation::slug((string) $pluginName).'; neither is mounted');
+                }
+
+                continue;
+            }
+
+            $this->registerPlugin((string) $pluginName, $manifest);
         }
     }
 
@@ -47,10 +66,11 @@ class RouteRegistrar
     {
         app(TenantContext::class)->assertPluginRuntimeSupported();
         $prefix = config('escalated.routes.prefix', 'support');
+        $slug = SdkPluginActivation::slug($pluginName);
 
-        $this->registerPages($pluginName, $manifest['pages'] ?? [], $prefix);
-        $this->registerEndpoints($pluginName, $manifest['endpoints'] ?? [], $prefix);
-        $this->registerWebhooks($pluginName, $manifest['webhooks'] ?? [], $prefix);
+        $this->registerPages($pluginName, $slug, $manifest['pages'] ?? [], $prefix);
+        $this->registerEndpoints($pluginName, $slug, $manifest['endpoints'] ?? [], $prefix);
+        $this->registerWebhooks($pluginName, $slug, $manifest['webhooks'] ?? [], $prefix);
     }
 
     // -------------------------------------------------------------------------
@@ -61,13 +81,14 @@ class RouteRegistrar
      * Register plugin admin page routes.
      *
      * Each page in the manifest becomes an Inertia route:
-     *   GET {prefix}/admin/plugins/{pluginName}/{route}
+     *   GET {prefix}/admin/plugins/{slug}/{route}
+     *   name: escalated.plugin.{slug}.page.{route, "/" replaced by "--"}
      *
      * The route renders the generic Escalated/Plugin/Page Inertia component,
      * passing the plugin name, component name, and initial props fetched from
      * the plugin's own endpoint.
      */
-    private function registerPages(string $pluginName, array $pages, string $prefix): void
+    private function registerPages(string $pluginName, string $slug, array $pages, string $prefix): void
     {
         if (empty($pages)) {
             return;
@@ -79,8 +100,8 @@ class RouteRegistrar
         );
 
         Route::middleware($middleware)
-            ->prefix("{$prefix}/admin/plugins/{$pluginName}")
-            ->group(function () use ($pluginName, $pages) {
+            ->prefix("{$prefix}/admin/plugins/{$slug}")
+            ->group(function () use ($pluginName, $slug, $pages) {
                 foreach ($pages as $page) {
                     $route = ltrim($page['route'] ?? '', '/');
                     $component = $page['component'] ?? '';
@@ -96,7 +117,7 @@ class RouteRegistrar
                         continue;
                     }
 
-                    $routeName = "escalated.plugin.{$pluginName}.page.{$route}";
+                    $routeName = "escalated.plugin.{$slug}.page.".str_replace('/', '--', $route);
 
                     Route::get($route, function () use ($pluginName, $component, $layout, $capability) {
                         // Inactive plugins have no pages.
@@ -137,9 +158,9 @@ class RouteRegistrar
      * Register plugin data endpoint routes.
      *
      * Each endpoint key is "{METHOD} {path}", e.g. "GET /settings".
-     * Generates:  {METHOD} {prefix}/api/plugins/{pluginName}{path}
+     * Generates:  {METHOD} {prefix}/api/plugins/{slug}{path}
      */
-    private function registerEndpoints(string $pluginName, array $endpoints, string $prefix): void
+    private function registerEndpoints(string $pluginName, string $slug, array $endpoints, string $prefix): void
     {
         if (empty($endpoints)) {
             return;
@@ -151,8 +172,8 @@ class RouteRegistrar
         );
 
         Route::middleware($middleware)
-            ->prefix("{$prefix}/api/plugins/{$pluginName}")
-            ->group(function () use ($pluginName, $endpoints) {
+            ->prefix("{$prefix}/api/plugins/{$slug}")
+            ->group(function () use ($pluginName, $slug, $endpoints) {
                 foreach ($endpoints as $signature => $definition) {
                     [$httpMethod, $path] = $this->routeDefinition($signature, $definition);
 
@@ -161,7 +182,7 @@ class RouteRegistrar
                     }
 
                     $capability = $definition['capability'] ?? null;
-                    $routeName = "escalated.plugin.{$pluginName}.endpoint.".strtolower($httpMethod).str_replace('/', '.', $path);
+                    $routeName = "escalated.plugin.{$slug}.endpoint.".strtolower($httpMethod).str_replace('/', '.', $path);
 
                     Route::match(
                         [strtolower($httpMethod)],
@@ -200,17 +221,17 @@ class RouteRegistrar
      * Webhooks are public routes (no auth). Signature verification is the
      * plugin's responsibility within its handler.
      *
-     * Generates:  {METHOD} {prefix}/webhooks/plugins/{pluginName}{path}
+     * Generates:  {METHOD} {prefix}/webhooks/plugins/{slug}{path}
      */
-    private function registerWebhooks(string $pluginName, array $webhooks, string $prefix): void
+    private function registerWebhooks(string $pluginName, string $slug, array $webhooks, string $prefix): void
     {
         if (empty($webhooks)) {
             return;
         }
 
         Route::middleware(['api'])
-            ->prefix("{$prefix}/webhooks/plugins/{$pluginName}")
-            ->group(function () use ($pluginName, $webhooks) {
+            ->prefix("{$prefix}/webhooks/plugins/{$slug}")
+            ->group(function () use ($pluginName, $slug, $webhooks) {
                 foreach ($webhooks as $signature => $definition) {
                     [$httpMethod, $path] = $this->routeDefinition($signature, $definition);
 
@@ -218,7 +239,7 @@ class RouteRegistrar
                         continue;
                     }
 
-                    $routeName = "escalated.plugin.{$pluginName}.webhook.".strtolower($httpMethod).str_replace('/', '.', $path);
+                    $routeName = "escalated.plugin.{$slug}.webhook.".strtolower($httpMethod).str_replace('/', '.', $path);
 
                     Route::match(
                         [strtolower($httpMethod)],
