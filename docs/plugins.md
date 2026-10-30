@@ -237,8 +237,18 @@ escalated_register_dashboard_widget([
     'component' => 'BillingSummaryWidget',
     'section' => 'agent',
     'priority' => 10,
+    // Optional live count, shared as the widget's `badge`. Called with the
+    // viewer while the page is built; return a number, a string or null.
+    // A throwing badge is null.
+    'badge' => fn ($user) => Invoice::overdue()->count(),
 ]);
 ```
+
+SDK plugin widgets with a `badge` function get the same: while
+`escalated.plugins.dashboardWidgets` is built, the runtime is asked
+`badge {plugin, component}` as the viewer, within 5 seconds, and the answer is
+the widget's `badge` (`null` when it fails). Widgets without a badge function
+carry no `badge` key.
 
 ### Scheduled Work (Cron)
 

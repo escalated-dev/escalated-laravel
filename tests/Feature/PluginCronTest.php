@@ -3,8 +3,9 @@
 use Escalated\Laravel\Bridge\PluginBridge;
 use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Log\Events\MessageLogged;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Event as EventBus;
 use Mockery\MockInterface;
 
 /*
@@ -64,7 +65,12 @@ it('runs as no user even when one is signed in', function () {
 });
 
 it('logs and skips a schedule it cannot read, and a failing schedule never stops the others', function () {
-    Log::spy();
+    $warnings = [];
+    EventBus::listen(MessageLogged::class, function (MessageLogged $log) use (&$warnings) {
+        if ($log->level === 'warning') {
+            $warnings[] = $log->message;
+        }
+    });
     $calls = [];
     fakeCronBridge(
         ['@acme/plugin-crm' => ['not a schedule', '* * * * *', '*/1 * * * *'], '@acme/plugin-other' => ['* * * * *']],
@@ -83,8 +89,8 @@ it('logs and skips a schedule it cannot read, and a failing schedule never stops
         ['@acme/plugin-crm', '*/1 * * * *'],
         ['@acme/plugin-other', '* * * * *'],
     ]);
-    Log::shouldHaveReceived('warning')->withArgs(fn ($message) => str_contains($message, 'not a schedule'))->once();
-    Log::shouldHaveReceived('warning')->withArgs(fn ($message) => str_contains($message, 'runtime went away'))->once();
+    expect(collect($warnings)->filter(fn ($m) => str_contains($m, 'not a schedule')))->toHaveCount(1)
+        ->and(collect($warnings)->filter(fn ($m) => str_contains($m, 'runtime went away')))->toHaveCount(1);
 });
 
 it('runs nothing in tenant mode, with plugins off, or before the runtime is up', function (array $config, bool $booted) {

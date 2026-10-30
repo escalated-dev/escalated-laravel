@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Services;
 
 use Escalated\Laravel\Bridge\PluginBridge;
 use Escalated\Laravel\Support\StaffAccess;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -274,6 +275,9 @@ class PluginUIService
                 'position' => $widget['priority'] ?? $widget['position'] ?? 100,
                 'width' => $widget['width'] ?? 'full',
             ];
+            if (isset($widget['badge'])) {
+                $dashboardWidgets[array_key_last($dashboardWidgets)]['badge'] = $this->nativeBadge($widget['badge'], $user);
+            }
         }
 
         foreach ($this->pageComponents as $page => $slots) {
@@ -330,6 +334,10 @@ class PluginUIService
                     'position' => $widget['order'] ?? 100,
                     'width' => $widget['size'] ?? 'half',
                 ];
+                if (($widget['hasBadge'] ?? false) === true) {
+                    // Asked as the viewer: the bridge's ctx acts as this request's user.
+                    $dashboardWidgets[array_key_last($dashboardWidgets)]['badge'] = $this->sdkBadge((string) $name, (string) $widget['component']);
+                }
             }
 
             foreach ((array) ($manifest['components'] ?? []) as $component) {
@@ -382,6 +390,39 @@ class PluginUIService
         }
 
         return $route;
+    }
+
+    /**
+     * A native widget's `badge`: a callable is called with the viewer; a
+     * number or string is used as is. Anything else, or a throw, is null.
+     */
+    private function nativeBadge(mixed $badge, mixed $user): int|float|string|null
+    {
+        try {
+            if (is_object($badge) && is_callable($badge)) {
+                $badge = $badge($user);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Escalated plugins: widget badge failed: '.$e->getMessage());
+
+            return null;
+        }
+
+        return is_int($badge) || is_float($badge) || is_string($badge) ? $badge : null;
+    }
+
+    /**
+     * An SDK widget's `badge`, asked from the runtime within 5 s; null when it fails.
+     */
+    private function sdkBadge(string $plugin, string $component): int|float|string|null
+    {
+        try {
+            return app(PluginBridge::class)->badge($plugin, $component);
+        } catch (\Throwable $e) {
+            Log::warning("Escalated plugins: {$plugin} badge '{$component}' failed: ".$e->getMessage());
+
+            return null;
+        }
     }
 
     /**
