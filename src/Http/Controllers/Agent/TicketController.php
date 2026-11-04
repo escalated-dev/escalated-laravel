@@ -10,6 +10,7 @@ use Escalated\Laravel\Http\Requests\AssignTicketRequest;
 use Escalated\Laravel\Http\Requests\ChangePriorityRequest;
 use Escalated\Laravel\Http\Requests\ChangeStatusRequest;
 use Escalated\Laravel\Http\Requests\ReplyToTicketRequest;
+use Escalated\Laravel\Http\Requests\SnoozeTicketRequest;
 use Escalated\Laravel\Http\Requests\UpdateTagsRequest;
 use Escalated\Laravel\Http\Requests\UpdateTicketRequest;
 use Escalated\Laravel\Models\CannedResponse;
@@ -23,6 +24,7 @@ use Escalated\Laravel\Services\AssignmentService;
 use Escalated\Laravel\Services\MacroService;
 use Escalated\Laravel\Services\TicketActionRegistry;
 use Escalated\Laravel\Services\TicketService;
+use Escalated\Laravel\Support\AssignableAgents;
 use Escalated\Laravel\Support\TicketAccounts;
 use Escalated\Laravel\Support\TicketListFilters;
 use Escalated\Laravel\Tenancy\TenantContext;
@@ -30,6 +32,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 
@@ -81,6 +84,7 @@ class TicketController extends Controller
         ]);
 
         $ticket->append(['chat_session_id', 'chat_started_at', 'chat_messages', 'requester_ticket_count', 'related_tickets']);
+        $ticket->setAttribute('requester_tickets', $this->requesterTickets($ticket));
 
         $queue = $inbox->recalled($request, $request->user());
 
@@ -89,6 +93,7 @@ class TicketController extends Controller
             'departments' => Department::active()->get(['id', 'name']),
             'tags' => Tag::all(['id', 'name', 'color']),
             'cannedResponses' => CannedResponse::forAgent($request->user()->getKey())->get(),
+            'agents' => AssignableAgents::for($ticket),
             'macros' => Macro::forAgent($request->user()->getKey())->orderBy('order')->get(),
             'is_following' => $ticket->isFollowedBy($request->user()->getKey()),
             'followers_count' => $ticket->followers()->count(),
@@ -249,6 +254,24 @@ class TicketController extends Controller
         return response()->json(['viewers' => $viewers]);
     }
 
+    public function snooze(Ticket $ticket, SnoozeTicketRequest $request): RedirectResponse
+    {
+        Gate::forUser($request->user())->authorize('update', $ticket);
+        $until = Carbon::parse($request->validated('snoozed_until'));
+
+        $this->ticketService->snoozeTicket($ticket, $until, $request->user());
+
+        return back()->with('success', 'Ticket snoozed until '.$until->format('M j, Y g:ia').'.');
+    }
+
+    public function unsnooze(Ticket $ticket, Request $request): RedirectResponse
+    {
+        Gate::forUser($request->user())->authorize('update', $ticket);
+        $this->ticketService->unsnoozeTicket($ticket, $request->user());
+
+        return back()->with('success', 'Ticket unsnoozed.');
+    }
+
     public function pin(Ticket $ticket, Reply $reply, Request $request): RedirectResponse
     {
         if (! $reply->is_internal_note) {
@@ -258,6 +281,41 @@ class TicketController extends Controller
         $reply->update(['is_pinned' => ! $reply->is_pinned]);
 
         return back()->with('success', $reply->is_pinned ? 'Note pinned.' : 'Note unpinned.');
+    }
+
+    /**
+     * The requester's five most recent other tickets the agent may see
+     * (the visibility scope applies), matched as requester_ticket_count is.
+     *
+     * @return list<array<string, mixed>>
+     */
+    protected function requesterTickets(Ticket $ticket): array
+    {
+        $query = Ticket::query()->whereKeyNot($ticket->getKey());
+
+        if ($ticket->isGuest()) {
+            if (! $ticket->guest_email) {
+                return [];
+            }
+            $query->where('guest_email', $ticket->guest_email);
+        } elseif ($ticket->requester_type && $ticket->requester_id) {
+            $query->where('requester_type', $ticket->requester_type)
+                ->where('requester_id', $ticket->requester_id);
+        } else {
+            return [];
+        }
+
+        return $query->latest('created_at')->latest('id')->limit(5)
+            ->get(['id', 'reference', 'subject', 'status', 'created_at', 'updated_at'])
+            ->map(fn (Ticket $other) => [
+                'id' => $other->id,
+                'reference' => $other->reference,
+                'subject' => $other->subject,
+                'status' => $other->status instanceof \BackedEnum ? $other->status->value : $other->status,
+                'created_at' => $other->created_at?->toIso8601String(),
+                'updated_at' => $other->updated_at?->toIso8601String(),
+            ])
+            ->all();
     }
 
     protected function customActionsForTicket(Ticket $ticket, Request $request): array
