@@ -15,7 +15,7 @@ use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\AgentTicketCreator;
 use Escalated\Laravel\Services\AttachmentService;
 use Escalated\Laravel\Services\MentionService;
-use Escalated\Laravel\Support\TicketAccounts;
+use Escalated\Laravel\Support\TicketListFilters;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Model;
 
@@ -127,86 +127,7 @@ class LocalDriver implements CreatesAgentTickets, TicketDriver
     {
         $query = Ticket::query()->with(['requester', 'assignee', 'department', 'tags', 'latestReply.author']);
 
-        if ($for) {
-            $query->where('requester_type', $for->getMorphClass())
-                ->where('requester_id', $for->getKey());
-        }
-
-        if (! empty($filters['status'])) {
-            $query->where('status', $filters['status']);
-        }
-
-        if (! empty($filters['priority'])) {
-            $query->where('priority', $filters['priority']);
-        }
-
-        if (! empty($filters['ticket_type'])) {
-            $query->where('ticket_type', $filters['ticket_type']);
-        }
-
-        if (! empty($filters['assigned_to'])) {
-            $query->where('assigned_to', $filters['assigned_to']);
-        }
-
-        if (isset($filters['unassigned']) && $filters['unassigned']) {
-            $query->whereNull('assigned_to');
-        }
-
-        if (! empty($filters['department_id'])) {
-            $query->where('department_id', $filters['department_id']);
-        }
-
-        if (isset($filters['account_type']) || isset($filters['account_id'])) {
-            TicketAccounts::constrain($query, ['type' => $filters['account_type'] ?? null, 'id' => $filters['account_id'] ?? null]);
-        }
-
-        if (! empty($filters['search'])) {
-            $query->search($filters['search']);
-        }
-
-        if (isset($filters['sla_breached']) && $filters['sla_breached']) {
-            $query->breachedSla();
-        }
-
-        if (! empty($filters['tag_ids'])) {
-            $query->whereHas('tags', fn ($q) => $q->whereIn('id', $filters['tag_ids']));
-        }
-
-        if (! empty($filters['tag'])) {
-            $query->whereHas('tags', fn ($q) => $q->where('name', 'like', "%{$filters['tag']}%"));
-        }
-
-        if (! empty($filters['created_after'])) {
-            $query->where('created_at', '>=', $filters['created_after']);
-        }
-
-        if (! empty($filters['created_before'])) {
-            $query->where('created_at', '<=', $filters['created_before']);
-        }
-
-        if (isset($filters['has_attachments']) && $filters['has_attachments']) {
-            $query->whereHas('attachments');
-        }
-
-        if (! empty($filters['requester'])) {
-            $term = $filters['requester'];
-            $query->where(function ($q) use ($term) {
-                $q->where('guest_name', 'like', "%{$term}%")
-                    ->orWhere('guest_email', 'like', "%{$term}%")
-                    ->orWhere(fn ($rq) => $rq->whereRequesterMatches($term));
-            });
-        }
-
-        if (isset($filters['following']) && $filters['following'] && $for) {
-            $query->whereHas('followers', fn ($q) => $q->where('user_id', $for->getKey()));
-        }
-
-        // Snooze filtering: show only snoozed, or exclude snoozed by default
-        if (isset($filters['snoozed']) && $filters['snoozed']) {
-            $query->snoozed();
-        } elseif (! isset($filters['include_snoozed']) || ! $filters['include_snoozed']) {
-            $query->notSnoozed();
-        }
+        TicketListFilters::apply($query, $filters, $for);
 
         $sortBy = $filters['sort_by'] ?? 'created_at';
         $sortDir = strtolower($filters['sort_dir'] ?? 'desc') === 'asc' ? 'asc' : 'desc';

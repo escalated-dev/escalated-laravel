@@ -111,4 +111,19 @@ return [
         'processing_failed' => 'فشلت المعالجة.',
     ],
 
+    'agent_inbox' => [
+        'queues' => [
+            'mine' => 'صندوقي',
+            'unassigned' => 'غير مسندة',
+            'all' => 'كل التذاكر',
+        ],
+        'views' => [
+            'urgent' => 'عاجلة',
+            'sla_at_risk' => 'اتفاقية الخدمة معرضة للخطر',
+            'waiting_on_me' => 'بانتظاري',
+            'waiting_on_customer' => 'بانتظار العميل',
+            'recently_updated' => 'حُدّثت مؤخراً',
+        ],
+    ],
+
 ];

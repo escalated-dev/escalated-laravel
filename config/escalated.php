@@ -191,6 +191,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Agent Inbox
+    |--------------------------------------------------------------------------
+    |
+    | The agent panel's rail counts, views and stat strip (`inbox` prop) are
+    | count queries per agent and queue. They are cached per agent for this
+    | many seconds; 0 recomputes them on every request.
+    |
+    */
+    'agent_inbox' => [
+        'cache_seconds' => (int) env('ESCALATED_AGENT_INBOX_CACHE_SECONDS', 10),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Ticket Actions
     |--------------------------------------------------------------------------
     |

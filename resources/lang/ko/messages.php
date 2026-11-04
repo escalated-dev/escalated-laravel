@@ -111,4 +111,19 @@ return [
         'processing_failed' => '처리에 실패했습니다.',
     ],
 
+    'agent_inbox' => [
+        'queues' => [
+            'mine' => '내 받은편지함',
+            'unassigned' => '미배정',
+            'all' => '모든 티켓',
+        ],
+        'views' => [
+            'urgent' => '긴급',
+            'sla_at_risk' => 'SLA 위험',
+            'waiting_on_me' => '내 응답 대기',
+            'waiting_on_customer' => '고객 응답 대기',
+            'recently_updated' => '최근 업데이트',
+        ],
+    ],
+
 ];

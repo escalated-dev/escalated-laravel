@@ -111,4 +111,19 @@ return [
         'processing_failed' => 'Verarbeitung fehlgeschlagen.',
     ],
 
+    'agent_inbox' => [
+        'queues' => [
+            'mine' => 'Mein Posteingang',
+            'unassigned' => 'Nicht zugewiesen',
+            'all' => 'Alle Tickets',
+        ],
+        'views' => [
+            'urgent' => 'Dringend',
+            'sla_at_risk' => 'SLA gefährdet',
+            'waiting_on_me' => 'Wartet auf mich',
+            'waiting_on_customer' => 'Wartet auf Kunden',
+            'recently_updated' => 'Kürzlich aktualisiert',
+        ],
+    ],
+
 ];

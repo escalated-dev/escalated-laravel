@@ -111,4 +111,19 @@ return [
         'processing_failed' => '処理に失敗しました。',
     ],
 
+    'agent_inbox' => [
+        'queues' => [
+            'mine' => '自分の受信箱',
+            'unassigned' => '未割り当て',
+            'all' => 'すべてのチケット',
+        ],
+        'views' => [
+            'urgent' => '緊急',
+            'sla_at_risk' => 'SLA リスクあり',
+            'waiting_on_me' => '自分の対応待ち',
+            'waiting_on_customer' => '顧客の返信待ち',
+            'recently_updated' => '最近更新',
+        ],
+    ],
+
 ];

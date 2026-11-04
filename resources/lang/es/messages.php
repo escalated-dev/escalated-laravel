@@ -111,4 +111,19 @@ return [
         'processing_failed' => 'Error en el procesamiento.',
     ],
 
+    'agent_inbox' => [
+        'queues' => [
+            'mine' => 'Mi bandeja',
+            'unassigned' => 'Sin asignar',
+            'all' => 'Todos los tickets',
+        ],
+        'views' => [
+            'urgent' => 'Urgentes',
+            'sla_at_risk' => 'SLA en riesgo',
+            'waiting_on_me' => 'Esperando mi respuesta',
+            'waiting_on_customer' => 'Esperando al cliente',
+            'recently_updated' => 'Actualizados recientemente',
+        ],
+    ],
+
 ];
