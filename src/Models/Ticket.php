@@ -360,7 +360,11 @@ class Ticket extends Model
 
     public function latestReply(): HasOne
     {
-        return $this->hasOne(Reply::class, 'ticket_id')->where('is_internal_note', false)->latestOfMany();
+        // The constraint goes inside ofMany() so it picks the latest public
+        // reply. Applied outside, the latest reply of any kind was picked and
+        // then discarded when it was a note, leaving no latest reply at all.
+        return $this->hasOne(Reply::class, 'ticket_id')
+            ->ofMany(['id' => 'max'], fn ($query) => $query->where('is_internal_note', false));
     }
 
     public function followers(): BelongsToMany

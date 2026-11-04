@@ -111,4 +111,19 @@ return [
         'processing_failed' => 'Verwerking mislukt.',
     ],
 
+    'agent_inbox' => [
+        'queues' => [
+            'mine' => 'Mijn inbox',
+            'unassigned' => 'Niet toegewezen',
+            'all' => 'Alle tickets',
+        ],
+        'views' => [
+            'urgent' => 'Urgent',
+            'sla_at_risk' => 'SLA in gevaar',
+            'waiting_on_me' => 'Wacht op mij',
+            'waiting_on_customer' => 'Wacht op klant',
+            'recently_updated' => 'Recent bijgewerkt',
+        ],
+    ],
+
 ];

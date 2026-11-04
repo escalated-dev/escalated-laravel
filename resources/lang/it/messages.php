@@ -111,4 +111,19 @@ return [
         'processing_failed' => 'Elaborazione fallita.',
     ],
 
+    'agent_inbox' => [
+        'queues' => [
+            'mine' => 'La mia casella',
+            'unassigned' => 'Non assegnati',
+            'all' => 'Tutti i ticket',
+        ],
+        'views' => [
+            'urgent' => 'Urgenti',
+            'sla_at_risk' => 'SLA a rischio',
+            'waiting_on_me' => 'In attesa di me',
+            'waiting_on_customer' => 'In attesa del cliente',
+            'recently_updated' => 'Aggiornati di recente',
+        ],
+    ],
+
 ];

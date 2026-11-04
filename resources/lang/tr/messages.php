@@ -111,4 +111,19 @@ return [
         'processing_failed' => 'İşleme başarısız oldu.',
     ],
 
+    'agent_inbox' => [
+        'queues' => [
+            'mine' => 'Gelen kutum',
+            'unassigned' => 'Atanmamış',
+            'all' => 'Tüm talepler',
+        ],
+        'views' => [
+            'urgent' => 'Acil',
+            'sla_at_risk' => 'SLA risk altında',
+            'waiting_on_me' => 'Beni bekleyen',
+            'waiting_on_customer' => 'Müşteriyi bekleyen',
+            'recently_updated' => 'Son güncellenen',
+        ],
+    ],
+
 ];

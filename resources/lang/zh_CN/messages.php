@@ -111,4 +111,19 @@ return [
         'processing_failed' => '处理失败。',
     ],
 
+    'agent_inbox' => [
+        'queues' => [
+            'mine' => '我的收件箱',
+            'unassigned' => '未分配',
+            'all' => '全部工单',
+        ],
+        'views' => [
+            'urgent' => '紧急',
+            'sla_at_risk' => 'SLA 有风险',
+            'waiting_on_me' => '等待我处理',
+            'waiting_on_customer' => '等待客户回复',
+            'recently_updated' => '最近更新',
+        ],
+    ],
+
 ];

@@ -111,4 +111,19 @@ return [
         'processing_failed' => 'Processing failed.',
     ],
 
+    'agent_inbox' => [
+        'queues' => [
+            'mine' => 'My inbox',
+            'unassigned' => 'Unassigned',
+            'all' => 'All tickets',
+        ],
+        'views' => [
+            'urgent' => 'Urgent',
+            'sla_at_risk' => 'SLA at risk',
+            'waiting_on_me' => 'Waiting on me',
+            'waiting_on_customer' => 'Waiting on customer',
+            'recently_updated' => 'Recently updated',
+        ],
+    ],
+
 ];

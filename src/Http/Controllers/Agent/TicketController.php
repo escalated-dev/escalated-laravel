@@ -18,11 +18,13 @@ use Escalated\Laravel\Models\Macro;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Tag;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Services\AgentInbox;
 use Escalated\Laravel\Services\AssignmentService;
 use Escalated\Laravel\Services\MacroService;
 use Escalated\Laravel\Services\TicketActionRegistry;
 use Escalated\Laravel\Services\TicketService;
 use Escalated\Laravel\Support\TicketAccounts;
+use Escalated\Laravel\Support\TicketListFilters;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -40,12 +42,23 @@ class TicketController extends Controller
         protected TicketActionRegistry $ticketActions,
     ) {}
 
-    public function index(Request $request): mixed
+    public function index(Request $request, AgentInbox $inbox): mixed
     {
-        $request->validate(TicketAccounts::filterRules());
+        $request->validate(array_merge(TicketAccounts::filterRules(), TicketListFilters::rules()));
+        $agent = $request->user();
+
+        $filters = $inbox->normaliseFilters($request->only([
+            'status', 'priority', 'ticket_type', 'assigned', 'assigned_to', 'unassigned', 'department_id',
+            'account_type', 'account_id', 'search', 'sla_breached', 'sla_at_risk', 'resolved_today', 'open',
+            'updated_within_hours', 'tag_ids', 'sort_by', 'sort_dir', 'per_page', 'following', 'view',
+        ]), $agent);
+
+        $queue = $inbox->queueFor($filters, $agent);
+        $inbox->remember($request, $queue);
+
         $tickets = $this->ticketService->list(
-            $request->only(['status', 'priority', 'ticket_type', 'assigned_to', 'unassigned', 'department_id', 'account_type', 'account_id', 'search', 'sla_breached', 'tag_ids', 'sort_by', 'sort_dir', 'per_page', 'following']),
-            $request->has('following') ? $request->user() : null,
+            $inbox->listFilters($filters, $queue),
+            $request->has('following') ? $agent : null,
         );
 
         return $this->renderer->render('Escalated/Agent/TicketIndex', [
@@ -53,10 +66,11 @@ class TicketController extends Controller
             'filters' => $request->all(),
             'departments' => Department::active()->get(['id', 'name']),
             'tags' => Tag::all(['id', 'name', 'color']),
-        ]);
+            'queue' => $inbox->queueProp($queue),
+        ] + $inbox->inboxProp($agent, $queue));
     }
 
-    public function show(Ticket $ticket, Request $request): mixed
+    public function show(Ticket $ticket, Request $request, AgentInbox $inbox): mixed
     {
         $ticket->load([
             'replies' => fn ($q) => $q->with('author', 'attachments')->latest(),
@@ -68,6 +82,8 @@ class TicketController extends Controller
 
         $ticket->append(['chat_session_id', 'chat_started_at', 'chat_messages', 'requester_ticket_count', 'related_tickets']);
 
+        $queue = $inbox->recalled($request, $request->user());
+
         return $this->renderer->render('Escalated/Agent/TicketShow', [
             'ticket' => $ticket,
             'departments' => Department::active()->get(['id', 'name']),
@@ -77,7 +93,8 @@ class TicketController extends Controller
             'is_following' => $ticket->isFollowedBy($request->user()->getKey()),
             'followers_count' => $ticket->followers()->count(),
             'customActions' => $this->customActionsForTicket($ticket, $request),
-        ]);
+            'queue' => $inbox->queueProp($queue),
+        ] + $inbox->inboxProp($request->user(), $queue));
     }
 
     public function update(Ticket $ticket, UpdateTicketRequest $request): RedirectResponse

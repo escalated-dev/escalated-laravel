@@ -111,4 +111,19 @@ return [
         'processing_failed' => 'Przetwarzanie nie powiodło się.',
     ],
 
+    'agent_inbox' => [
+        'queues' => [
+            'mine' => 'Moja skrzynka',
+            'unassigned' => 'Nieprzypisane',
+            'all' => 'Wszystkie zgłoszenia',
+        ],
+        'views' => [
+            'urgent' => 'Pilne',
+            'sla_at_risk' => 'SLA zagrożone',
+            'waiting_on_me' => 'Czeka na mnie',
+            'waiting_on_customer' => 'Czeka na klienta',
+            'recently_updated' => 'Ostatnio zaktualizowane',
+        ],
+    ],
+
 ];

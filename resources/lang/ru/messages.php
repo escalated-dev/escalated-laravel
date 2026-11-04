@@ -111,4 +111,19 @@ return [
         'processing_failed' => 'Обработка не удалась.',
     ],
 
+    'agent_inbox' => [
+        'queues' => [
+            'mine' => 'Мои входящие',
+            'unassigned' => 'Не назначены',
+            'all' => 'Все тикеты',
+        ],
+        'views' => [
+            'urgent' => 'Срочные',
+            'sla_at_risk' => 'SLA под угрозой',
+            'waiting_on_me' => 'Ждут меня',
+            'waiting_on_customer' => 'Ждут клиента',
+            'recently_updated' => 'Недавно обновлённые',
+        ],
+    ],
+
 ];
