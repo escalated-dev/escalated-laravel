@@ -80,6 +80,15 @@ it('ranks title matches before body matches, then the most recently updated', fu
     expect($ids)->toBe([$newerTitle->id, $olderTitle->id, $bodyOnly->id]);
 });
 
+it('ignores case on every database', function () {
+    $article = kbArticle(['title' => 'Resetting your Password']);
+
+    $this->actingAs($this->createAgent())
+        ->getJson(route('escalated.agent.kb.search', ['q' => 'PASSWORD']))
+        ->assertOk()
+        ->assertJsonPath('data.0.id', $article->id);
+});
+
 it('treats LIKE wildcards in the query as literal text', function (string $q) {
     kbArticle(['title' => 'Plain title', 'body' => 'Nothing special']);
     $literal = kbArticle(['title' => 'Codes: 100%% off, a_b and x__y', 'body' => '']);

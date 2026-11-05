@@ -49,7 +49,8 @@ class Article extends Model
     }
 
     /**
-     * Title or body contains the term. `%` and `_` in the term are literal:
+     * Title or body contains the term, ignoring case on every database
+     * (PostgreSQL's LIKE is case-sensitive). `%` and `_` in the term are literal:
      * the pattern escapes them with `!`, which every supported database
      * accepts as an ESCAPE character.
      */
@@ -59,8 +60,8 @@ class Article extends Model
         $grammar = $query->getQuery()->getGrammar();
 
         return $query->where(function ($q) use ($pattern, $grammar) {
-            $q->whereRaw($grammar->wrap('title')." LIKE ? ESCAPE '!'", [$pattern])
-                ->orWhereRaw($grammar->wrap('body')." LIKE ? ESCAPE '!'", [$pattern]);
+            $q->whereRaw('LOWER('.$grammar->wrap('title').") LIKE ? ESCAPE '!'", [$pattern])
+                ->orWhereRaw('LOWER('.$grammar->wrap('body').") LIKE ? ESCAPE '!'", [$pattern]);
         });
     }
 
@@ -69,12 +70,12 @@ class Article extends Model
     {
         $column = $query->getQuery()->getGrammar()->wrap('title');
 
-        return $query->orderByRaw("CASE WHEN {$column} LIKE ? ESCAPE '!' THEN 0 ELSE 1 END", [self::likePattern($term)]);
+        return $query->orderByRaw("CASE WHEN LOWER({$column}) LIKE ? ESCAPE '!' THEN 0 ELSE 1 END", [self::likePattern($term)]);
     }
 
     private static function likePattern(string $term): string
     {
-        return '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $term).'%';
+        return '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], mb_strtolower($term)).'%';
     }
 
     public function incrementViews(): void
