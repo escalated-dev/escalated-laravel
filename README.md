@@ -44,6 +44,7 @@ A full-featured, embeddable support ticket system for Laravel. Drop it into any 
 - **Department routing** — Organize agents into departments with auto-assignment (round-robin)
 - **Tagging system** — Categorize tickets with colored tags
 - **Guest tickets** — Email-verified submission, expiring private links, and host-supplied tracking lookup; see [verified guest access and upgrade requirements](docs/guest-access.md)
+- **Admin inside your own admin panel (optional)** — Off by default; the standalone admin stays the default. Turn it on to mount Escalated's admin under your prefix and middleware, render it inside your Inertia layout or Blade template (or an allow-listed iframe), and list its menu in your own sidebar; see [embedding the admin](docs/embedding-admin.md)
 - **Embed on other sites** — Put the widget, ticket form or live chat on a store or marketing site with one script tag and host parameters; see [embedding the widget](docs/embedding-the-widget.md)
 - **Access control** — Roles & permissions, two-factor authentication and SSO (SAML, OAuth/OIDC, JWT) as install-level switches that is enforced on every staff route when on and hidden when off; see [access control](docs/access-control.md)
 - **Agent integration API** — Create tickets for host users or named contacts with metadata, tracking references and ordered host-model subjects in one call; see [the API contract](docs/agent-ticket-api.md)

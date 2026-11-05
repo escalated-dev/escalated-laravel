@@ -2,7 +2,9 @@
 
 namespace Escalated\Laravel;
 
+use Escalated\Laravel\Support\AdminNavigation;
 use Escalated\Laravel\Support\ConnectionStore;
+use Escalated\Laravel\Support\EmbedConfig;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Escalated\Laravel\Tenancy\TenantQueryBuilder;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -14,6 +16,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Schema\Builder as SchemaBuilder;
 use Illuminate\Database\Schema\ColumnDefinition;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -42,6 +45,66 @@ class Escalated
      * null, which means "force the host's default connection".
      */
     protected static string|null|false $connectionOverride = false;
+
+    /**
+     * Embed Escalated's admin in the host's own admin panel instead of the
+     * standalone admin at `/{prefix}/admin` (optional; ADR 2026-11-05).
+     *
+     * Call it from a service provider's register() method, before Escalated
+     * registers its routes. It writes the `escalated.ui.embed` config keys,
+     * which can be set in config/escalated.php instead.
+     *
+     *     Escalated::embedAdmin(
+     *         prefix: 'admin/support',
+     *         middleware: ['web', 'auth', 'can:admin'],
+     *         layout: 'Layouts/AdminLayout',
+     *     );
+     *
+     * @param  string  $prefix  URL prefix the admin routes move under
+     * @param  list<string>|null  $middleware  middleware for those routes; null keeps `routes.admin_middleware`
+     * @param  string|null  $layout  host layout name for the frontend's `layouts` option
+     * @param  string|null  $rootView  Inertia root view for embedded responses (server-rendered hosts)
+     * @param  string  $mode  'layout' or 'iframe'
+     * @param  bool  $replaceAdminGate  true: the host's middleware alone decides who reaches the admin
+     * @param  list<string>  $frameAncestors  iframe mode: origins allowed to frame the admin
+     */
+    public static function embedAdmin(
+        string $prefix = 'admin/support',
+        ?array $middleware = null,
+        ?string $layout = null,
+        ?string $rootView = null,
+        string $mode = 'layout',
+        bool $replaceAdminGate = false,
+        array $frameAncestors = [],
+    ): void {
+        if (! in_array($mode, EmbedConfig::MODES, true)) {
+            throw new \InvalidArgumentException("Escalated::embedAdmin() mode must be 'layout' or 'iframe', got '{$mode}'.");
+        }
+
+        config(['escalated.ui.embed' => [
+            'enabled' => true,
+            'mode' => $mode,
+            'prefix' => $prefix,
+            'middleware' => $middleware,
+            'replace_admin_gate' => $replaceAdminGate,
+            'layout' => $layout,
+            'root_view' => $rootView,
+            'frame_ancestors' => $frameAncestors,
+        ]]);
+    }
+
+    /**
+     * Escalated's admin menu for `$user` (default: the signed-in user), for a
+     * host to render in its own sidebar: key, label, route, url, icon,
+     * position, active, badge, plugin, children. Filtered by the admin gate,
+     * feature switches and route permissions; plugin admin items included.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function adminNavigation(mixed $user = null, ?Request $request = null): array
+    {
+        return AdminNavigation::for($user ?? auth()->user(), $request);
+    }
 
     /**
      * Set the user model class.

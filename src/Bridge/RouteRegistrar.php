@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Bridge;
 
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Http\Middleware\EnsureIsAdmin;
+use Escalated\Laravel\Support\EmbedConfig;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -94,13 +95,13 @@ class RouteRegistrar
             return;
         }
 
-        $middleware = array_merge(
-            config('escalated.routes.admin_middleware', ['web', 'auth']),
-            [EnsureIsAdmin::class]
-        );
+        // Beside the admin: `{prefix}/admin/plugins/...`, or under the host's
+        // prefix and middleware while the admin is embedded (ADR 2026-11-05).
+        $middleware = EmbedConfig::adminMiddleware([EnsureIsAdmin::class]);
+        $base = EmbedConfig::enabled() ? EmbedConfig::prefix() : "{$prefix}/admin";
 
         Route::middleware($middleware)
-            ->prefix("{$prefix}/admin/plugins/{$slug}")
+            ->prefix("{$base}/plugins/{$slug}")
             ->group(function () use ($pluginName, $slug, $pages) {
                 foreach ($pages as $page) {
                     $route = ltrim($page['route'] ?? '', '/');

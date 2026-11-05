@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Upgrading
+- **Optional: embed the admin in your own admin panel.** Off by default; with no `escalated.ui.embed` configuration every route, page, shared prop, header and gate is unchanged (a test compares the whole route table with the one before this change). A published `config/escalated.php` without the new `ui.embed` block keeps it off. See docs/embedding-admin.md.
+
+### Added
+- **Embedding the admin in your own admin panel** (optional; ADR 2026-11-05-embeddable-admin). `Escalated::embedAdmin(prefix:, middleware:, layout:, rootView:, mode:, replaceAdminGate:, frameAncestors:)`, or the `escalated.ui.embed` config keys (`ESCALATED_EMBED`, `ESCALATED_EMBED_MODE`, `ESCALATED_EMBED_PREFIX`, `ESCALATED_EMBED_FRAME_ANCESTORS`):
+  - the `escalated.admin.*` routes (admin screens, plugin admin, API tokens) and SDK plugin admin pages move under the host's prefix and middleware with the same route names; Escalated's admin gate stays unless `replace_admin_gate` is set; agent, customer, guest, widget, API, SSO, two-factor and newsletter routes do not move;
+  - embedded pages share `escalated.embed` (`enabled`, `mode`, `layout`, `route`, `base_url`, `allowed_origins`); every page shares `escalated.navigation`, the admin menu filtered by the admin gate, feature switches and route permissions, with plugin admin items; `Escalated::adminNavigation()` returns the same for Blade;
+  - `root_view` renders embedded pages in the host's Blade layout;
+  - iframe mode sends `Content-Security-Policy: frame-ancestors 'self' <origins>` and drops `X-Frame-Options` on embedded responses only.
+
 ## [1.9.15] - 2026-11-04
 
 ### Upgrading

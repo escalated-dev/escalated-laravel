@@ -49,6 +49,8 @@ use Escalated\Laravel\Services\PluginUIService;
 use Escalated\Laravel\Services\TicketActionRegistry;
 use Escalated\Laravel\Services\TwoFactorService;
 use Escalated\Laravel\Support\AccessFeatures;
+use Escalated\Laravel\Support\AdminNavigation;
+use Escalated\Laravel\Support\EmbedConfig;
 use Escalated\Laravel\Support\GuestRateLimits;
 use Escalated\Laravel\Support\HookManager;
 use Escalated\Laravel\Support\StaffAccess;
@@ -546,14 +548,13 @@ class EscalatedServiceProvider extends ServiceProvider
 
     protected function registerApiTokenRoutes(): void
     {
-        $middleware = array_merge(
-            config('escalated.routes.admin_middleware', ['web', 'auth']),
+        $middleware = EmbedConfig::adminMiddleware(
+            [EnsureIsAdmin::class, RequireTwoFactor::class, EnforceRoutePermissions::class],
             $this->tenantMiddleware(),
-            [EnsureIsAdmin::class, RequireTwoFactor::class, EnforceRoutePermissions::class]
         );
 
         Route::middleware($middleware)
-            ->prefix(config('escalated.routes.prefix', 'support').'/admin')
+            ->prefix(EmbedConfig::adminPrefix())
             ->group(function () {
                 Route::get('/api-tokens', [ApiTokenController::class, 'index'])->name('escalated.admin.api-tokens.index');
                 Route::post('/api-tokens', [ApiTokenController::class, 'store'])->name('escalated.admin.api-tokens.store');
@@ -684,6 +685,13 @@ class EscalatedServiceProvider extends ServiceProvider
                 }
             }
 
+            // Embedding the admin in the host's admin panel (optional; ADR
+            // 2026-11-05). Neither key exists while it is off.
+            if (EmbedConfig::enabled()) {
+                $data['embed'] = EmbedConfig::shared(request());
+                $data['navigation'] = AdminNavigation::for($user, request());
+            }
+
             // Share plugin UI extensions if plugins are enabled
             if (config('escalated.plugins.enabled', true)) {
                 try {
@@ -726,6 +734,10 @@ class EscalatedServiceProvider extends ServiceProvider
             }
         });
         Event::listen(RequestHandled::class, [WidgetCors::class, 'decorateEarlyResponse']);
+        // Only while the admin is embedded (ADR 2026-11-05): iframe framing headers.
+        if (EmbedConfig::enabled()) {
+            Event::listen(RequestHandled::class, [EmbedConfig::class, 'decorateResponse']);
+        }
         Event::listen(Events\TicketCreated::class, Listeners\SendNewTicketNotifications::class);
         Event::listen(Events\TicketCreated::class, Listeners\AutoAssignTicket::class);
         Event::listen(Events\TicketCreated::class, Listeners\AttachSlaPolicy::class);

@@ -132,6 +132,42 @@ return [
     */
     'ui' => [
         'enabled' => env('ESCALATED_UI_ENABLED', true),
+
+        /*
+        |----------------------------------------------------------------------
+        | Embed the admin in your own admin panel (optional)
+        |----------------------------------------------------------------------
+        |
+        | Off by default: the standalone admin at /{prefix}/admin is used and
+        | nothing below has any effect. Turned on, Escalated's admin routes
+        | move under `prefix` and `middleware`, pages carry an embed flag and
+        | the admin menu is shared as `escalated.navigation` for your own
+        | sidebar. Same as calling Escalated::embedAdmin() in a service
+        | provider's register(). See docs/embedding-admin.md.
+        |
+        | - mode: 'layout' (your Vue layout or your root view wraps the pages)
+        |   or 'iframe' (framed by an allow-listed origin).
+        | - middleware: null keeps routes.admin_middleware (['web', 'auth']).
+        | - replace_admin_gate: true removes Escalated's admin gate from these
+        |   routes so your middleware alone decides. Only set it if your
+        |   middleware restricts the routes to admins.
+        | - layout: name of the host layout the frontend's `layouts` option
+        |   should use for embedded pages.
+        | - root_view: Inertia root view (Blade) for embedded pages.
+        | - frame_ancestors: iframe mode only; exact origins allowed to frame
+        |   the admin (comma-separated in the env var). No wildcards.
+        |
+        */
+        'embed' => [
+            'enabled' => env('ESCALATED_EMBED', false),
+            'mode' => env('ESCALATED_EMBED_MODE', 'layout'),
+            'prefix' => env('ESCALATED_EMBED_PREFIX', 'admin/support'),
+            'middleware' => null,
+            'replace_admin_gate' => false,
+            'layout' => null,
+            'root_view' => null,
+            'frame_ancestors' => array_values(array_filter(array_map('trim', explode(',', (string) env('ESCALATED_EMBED_FRAME_ANCESTORS', ''))))),
+        ],
     ],
 
     /*
