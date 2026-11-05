@@ -3168,6 +3168,21 @@
             "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
         ]
     },
+    "escalated.agent.status": {
+        "uri": "support/agent/status",
+        "methods": [
+            "PUT",
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
     "escalated.agent.tickets.assign": {
         "uri": "support/agent/tickets/{ticket}/assign",
         "methods": [
