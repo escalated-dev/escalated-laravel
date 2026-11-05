@@ -41,6 +41,7 @@ function unreadFlags($test, $user): array
 {
     return collect(unreadList($test, $user)['tickets']['data'])
         ->mapWithKeys(fn (array $row) => [$row['reference'] => $row['is_unread']])
+        ->sortKeys()
         ->all();
 }
 
@@ -174,12 +175,12 @@ it('marks tickets read and unread in bulk', function () {
     $this->actingAs($agent)
         ->post(route('escalated.agent.tickets.bulk'), ['ticket_ids' => [$a->id, $b->id], 'action' => 'mark_read'])
         ->assertRedirect();
-    expect(unreadFlags($this, $agent))->toBe([$b->reference => false, $a->reference => false]);
+    expect(unreadFlags($this, $agent))->toBe([$a->reference => false, $b->reference => false]);
 
     $this->actingAs($agent)
         ->post(route('escalated.agent.tickets.bulk'), ['ticket_ids' => [$a->id], 'action' => 'mark_unread'])
         ->assertRedirect();
-    expect(unreadFlags($this, $agent))->toBe([$b->reference => false, $a->reference => true]);
+    expect(unreadFlags($this, $agent))->toBe([$a->reference => true, $b->reference => false]);
 });
 
 it('sends is_unread false on the ticket page, which the visit marked read', function () {
