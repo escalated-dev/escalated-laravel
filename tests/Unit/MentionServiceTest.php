@@ -6,9 +6,12 @@ use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Notifications\MentionNotification;
 use Escalated\Laravel\Services\MentionService;
 use Escalated\Laravel\Tests\Fixtures\TestUser;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Notification;
 
 beforeEach(function () {
+    Gate::define('escalated-agent', fn ($user) => $user->is_agent || $user->is_admin);
+    Gate::define('escalated-admin', fn ($user) => $user->is_admin);
     $this->mentionService = new MentionService;
 });
 

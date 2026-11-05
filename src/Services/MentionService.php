@@ -6,6 +6,7 @@ use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Models\Mention;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Notifications\MentionNotification;
+use Escalated\Laravel\Support\StaffAccess;
 use Illuminate\Support\Collection;
 
 class MentionService
@@ -60,10 +61,15 @@ class MentionService
 
     /**
      * Create mention records and send notifications for the given reply.
+     *
+     * Only staff-authored content (agent or admin replies and internal
+     * notes) mentions anyone. A customer or guest naming an agent in their
+     * reply never creates a mention or a notification, so customers cannot
+     * ping staff directly.
      */
     public function processMentions(Reply $reply, array $mentionedUserIds): void
     {
-        if (empty($mentionedUserIds)) {
+        if (empty($mentionedUserIds) || ! $this->authoredByStaff($reply)) {
             return;
         }
 
@@ -90,6 +96,19 @@ class MentionService
                 $user->notify(new MentionNotification($reply));
             }
         }
+    }
+
+    /**
+     * Whether the reply's author is an agent or admin. Guest replies have no
+     * author; contacts and other non-user authors are never staff.
+     */
+    public function authoredByStaff(Reply $reply): bool
+    {
+        if ($reply->author_type === null || $reply->author_id === null) {
+            return false;
+        }
+
+        return StaffAccess::isStaff($reply->author);
     }
 
     /**

@@ -23,6 +23,12 @@ All notable changes to this project will be documented in this file.
 - **Customer online status on agent pages:** `requester_online` and `requester_last_seen_at` on ticket list rows and the agent ticket page. Last-seen comes from customer-portal requests, widget live chat and the widget's ticket status lookup, written at most once per customer every 30 seconds. "Online" means seen within `escalated.presence.online_window_seconds` (env `ESCALATED_PRESENCE_ONLINE_WINDOW`, default 120). Customers never see it. See `docs/agent-panel.md`.
 - **Agent notifications feed:** `GET /{prefix}/agent/notifications` (`escalated.agent.notifications.index`), `POST .../{id}/read` and `POST .../read-all`, over the existing database notifications, plus the shared `escalated.notifications.unread_count` for agents. Items are `{ id, type, title, body, ticket, url, created_at, read_at }`; tickets the agent can no longer view are redacted. New in-app-only notifications for SLA warnings (to the assignee) and chat transfers (to the receiving agent). Each new item is broadcast as `notification.created` on `escalated.agents.{id}` while broadcasting is on. Titles are translated in all 14 locales. See `docs/agent-panel.md`.
 
+### Security
+- **Only staff-authored content triggers @mention notifications.** A customer reply that named an agent (`@Name` or `@{Full Name}`) created a mention and notified that agent, so customers could ping any agent directly. Mentions now come only from replies and internal notes written by an agent or admin (the `escalated-agent` / `escalated-admin` gates, and a staff seat in tenant mode); customer, guest and contact replies never create a mention or a notification. This matches the other Escalated backends and ADR 2026-11-05-agent-panel-data.
+
+### Changed
+- **`MentionService::processMentions()` ignores replies whose author is not staff.** Hosts calling it directly for customer-authored replies get no mentions. `MentionService::authoredByStaff()` exposes the check.
+
 ### Fixed
 - **Article search takes `%` and `_` literally.** The customer knowledge base and widget article search passed them through to `LIKE`, so a search for `%` matched every article. It also ignores case on PostgreSQL now, as it already did on MySQL and SQLite.
 
