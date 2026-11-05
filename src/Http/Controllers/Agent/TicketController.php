@@ -21,6 +21,7 @@ use Escalated\Laravel\Models\Tag;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\AgentInbox;
 use Escalated\Laravel\Services\AssignmentService;
+use Escalated\Laravel\Services\CustomerPresenceTracker;
 use Escalated\Laravel\Services\MacroService;
 use Escalated\Laravel\Services\TicketActionRegistry;
 use Escalated\Laravel\Services\TicketReads;
@@ -46,7 +47,7 @@ class TicketController extends Controller
         protected TicketActionRegistry $ticketActions,
     ) {}
 
-    public function index(Request $request, AgentInbox $inbox, TicketReads $reads): mixed
+    public function index(Request $request, AgentInbox $inbox, TicketReads $reads, CustomerPresenceTracker $presence): mixed
     {
         $request->validate(array_merge(TicketAccounts::filterRules(), TicketListFilters::rules()));
         $agent = $request->user();
@@ -64,6 +65,7 @@ class TicketController extends Controller
             $inbox->listFilters($filters, $queue),
             $request->has('following') ? $agent : null,
         );
+        $presence->decorate($tickets->getCollection());
 
         if ($inbox->tracksLocally()) {
             $flags = $reads->flags($agent, $tickets->getCollection());
@@ -79,7 +81,7 @@ class TicketController extends Controller
         ] + $inbox->inboxProp($agent, $queue));
     }
 
-    public function show(Ticket $ticket, Request $request, AgentInbox $inbox, TicketReads $reads): mixed
+    public function show(Ticket $ticket, Request $request, AgentInbox $inbox, TicketReads $reads, CustomerPresenceTracker $presence): mixed
     {
         // Opening the ticket in the agent panel is reading it.
         if ($inbox->tracksLocally()) {
@@ -97,6 +99,7 @@ class TicketController extends Controller
 
         $ticket->append(['chat_session_id', 'chat_started_at', 'chat_messages', 'requester_ticket_count', 'related_tickets']);
         $ticket->setAttribute('requester_tickets', $this->requesterTickets($ticket));
+        $presence->decorate([$ticket]);
 
         $queue = $inbox->recalled($request, $request->user());
 

@@ -84,3 +84,23 @@ Props:
   `escalated.agent_inbox.cache_seconds`.
 
 Neither is sent in cloud mode, where tickets are not stored locally.
+
+## Customer online status
+
+Agent pages show whether the customer is on the site right now:
+
+- `requester_online` (boolean) and `requester_last_seen_at` (ISO 8601 or
+  `null`) on every row of `tickets.data` (TicketIndex) and on `ticket`
+  (TicketShow), from one query per page.
+- The customer is the ticket's requester, or its contact for a guest ticket.
+- Last-seen is recorded from requests the customer already makes: any
+  customer-portal page while signed in (staff are not recorded), the widget's
+  live chat (start, reading and sending messages, typing, ending, rating),
+  and the widget's ticket status lookup. It is written at most once per
+  customer every 30 seconds, into `escalated_customer_presence`.
+- Online means seen within `escalated.presence.online_window_seconds` (env
+  `ESCALATED_PRESENCE_ONLINE_WINDOW`, default 120).
+
+The fields are only on agent pages. No customer, guest, widget or public API
+response carries them. There is no widget heartbeat: a customer reading a
+ticket without polling goes "offline" after the window.
