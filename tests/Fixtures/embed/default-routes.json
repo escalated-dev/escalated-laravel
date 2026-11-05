@@ -3168,11 +3168,11 @@
             "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
         ]
     },
-    "escalated.agent.status": {
-        "uri": "support/agent/status",
+    "escalated.agent.kb.search": {
+        "uri": "support/agent/kb/search",
         "methods": [
-            "PUT",
-            "POST"
+            "GET",
+            "HEAD"
         ],
         "middleware": [
             "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
