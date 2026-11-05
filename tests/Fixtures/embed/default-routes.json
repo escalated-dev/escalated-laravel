@@ -3168,6 +3168,21 @@
             "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
         ]
     },
+    "escalated.agent.kb.search": {
+        "uri": "support/agent/kb/search",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
     "escalated.agent.status": {
         "uri": "support/agent/status",
         "methods": [

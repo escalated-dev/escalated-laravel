@@ -48,12 +48,34 @@ class Article extends Model
         return $query->where('status', 'draft');
     }
 
+    /**
+     * Title or body contains the term, ignoring case on every database
+     * (PostgreSQL's LIKE is case-sensitive). `%` and `_` in the term are literal:
+     * the pattern escapes them with `!`, which every supported database
+     * accepts as an ESCAPE character.
+     */
     public function scopeSearch($query, string $term)
     {
-        return $query->where(function ($q) use ($term) {
-            $q->where('title', 'like', "%{$term}%")
-                ->orWhere('body', 'like', "%{$term}%");
+        $pattern = self::likePattern($term);
+        $grammar = $query->getQuery()->getGrammar();
+
+        return $query->where(function ($q) use ($pattern, $grammar) {
+            $q->whereRaw('LOWER('.$grammar->wrap('title').") LIKE ? ESCAPE '!'", [$pattern])
+                ->orWhereRaw('LOWER('.$grammar->wrap('body').") LIKE ? ESCAPE '!'", [$pattern]);
         });
+    }
+
+    /** Articles whose title contains the term first. */
+    public function scopeOrderByTitleMatch($query, string $term)
+    {
+        $column = $query->getQuery()->getGrammar()->wrap('title');
+
+        return $query->orderByRaw("CASE WHEN LOWER({$column}) LIKE ? ESCAPE '!' THEN 0 ELSE 1 END", [self::likePattern($term)]);
+    }
+
+    private static function likePattern(string $term): string
+    {
+        return '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], mb_strtolower($term)).'%';
     }
 
     public function incrementViews(): void

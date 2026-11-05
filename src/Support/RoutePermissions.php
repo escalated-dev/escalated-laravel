@@ -111,6 +111,7 @@ final class RoutePermissions
             'escalated.api.reports.*' => ['report.view'],
 
             // ---- Knowledge base ----------------------------------------------
+            'escalated.agent.kb.search' => ['kb.view'],
             'escalated.admin.kb-articles.index' => ['kb.view'],
             'escalated.admin.kb-articles.create' => ['kb.create'],
             'escalated.admin.kb-articles.store' => ['kb.create'],

@@ -14,6 +14,10 @@ All notable changes to this project will be documented in this file.
   - `root_view` renders embedded pages in the host's Blade layout;
   - iframe mode sends `Content-Security-Policy: frame-ancestors 'self' <origins>` and drops `X-Frame-Options` on embedded responses only.
 - **Agents set their own status** through `PUT`/`POST /{prefix}/agent/status` (`escalated.agent.status`, body `{ status: online | away | offline }`), light agents included. It is stored in the agent profile's `chat_status`, the field live-chat routing reads; the admin route `escalated.admin.chat.status` stays as an alias and now also answers `agent_status`. Agents get the shared `escalated.agent_status` (`offline` until set) and `escalated.agent_statuses`. See `docs/agent-panel.md`.
+- **Knowledge-base search for agents:** `GET /{prefix}/agent/kb/search?q=` (`escalated.agent.kb.search`, `kb.view` under roles & permissions) answers `{ data: [{ id, title, excerpt, url, category, updated_at }] }` for published articles, title matches first. 404 while the knowledge base is off. See `docs/agent-panel.md`.
+
+### Fixed
+- **Article search takes `%` and `_` literally.** The customer knowledge base and widget article search passed them through to `LIKE`, so a search for `%` matched every article. It also ignores case on PostgreSQL now, as it already did on MySQL and SQLite.
 
 ## [1.9.15] - 2026-11-04
 
