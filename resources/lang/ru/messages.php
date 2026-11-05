@@ -111,6 +111,20 @@ return [
         'processing_failed' => 'Обработка не удалась.',
     ],
 
+    'agent_notifications' => [
+        'ticket_assigned' => 'Вам назначен :reference',
+        'ticket_reply' => 'Новый ответ в :reference',
+        'mention' => ':name упомянул(а) вас в :reference',
+        'sla_warning' => 'Скоро истекает SLA в :reference',
+        'sla_breached' => 'Нарушен SLA в :reference',
+        'chat_transferred' => 'Вам передан чат (:reference)',
+        'new_ticket' => 'Новый тикет :reference',
+        'ticket_escalated' => ':reference эскалирован',
+        'status_changed' => 'Изменён статус в :reference',
+        'generic' => 'Обновление в :reference',
+        'unavailable' => 'Тикет, который вам больше недоступен',
+    ],
+
     'agent_inbox' => [
         'queues' => [
             'mine' => 'Мои входящие',

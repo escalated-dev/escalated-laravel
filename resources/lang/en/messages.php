@@ -111,6 +111,20 @@ return [
         'processing_failed' => 'Processing failed.',
     ],
 
+    'agent_notifications' => [
+        'ticket_assigned' => ':reference was assigned to you',
+        'ticket_reply' => 'New reply on :reference',
+        'mention' => ':name mentioned you on :reference',
+        'sla_warning' => 'SLA due soon on :reference',
+        'sla_breached' => 'SLA breached on :reference',
+        'chat_transferred' => 'A chat was transferred to you (:reference)',
+        'new_ticket' => 'New ticket :reference',
+        'ticket_escalated' => ':reference was escalated',
+        'status_changed' => 'Status changed on :reference',
+        'generic' => 'Update on :reference',
+        'unavailable' => 'A ticket you can no longer view',
+    ],
+
     'agent_inbox' => [
         'queues' => [
             'mine' => 'My inbox',

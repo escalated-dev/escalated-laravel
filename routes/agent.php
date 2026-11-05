@@ -2,6 +2,7 @@
 
 use Escalated\Laravel\Http\Controllers\Agent\DashboardController;
 use Escalated\Laravel\Http\Controllers\Agent\KnowledgeBaseSearchController;
+use Escalated\Laravel\Http\Controllers\Agent\NotificationController;
 use Escalated\Laravel\Http\Controllers\Agent\StatusController;
 use Escalated\Laravel\Http\Controllers\Agent\TicketController;
 use Escalated\Laravel\Http\Controllers\BulkActionController;
@@ -18,6 +19,9 @@ Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web'
         Route::get('/', DashboardController::class)->name('escalated.agent.dashboard');
         Route::match(['put', 'post'], '/status', StatusController::class)->name('escalated.agent.status');
         Route::get('/kb/search', KnowledgeBaseSearchController::class)->name('escalated.agent.kb.search');
+        Route::get('/notifications', [NotificationController::class, 'index'])->name('escalated.agent.notifications.index');
+        Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('escalated.agent.notifications.read-all');
+        Route::post('/notifications/{notification}/read', [NotificationController::class, 'read'])->name('escalated.agent.notifications.read');
         Route::get('/tickets', [TicketController::class, 'index'])->name('escalated.agent.tickets.index');
         Route::post('/tickets/bulk', BulkActionController::class)->name('escalated.agent.tickets.bulk');
 

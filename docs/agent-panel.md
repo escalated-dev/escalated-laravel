@@ -104,3 +104,46 @@ Agent pages show whether the customer is on the site right now:
 The fields are only on agent pages. No customer, guest, widget or public API
 response carries them. There is no widget heartbeat: a customer reading a
 ticket without polling goes "offline" after the window.
+
+## Notifications
+
+The bell in the agent panel lists the agent's in-app notifications. They are
+Laravel database notifications in the host's `notifications` table, which
+Escalated already writes through the `database` channel in
+`escalated.notifications.channels` (on by default). The feed lists only
+Escalated's own notification classes.
+
+The feed is **available** while `database` is one of the channels and the
+`notifications` table exists. Otherwise the routes answer 404 and the shared
+prop is left out, so the bell stays hidden.
+
+| `type` | Sent to | When |
+|---|---|---|
+| `ticket_assigned` | the assignee | someone else assigns them a ticket (assigning yourself sends nothing, email included) |
+| `ticket_reply` | the assignee and followers | a public reply from the customer side; other agents' replies still email but are not in the feed |
+| `mention` | the mentioned agent | an @mention in an internal note |
+| `sla_warning` | the assignee | `sla.warning`; in-app only, no email |
+| `sla_breached` | the assignee | `sla.breached` |
+| `chat_transferred` | the receiving agent | a live chat is transferred to them; in-app only |
+| `new_ticket`, `ticket_escalated`, `status_changed` | as before | the existing notifications, also listed |
+
+| Route | Name | Answer |
+|---|---|---|
+| `GET /{prefix}/agent/notifications` | `escalated.agent.notifications.index` | `{ data: [item], meta: { current_page, last_page, per_page, total }, unread_count }`, newest first; `?per_page=` (default 20, max 50), `?unread=1`, `?page=` |
+| `POST /{prefix}/agent/notifications/{id}/read` | `escalated.agent.notifications.read` | `{ unread_count }`; 404 for another user's notification |
+| `POST /{prefix}/agent/notifications/read-all` | `escalated.agent.notifications.read-all` | `{ unread_count: 0 }` |
+
+An item is `{ id, type, title, body, ticket: { id, reference, subject } | null, url, created_at, read_at }`.
+`title` is translated when it is read (`escalated::messages.agent_notifications.*`).
+`body` is the ticket's current subject. If the agent can no longer see the
+ticket (visibility, department, or the ticket was deleted), the item stays in
+the list but its `ticket`, `url` and `body` are `null` and its title is
+generic.
+
+Agents get `escalated.notifications: { unread_count }` in the shared props.
+While `escalated.broadcasting.enabled` is on, each new item is broadcast as
+`notification.created` on the agent's private `escalated.agents.{id}` channel,
+with the item as the payload.
+
+The routes need no permission under roles & permissions: they are personal.
+Muting notification types per agent is not built yet.

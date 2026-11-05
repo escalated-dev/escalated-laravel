@@ -111,6 +111,20 @@ return [
         'processing_failed' => '処理に失敗しました。',
     ],
 
+    'agent_notifications' => [
+        'ticket_assigned' => ':reference があなたに割り当てられました',
+        'ticket_reply' => ':reference に新しい返信',
+        'mention' => ':name さんが :reference であなたをメンションしました',
+        'sla_warning' => ':reference の SLA 期限が近づいています',
+        'sla_breached' => ':reference の SLA に違反しました',
+        'chat_transferred' => 'チャットがあなたに転送されました (:reference)',
+        'new_ticket' => '新しいチケット :reference',
+        'ticket_escalated' => ':reference がエスカレーションされました',
+        'status_changed' => ':reference のステータスが変更されました',
+        'generic' => ':reference の更新',
+        'unavailable' => '表示できなくなったチケット',
+    ],
+
     'agent_inbox' => [
         'queues' => [
             'mine' => '自分の受信箱',

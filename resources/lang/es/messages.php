@@ -111,6 +111,20 @@ return [
         'processing_failed' => 'Error en el procesamiento.',
     ],
 
+    'agent_notifications' => [
+        'ticket_assigned' => 'Se te asignó :reference',
+        'ticket_reply' => 'Nueva respuesta en :reference',
+        'mention' => ':name te mencionó en :reference',
+        'sla_warning' => 'SLA a punto de vencer en :reference',
+        'sla_breached' => 'SLA incumplido en :reference',
+        'chat_transferred' => 'Se te transfirió un chat (:reference)',
+        'new_ticket' => 'Nuevo ticket :reference',
+        'ticket_escalated' => ':reference fue escalado',
+        'status_changed' => 'Cambio de estado en :reference',
+        'generic' => 'Novedad en :reference',
+        'unavailable' => 'Un ticket que ya no puedes ver',
+    ],
+
     'agent_inbox' => [
         'queues' => [
             'mine' => 'Mi bandeja',
