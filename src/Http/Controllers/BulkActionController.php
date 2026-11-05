@@ -7,6 +7,7 @@ use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Http\Requests\BulkActionRequest;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\AssignmentService;
+use Escalated\Laravel\Services\TicketReads;
 use Escalated\Laravel\Services\TicketService;
 use Escalated\Laravel\Support\StaffAccess;
 use Illuminate\Http\RedirectResponse;
@@ -19,7 +20,7 @@ class BulkActionController extends Controller
         protected AssignmentService $assignmentService,
     ) {}
 
-    public function __invoke(BulkActionRequest $request): RedirectResponse
+    public function __invoke(BulkActionRequest $request, TicketReads $reads): RedirectResponse
     {
         $ticketIds = $request->validated('ticket_ids');
         $action = $request->validated('action');
@@ -40,6 +41,8 @@ class BulkActionController extends Controller
                     'delete' => StaffAccess::isAdmin($request->user())
                         ? $ticket->delete()
                         : abort(403, 'Only admins can delete tickets'),
+                    'mark_read' => $reads->markRead($causer, $ticket),
+                    'mark_unread' => $reads->markUnread($causer, $ticket),
                 };
                 $successCount++;
             } catch (\Throwable) {

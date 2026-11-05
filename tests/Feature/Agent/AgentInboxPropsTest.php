@@ -55,7 +55,7 @@ it('sends inbox counts, built-in views, stats and the queue on the ticket list',
     expect($response->json('component'))->toBe('Escalated/Agent/TicketIndex');
 
     $inbox = $response->json('props.inbox');
-    expect(array_keys($inbox))->toBe(['counts', 'views', 'stats'])
+    expect(array_keys($inbox))->toBe(['counts', 'unread', 'views', 'stats'])
         // Unresolved, unsnoozed tickets in each queue.
         ->and($inbox['counts'])->toBe(['mine' => 2, 'unassigned' => 1, 'all' => 4])
         ->and(array_column($inbox['views'], 'id'))->toBe(BUILT_IN_VIEW_IDS)
@@ -250,8 +250,8 @@ it('previews the latest customer-visible message, never an internal note', funct
     $row = inertiaGet($this, $agent, route('escalated.agent.tickets.index'))->json('props.tickets.data.0');
 
     expect($row['latest_reply']['body'])->toBe('Customer-visible answer')
-        // Escalated tracks no per-agent read state, so it sends no read flag.
-        ->and($row)->not->toHaveKey('is_unread');
+        // The agent's own replies are not customer activity; the new ticket is.
+        ->and($row['is_unread'])->toBeTrue();
 });
 
 it('sends inbox and the queue the agent last opened on the ticket page', function () {
@@ -263,7 +263,7 @@ it('sends inbox and the queue the agent last opened on the ticket page', functio
     expect($show->json('component'))->toBe('Escalated/Agent/TicketShow')
         ->and($show->json('props.queue'))->toBe(['key' => 'all', 'title' => 'All tickets'])
         ->and($show->json('props.inbox.counts'))->toBe(['mine' => 1, 'unassigned' => 1, 'all' => 2])
-        ->and(array_keys($show->json('props.inbox')))->toBe(['counts', 'views', 'stats']);
+        ->and(array_keys($show->json('props.inbox')))->toBe(['counts', 'unread', 'views', 'stats']);
 
     inertiaGet($this, $agent, route('escalated.agent.tickets.index', ['assigned_to' => $agent->id]))->assertOk();
 

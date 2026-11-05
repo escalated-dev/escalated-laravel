@@ -18,8 +18,8 @@ class BulkActionRequest extends FormRequest
         return [
             'ticket_ids' => ['required', 'array', 'min:1', 'max:50'],
             'ticket_ids.*' => ['integer', 'exists:'.Ticket::class.',id'],
-            'action' => ['required', 'string', Rule::in(['status', 'priority', 'assign', 'tags', 'department', 'delete'])],
-            'value' => ['required_unless:action,delete'],
+            'action' => ['required', 'string', Rule::in(['status', 'priority', 'assign', 'tags', 'department', 'delete', 'mark_read', 'mark_unread'])],
+            'value' => ['required_unless:action,delete,mark_read,mark_unread'],
         ];
     }
 }

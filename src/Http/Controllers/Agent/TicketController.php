@@ -23,6 +23,7 @@ use Escalated\Laravel\Services\AgentInbox;
 use Escalated\Laravel\Services\AssignmentService;
 use Escalated\Laravel\Services\MacroService;
 use Escalated\Laravel\Services\TicketActionRegistry;
+use Escalated\Laravel\Services\TicketReads;
 use Escalated\Laravel\Services\TicketService;
 use Escalated\Laravel\Support\AssignableAgents;
 use Escalated\Laravel\Support\TicketAccounts;
@@ -45,7 +46,7 @@ class TicketController extends Controller
         protected TicketActionRegistry $ticketActions,
     ) {}
 
-    public function index(Request $request, AgentInbox $inbox): mixed
+    public function index(Request $request, AgentInbox $inbox, TicketReads $reads): mixed
     {
         $request->validate(array_merge(TicketAccounts::filterRules(), TicketListFilters::rules()));
         $agent = $request->user();
@@ -64,6 +65,11 @@ class TicketController extends Controller
             $request->has('following') ? $agent : null,
         );
 
+        if ($inbox->tracksLocally()) {
+            $flags = $reads->flags($agent, $tickets->getCollection());
+            $tickets->getCollection()->each(fn (Ticket $ticket) => $ticket->setAttribute('is_unread', $flags[$ticket->getKey()]));
+        }
+
         return $this->renderer->render('Escalated/Agent/TicketIndex', [
             'tickets' => $tickets,
             'filters' => $request->all(),
@@ -73,8 +79,14 @@ class TicketController extends Controller
         ] + $inbox->inboxProp($agent, $queue));
     }
 
-    public function show(Ticket $ticket, Request $request, AgentInbox $inbox): mixed
+    public function show(Ticket $ticket, Request $request, AgentInbox $inbox, TicketReads $reads): mixed
     {
+        // Opening the ticket in the agent panel is reading it.
+        if ($inbox->tracksLocally()) {
+            $reads->markRead($request->user(), $ticket);
+            $ticket->setAttribute('is_unread', false);
+        }
+
         $ticket->load([
             'replies' => fn ($q) => $q->with('author', 'attachments')->latest(),
             'attachments', 'tags', 'department', 'requester', 'assignee',
@@ -209,6 +221,27 @@ class TicketController extends Controller
         }
 
         return back()->with('success', __('escalated::messages.ticket.custom_action_dispatched'));
+    }
+
+    public function markRead(Ticket $ticket, Request $request, TicketReads $reads): RedirectResponse|JsonResponse
+    {
+        $reads->markRead($request->user(), $ticket);
+
+        return $this->readAnswer($request, false);
+    }
+
+    public function markUnread(Ticket $ticket, Request $request, TicketReads $reads): RedirectResponse|JsonResponse
+    {
+        $reads->markUnread($request->user(), $ticket);
+
+        return $this->readAnswer($request, true);
+    }
+
+    private function readAnswer(Request $request, bool $unread): RedirectResponse|JsonResponse
+    {
+        return $request->wantsJson() && ! $request->header('X-Inertia')
+            ? response()->json(['is_unread' => $unread])
+            : back();
     }
 
     public function follow(Ticket $ticket, Request $request): RedirectResponse

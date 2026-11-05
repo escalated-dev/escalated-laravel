@@ -29,6 +29,8 @@ final class RoutePermissions
         'tags' => ['ticket.edit'],
         'department' => ['ticket.edit'],
         'delete' => ['ticket.delete'],
+        'mark_read' => [],
+        'mark_unread' => [],
     ];
 
     /**
@@ -60,6 +62,8 @@ final class RoutePermissions
             'escalated.*.tickets.show' => ['ticket.view'],
             'escalated.admin.tickets.merge-search' => ['ticket.view'],
             'escalated.*.tickets.follow' => ['ticket.view'],
+            'escalated.agent.tickets.read' => ['ticket.view'],
+            'escalated.agent.tickets.unread' => ['ticket.view'],
             'escalated.*.tickets.presence' => ['ticket.view'],
             'escalated.*.tickets.typing' => ['ticket.view'],
             'escalated.admin.tickets.links.index' => ['ticket.view'],

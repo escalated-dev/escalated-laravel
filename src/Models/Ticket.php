@@ -12,6 +12,7 @@ use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Events;
 use Escalated\Laravel\Services\GuestEmailVerification;
+use Escalated\Laravel\Services\TicketReads;
 use Escalated\Laravel\Services\TicketSubjectResolver;
 use Escalated\Laravel\Services\TicketSubjectService;
 use Escalated\Laravel\Support\RequiredDepartment;
@@ -95,7 +96,13 @@ class Ticket extends Model
             if (empty($ticket->status)) {
                 $ticket->status = TicketStatus::Open;
             }
+
+            TicketReads::ticketCreating($ticket);
         });
+
+        // The foreign key cascades too; this also covers SQLite without
+        // foreign keys and a package connection separate from the host's.
+        static::forceDeleted(fn (self $ticket) => TicketRead::query()->where('ticket_id', $ticket->getKey())->delete());
 
         static::created(function (self $ticket) {
             // Generate the final reference from the primary key, then dispatch TicketCreated
@@ -199,6 +206,7 @@ class Ticket extends Model
             'resolved_at' => 'datetime',
             'closed_at' => 'datetime',
             'snoozed_until' => 'datetime',
+            'last_customer_activity_at' => 'datetime',
             'guest_access_expires_at' => 'datetime',
             'guest_email_verified_at' => 'datetime',
         ];

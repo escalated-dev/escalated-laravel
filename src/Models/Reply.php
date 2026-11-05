@@ -7,6 +7,7 @@ use Escalated\Laravel\Database\Factories\ReplyFactory;
 use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Events\InternalNoteAdded;
 use Escalated\Laravel\Events\ReplyCreated;
+use Escalated\Laravel\Services\TicketReads;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -29,6 +30,8 @@ class Reply extends Model
         parent::booted();
 
         static::created(function ($reply) {
+            TicketReads::replyCreated($reply);
+
             if ($reply->deferCreatedEvent) {
                 return;
             }
