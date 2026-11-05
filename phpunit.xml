@@ -19,6 +19,9 @@
         <testsuite name="Prefix">
             <directory>tests/Prefix</directory>
         </testsuite>
+        <testsuite name="Embed">
+            <directory>tests/Embed</directory>
+        </testsuite>
     </testsuites>
     <source>
         <include>

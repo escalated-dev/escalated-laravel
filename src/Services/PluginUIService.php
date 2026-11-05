@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Services;
 
 use Escalated\Laravel\Bridge\PluginBridge;
 use Escalated\Laravel\Bridge\SdkPluginActivation;
+use Escalated\Laravel\Support\EmbedConfig;
 use Escalated\Laravel\Support\StaffAccess;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
@@ -315,7 +316,7 @@ class PluginUIService
                 $menuItems[] = [
                     'label' => $menu['label'] ?? $page['component'],
                     // Where RouteRegistrar mounts the page.
-                    'route' => '/'.ltrim("{$prefix}/admin/plugins/{$slug}/{$route}", '/'),
+                    'route' => '/'.ltrim((EmbedConfig::enabled() ? EmbedConfig::prefix() : "{$prefix}/admin")."/plugins/{$slug}/{$route}", '/'),
                     'icon' => $menu['icon'] ?? null,
                     'position' => $menu['position'] ?? 100,
                     'section' => $section,

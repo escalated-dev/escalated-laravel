@@ -49,10 +49,13 @@ use Escalated\Laravel\Http\Middleware\EnsureIsAdmin;
 use Escalated\Laravel\Http\Middleware\EnsureIsStaff;
 use Escalated\Laravel\Http\Middleware\RequireTwoFactor;
 use Escalated\Laravel\Http\Middleware\ResolveTicketByReference;
+use Escalated\Laravel\Support\EmbedConfig;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web', 'auth']), [EnsureIsAdmin::class, RequireTwoFactor::class, EnforceRoutePermissions::class]))
-    ->prefix(config('escalated.routes.prefix', 'support').'/admin')
+// Under `{prefix}/admin`, or under the host's prefix and middleware while the
+// admin is embedded in the host's admin panel (EmbedConfig; ADR 2026-11-05).
+Route::middleware(EmbedConfig::adminMiddleware([EnsureIsAdmin::class, RequireTwoFactor::class, EnforceRoutePermissions::class]))
+    ->prefix(EmbedConfig::adminPrefix())
     ->group(function () {
         Route::get('/agents/search', AgentSearchController::class)->name('escalated.admin.agents.search');
 
