@@ -1,0 +1,4654 @@
+{
+    "escalated.admin.agents.search": {
+        "uri": "support/admin/agents/search",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.api-tokens.destroy": {
+        "uri": "support/admin/api-tokens/{id}",
+        "methods": [
+            "DELETE"
+        ],
+        "middleware": [
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.api-tokens.index": {
+        "uri": "support/admin/api-tokens",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.api-tokens.store": {
+        "uri": "support/admin/api-tokens",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.api-tokens.update": {
+        "uri": "support/admin/api-tokens/{id}",
+        "methods": [
+            "PATCH"
+        ],
+        "middleware": [
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.audit-log": {
+        "uri": "support/admin/audit-log",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.automations.create": {
+        "uri": "support/admin/automations/create",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.automations.destroy": {
+        "uri": "support/admin/automations/{automation}",
+        "methods": [
+            "DELETE"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.automations.edit": {
+        "uri": "support/admin/automations/{automation}/edit",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.automations.index": {
+        "uri": "support/admin/automations",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.automations.store": {
+        "uri": "support/admin/automations",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.automations.update": {
+        "uri": "support/admin/automations/{automation}",
+        "methods": [
+            "PUT",
+            "PATCH"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.business-hours.create": {
+        "uri": "support/admin/business-hours/create",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.business-hours.destroy": {
+        "uri": "support/admin/business-hours/{business_hour}",
+        "methods": [
+            "DELETE"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.business-hours.edit": {
+        "uri": "support/admin/business-hours/{business_hour}/edit",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.business-hours.index": {
+        "uri": "support/admin/business-hours",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.business-hours.store": {
+        "uri": "support/admin/business-hours",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.business-hours.update": {
+        "uri": "support/admin/business-hours/{business_hour}",
+        "methods": [
+            "PUT",
+            "PATCH"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.canned-responses.destroy": {
+        "uri": "support/admin/canned-responses/{cannedResponse}",
+        "methods": [
+            "DELETE"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.canned-responses.index": {
+        "uri": "support/admin/canned-responses",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.canned-responses.store": {
+        "uri": "support/admin/canned-responses",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.canned-responses.update": {
+        "uri": "support/admin/canned-responses/{cannedResponse}",
+        "methods": [
+            "PUT"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.capacity.index": {
+        "uri": "support/admin/capacity",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.capacity.update": {
+        "uri": "support/admin/capacity/{capacity}",
+        "methods": [
+            "PUT"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.chat.accept": {
+        "uri": "support/admin/chat/{session}/accept",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.chat.active": {
+        "uri": "support/admin/chat/active",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.chat.end": {
+        "uri": "support/admin/chat/{session}/end",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.chat.message": {
+        "uri": "support/admin/chat/{session}/message",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.chat.queue": {
+        "uri": "support/admin/chat/queue",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.chat.routing-rules.destroy": {
+        "uri": "support/admin/chat/routing-rules/{routingRule}",
+        "methods": [
+            "DELETE"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.chat.routing-rules.index": {
+        "uri": "support/admin/chat/routing-rules",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.chat.routing-rules.store": {
+        "uri": "support/admin/chat/routing-rules",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.chat.routing-rules.update": {
+        "uri": "support/admin/chat/routing-rules/{routingRule}",
+        "methods": [
+            "PUT"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.chat.settings": {
+        "uri": "support/admin/chat/settings",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.chat.settings.update": {
+        "uri": "support/admin/chat/settings",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.chat.status": {
+        "uri": "support/admin/chat/status",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.chat.transfer": {
+        "uri": "support/admin/chat/{session}/transfer",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.chat.typing": {
+        "uri": "support/admin/chat/{session}/typing",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.custom-fields.create": {
+        "uri": "support/admin/custom-fields/create",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.custom-fields.destroy": {
+        "uri": "support/admin/custom-fields/{custom_field}",
+        "methods": [
+            "DELETE"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.custom-fields.edit": {
+        "uri": "support/admin/custom-fields/{custom_field}/edit",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.custom-fields.index": {
+        "uri": "support/admin/custom-fields",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.custom-fields.reorder": {
+        "uri": "support/admin/custom-fields/reorder",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.custom-fields.store": {
+        "uri": "support/admin/custom-fields",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.custom-fields.update": {
+        "uri": "support/admin/custom-fields/{custom_field}",
+        "methods": [
+            "PUT",
+            "PATCH"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.custom-objects.create": {
+        "uri": "support/admin/custom-objects/create",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.custom-objects.destroy": {
+        "uri": "support/admin/custom-objects/{custom_object}",
+        "methods": [
+            "DELETE"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.custom-objects.edit": {
+        "uri": "support/admin/custom-objects/{custom_object}/edit",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.custom-objects.index": {
+        "uri": "support/admin/custom-objects",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.custom-objects.records": {
+        "uri": "support/admin/custom-objects/{customObject}/records",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.custom-objects.records.destroy": {
+        "uri": "support/admin/custom-objects/{customObject}/records/{record}",
+        "methods": [
+            "DELETE"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.custom-objects.records.store": {
+        "uri": "support/admin/custom-objects/{customObject}/records",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.custom-objects.records.update": {
+        "uri": "support/admin/custom-objects/{customObject}/records/{record}",
+        "methods": [
+            "PUT"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.custom-objects.store": {
+        "uri": "support/admin/custom-objects",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.custom-objects.update": {
+        "uri": "support/admin/custom-objects/{custom_object}",
+        "methods": [
+            "PUT",
+            "PATCH"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.departments.create": {
+        "uri": "support/admin/departments/create",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.departments.destroy": {
+        "uri": "support/admin/departments/{department}",
+        "methods": [
+            "DELETE"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.departments.edit": {
+        "uri": "support/admin/departments/{department}/edit",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.departments.index": {
+        "uri": "support/admin/departments",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.departments.store": {
+        "uri": "support/admin/departments",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.departments.update": {
+        "uri": "support/admin/departments/{department}",
+        "methods": [
+            "PUT",
+            "PATCH"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.escalation-rules.create": {
+        "uri": "support/admin/escalation-rules/create",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.escalation-rules.destroy": {
+        "uri": "support/admin/escalation-rules/{escalation_rule}",
+        "methods": [
+            "DELETE"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.escalation-rules.edit": {
+        "uri": "support/admin/escalation-rules/{escalation_rule}/edit",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.escalation-rules.index": {
+        "uri": "support/admin/escalation-rules",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.escalation-rules.store": {
+        "uri": "support/admin/escalation-rules",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.escalation-rules.update": {
+        "uri": "support/admin/escalation-rules/{escalation_rule}",
+        "methods": [
+            "PUT",
+            "PATCH"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.import.cancel": {
+        "uri": "support/admin/import/cancel/{jobId}",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.import.connect": {
+        "uri": "support/admin/import/{platform}/connect",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.import.index": {
+        "uri": "support/admin/import",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.import.mapping": {
+        "uri": "support/admin/import/{platform}/mapping",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.import.pause": {
+        "uri": "support/admin/import/pause/{jobId}",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.import.progress": {
+        "uri": "support/admin/import/progress/{jobId}",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.import.resume": {
+        "uri": "support/admin/import/resume/{jobId}",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.import.review": {
+        "uri": "support/admin/import/{platform}/review",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.import.start": {
+        "uri": "support/admin/import/{platform}/start",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.import.status": {
+        "uri": "support/admin/import/status/{jobId}",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.import.test-connection": {
+        "uri": "support/admin/import/{platform}/test-connection",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.kb-articles.create": {
+        "uri": "support/admin/kb-articles/create",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.kb-articles.destroy": {
+        "uri": "support/admin/kb-articles/{kb_article}",
+        "methods": [
+            "DELETE"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.kb-articles.edit": {
+        "uri": "support/admin/kb-articles/{kb_article}/edit",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.kb-articles.index": {
+        "uri": "support/admin/kb-articles",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.kb-articles.store": {
+        "uri": "support/admin/kb-articles",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.kb-articles.update": {
+        "uri": "support/admin/kb-articles/{kb_article}",
+        "methods": [
+            "PUT",
+            "PATCH"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.kb-categories.destroy": {
+        "uri": "support/admin/kb-categories/{kb_category}",
+        "methods": [
+            "DELETE"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.kb-categories.index": {
+        "uri": "support/admin/kb-categories",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.kb-categories.store": {
+        "uri": "support/admin/kb-categories",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.kb-categories.update": {
+        "uri": "support/admin/kb-categories/{kb_category}",
+        "methods": [
+            "PUT",
+            "PATCH"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.macros.destroy": {
+        "uri": "support/admin/macros/{macro}",
+        "methods": [
+            "DELETE"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.macros.index": {
+        "uri": "support/admin/macros",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.macros.store": {
+        "uri": "support/admin/macros",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.macros.update": {
+        "uri": "support/admin/macros/{macro}",
+        "methods": [
+            "PUT"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.plugins.activate": {
+        "uri": "support/admin/plugins/{slug}/activate",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Closure"
+        ]
+    },
+    "escalated.admin.plugins.deactivate": {
+        "uri": "support/admin/plugins/{slug}/deactivate",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Closure"
+        ]
+    },
+    "escalated.admin.plugins.destroy": {
+        "uri": "support/admin/plugins/{slug}",
+        "methods": [
+            "DELETE"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Closure"
+        ]
+    },
+    "escalated.admin.plugins.index": {
+        "uri": "support/admin/plugins",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Closure"
+        ]
+    },
+    "escalated.admin.plugins.upload": {
+        "uri": "support/admin/plugins/upload",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Closure"
+        ]
+    },
+    "escalated.admin.reports": {
+        "uri": "support/admin/reports",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.reports.agent-detail": {
+        "uri": "support/admin/reports/agent/{id}/detail",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.reports.agent-ranking": {
+        "uri": "support/admin/reports/agent-ranking",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.reports.agents": {
+        "uri": "support/admin/reports/agents",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.reports.cohorts": {
+        "uri": "support/admin/reports/cohorts",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.reports.comparison": {
+        "uri": "support/admin/reports/comparison",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.reports.csat": {
+        "uri": "support/admin/reports/csat",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.reports.dashboard": {
+        "uri": "support/admin/reports/dashboard",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.reports.export": {
+        "uri": "support/admin/reports/export/{type}",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.reports.frt": {
+        "uri": "support/admin/reports/frt",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.reports.resolution": {
+        "uri": "support/admin/reports/resolution",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.reports.resolution-times": {
+        "uri": "support/admin/reports/resolution-times",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.reports.response-times": {
+        "uri": "support/admin/reports/response-times",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.reports.sla": {
+        "uri": "support/admin/reports/sla",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.reports.sla-trends": {
+        "uri": "support/admin/reports/sla-trends",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.roles.create": {
+        "uri": "support/admin/roles/create",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:roles_permissions"
+        ]
+    },
+    "escalated.admin.roles.destroy": {
+        "uri": "support/admin/roles/{role}",
+        "methods": [
+            "DELETE"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:roles_permissions"
+        ]
+    },
+    "escalated.admin.roles.edit": {
+        "uri": "support/admin/roles/{role}/edit",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:roles_permissions"
+        ]
+    },
+    "escalated.admin.roles.index": {
+        "uri": "support/admin/roles",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:roles_permissions"
+        ]
+    },
+    "escalated.admin.roles.store": {
+        "uri": "support/admin/roles",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:roles_permissions"
+        ]
+    },
+    "escalated.admin.roles.update": {
+        "uri": "support/admin/roles/{role}",
+        "methods": [
+            "PUT",
+            "PATCH"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:roles_permissions"
+        ]
+    },
+    "escalated.admin.saved-views.destroy": {
+        "uri": "support/admin/saved-views/{savedView}",
+        "methods": [
+            "DELETE"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.saved-views.index": {
+        "uri": "support/admin/saved-views",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.saved-views.reorder": {
+        "uri": "support/admin/saved-views/reorder",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.saved-views.store": {
+        "uri": "support/admin/saved-views",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.saved-views.update": {
+        "uri": "support/admin/saved-views/{savedView}",
+        "methods": [
+            "PUT"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.settings": {
+        "uri": "support/admin/settings",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.settings.csat": {
+        "uri": "support/admin/settings/csat",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.settings.csat.update": {
+        "uri": "support/admin/settings/csat",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.settings.data-retention": {
+        "uri": "support/admin/settings/data-retention",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.settings.data-retention.update": {
+        "uri": "support/admin/settings/data-retention",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.settings.database": {
+        "uri": "support/admin/settings/database",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.settings.database.test": {
+        "uri": "support/admin/settings/database/test",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.settings.database.update": {
+        "uri": "support/admin/settings/database",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.settings.email": {
+        "uri": "support/admin/settings/email",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.settings.email.update": {
+        "uri": "support/admin/settings/email",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.settings.public-tickets": {
+        "uri": "support/admin/settings/public-tickets",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.settings.public-tickets.update": {
+        "uri": "support/admin/settings/public-tickets",
+        "methods": [
+            "PUT"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.settings.sso": {
+        "uri": "support/admin/settings/sso",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:sso"
+        ]
+    },
+    "escalated.admin.settings.sso.update": {
+        "uri": "support/admin/settings/sso",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:sso"
+        ]
+    },
+    "escalated.admin.settings.update": {
+        "uri": "support/admin/settings",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.skills.create": {
+        "uri": "support/admin/skills/create",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.skills.destroy": {
+        "uri": "support/admin/skills/{skill}",
+        "methods": [
+            "DELETE"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.skills.edit": {
+        "uri": "support/admin/skills/{skill}/edit",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.skills.index": {
+        "uri": "support/admin/skills",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.skills.store": {
+        "uri": "support/admin/skills",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.skills.update": {
+        "uri": "support/admin/skills/{skill}",
+        "methods": [
+            "PUT",
+            "PATCH"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.sla-policies.create": {
+        "uri": "support/admin/sla-policies/create",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.sla-policies.destroy": {
+        "uri": "support/admin/sla-policies/{sla_policy}",
+        "methods": [
+            "DELETE"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.sla-policies.edit": {
+        "uri": "support/admin/sla-policies/{sla_policy}/edit",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.sla-policies.index": {
+        "uri": "support/admin/sla-policies",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.sla-policies.store": {
+        "uri": "support/admin/sla-policies",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.sla-policies.update": {
+        "uri": "support/admin/sla-policies/{sla_policy}",
+        "methods": [
+            "PUT",
+            "PATCH"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.statuses.create": {
+        "uri": "support/admin/statuses/create",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.statuses.destroy": {
+        "uri": "support/admin/statuses/{status}",
+        "methods": [
+            "DELETE"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.statuses.edit": {
+        "uri": "support/admin/statuses/{status}/edit",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.statuses.index": {
+        "uri": "support/admin/statuses",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.statuses.store": {
+        "uri": "support/admin/statuses",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.statuses.update": {
+        "uri": "support/admin/statuses/{status}",
+        "methods": [
+            "PUT",
+            "PATCH"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.tags.destroy": {
+        "uri": "support/admin/tags/{tag}",
+        "methods": [
+            "DELETE"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.tags.index": {
+        "uri": "support/admin/tags",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.tags.store": {
+        "uri": "support/admin/tags",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.tags.update": {
+        "uri": "support/admin/tags/{tag}",
+        "methods": [
+            "PUT"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.tickets.assign": {
+        "uri": "support/admin/tickets/{ticket}/assign",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.admin.tickets.bulk": {
+        "uri": "support/admin/tickets/bulk",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.tickets.department": {
+        "uri": "support/admin/tickets/{ticket}/department",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.admin.tickets.follow": {
+        "uri": "support/admin/tickets/{ticket}/follow",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.admin.tickets.index": {
+        "uri": "support/admin/tickets",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.tickets.links.destroy": {
+        "uri": "support/admin/tickets/{ticket}/links/{link}",
+        "methods": [
+            "DELETE"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.admin.tickets.links.index": {
+        "uri": "support/admin/tickets/{ticket}/links",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.admin.tickets.links.store": {
+        "uri": "support/admin/tickets/{ticket}/links",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.admin.tickets.macro": {
+        "uri": "support/admin/tickets/{ticket}/macro",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.admin.tickets.merge": {
+        "uri": "support/admin/tickets/{ticket}/merge",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.admin.tickets.merge-search": {
+        "uri": "support/admin/tickets/merge-search",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.tickets.note": {
+        "uri": "support/admin/tickets/{ticket}/note",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.admin.tickets.pin": {
+        "uri": "support/admin/tickets/{ticket}/replies/{reply}/pin",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.admin.tickets.presence": {
+        "uri": "support/admin/tickets/{ticket}/presence",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.admin.tickets.priority": {
+        "uri": "support/admin/tickets/{ticket}/priority",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.admin.tickets.reply": {
+        "uri": "support/admin/tickets/{ticket}/reply",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.admin.tickets.show": {
+        "uri": "support/admin/tickets/{ticket}",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.admin.tickets.side-conversations.close": {
+        "uri": "support/admin/tickets/{ticket}/side-conversations/{sideConversation}/close",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.admin.tickets.side-conversations.index": {
+        "uri": "support/admin/tickets/{ticket}/side-conversations",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.admin.tickets.side-conversations.reply": {
+        "uri": "support/admin/tickets/{ticket}/side-conversations/{sideConversation}/reply",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.admin.tickets.side-conversations.store": {
+        "uri": "support/admin/tickets/{ticket}/side-conversations",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.admin.tickets.snooze": {
+        "uri": "support/admin/tickets/{ticket}/snooze",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.admin.tickets.split": {
+        "uri": "support/admin/tickets/{ticket}/split",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.admin.tickets.status": {
+        "uri": "support/admin/tickets/{ticket}/status",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.admin.tickets.subjects.destroy": {
+        "uri": "support/admin/tickets/{ticket}/subjects/{subject}",
+        "methods": [
+            "DELETE"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.admin.tickets.subjects.store": {
+        "uri": "support/admin/tickets/{ticket}/subjects",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.admin.tickets.tags": {
+        "uri": "support/admin/tickets/{ticket}/tags",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.admin.tickets.typing": {
+        "uri": "support/admin/tickets/{ticket}/typing",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.admin.tickets.unsnooze": {
+        "uri": "support/admin/tickets/{ticket}/unsnooze",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.admin.two-factor.confirm": {
+        "uri": "support/admin/settings/two-factor/confirm",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:two_factor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsStaff",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor"
+        ]
+    },
+    "escalated.admin.two-factor.disable": {
+        "uri": "support/admin/settings/two-factor/disable",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:two_factor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsStaff",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor"
+        ]
+    },
+    "escalated.admin.two-factor.index": {
+        "uri": "support/admin/settings/two-factor",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:two_factor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsStaff",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor"
+        ]
+    },
+    "escalated.admin.two-factor.setup": {
+        "uri": "support/admin/settings/two-factor/setup",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:two_factor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsStaff",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor"
+        ]
+    },
+    "escalated.admin.users.index": {
+        "uri": "support/admin/users",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.users.role": {
+        "uri": "support/admin/users/{user}/role",
+        "methods": [
+            "PATCH"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.users.roles": {
+        "uri": "support/admin/users/{user}/roles",
+        "methods": [
+            "PUT"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:roles_permissions"
+        ]
+    },
+    "escalated.admin.webhooks.create": {
+        "uri": "support/admin/webhooks/create",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.webhooks.deliveries": {
+        "uri": "support/admin/webhooks/{webhook}/deliveries",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.webhooks.destroy": {
+        "uri": "support/admin/webhooks/{webhook}",
+        "methods": [
+            "DELETE"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.webhooks.edit": {
+        "uri": "support/admin/webhooks/{webhook}/edit",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.webhooks.index": {
+        "uri": "support/admin/webhooks",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.webhooks.retry": {
+        "uri": "support/admin/webhooks/deliveries/{delivery}/retry",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.webhooks.store": {
+        "uri": "support/admin/webhooks",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.webhooks.update": {
+        "uri": "support/admin/webhooks/{webhook}",
+        "methods": [
+            "PUT",
+            "PATCH"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.workflows.create": {
+        "uri": "support/admin/workflows/create",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.workflows.destroy": {
+        "uri": "support/admin/workflows/{workflow}",
+        "methods": [
+            "DELETE"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.workflows.edit": {
+        "uri": "support/admin/workflows/{workflow}",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.workflows.index": {
+        "uri": "support/admin/workflows",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.workflows.logs": {
+        "uri": "support/admin/workflows/logs",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.workflows.reorder": {
+        "uri": "support/admin/workflows/reorder",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.workflows.store": {
+        "uri": "support/admin/workflows",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.workflows.test": {
+        "uri": "support/admin/workflows/{workflow}/test",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.workflows.toggle": {
+        "uri": "support/admin/workflows/{workflow}/toggle",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.workflows.update": {
+        "uri": "support/admin/workflows/{workflow}",
+        "methods": [
+            "PUT"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.admin.workflows.workflow-logs": {
+        "uri": "support/admin/workflows/{workflow}/logs",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAdmin",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.agent.dashboard": {
+        "uri": "support/agent",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.agent.tickets.assign": {
+        "uri": "support/agent/tickets/{ticket}/assign",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.agent.tickets.bulk": {
+        "uri": "support/agent/tickets/bulk",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.agent.tickets.custom-action": {
+        "uri": "support/agent/tickets/{ticket}/actions/{action}",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.agent.tickets.department": {
+        "uri": "support/agent/tickets/{ticket}/department",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.agent.tickets.follow": {
+        "uri": "support/agent/tickets/{ticket}/follow",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.agent.tickets.index": {
+        "uri": "support/agent/tickets",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.agent.tickets.macro": {
+        "uri": "support/agent/tickets/{ticket}/macro",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.agent.tickets.note": {
+        "uri": "support/agent/tickets/{ticket}/note",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.agent.tickets.pin": {
+        "uri": "support/agent/tickets/{ticket}/replies/{reply}/pin",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.agent.tickets.presence": {
+        "uri": "support/agent/tickets/{ticket}/presence",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.agent.tickets.priority": {
+        "uri": "support/agent/tickets/{ticket}/priority",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.agent.tickets.reply": {
+        "uri": "support/agent/tickets/{ticket}/reply",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.agent.tickets.show": {
+        "uri": "support/agent/tickets/{ticket}",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.agent.tickets.snooze": {
+        "uri": "support/agent/tickets/{ticket}/snooze",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.agent.tickets.status": {
+        "uri": "support/agent/tickets/{ticket}/status",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.agent.tickets.tags": {
+        "uri": "support/agent/tickets/{ticket}/tags",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.agent.tickets.typing": {
+        "uri": "support/agent/tickets/{ticket}/typing",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.agent.tickets.unsnooze": {
+        "uri": "support/agent/tickets/{ticket}/unsnooze",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.agent.tickets.update": {
+        "uri": "support/agent/tickets/{ticket}",
+        "methods": [
+            "PUT"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.api.agents": {
+        "uri": "support/api/v1/agents",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:agent",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.api.auth.validate": {
+        "uri": "support/api/v1/auth/validate",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:agent",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.api.canned-responses": {
+        "uri": "support/api/v1/canned-responses",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:agent",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.api.dashboard": {
+        "uri": "support/api/v1/dashboard",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:agent",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.api.departments": {
+        "uri": "support/api/v1/departments",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:agent",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.api.macros": {
+        "uri": "support/api/v1/macros",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:agent",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.api.mobile.auth.login": {
+        "uri": "support/api/v1/mobile/auth/login",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit"
+        ]
+    },
+    "escalated.api.mobile.auth.logout": {
+        "uri": "support/api/v1/mobile/auth/logout",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:customer"
+        ]
+    },
+    "escalated.api.mobile.auth.me": {
+        "uri": "support/api/v1/mobile/auth/me",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:customer"
+        ]
+    },
+    "escalated.api.mobile.auth.profile": {
+        "uri": "support/api/v1/mobile/auth/profile",
+        "methods": [
+            "PUT"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:customer"
+        ]
+    },
+    "escalated.api.mobile.auth.refresh": {
+        "uri": "support/api/v1/mobile/auth/refresh",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:customer"
+        ]
+    },
+    "escalated.api.mobile.auth.register": {
+        "uri": "support/api/v1/mobile/auth/register",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit"
+        ]
+    },
+    "escalated.api.mobile.auth.validate": {
+        "uri": "support/api/v1/mobile/auth/validate",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:customer"
+        ]
+    },
+    "escalated.api.mobile.departments": {
+        "uri": "support/api/v1/mobile/departments",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit"
+        ]
+    },
+    "escalated.api.mobile.guest.lookup": {
+        "uri": "support/api/v1/mobile/guest/lookup",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests",
+            "throttle:escalated-guest-replies"
+        ]
+    },
+    "escalated.api.mobile.guest.tickets.reply": {
+        "uri": "support/api/v1/mobile/guest/tickets/{token}/replies",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests",
+            "throttle:escalated-guest-replies"
+        ]
+    },
+    "escalated.api.mobile.guest.tickets.show": {
+        "uri": "support/api/v1/mobile/guest/tickets/{token}",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests"
+        ]
+    },
+    "escalated.api.mobile.guest.tickets.store": {
+        "uri": "support/api/v1/mobile/guest/tickets",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests",
+            "throttle:escalated-guest-submissions"
+        ]
+    },
+    "escalated.api.mobile.guest.verification": {
+        "uri": "support/api/v1/mobile/guest/verification",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests",
+            "throttle:escalated-guest-submissions"
+        ]
+    },
+    "escalated.api.mobile.kb.categories": {
+        "uri": "support/api/v1/mobile/kb/categories",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit"
+        ]
+    },
+    "escalated.api.mobile.kb.index": {
+        "uri": "support/api/v1/mobile/kb/articles",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit"
+        ]
+    },
+    "escalated.api.mobile.kb.rate": {
+        "uri": "support/api/v1/mobile/kb/articles/{slug}/rate",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit"
+        ]
+    },
+    "escalated.api.mobile.kb.show": {
+        "uri": "support/api/v1/mobile/kb/articles/{slug}",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit"
+        ]
+    },
+    "escalated.api.mobile.tickets.close": {
+        "uri": "support/api/v1/mobile/tickets/{ticket}/close",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:customer",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.api.mobile.tickets.index": {
+        "uri": "support/api/v1/mobile/tickets",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:customer"
+        ]
+    },
+    "escalated.api.mobile.tickets.rate": {
+        "uri": "support/api/v1/mobile/tickets/{ticket}/rate",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:customer",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.api.mobile.tickets.reopen": {
+        "uri": "support/api/v1/mobile/tickets/{ticket}/reopen",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:customer",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.api.mobile.tickets.reply": {
+        "uri": "support/api/v1/mobile/tickets/{ticket}/replies",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:customer",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.api.mobile.tickets.show": {
+        "uri": "support/api/v1/mobile/tickets/{ticket}",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:customer",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.api.mobile.tickets.store": {
+        "uri": "support/api/v1/mobile/tickets",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:customer"
+        ]
+    },
+    "escalated.api.realtime": {
+        "uri": "support/api/v1/realtime/config",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:agent",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.api.reports.export": {
+        "uri": "support/api/v1/reports/export/{type}",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:admin",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.api.reports.summary": {
+        "uri": "support/api/v1/reports/summary",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:admin",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.api.tags": {
+        "uri": "support/api/v1/tags",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:agent",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.api.tickets.assign": {
+        "uri": "support/api/v1/tickets/{ticket}/assign",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:agent",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.api.tickets.custom-action": {
+        "uri": "support/api/v1/tickets/{ticket}/actions/{action}",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:agent",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.api.tickets.destroy": {
+        "uri": "support/api/v1/tickets/{ticket}",
+        "methods": [
+            "DELETE"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:admin",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.api.tickets.follow": {
+        "uri": "support/api/v1/tickets/{ticket}/follow",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:agent",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.api.tickets.index": {
+        "uri": "support/api/v1/tickets",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:agent",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.api.tickets.macro": {
+        "uri": "support/api/v1/tickets/{ticket}/macro",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:agent",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.api.tickets.priority": {
+        "uri": "support/api/v1/tickets/{ticket}/priority",
+        "methods": [
+            "PATCH"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:agent",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.api.tickets.reply": {
+        "uri": "support/api/v1/tickets/{ticket}/reply",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:agent",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.api.tickets.show": {
+        "uri": "support/api/v1/tickets/{ticket}",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:agent",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.api.tickets.status": {
+        "uri": "support/api/v1/tickets/{ticket}/status",
+        "methods": [
+            "PATCH"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:agent",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.api.tickets.store": {
+        "uri": "support/api/v1/tickets",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:agent",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.api.tickets.subjects.index": {
+        "uri": "support/api/v1/tickets/{ticket}/subjects",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:agent",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.api.tickets.subjects.update": {
+        "uri": "support/api/v1/tickets/{ticket}/subjects",
+        "methods": [
+            "PUT"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:agent",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.api.tickets.tags": {
+        "uri": "support/api/v1/tickets/{ticket}/tags",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:agent",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.attachments.download": {
+        "uri": "support/attachments/{attachment}",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "signed",
+            "throttle:120,1"
+        ]
+    },
+    "escalated.customer.kb.feedback": {
+        "uri": "support/kb/{slug}/feedback",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth"
+        ]
+    },
+    "escalated.customer.kb.index": {
+        "uri": "support/kb",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth"
+        ]
+    },
+    "escalated.customer.kb.show": {
+        "uri": "support/kb/{slug}",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth"
+        ]
+    },
+    "escalated.customer.tickets.close": {
+        "uri": "support/{ticket}/close",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.customer.tickets.create": {
+        "uri": "support/create",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth"
+        ]
+    },
+    "escalated.customer.tickets.index": {
+        "uri": "support",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth"
+        ]
+    },
+    "escalated.customer.tickets.rate": {
+        "uri": "support/{ticket}/rate",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.customer.tickets.reopen": {
+        "uri": "support/{ticket}/reopen",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.customer.tickets.reply": {
+        "uri": "support/{ticket}/reply",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.customer.tickets.show": {
+        "uri": "support/{ticket}",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTicketByReference"
+        ]
+    },
+    "escalated.customer.tickets.store": {
+        "uri": "support",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth"
+        ]
+    },
+    "escalated.guest.lookup": {
+        "uri": "support/guest/lookup",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:guest",
+            "throttle:escalated-guest-replies"
+        ]
+    },
+    "escalated.guest.tickets.create": {
+        "uri": "support/guest/create",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:guest"
+        ]
+    },
+    "escalated.guest.tickets.rate": {
+        "uri": "support/guest/{token}/rate",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:guest",
+            "throttle:escalated-guest-replies"
+        ]
+    },
+    "escalated.guest.tickets.reply": {
+        "uri": "support/guest/{token}/reply",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:guest",
+            "throttle:escalated-guest-replies"
+        ]
+    },
+    "escalated.guest.tickets.show": {
+        "uri": "support/guest/{token}",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:guest"
+        ]
+    },
+    "escalated.guest.tickets.store": {
+        "uri": "support/guest",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:guest",
+            "throttle:escalated-guest-submissions"
+        ]
+    },
+    "escalated.guest.verification": {
+        "uri": "support/guest/verification",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:guest",
+            "throttle:escalated-guest-submissions"
+        ]
+    },
+    "escalated.inbound.webhook": {
+        "uri": "support/inbound/{adapter}",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "api"
+        ]
+    },
+    "escalated.slack.inbound": {
+        "uri": "support/inbound/slack/{app}",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "api",
+            "throttle:600,1"
+        ]
+    },
+    "escalated.sso.jwt.callback": {
+        "uri": "support/sso/jwt/callback",
+        "methods": [
+            "GET",
+            "POST",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:sso"
+        ]
+    },
+    "escalated.sso.login": {
+        "uri": "support/sso/login",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:sso"
+        ]
+    },
+    "escalated.sso.oauth.callback": {
+        "uri": "support/sso/oauth/callback",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:sso"
+        ]
+    },
+    "escalated.sso.saml.acs": {
+        "uri": "support/sso/saml/acs",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:sso"
+        ]
+    },
+    "escalated.sso.saml.metadata": {
+        "uri": "support/sso/saml/metadata",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:sso"
+        ]
+    },
+    "escalated.two-factor.challenge": {
+        "uri": "support/two-factor/challenge",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:two_factor"
+        ]
+    },
+    "escalated.two-factor.verify": {
+        "uri": "support/two-factor/challenge",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:two_factor",
+            "throttle:escalated-two-factor"
+        ]
+    },
+    "escalated.widget.articles.search": {
+        "uri": "support/widget/articles",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCors",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCsrf",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:widget"
+        ]
+    },
+    "escalated.widget.articles.show": {
+        "uri": "support/widget/articles/{slug}",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCors",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCsrf",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:widget"
+        ]
+    },
+    "escalated.widget.chat.availability": {
+        "uri": "support/widget/chat/availability",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCors",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCsrf",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests"
+        ]
+    },
+    "escalated.widget.chat.end": {
+        "uri": "support/widget/chat/{sessionId}/end",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCors",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCsrf",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:chat"
+        ]
+    },
+    "escalated.widget.chat.message": {
+        "uri": "support/widget/chat/{sessionId}/message",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCors",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCsrf",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:chat",
+            "throttle:escalated-guest-replies"
+        ]
+    },
+    "escalated.widget.chat.messages": {
+        "uri": "support/widget/chat/{sessionId}/messages",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCors",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCsrf",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:chat"
+        ]
+    },
+    "escalated.widget.chat.messages.store": {
+        "uri": "support/widget/chat/{sessionId}/messages",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCors",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCsrf",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:chat",
+            "throttle:escalated-guest-replies"
+        ]
+    },
+    "escalated.widget.chat.rate": {
+        "uri": "support/widget/chat/{sessionId}/rate",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCors",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCsrf",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:chat",
+            "throttle:escalated-guest-replies"
+        ]
+    },
+    "escalated.widget.chat.start": {
+        "uri": "support/widget/chat/start",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCors",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCsrf",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:chat",
+            "throttle:escalated-guest-submissions"
+        ]
+    },
+    "escalated.widget.chat.typing": {
+        "uri": "support/widget/chat/{sessionId}/typing",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCors",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCsrf",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:chat"
+        ]
+    },
+    "escalated.widget.config": {
+        "uri": "support/widget/config",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCors",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCsrf",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:widget"
+        ]
+    },
+    "escalated.widget.lookup": {
+        "uri": "support/widget/lookup",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCors",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCsrf",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests",
+            "throttle:escalated-guest-replies"
+        ]
+    },
+    "escalated.widget.preflight": {
+        "uri": "support/widget/{path}",
+        "methods": [
+            "OPTIONS"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCors",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCsrf",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests"
+        ]
+    },
+    "escalated.widget.script": {
+        "uri": "support/widget/embed.js",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant"
+        ]
+    },
+    "escalated.widget.tickets.status": {
+        "uri": "support/widget/tickets/{reference}",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCors",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCsrf",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:widget"
+        ]
+    },
+    "escalated.widget.tickets.store": {
+        "uri": "support/widget/tickets",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCors",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCsrf",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureFeatureEnabled:widget",
+            "throttle:escalated-guest-submissions"
+        ]
+    },
+    "escalated.widget.verification": {
+        "uri": "support/widget/verification",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCors",
+            "web",
+            "Escalated\\Laravel\\Http\\Middleware\\WidgetCsrf",
+            "Escalated\\Laravel\\Http\\Middleware\\GuestPrivacyHeaders",
+            "throttle:escalated-guest-requests",
+            "throttle:escalated-guest-submissions"
+        ]
+    }
+}
