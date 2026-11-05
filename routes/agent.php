@@ -1,8 +1,8 @@
 <?php
 
 use Escalated\Laravel\Http\Controllers\Agent\DashboardController;
-use Escalated\Laravel\Http\Controllers\Agent\StatusController;
 use Escalated\Laravel\Http\Controllers\Agent\KnowledgeBaseSearchController;
+use Escalated\Laravel\Http\Controllers\Agent\StatusController;
 use Escalated\Laravel\Http\Controllers\Agent\TicketController;
 use Escalated\Laravel\Http\Controllers\BulkActionController;
 use Escalated\Laravel\Http\Controllers\PresenceController;
