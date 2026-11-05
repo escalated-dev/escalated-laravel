@@ -28,3 +28,22 @@ Agents (not customers) get two shared props in `escalated`:
 
 With roles & permissions on, the route needs no permission: it is personal.
 No event is emitted; the event vocabulary has none for it.
+
+## Knowledge-base search
+
+`GET /{prefix}/agent/kb/search?q=...` (`escalated.agent.kb.search`) feeds the
+ticket workspace's Related panel and the composer's "insert article link".
+
+- `q`: 2 to 200 characters; `limit`: 1 to 20, default 10. Anything else is a 422.
+- Answer: `{ "data": [{ "id", "title", "excerpt", "url", "category": { "id", "name" } | null, "updated_at" }] }`.
+  `excerpt` is the body as plain text, cut at about 160 characters; `url` is
+  the article on the customer knowledge base (`escalated.customer.kb.show`).
+- Published articles only; this package has no agent-only articles, and
+  drafts are never returned.
+- Matching is a case-insensitive `LIKE` on title and body with `%` and `_` taken literally; title
+  matches come first, then the most recently updated.
+- 404 while the knowledge base is turned off. With roles & permissions on it
+  needs `kb.view`.
+
+The same escaping now applies to the customer knowledge base and widget
+article search, where a `%` or `_` in the search used to match anything.
