@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.9.15] - 2026-11-04
+
 ### Upgrading
 - **The agent ticket pages send the agent panel's optional `inbox` and `queue` props** (shared frontend `docs/agent-panel.md`). Each list request runs a few extra count queries (3 counts, 5 built-in views, 4 stats and one per saved view, up to 50 views), cached per agent and queue for `escalated.agent_inbox.cache_seconds` (env `ESCALATED_AGENT_INBOX_CACHE_SECONDS`, default 10; 0 turns the cache off), so counts can lag a change by that long. Older frontends ignore the props.
 - **A ticket's `latest_reply` is now its latest public reply.** It used to be `null` whenever the newest reply was an internal note, so the list showed no preview, `last_reply_at` and `last_reply_author` were empty, and the agent dashboard's recent tickets did the same. Internal notes are still never used.
@@ -22,6 +24,9 @@ All notable changes to this project will be documented in this file.
 
 ### Not sent
 - `is_unread` and `requester_online`: Escalated tracks no per-agent read state or customer presence, so the list rows carry neither. Live chat tickets are still marked through `is_live_chat`.
+
+### Changed
+- The bundled widget is now `@escalated-dev/escalated` 0.12.8. The widget's source did not change in 0.12.8; the bundle is rebuilt with Vue 3.5.44, so it behaves as before.
 
 ## [1.9.14] - 2026-10-30
 
