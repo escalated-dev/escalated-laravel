@@ -241,6 +241,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Customer Online Status
+    |--------------------------------------------------------------------------
+    |
+    | Agent pages show a customer as online when the customer portal or the
+    | widget saw them within this many seconds. Last-seen is written at most
+    | once per customer every 30 seconds.
+    |
+    */
+    'presence' => [
+        'online_window_seconds' => (int) env('ESCALATED_PRESENCE_ONLINE_WINDOW', 120),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Ticket Actions
     |--------------------------------------------------------------------------
     |

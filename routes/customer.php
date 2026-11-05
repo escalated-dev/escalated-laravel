@@ -3,10 +3,11 @@
 use Escalated\Laravel\Http\Controllers\Customer\KnowledgeBaseController;
 use Escalated\Laravel\Http\Controllers\Customer\TicketController;
 use Escalated\Laravel\Http\Controllers\SatisfactionRatingController;
+use Escalated\Laravel\Http\Middleware\RecordCustomerPresence;
 use Escalated\Laravel\Http\Middleware\ResolveTicketByReference;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(config('escalated.routes.middleware', ['web', 'auth']))
+Route::middleware([...config('escalated.routes.middleware', ['web', 'auth']), RecordCustomerPresence::class])
     ->prefix(config('escalated.routes.prefix', 'support'))
     ->group(function () {
         Route::get('/', [TicketController::class, 'index'])->name('escalated.customer.tickets.index');

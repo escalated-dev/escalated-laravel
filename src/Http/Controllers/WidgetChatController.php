@@ -6,8 +6,10 @@ use Escalated\Laravel\Enums\ChatSessionStatus;
 use Escalated\Laravel\Models\ChatSession;
 use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\EscalatedSettings;
+use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\ChatAvailabilityService;
 use Escalated\Laravel\Services\ChatSessionService;
+use Escalated\Laravel\Services\CustomerPresenceTracker;
 use Escalated\Laravel\Services\GuestAccess;
 use Escalated\Laravel\Support\WidgetMetadata;
 use Illuminate\Http\JsonResponse;
@@ -59,6 +61,10 @@ class WidgetChatController extends Controller
         $validated['metadata'] = WidgetMetadata::fromRequest($request);
 
         $result = $this->chatSessionService->startChat($validated);
+
+        if ($ticket = Ticket::query()->withoutGlobalScopes()->where('reference', $result['ticket_reference'] ?? null)->first()) {
+            $this->recordPresence($ticket);
+        }
 
         return response()->json($result, 201);
     }
@@ -159,7 +165,18 @@ class WidgetChatController extends Controller
     protected function guestSession(string $token): ChatSession
     {
         $ticket = app(GuestAccess::class)->resolve($token, 'chat');
+        $this->recordPresence($ticket);
 
         return ChatSession::where('ticket_id', $ticket->id)->where('customer_session_id', hash('sha256', $token))->firstOrFail();
+    }
+
+    /** The guest is on the site (agent pages show them online). */
+    private function recordPresence(Ticket $ticket): void
+    {
+        try {
+            app(CustomerPresenceTracker::class)->seeTicketCustomer($ticket);
+        } catch (\Throwable) {
+            // Presence is a hint; it never breaks the chat.
+        }
     }
 }

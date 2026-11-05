@@ -6,6 +6,7 @@ use Escalated\Laravel\Models\Article;
 use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Services\CustomerPresenceTracker;
 use Escalated\Laravel\Services\GuestAccess;
 use Escalated\Laravel\Services\GuestTicketService;
 use Escalated\Laravel\Support\WidgetMetadata;
@@ -168,6 +169,12 @@ class WidgetController extends Controller
         abort_unless(is_string($token) && $token !== '', 404);
         $ticket = app(GuestAccess::class)->resolve($token);
         abort_unless(hash_equals($ticket->reference, $reference), 404);
+
+        try {
+            app(CustomerPresenceTracker::class)->seeTicketCustomer($ticket);
+        } catch (\Throwable) {
+            // Presence is a hint; it never breaks the lookup.
+        }
 
         $replies = $ticket->replies()
             ->where('is_internal_note', false)
