@@ -47,3 +47,40 @@ ticket workspace's Related panel and the composer's "insert article link".
 
 The same escaping now applies to the customer knowledge base and widget
 article search, where a `%` or `_` in the search used to match anything.
+
+## Unread tickets
+
+A ticket is unread for an agent when the customer side did something the
+agent has not seen since they last opened it.
+
+- **Customer activity** is the ticket's `last_customer_activity_at`: set when
+  the ticket is created (not while importing) and on every public reply or
+  chat message from the requester, a contact, a guest, or a host user who is
+  not staff. Agent replies, internal notes, and replies written by workflows,
+  automations or the system never move it. Tickets that existed before the
+  upgrade have none, so they start out read.
+- **Read markers** live in `escalated_ticket_reads` (`user_id`, `ticket_id`,
+  `last_read_at`), one row per agent and ticket. `last_read_at` NULL means the
+  agent marked the ticket unread.
+- Opening a ticket in the agent panel (`escalated.agent.tickets.show`) marks it
+  read for that agent. Admin screens and the API do not.
+
+| Route | Name | Answer |
+|---|---|---|
+| `POST /{prefix}/agent/tickets/{ticket}/read` | `escalated.agent.tickets.read` | `{ "is_unread": false }` (JSON request), or back |
+| `POST /{prefix}/agent/tickets/{ticket}/unread` | `escalated.agent.tickets.unread` | `{ "is_unread": true }` (JSON request), or back |
+| `POST /{prefix}/agent/tickets/bulk` | `escalated.agent.tickets.bulk` | new actions `mark_read` and `mark_unread` (no `value`) |
+
+All three need only `ticket.view` under roles & permissions and act only on
+tickets the agent can see. Markers are personal: nobody else sees them, and
+they are not ticket activity or events.
+
+Props:
+
+- `is_unread` on every row of `tickets.data` (TicketIndex) and on `ticket`
+  (TicketShow, always `false` since the visit read it);
+- `inbox.unread`: `{ mine, unassigned, all }`, the open tickets in each queue
+  that are unread for the agent. Like the rest of `inbox` it is cached for
+  `escalated.agent_inbox.cache_seconds`.
+
+Neither is sent in cloud mode, where tickets are not stored locally.

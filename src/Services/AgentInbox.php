@@ -131,7 +131,13 @@ class AgentInbox
      */
     public function inboxProp(Authenticatable $agent, array $queue): array
     {
-        return config('escalated.mode', 'self-hosted') === 'cloud' ? [] : ['inbox' => $this->summary($agent, $queue)];
+        return $this->tracksLocally() ? ['inbox' => $this->summary($agent, $queue)] : [];
+    }
+
+    /** Whether tickets live in the local table (not in cloud mode), so counts and read markers mean something. */
+    public function tracksLocally(): bool
+    {
+        return config('escalated.mode', 'self-hosted') !== 'cloud';
     }
 
     /** The `inbox` prop for this agent and queue. */
@@ -163,6 +169,12 @@ class AgentInbox
                 'mine' => $this->countOpen(['assigned_to' => $me]),
                 'unassigned' => $this->countOpen(['unassigned' => 1]),
                 'all' => $this->countOpen([]),
+            ],
+            // Of the same open tickets, those unread for this agent.
+            'unread' => [
+                'mine' => $this->countOpen(['assigned_to' => $me], $agent),
+                'unassigned' => $this->countOpen(['unassigned' => 1], $agent),
+                'all' => $this->countOpen([], $agent),
             ],
             'views' => $this->views($agent)
                 ->map(fn (array $view) => [
@@ -233,18 +245,25 @@ class AgentInbox
     }
 
     /** Unresolved tickets, unless the filters ask for a status themselves. */
-    private function countOpen(array $filters): int
+    private function countOpen(array $filters, ?Authenticatable $unreadFor = null): int
     {
         if (empty($filters['status'])) {
             $filters['open'] = 1;
         }
 
-        return $this->count($filters);
+        return $this->count($filters, $unreadFor);
     }
 
-    private function count(array $filters): int
+    /** Tickets matching the filters; with $unreadFor, only those unread for that agent. */
+    private function count(array $filters, ?Authenticatable $unreadFor = null): int
     {
-        return TicketListFilters::apply(Ticket::query(), $filters)->count();
+        $query = TicketListFilters::apply(Ticket::query(), $filters);
+
+        if ($unreadFor) {
+            app(TicketReads::class)->onlyUnread($query, $unreadFor);
+        }
+
+        return $query->count();
     }
 
     /** Filters as strings, without empty values or order, for comparing a URL with a view. */

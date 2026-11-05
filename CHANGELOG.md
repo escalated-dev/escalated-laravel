@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Upgrading
 - **Optional: embed the admin in your own admin panel.** Off by default; with no `escalated.ui.embed` configuration every route, page, shared prop, header and gate is unchanged (a test compares the whole route table with the one before this change). A published `config/escalated.php` without the new `ui.embed` block keeps it off. See docs/embedding-admin.md.
+- **New migration:** `escalated_tickets.last_customer_activity_at` and the `escalated_ticket_reads` table. Run `php artisan migrate`. Existing tickets get no activity, so none of them turn unread on upgrade.
 
 ### Added
 - **Embedding the admin in your own admin panel** (optional; ADR 2026-11-05-embeddable-admin). `Escalated::embedAdmin(prefix:, middleware:, layout:, rootView:, mode:, replaceAdminGate:, frameAncestors:)`, or the `escalated.ui.embed` config keys (`ESCALATED_EMBED`, `ESCALATED_EMBED_MODE`, `ESCALATED_EMBED_PREFIX`, `ESCALATED_EMBED_FRAME_ANCESTORS`):
@@ -15,6 +16,7 @@ All notable changes to this project will be documented in this file.
   - iframe mode sends `Content-Security-Policy: frame-ancestors 'self' <origins>` and drops `X-Frame-Options` on embedded responses only.
 - **Agents set their own status** through `PUT`/`POST /{prefix}/agent/status` (`escalated.agent.status`, body `{ status: online | away | offline }`), light agents included. It is stored in the agent profile's `chat_status`, the field live-chat routing reads; the admin route `escalated.admin.chat.status` stays as an alias and now also answers `agent_status`. Agents get the shared `escalated.agent_status` (`offline` until set) and `escalated.agent_statuses`. See `docs/agent-panel.md`.
 - **Knowledge-base search for agents:** `GET /{prefix}/agent/kb/search?q=` (`escalated.agent.kb.search`, `kb.view` under roles & permissions) answers `{ data: [{ id, title, excerpt, url, category, updated_at }] }` for published articles, title matches first. 404 while the knowledge base is off. See `docs/agent-panel.md`.
+- **Per-agent unread tracking.** Ticket list rows and the ticket page carry `is_unread`, and `inbox.unread` counts unread open tickets per queue. A ticket is unread when it has customer activity (creation, or a public reply or chat message from the customer side) newer than the agent's last visit. Opening it in the agent panel marks it read; `escalated.agent.tickets.read` / `.unread` and the bulk actions `mark_read` / `mark_unread` set it by hand. See `docs/agent-panel.md`.
 
 ### Fixed
 - **Article search takes `%` and `_` literally.** The customer knowledge base and widget article search passed them through to `LIKE`, so a search for `%` matched every article. It also ignores case on PostgreSQL now, as it already did on MySQL and SQLite.
