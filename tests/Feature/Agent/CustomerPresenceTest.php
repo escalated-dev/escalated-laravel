@@ -7,6 +7,7 @@
  */
 
 use Escalated\Laravel\Enums\TicketStatus;
+use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Models\ChatSession;
 use Escalated\Laravel\Models\Contact;
 use Escalated\Laravel\Models\CustomerPresence;
@@ -14,7 +15,6 @@ use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Tests\Fixtures\TestUser;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 beforeEach(function () {
@@ -161,11 +161,11 @@ it('answers the agent list with a fixed number of presence queries', function ()
     }
 
     $count = function () use ($agent) {
-        DB::connection()->flushQueryLog();
-        DB::connection()->enableQueryLog();
+        Escalated::db()->flushQueryLog();
+        Escalated::db()->enableQueryLog();
         presenceRow($this, $agent, Ticket::first());
 
-        return collect(DB::connection()->getQueryLog())
+        return collect(Escalated::db()->getQueryLog())
             ->filter(fn ($q) => str_contains($q['query'], 'customer_presence'))->count();
     };
 
