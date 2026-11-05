@@ -32,6 +32,7 @@ use Escalated\Laravel\Console\Commands\WakeSnoozedTicketsCommand;
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Contracts\TenantCatalog;
 use Escalated\Laravel\Contracts\TenantResolver;
+use Escalated\Laravel\Enums\ChatStatus;
 use Escalated\Laravel\Http\Controllers\Admin\ApiTokenController;
 use Escalated\Laravel\Http\InertiaErrorPage;
 use Escalated\Laravel\Http\Middleware\CheckPermission;
@@ -51,6 +52,7 @@ use Escalated\Laravel\Services\TwoFactorService;
 use Escalated\Laravel\Support\AccessFeatures;
 use Escalated\Laravel\Support\AdminNavigation;
 use Escalated\Laravel\Support\EmbedConfig;
+use Escalated\Laravel\Support\AgentStatus;
 use Escalated\Laravel\Support\GuestRateLimits;
 use Escalated\Laravel\Support\HookManager;
 use Escalated\Laravel\Support\StaffAccess;
@@ -679,6 +681,10 @@ class EscalatedServiceProvider extends ServiceProvider
                     if (Escalated::schema()->hasTable(Escalated::table('agent_profiles'))) {
                         $profile = AgentProfile::where('user_id', $user->getKey())->first();
                         $data['agent_type'] = $profile?->agent_type ?? 'full';
+                        if ($data['is_agent']) {
+                            $data['agent_status'] = $profile?->chat_status?->value ?? ChatStatus::Offline->value;
+                            $data['agent_statuses'] = AgentStatus::values();
+                        }
                     }
                 } catch (\Throwable) {
                     // Agent profiles table may not exist yet

@@ -4,9 +4,9 @@ namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Escalated\Laravel\Enums\ChatSessionStatus;
 use Escalated\Laravel\Enums\ChatStatus;
-use Escalated\Laravel\Models\AgentProfile;
 use Escalated\Laravel\Models\ChatSession;
 use Escalated\Laravel\Services\ChatSessionService;
+use Escalated\Laravel\Support\AgentStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -104,10 +104,10 @@ class ChatController extends Controller
             'status' => ['required', 'string', 'in:online,away,offline'],
         ]);
 
-        $profile = AgentProfile::forUser($request->user()->id);
-        $profile->update(['chat_status' => ChatStatus::from($validated['status'])]);
+        // The same field as the agent route (escalated.agent.status); this route is kept as an alias.
+        AgentStatus::set($request->user(), ChatStatus::from($validated['status']));
 
-        return response()->json(['message' => 'Status updated.', 'chat_status' => $validated['status']]);
+        return response()->json(['message' => 'Status updated.', 'chat_status' => $validated['status'], 'agent_status' => $validated['status']]);
     }
 
     /**

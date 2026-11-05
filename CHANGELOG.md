@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
   - embedded pages share `escalated.embed` (`enabled`, `mode`, `layout`, `route`, `base_url`, `allowed_origins`); every page shares `escalated.navigation`, the admin menu filtered by the admin gate, feature switches and route permissions, with plugin admin items; `Escalated::adminNavigation()` returns the same for Blade;
   - `root_view` renders embedded pages in the host's Blade layout;
   - iframe mode sends `Content-Security-Policy: frame-ancestors 'self' <origins>` and drops `X-Frame-Options` on embedded responses only.
+- **Agents set their own status** through `PUT`/`POST /{prefix}/agent/status` (`escalated.agent.status`, body `{ status: online | away | offline }`), light agents included. It is stored in the agent profile's `chat_status`, the field live-chat routing reads; the admin route `escalated.admin.chat.status` stays as an alias and now also answers `agent_status`. Agents get the shared `escalated.agent_status` (`offline` until set) and `escalated.agent_statuses`. See `docs/agent-panel.md`.
 
 ## [1.9.15] - 2026-11-04
 
