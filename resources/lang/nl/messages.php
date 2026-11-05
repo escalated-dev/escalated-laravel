@@ -111,6 +111,20 @@ return [
         'processing_failed' => 'Verwerking mislukt.',
     ],
 
+    'agent_notifications' => [
+        'ticket_assigned' => ':reference is aan je toegewezen',
+        'ticket_reply' => 'Nieuw antwoord op :reference',
+        'mention' => ':name heeft je genoemd in :reference',
+        'sla_warning' => 'SLA verloopt binnenkort bij :reference',
+        'sla_breached' => 'SLA overschreden bij :reference',
+        'chat_transferred' => 'Er is een chat aan je overgedragen (:reference)',
+        'new_ticket' => 'Nieuw ticket :reference',
+        'ticket_escalated' => ':reference is geëscaleerd',
+        'status_changed' => 'Status gewijzigd bij :reference',
+        'generic' => 'Update bij :reference',
+        'unavailable' => 'Een ticket dat je niet meer kunt bekijken',
+    ],
+
     'agent_inbox' => [
         'queues' => [
             'mine' => 'Mijn inbox',

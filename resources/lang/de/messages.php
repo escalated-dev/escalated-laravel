@@ -111,6 +111,20 @@ return [
         'processing_failed' => 'Verarbeitung fehlgeschlagen.',
     ],
 
+    'agent_notifications' => [
+        'ticket_assigned' => ':reference wurde Ihnen zugewiesen',
+        'ticket_reply' => 'Neue Antwort auf :reference',
+        'mention' => ':name hat Sie in :reference erwähnt',
+        'sla_warning' => 'SLA läuft bald ab bei :reference',
+        'sla_breached' => 'SLA verletzt bei :reference',
+        'chat_transferred' => 'Ein Chat wurde an Sie übergeben (:reference)',
+        'new_ticket' => 'Neues Ticket :reference',
+        'ticket_escalated' => ':reference wurde eskaliert',
+        'status_changed' => 'Status geändert bei :reference',
+        'generic' => 'Neuigkeit zu :reference',
+        'unavailable' => 'Ein Ticket, das Sie nicht mehr sehen können',
+    ],
+
     'agent_inbox' => [
         'queues' => [
             'mine' => 'Mein Posteingang',

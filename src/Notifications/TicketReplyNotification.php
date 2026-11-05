@@ -6,8 +6,10 @@ use Escalated\Laravel\Mail\NotificationThreading;
 use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Notifications\Concerns\GuardsTenantNotification;
+use Escalated\Laravel\Services\TicketReads;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -19,7 +21,21 @@ class TicketReplyNotification extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        return config('escalated.notifications.channels', ['mail', 'database']);
+        $channels = config('escalated.notifications.channels', ['mail', 'database']);
+
+        // Staff get an in-app notification only for the customer's replies
+        // (the agent feed); the email is unchanged.
+        if (! $this->isForRequester($notifiable) && ! TicketReads::isCustomerSide($this->reply)) {
+            $channels = array_values(array_diff($channels, ['database']));
+        }
+
+        return $channels;
+    }
+
+    private function isForRequester(object $notifiable): bool
+    {
+        return $notifiable instanceof Model
+            && (bool) $this->reply->ticket?->isRequesterIdentity($notifiable->getMorphClass(), $notifiable->getKey());
     }
 
     public function toMail(object $notifiable): MailMessage

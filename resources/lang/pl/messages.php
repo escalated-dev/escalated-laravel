@@ -111,6 +111,20 @@ return [
         'processing_failed' => 'Przetwarzanie nie powiodło się.',
     ],
 
+    'agent_notifications' => [
+        'ticket_assigned' => 'Przypisano Ci :reference',
+        'ticket_reply' => 'Nowa odpowiedź w :reference',
+        'mention' => ':name wspomniał(a) o Tobie w :reference',
+        'sla_warning' => 'SLA wkrótce minie w :reference',
+        'sla_breached' => 'Naruszono SLA w :reference',
+        'chat_transferred' => 'Przekazano Ci czat (:reference)',
+        'new_ticket' => 'Nowe zgłoszenie :reference',
+        'ticket_escalated' => 'Eskalowano :reference',
+        'status_changed' => 'Zmieniono status w :reference',
+        'generic' => 'Aktualizacja w :reference',
+        'unavailable' => 'Zgłoszenie, którego już nie możesz zobaczyć',
+    ],
+
     'agent_inbox' => [
         'queues' => [
             'mine' => 'Moja skrzynka',

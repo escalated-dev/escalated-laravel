@@ -111,6 +111,20 @@ return [
         'processing_failed' => 'Échec du traitement.',
     ],
 
+    'agent_notifications' => [
+        'ticket_assigned' => ':reference vous a été attribué',
+        'ticket_reply' => 'Nouvelle réponse sur :reference',
+        'mention' => ':name vous a mentionné sur :reference',
+        'sla_warning' => 'SLA bientôt dépassé sur :reference',
+        'sla_breached' => 'SLA dépassé sur :reference',
+        'chat_transferred' => 'Une discussion vous a été transférée (:reference)',
+        'new_ticket' => 'Nouveau ticket :reference',
+        'ticket_escalated' => ':reference a été escaladé',
+        'status_changed' => 'Statut modifié sur :reference',
+        'generic' => 'Mise à jour sur :reference',
+        'unavailable' => 'Un ticket que vous ne pouvez plus consulter',
+    ],
+
     'agent_inbox' => [
         'queues' => [
             'mine' => 'Ma boîte',

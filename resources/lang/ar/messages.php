@@ -111,6 +111,20 @@ return [
         'processing_failed' => 'فشلت المعالجة.',
     ],
 
+    'agent_notifications' => [
+        'ticket_assigned' => 'تم إسناد :reference إليك',
+        'ticket_reply' => 'رد جديد على :reference',
+        'mention' => 'أشار إليك :name في :reference',
+        'sla_warning' => 'اقتراب موعد اتفاقية مستوى الخدمة في :reference',
+        'sla_breached' => 'تم تجاوز اتفاقية مستوى الخدمة في :reference',
+        'chat_transferred' => 'تم تحويل محادثة إليك (:reference)',
+        'new_ticket' => 'تذكرة جديدة :reference',
+        'ticket_escalated' => 'تم تصعيد :reference',
+        'status_changed' => 'تغيرت الحالة في :reference',
+        'generic' => 'تحديث على :reference',
+        'unavailable' => 'تذكرة لم يعد بإمكانك عرضها',
+    ],
+
     'agent_inbox' => [
         'queues' => [
             'mine' => 'صندوقي',

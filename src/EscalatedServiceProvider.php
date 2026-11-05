@@ -44,6 +44,7 @@ use Escalated\Laravel\Http\Middleware\ResolveTicketByReference;
 use Escalated\Laravel\Http\Middleware\WidgetCors;
 use Escalated\Laravel\Models\AgentProfile;
 use Escalated\Laravel\Models\EscalatedSettings;
+use Escalated\Laravel\Services\AgentNotificationFeed;
 use Escalated\Laravel\Services\ImportService;
 use Escalated\Laravel\Services\PluginService;
 use Escalated\Laravel\Services\PluginUIService;
@@ -74,6 +75,7 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Foundation\Http\Events\RequestHandled;
+use Illuminate\Notifications\Events\NotificationSent;
 use Illuminate\Queue\BackgroundQueue;
 use Illuminate\Queue\DeferredQueue;
 use Illuminate\Queue\Events\JobAttempted;
@@ -698,6 +700,18 @@ class EscalatedServiceProvider extends ServiceProvider
                 $data['navigation'] = AdminNavigation::for($user, request());
             }
 
+            // The notifications bell (agents only, while in-app delivery is on).
+            if ($user && $data['is_agent']) {
+                try {
+                    $feed = $this->app->make(AgentNotificationFeed::class);
+                    if ($feed->available($user)) {
+                        $data['notifications'] = ['unread_count' => $feed->unreadCount($user)];
+                    }
+                } catch (\Throwable) {
+                    // The notifications table may not exist yet
+                }
+            }
+
             // Share plugin UI extensions if plugins are enabled
             if (config('escalated.plugins.enabled', true)) {
                 try {
@@ -758,6 +772,9 @@ class EscalatedServiceProvider extends ServiceProvider
         Event::listen(Events\TicketStatusChanged::class, Listeners\SendStatusChangeNotification::class);
 
         Event::listen(Events\SlaBreached::class, Listeners\SendSlaBreachNotification::class);
+        Event::listen(Events\SlaWarning::class, [Listeners\SendInAppAgentNotifications::class, 'slaWarning']);
+        Event::listen(Events\ChatTransferred::class, [Listeners\SendInAppAgentNotifications::class, 'chatTransferred']);
+        Event::listen(NotificationSent::class, Listeners\BroadcastAgentNotification::class);
 
         Event::listen(Events\TicketEscalated::class, Listeners\SendEscalationNotification::class);
 

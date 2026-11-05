@@ -111,6 +111,20 @@ return [
         'processing_failed' => '处理失败。',
     ],
 
+    'agent_notifications' => [
+        'ticket_assigned' => ':reference 已分配给你',
+        'ticket_reply' => ':reference 有新回复',
+        'mention' => ':name 在 :reference 中提到了你',
+        'sla_warning' => ':reference 的 SLA 即将到期',
+        'sla_breached' => ':reference 的 SLA 已违约',
+        'chat_transferred' => '一个聊天已转给你 (:reference)',
+        'new_ticket' => '新工单 :reference',
+        'ticket_escalated' => ':reference 已升级',
+        'status_changed' => ':reference 的状态已更改',
+        'generic' => ':reference 有更新',
+        'unavailable' => '你已无法查看的工单',
+    ],
+
     'agent_inbox' => [
         'queues' => [
             'mine' => '我的收件箱',

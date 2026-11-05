@@ -111,6 +111,20 @@ return [
         'processing_failed' => '처리에 실패했습니다.',
     ],
 
+    'agent_notifications' => [
+        'ticket_assigned' => ':reference 이(가) 나에게 배정되었습니다',
+        'ticket_reply' => ':reference 에 새 답변',
+        'mention' => ':name 님이 :reference 에서 나를 언급했습니다',
+        'sla_warning' => ':reference 의 SLA 기한이 임박했습니다',
+        'sla_breached' => ':reference 의 SLA를 위반했습니다',
+        'chat_transferred' => '채팅이 나에게 이관되었습니다 (:reference)',
+        'new_ticket' => '새 티켓 :reference',
+        'ticket_escalated' => ':reference 이(가) 에스컬레이션되었습니다',
+        'status_changed' => ':reference 의 상태가 변경되었습니다',
+        'generic' => ':reference 업데이트',
+        'unavailable' => '더 이상 볼 수 없는 티켓',
+    ],
+
     'agent_inbox' => [
         'queues' => [
             'mine' => '내 받은편지함',

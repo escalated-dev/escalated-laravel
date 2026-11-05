@@ -111,6 +111,20 @@ return [
         'processing_failed' => 'İşleme başarısız oldu.',
     ],
 
+    'agent_notifications' => [
+        'ticket_assigned' => ':reference size atandı',
+        'ticket_reply' => ':reference için yeni yanıt',
+        'mention' => ':name sizden :reference içinde bahsetti',
+        'sla_warning' => ':reference için SLA süresi dolmak üzere',
+        'sla_breached' => ':reference için SLA ihlal edildi',
+        'chat_transferred' => 'Size bir sohbet aktarıldı (:reference)',
+        'new_ticket' => 'Yeni talep :reference',
+        'ticket_escalated' => ':reference üst seviyeye taşındı',
+        'status_changed' => ':reference durumu değişti',
+        'generic' => ':reference güncellendi',
+        'unavailable' => 'Artık göremediğiniz bir talep',
+    ],
+
     'agent_inbox' => [
         'queues' => [
             'mine' => 'Gelen kutum',
