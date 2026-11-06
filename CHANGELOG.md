@@ -4,10 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.9.16] - 2026-11-05
+
 ### Upgrading
 - **Optional: embed the admin in your own admin panel.** Off by default; with no `escalated.ui.embed` configuration every route, page, shared prop, header and gate is unchanged (a test compares the whole route table with the one before this change). A published `config/escalated.php` without the new `ui.embed` block keeps it off. See docs/embedding-admin.md.
 - **New migration:** `escalated_tickets.last_customer_activity_at` and the `escalated_ticket_reads` table. Run `php artisan migrate`. Existing tickets get no activity, so none of them turn unread on upgrade.
 - **New migration:** the `escalated_customer_presence` table. Run `php artisan migrate`.
+- **@mention notifications come only from staff.** A mention in a customer, guest or contact reply no longer creates a mention or notifies anyone; mentions in agents' and admins' replies and internal notes work as before. Hosts calling `MentionService::processMentions()` for customer-authored replies get no mentions.
 - **Assigning a ticket to yourself no longer sends you an assignment notification** (email or in-app).
 - **Staff get an in-app `ticket_reply` notification only for customer-side replies.** Another agent's reply on your ticket still emails you as before, but it no longer goes into the `notifications` table.
 
