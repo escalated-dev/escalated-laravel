@@ -29,12 +29,6 @@ updates:
     labels:
       - "dependencies"
 
-  - package-ecosystem: "composer"
-    directory: "/docker/host-app"
-    schedule:
-      interval: "weekly"
-    labels:
-      - "dependencies"
 
   - package-ecosystem: "npm"
     directory: "/docker/host-app"
