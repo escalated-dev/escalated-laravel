@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.9.17] - 2026-11-07
+
+### Upgrading
+- No host changes: the package's code and `composer.json` are unchanged. Everything below is in the Docker demo host app, which is not shipped.
+
+### Changed
+- **Docker demo host app (not shipped):** @escalated-dev/escalated ^0.12.9, @inertiajs/vue3 ^3.11.0, tailwindcss and @tailwindcss/postcss ^4.3.5, laravel-vite-plugin ^3.2.1, vite 8.3.6, postcss 8.5.32, vue 3.5.45 and axios 1.21.0 (#299, #300, #301, #306).
+- Dependabot no longer runs for the demo host app's Composer file, which it cannot resolve outside the Docker image, and holds the deferred `pestphp/pest` 5, `pestphp/pest-plugin-laravel` 5 and `symfony/dom-crawler` 8 majors (#301, #302).
+
 ## [1.9.16] - 2026-11-05
 
 ### Upgrading
