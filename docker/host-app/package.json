@@ -9,7 +9,7 @@
         "@escalated-dev/escalated": "^0.12.7"
     },
     "devDependencies": {
-        "@inertiajs/vue3": "^3.9.1",
+        "@inertiajs/vue3": "^3.11.0",
         "@tailwindcss/postcss": "^4.3.3",
         "@vitejs/plugin-vue": "^6.0.10",
         "axios": "^1.21.0",
