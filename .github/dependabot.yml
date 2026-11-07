@@ -13,6 +13,14 @@ updates:
       interval: "weekly"
     labels:
       - "dependencies"
+    ignore:
+      # Deferred majors: Pest 5 and DomCrawler 8 need a planned upgrade.
+      - dependency-name: "pestphp/pest"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "pestphp/pest-plugin-laravel"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "symfony/dom-crawler"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "npm"
     directory: "/"
