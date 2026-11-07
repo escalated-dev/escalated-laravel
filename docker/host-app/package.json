@@ -10,7 +10,7 @@
     },
     "devDependencies": {
         "@inertiajs/vue3": "^3.9.1",
-        "@tailwindcss/postcss": "^4.3.3",
+        "@tailwindcss/postcss": "^4.3.4",
         "@vitejs/plugin-vue": "^6.0.10",
         "axios": "^1.21.0",
         "laravel-vite-plugin": "^3.2.0",
