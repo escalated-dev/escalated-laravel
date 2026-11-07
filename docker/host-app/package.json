@@ -6,16 +6,16 @@
         "build": "vite build"
     },
     "dependencies": {
-        "@escalated-dev/escalated": "^0.12.7"
+        "@escalated-dev/escalated": "^0.12.9"
     },
     "devDependencies": {
-        "@inertiajs/vue3": "^3.9.1",
-        "@tailwindcss/postcss": "^4.3.3",
+        "@inertiajs/vue3": "^3.11.0",
+        "@tailwindcss/postcss": "^4.3.5",
         "@vitejs/plugin-vue": "^6.0.10",
         "axios": "^1.21.0",
-        "laravel-vite-plugin": "^3.2.0",
+        "laravel-vite-plugin": "^3.2.1",
         "postcss": "^8.5.32",
-        "tailwindcss": "^4.3.3",
+        "tailwindcss": "^4.3.5",
         "vite": "^8.3.6",
         "vue": "^3.5.45"
     }
