@@ -1,67 +1,161 @@
-<p align="center">
-  <a href="README.ar.md">العربية</a> •
-  <a href="README.de.md">Deutsch</a> •
-  <a href="../../README.md">English</a> •
-  <b>Español</b> •
-  <a href="README.fr.md">Français</a> •
-  <a href="README.it.md">Italiano</a> •
-  <a href="README.ja.md">日本語</a> •
-  <a href="README.ko.md">한국어</a> •
-  <a href="README.nl.md">Nederlands</a> •
-  <a href="README.pl.md">Polski</a> •
-  <a href="README.pt-BR.md">Português (BR)</a> •
-  <a href="README.ru.md">Русский</a> •
-  <a href="README.tr.md">Türkçe</a> •
+<p align="center"><sub>
+  <a href="README.ar.md">العربية</a> ·
+  <a href="README.de.md">Deutsch</a> ·
+  <a href="../../README.md">English</a> ·
+  <b>Español</b> ·
+  <a href="README.fr.md">Français</a> ·
+  <a href="README.it.md">Italiano</a> ·
+  <a href="README.ja.md">日本語</a> ·
+  <a href="README.ko.md">한국어</a> ·
+  <a href="README.nl.md">Nederlands</a> ·
+  <a href="README.pl.md">Polski</a> ·
+  <a href="README.pt-BR.md">Português (BR)</a> ·
+  <a href="README.ru.md">Русский</a> ·
+  <a href="README.tr.md">Türkçe</a> ·
   <a href="README.zh-CN.md">简体中文</a>
+</sub></p>
+
+<p align="center">
+  <a href="https://escalated.dev"><img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/logo.png" width="72" height="72" alt="Escalated"></a>
 </p>
 
-# Escalated for Laravel
+<h1 align="center">Escalated for Laravel</h1>
 
-[![Tests](https://github.com/escalated-dev/escalated-laravel/actions/workflows/laravel.yml/badge.svg)](https://github.com/escalated-dev/escalated-laravel/actions/workflows/laravel.yml)
-[![FOSSA Status](https://app.fossa.com/api/projects/custom%2B62107%2Fgithub.com%2Fescalated-dev%2Fescalated-laravel.svg?type=shield)](https://app.fossa.com/projects/custom%2B62107%2Fgithub.com%2Fescalated-dev%2Fescalated-laravel?ref=badge_shield)
-[![Laravel](https://img.shields.io/badge/laravel-11.x--13.x-FF2D20?logo=laravel&logoColor=white)](https://laravel.com/)
-[![PHP](https://img.shields.io/badge/php-8.2+-777BB4?logo=php&logoColor=white)](https://www.php.net/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<p align="center">
+  Añade un helpdesk completo a tu aplicación Laravel.<br>
+  Tickets, SLA, reglas de escalado, una bandeja de entrada para agentes y un portal de clientes, funcionando en tu propia base de datos.
+</p>
 
-Un sistema de tickets de soporte completo e integrable para Laravel. Agrégalo a cualquier aplicación — obtén un helpdesk completo con seguimiento de SLA, reglas de escalamiento, flujos de trabajo de agentes y un portal de clientes. No requiere servicios externos.
+<p align="center">
+  <a href="https://escalated.dev"><b>Sitio web</b></a> ·
+  <a href="https://escalated.dev/docs"><b>Documentación</b></a> ·
+  <a href="https://escalated.dev/cloud"><b>Cloud</b></a> ·
+  <a href="../../CHANGELOG.md"><b>Registro de cambios</b></a>
+</p>
 
-> **[escalated.dev](https://escalated.dev)** — Obtenga más información, vea demos y compare las opciones de Cloud vs Auto-hospedado.
+<br>
 
-**Tres modos de alojamiento.** Ejecute completamente auto-hospedado, sincronice con una nube central para visibilidad multi-aplicación, o redirija todo a la nube. Cambie de modo con un solo cambio de configuración.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/inbox-dark.png">
+  <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/inbox-light.png" alt="La bandeja de entrada de agentes de Escalated: vistas guardadas con contadores, cuentas atrás de SLA y prioridades en cada ticket" width="100%">
+</picture>
 
-## Características
+## Qué hace
 
-- **Ciclo de vida del ticket** — Crear, asignar, responder, resolver, cerrar, reabrir con transiciones de estado configurables
-- **Motor de SLA** — Objetivos de respuesta y resolución por prioridad, cálculo de horas laborales, detección automática de incumplimientos
-- **Reglas de escalamiento** — Reglas basadas en condiciones que escalan, repriorizan, reasignan o notifican automáticamente
-- **Panel del agente** — Cola de tickets con filtros, acciones masivas, notas internas, respuestas predefinidas
-- **Portal del cliente** — Creación de tickets en autoservicio, respuestas y seguimiento de estado
-- **Panel de administración** — Gestionar departamentos, políticas de SLA, reglas de escalamiento, etiquetas y ver informes
-- **Archivos adjuntos** — Carga con arrastrar y soltar, almacenamiento y límites de tamaño configurables
-- **Línea de actividad** — Registro completo de auditoría de cada acción en cada ticket
-- **Notificaciones por correo** — Notificaciones configurables por evento con soporte de webhooks
-- **Enrutamiento por departamentos** — Organizar agentes en departamentos con asignación automática (round-robin)
-- **Sistema de etiquetado** — Categorizar tickets con etiquetas de colores
-- **Tickets de invitados** — Envío anónimo de tickets con acceso por enlace mágico vía token de invitado
-- **Correo entrante** — Crear y responder tickets por correo electrónico (Mailgun, Postmark, AWS SES, IMAP)
-- **Inertia.js + Vue 3 UI** — Frontend compartido a través de [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated)
-- **División de tickets** — Dividir una respuesta en un nuevo ticket independiente conservando el contexto original
-- **Ticket snooze** — Posponer tickets con preajustes (1h, 4h, mañana, próxima semana); el comando Artisan `escalated:wake-snoozed-tickets` los reactiva automáticamente según la programación
-- **Vistas guardadas / colas personalizadas** — Guardar, nombrar y compartir filtros preestablecidos como vistas de tickets reutilizables
-- **Embeddable support widget** — Widget ligero `<script>` servido a través de rutas `/support/widget/*` con búsqueda en base de conocimientos, formulario de ticket y verificación de estado
-- **Hilos de correo electrónico** — Los correos salientes incluyen encabezados `In-Reply-To` y `References` apropiados para el hilo correcto en clientes de correo
-- **Plantillas de correo con marca** — Logo, color primario y texto de pie de página configurables para todos los correos salientes
-- **Real-time broadcasting** — Transmisión opcional a través de Pusher, Reverb o Soketi con respaldo automático de sondeo
-- **Interruptor de base de conocimientos** — Habilitar o deshabilitar la base de conocimientos pública desde la configuración de administración
-- **CI: Laravel Pint** — Aplicación automática de estilo de código en cada pull request
+<table>
+  <tr>
+    <td width="40%">
+      <h3>Una bandeja de entrada en la que tus agentes pueden trabajar todo el día</h3>
+      Conversación, notas internas, respuestas predefinidas y temporizadores de SLA en una sola pantalla. Los tickets también llegan por correo electrónico a través de Mailgun, Postmark, SES o IMAP.
+    </td>
+    <td width="60%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/ticket-dark.png">
+        <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/ticket-light.png" alt="Un ticket abierto en el espacio de trabajo del agente con el editor de respuestas">
+      </picture>
+    </td>
+  </tr>
+  <tr>
+    <td width="60%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/dashboard-dark.png">
+        <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/dashboard-light.png" alt="La página de informes de administración con tiempos de respuesta, CSAT e incumplimientos de SLA">
+      </picture>
+    </td>
+    <td width="40%">
+      <h3>SLA y reglas de escalado que puedes ver</h3>
+      Objetivos de respuesta y resolución por prioridad con horario laboral, reglas que escalan o reasignan cuando no se cumplen, e informes sobre incumplimientos.
+    </td>
+  </tr>
+  <tr>
+    <td width="40%">
+      <h3>Un portal de clientes que ya está hecho</h3>
+      Los clientes abren tickets, responden y consultan el estado dentro de tu aplicación. Inserta el widget en otros sitios con una sola etiqueta script.
+    </td>
+    <td width="60%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/portal-dark.png">
+        <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/portal-light.png" alt="La lista de tickets del portal de clientes">
+      </picture>
+    </td>
+  </tr>
+</table>
 
-## Requisitos
+## Funciones
 
-- PHP 8.2+
-- Laravel 11.x, 12.x, or 13.x
-- Node.js 18+ (para recursos del frontend)
+<table>
+<tr>
+<td width="33%" valign="top">
 
-## Inicio Rápido
+**Tickets**
+- Crear, asignar, responder, resolver, reabrir
+- Transiciones de estado configurables
+- Dividir una respuesta en un ticket nuevo
+- Posponer con reactivación automática
+- Etiquetas, adjuntos, cronología de actividad
+
+</td>
+<td width="33%" valign="top">
+
+**Espacio de trabajo del agente**
+- Cola con filtros y vistas guardadas
+- Acciones masivas y notas internas
+- Respuestas predefinidas
+- Departamentos con asignación por turnos
+- Actualizaciones en tiempo real con sondeo como alternativa
+
+</td>
+<td width="33%" valign="top">
+
+**SLA y escalado**
+- Objetivos de respuesta y resolución por prioridad
+- Horario laboral
+- Detección automática de incumplimientos
+- Reglas que escalan, reasignan o notifican
+
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+
+**Clientes**
+- Portal de autoservicio: abrir, responder, seguir
+- Tickets de invitados verificados con enlaces privados
+- Widget, formulario o chat en vivo integrables
+- Base de conocimiento, activada o desactivada
+
+</td>
+<td width="33%" valign="top">
+
+**Correo electrónico**
+- Correo entrante vía Mailgun, Postmark, SES, IMAP
+- Notificaciones y webhooks por evento
+- Hilos correctos en los clientes de correo
+- Plantillas con tu marca
+
+</td>
+<td width="33%" valign="top">
+
+**Administración y acceso**
+- Departamentos, políticas de SLA, reglas, informes
+- Roles, permisos, doble factor, SSO
+- Administración dentro de tu propio panel de administración
+- API de agentes para crear tickets
+
+</td>
+</tr>
+</table>
+
+<p align="center"><sub><a href="../features.md">Todas las funciones en detalle</a></sub></p>
+
+<p align="center">
+  <a href="https://laravel.com"><img src="https://img.shields.io/badge/Laravel_11--13-FF2D20?style=for-the-badge&logo=laravel&logoColor=white" alt="Laravel 11 to 13"></a>
+  <a href="https://www.php.net"><img src="https://img.shields.io/badge/PHP_8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.2+"></a>
+  <a href="https://inertiajs.com"><img src="https://img.shields.io/badge/Inertia-9553E9?style=for-the-badge&logo=inertia&logoColor=white" alt="Inertia"></a>
+  <a href="https://vuejs.org"><img src="https://img.shields.io/badge/Vue_3-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white" alt="Vue 3"></a>
+</p>
+
+## Inicio rápido
 
 ```bash
 composer require escalated-dev/escalated-laravel
@@ -70,654 +164,19 @@ php artisan escalated:install
 php artisan migrate
 ```
 
-The install command will offer to automatically configure your User model with the `Ticketable` interface and `HasTickets` trait. If you prefer to do this manually, or if you use a custom user model, add the following:
+Después visita `/support`. Requiere PHP 8.2+ y Laravel 11.39 o posterior. La [guía de primeros pasos](../getting-started.md) explica cómo configurar el modelo de usuario y los gates de acceso.
 
-```php
-use Escalated\Laravel\Contracts\HasTickets;
-use Escalated\Laravel\Contracts\Ticketable;
+## Más información
 
-class User extends Authenticatable implements Ticketable
-{
-    use HasTickets;
-}
-```
+- [Todas las funciones](../features.md) · [Primeros pasos](../getting-started.md) · [Instalación](../installation.md)
+- [Integración del frontend y temas](../frontend-integration.md) · [Personalización](../customization.md)
+- [Configuración, modos de alojamiento, eventos y rutas](../operations.md) · [Referencia de configuración](../configuration.md)
+- [Políticas de SLA](../sla-policies.md) · [Reglas de escalado](../escalation-rules.md) · [Acceso a tickets y enrutamiento](../ticket-access-and-routing.md)
+- [Correo entrante](../inbound-email.md) · [Insertar el widget](../embedding-the-widget.md) · [Acceso de invitados](../guest-access.md)
+- [Plugins](../plugin-sdk.md) · [Boletines](../newsletters.md) · [Multiinquilino](../tenancy.md)
 
-Define authorization gates in a service provider:
-
-```php
-use Illuminate\Support\Facades\Gate;
-
-Gate::define('escalated-admin', fn ($user) => $user->is_admin);
-Gate::define('escalated-agent', fn ($user) => $user->is_agent || $user->is_admin);
-```
-
-Visit `/support` — you're live.
-
-## Integración Frontend
-
-Escalated ships a Vue component library and default pages via the [`@escalated-dev/escalated`](https://github.com/escalated-dev/escalated) npm package.
-
-### 1. Contenido de Tailwind
-
-Agregue el paquete Escalated a la configuración `content` de Tailwind para que sus clases no sean eliminadas:
-
-```js
-// tailwind.config.js
-content: [
-    // ... your existing paths
-    './node_modules/@escalated-dev/escalated/src/**/*.vue',
-],
-```
-
-### 2. Resolución de Páginas
-
-Add the Escalated page resolver to your `app.ts`:
-
-```ts
-import { createInertiaApp } from '@inertiajs/vue3';
-import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
-
-const escalatedPages = import.meta.glob(
-    '../../node_modules/@escalated-dev/escalated/src/pages/**/*.vue',
-);
-
-createInertiaApp({
-    resolve: (name) => {
-        if (name.startsWith('Escalated/')) {
-            const path = name.replace('Escalated/', '');
-            return resolvePageComponent(
-                `../../node_modules/@escalated-dev/escalated/src/pages/${path}.vue`,
-                escalatedPages,
-            );
-        }
-        return resolvePageComponent(`./Pages/${name}.vue`,
-            import.meta.glob('./Pages/**/*.vue'));
-    },
-    // ...
-});
-```
-
-### 3. Temas (Opcional)
-
-Registre el `EscalatedPlugin` para renderizar las páginas de Escalated dentro del diseño de su aplicación — no se necesita duplicación de páginas:
-
-```ts
-import { EscalatedPlugin } from '@escalated-dev/escalated';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-
-createInertiaApp({
-    setup({ el, App, props, plugin }) {
-        createApp({ render: () => h(App, props) })
-            .use(plugin)
-            .use(EscalatedPlugin, {
-                layout: AuthenticatedLayout,
-            })
-            .mount(el);
-    },
-});
-```
-
-Your layout component must accept a `#header` slot and a default slot. Escalated will render its sub-navigation in the header and page content in the default slot.
-
-Without the plugin, Escalated uses its own standalone layout with a simple nav bar.
-
-### Propiedades CSS Personalizadas
-
-Pass a `theme` option to customize colors and radii:
-
-```ts
-app.use(EscalatedPlugin, {
-    layout: AuthenticatedLayout,
-    theme: {
-        primary: '#3b82f6',
-        radius: '0.75rem',
-    }
-})
-```
-
-| Property | Default | Description |
-|----------|---------|-------------|
-| `--esc-primary` | `#4f46e5` | Primary action color |
-| `--esc-primary-hover` | auto-darkened | Primary hover color |
-| `--esc-radius` | `0.5rem` | Border radius for inputs and buttons |
-| `--esc-radius-lg` | auto-scaled | Border radius for cards and panels |
-| `--esc-font-family` | inherit | Font family override |
-
-### Componentes Disponibles
-
-| Component | Description |
-|-----------|-------------|
-| `ActivityTimeline` | Full audit log of ticket events |
-| `AssigneeSelect` | Agent assignment dropdown |
-| `AttachmentList` | File attachment display |
-| `FileDropzone` | Drag-and-drop file upload |
-| `PriorityBadge` | Priority level indicator |
-| `ReplyComposer` | Rich text reply editor |
-| `ReplyThread` | Chronological message thread |
-| `SlaTimer` | SLA countdown display |
-| `StatsCard` | Metric card for dashboards |
-| `StatusBadge` | Ticket status indicator |
-| `TagSelect` | Tag picker with colors |
-| `TicketFilters` | Search and filter controls |
-| `TicketList` | Paginated ticket table |
-| `TicketSidebar` | Ticket metadata sidebar |
-
-### Props Compartidos de Inertia
-
-Escalated automatically shares data to all Inertia pages via `page.props.escalated`:
-
-```js
-page.props.escalated = {
-    prefix: 'support',     // Route prefix from config
-    is_agent: true,        // Current user can access agent views
-    is_admin: false,       // Current user can access admin views
-}
-```
-
-Use these to conditionally show nav links or restrict UI elements.
-
-## Modos de Alojamiento
-
-### Self-Hosted (predeterminado)
-
-Todo permanece en su base de datos. Sin llamadas externas. Autonomía total.
-
-```php
-// config/escalated.php
-'mode' => 'self-hosted',
-```
-
-### Sincronizado
-
-Base de datos local + sincronización automática con `cloud.escalated.dev` para bandeja de entrada unificada en múltiples aplicaciones. Si la nube no está disponible, su aplicación sigue funcionando — los eventos se ponen en cola y se reintentan.
-
-```php
-'mode' => 'synced',
-'hosted' => [
-    'api_url' => 'https://cloud.escalated.dev/api/v1',
-    'api_key' => env('ESCALATED_API_KEY'),
-],
-```
-
-### Nube
-
-Todos los datos de tickets se envían a la API en la nube. Su aplicación maneja la autenticación y renderiza la interfaz, pero el almacenamiento vive en la nube. Soporta múltiples dominios por clave API.
-
-```php
-'mode' => 'cloud',
-```
-
-Los tres modos comparten los mismos controladores, interfaz y lógica de negocio. El patrón de driver se encarga del resto.
-
-## Publicación de Recursos
-
-```bash
-# Email templates
-php artisan vendor:publish --tag=escalated-views
-
-# Config file
-php artisan vendor:publish --tag=escalated-config
-
-# Database migrations
-php artisan vendor:publish --tag=escalated-migrations
-```
-
-## Programación
-
-Agregue estos a su programador para la automatización de SLA y escalamiento:
-
-```php
-// app/Console/Kernel.php or routes/console.php
-Schedule::command('escalated:check-sla')->everyMinute();
-Schedule::command('escalated:evaluate-escalations')->everyFiveMinutes();
-Schedule::command('escalated:close-resolved')->daily();
-Schedule::command('escalated:purge-activities')->weekly();
-Schedule::command('escalated:poll-imap')->everyMinute(); // Only if using IMAP adapter
-```
-
-## Configuración
-
-All config lives in `config/escalated.php`. Key options:
-
-```php
-'mode' => 'self-hosted',              // self-hosted | synced | cloud
-'user_model' => App\Models\User::class,
-'table_prefix' => 'escalated_',
-'default_priority' => 'medium',
-
-'routes' => [
-    'prefix' => 'support',
-    'middleware' => ['web', 'auth'],
-],
-
-'tickets' => [
-    'allow_customer_close' => true,
-    'auto_close_resolved_after_days' => 7,
-],
-
-'sla' => [
-    'enabled' => true,
-    'business_hours_only' => false,
-    'business_hours' => [
-        'start' => '09:00',
-        'end' => '17:00',
-        'timezone' => 'UTC',
-        'days' => [1, 2, 3, 4, 5],
-    ],
-],
-```
-
-See the [full configuration reference](docs/configuration.md).
-
-## Eventos
-
-Every ticket action dispatches an event you can listen to:
-
-| Event | When |
-|-------|------|
-| `TicketCreated` | New ticket |
-| `TicketStatusChanged` | Status transition |
-| `TicketAssigned` | Agent assigned |
-| `ReplyCreated` | Public reply added |
-| `InternalNoteAdded` | Agent note added |
-| `SlaBreached` | SLA deadline missed |
-| `TicketEscalated` | Ticket escalated |
-| `TicketResolved` | Ticket resolved |
-| `TicketClosed` | Ticket closed |
-
-```php
-use Escalated\Laravel\Events\TicketCreated;
-
-Event::listen(TicketCreated::class, function ($event) {
-    // $event->ticket
-});
-```
-
-[Full events documentation →](docs/events.md)
-
-## Correo Electrónico Entrante
-
-Escalated can create and reply to tickets from incoming emails. Supports **Mailgun**, **Postmark**, **AWS SES** webhooks, and **IMAP** polling as a fallback.
-
-### Cómo Funciona
-
-1. An external email service receives an email at your support address (e.g., `support@yourapp.com`)
-2. The service forwards the email to your application via webhook (or IMAP polling fetches it)
-3. Escalated normalizes the payload into an `InboundMessage` DTO via the adapter
-4. The `InboundEmailService` processes the message:
-   - **Thread matching**: when `ESCALATED_EMAIL_INBOUND_SECRET` is set, only the signed Reply-To address (`reply+{id}.{hmac8}@domain`) that outbound notifications carry identifies a ticket. Without a secret, the `In-Reply-To` / `References` headers and the subject reference (e.g., `[ESC-00001]`) are used instead
-   - **Sender check**: a threaded email becomes a reply only when the `From` address is the ticket's requester (the guest email, or the requester user's email). The reply is posted as that requester. Staff identity is never taken from the `From` header, so agents reply in the app, not by email
-   - **Match found**: adds a reply to the existing ticket; reopens the ticket if it was resolved or closed
-   - **No match, or a sender who is not the requester**: creates a new ticket — if the sender is a registered user they become the requester, otherwise a guest ticket is created
-5. Every inbound email is logged to `escalated_inbound_emails` for audit
-
-### Habilitar Correo Entrante
-
-```env
-ESCALATED_INBOUND_EMAIL=true
-ESCALATED_INBOUND_ADDRESS=support@yourapp.com
-```
-
-### Configuración del Adaptador
-
-#### Mailgun
-
-```env
-ESCALATED_INBOUND_ADAPTER=mailgun
-ESCALATED_MAILGUN_SIGNING_KEY=your-mailgun-signing-key
-```
-
-Configure a Mailgun Route to forward inbound emails to:
-
-```
-POST https://yourapp.com/support/inbound/mailgun
-```
-
-The signing key is in your Mailgun dashboard under **Settings > API Keys > HTTP Webhook Signing Key**. Requests are verified via HMAC-SHA256 signature.
-
-#### Postmark
-
-```env
-ESCALATED_INBOUND_ADAPTER=postmark
-ESCALATED_POSTMARK_INBOUND_TOKEN=your-postmark-inbound-token
-```
-
-Configure an Inbound Webhook in your Postmark server settings pointing to:
-
-```
-POST https://yourapp.com/support/inbound/postmark
-```
-
-The token is sent in the `X-Postmark-Token` header and verified on each request.
-
-#### AWS SES
-
-```env
-ESCALATED_INBOUND_ADAPTER=ses
-ESCALATED_SES_REGION=us-east-1
-ESCALATED_SES_TOPIC_ARN=arn:aws:sns:us-east-1:123456789:your-topic
-```
-
-1. Configure SES to receive emails and publish to an SNS topic
-2. Create an HTTPS subscription on the SNS topic pointing to:
-   ```
-   POST https://yourapp.com/support/inbound/ses
-   ```
-3. Escalated auto-confirms the SNS subscription and verifies message signatures using Amazon's certificate
-
-#### IMAP (Fallback)
-
-For providers without webhook support, poll via IMAP:
-
-```env
-ESCALATED_INBOUND_ADAPTER=imap
-ESCALATED_IMAP_HOST=imap.gmail.com
-ESCALATED_IMAP_PORT=993
-ESCALATED_IMAP_ENCRYPTION=ssl
-ESCALATED_IMAP_USERNAME=support@yourapp.com
-ESCALATED_IMAP_PASSWORD=your-app-password
-ESCALATED_IMAP_MAILBOX=INBOX
-```
-
-Schedule the poll command:
-
-```php
-Schedule::command('escalated:poll-imap')->everyMinute();
-```
-
-### URL del Webhook
-
-```
-POST /{prefix}/inbound/{adapter}
-```
-
-Where `{prefix}` is your configured route prefix (default: `support`) and `{adapter}` is `mailgun`, `postmark`, or `ses`. These routes use the `api` middleware (no CSRF, no auth).
-
-### Características de Procesamiento
-
-- **Thread detection** via the signed Reply-To address, or (without an inbound secret) the `In-Reply-To` / `References` headers and subject reference pattern (`[ESC-00001]`); replies are accepted only from the ticket's requester
-- **Guest tickets** for unknown senders — display name derived from email (e.g., `john.doe@example.com` → `John Doe`)
-- **Subject sanitization** — strips `RE:`, `FW:`, `FWD:` prefixes (including stacked)
-- **HTML fallback** — uses stripped HTML body when plain text is empty
-- **Duplicate detection** — skips messages with duplicate `Message-ID` headers
-- **Attachment handling** — stores attachments respecting `max_attachment_size_kb` and `max_attachments_per_reply`
-- **Auto-reopen** — reopens resolved/closed tickets when the requester replies via email
-- **Audit logging** — every inbound email recorded in `escalated_inbound_emails` with status tracking
-
-### Adaptador Personalizado
-
-Implement the `InboundAdapter` interface:
-
-```php
-use Escalated\Laravel\Mail\Adapters\InboundAdapter;
-use Escalated\Laravel\Mail\InboundMessage;
-use Illuminate\Http\Request;
-
-class MyAdapter implements InboundAdapter
-{
-    public function parseRequest(Request $request): InboundMessage
-    {
-        return new InboundMessage(
-            fromEmail: $request->input('from'),
-            fromName: $request->input('name'),
-            toEmail: $request->input('to'),
-            subject: $request->input('subject'),
-            bodyText: $request->input('text'),
-            bodyHtml: $request->input('html'),
-            messageId: $request->input('message_id'),
-            inReplyTo: $request->input('in_reply_to'),
-        );
-    }
-
-    public function verifyRequest(Request $request): bool
-    {
-        return $request->header('X-Secret') === config('services.my_adapter.secret');
-    }
-}
-```
-
-### Variables de Entorno de Correo Entrante
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `ESCALATED_INBOUND_EMAIL` | `false` | Enable inbound email |
-| `ESCALATED_INBOUND_ADAPTER` | `mailgun` | Default adapter |
-| `ESCALATED_INBOUND_ADDRESS` | `support@example.com` | Support email address |
-| `ESCALATED_MAILGUN_SIGNING_KEY` | — | Mailgun webhook signing key |
-| `ESCALATED_POSTMARK_INBOUND_TOKEN` | — | Postmark inbound token |
-| `ESCALATED_SES_REGION` | `us-east-1` | AWS SES region |
-| `ESCALATED_SES_TOPIC_ARN` | — | AWS SNS topic ARN |
-| `ESCALATED_IMAP_HOST` | — | IMAP server hostname |
-| `ESCALATED_IMAP_PORT` | `993` | IMAP server port |
-| `ESCALATED_IMAP_ENCRYPTION` | `ssl` | IMAP encryption |
-| `ESCALATED_IMAP_USERNAME` | — | IMAP username |
-| `ESCALATED_IMAP_PASSWORD` | — | IMAP password |
-| `ESCALATED_IMAP_MAILBOX` | `INBOX` | IMAP mailbox to poll |
-
-## Rutas
-
-| Route | Method | Description |
-|-------|--------|-------------|
-| `/support` | GET | Customer ticket list |
-| `/support/create` | GET | New ticket form |
-| `/support/{ticket}` | GET | Ticket detail |
-| `/support/guest/create` | GET | Guest ticket form |
-| `/support/guest/{token}` | GET | Guest ticket view (magic link) |
-| `/support/agent` | GET | Agent dashboard |
-| `/support/agent/tickets` | GET | Agent ticket queue |
-| `/support/agent/tickets/{ticket}` | GET | Agent ticket view |
-| `/support/admin/reports` | GET | Admin reports |
-| `/support/admin/departments` | GET | Department management |
-| `/support/admin/sla-policies` | GET | SLA policy management |
-| `/support/admin/escalation-rules` | GET | Escalation rule management |
-| `/support/admin/tags` | GET | Tag management |
-| `/support/admin/canned-responses` | GET | Canned response management |
-| `/support/inbound/mailgun` | POST | Mailgun inbound webhook |
-| `/support/inbound/postmark` | POST | Postmark inbound webhook |
-| `/support/inbound/ses` | POST | SES/SNS inbound webhook |
-| `/support/agent/tickets/bulk` | POST | Bulk actions on multiple tickets |
-| `/support/agent/tickets/{ticket}/follow` | POST | Follow/unfollow a ticket |
-| `/support/agent/tickets/{ticket}/macro` | POST | Apply a macro to a ticket |
-| `/support/agent/tickets/{ticket}/presence` | POST | Update presence on a ticket |
-| `/support/agent/tickets/{ticket}/pin/{reply}` | POST | Pin/unpin an internal note |
-| `/support/{ticket}/rate` | POST | Submit satisfaction rating |
-
-All routes use the configurable prefix (default: `support`). Inbound webhook routes use the `api` middleware (no auth, no CSRF).
-
-## SDK de Plugins
-
-Escalated soporta plugins agnósticos al framework construidos con el [Plugin SDK](https://github.com/escalated-dev/escalated-plugin-sdk). Los plugins se escriben una vez en TypeScript y funcionan en todos los backends de Escalated.
-
-### Instalación de Plugins
-
-The plugin bridge is built into `escalated-laravel` — no additional PHP package required. Install plugins and the runtime via npm:
-
-```bash
-npm install @escalated-dev/plugin-runtime
-npm install @escalated-dev/plugin-slack
-npm install @escalated-dev/plugin-jira
-```
-
-### Habilitando Plugins SDK
-
-```php
-// config/escalated.php
-'plugins' => [
-    'enabled'     => true,
-    'sdk_enabled' => true,  // Enable the Node.js bridge
-],
-```
-
-### Cómo Funciona
-
-SDK plugins run as a Node.js subprocess managed by `@escalated-dev/plugin-runtime`, communicating with Laravel over JSON-RPC 2.0 via stdio. The `escalated_do_action()` and `escalated_apply_filters()` helpers dual-dispatch to both legacy PHP plugins and new SDK plugins simultaneously — no changes to existing hook call sites.
-
-### Creando Tu Propio Plugin
-
-```typescript
-import { definePlugin } from '@escalated-dev/plugin-sdk'
-
-export default definePlugin({
-  name: 'my-plugin',
-  version: '1.0.0',
-  actions: {
-    'ticket.created': async (event, ctx) => {
-      ctx.log.info('New ticket!', event)
-    },
-  },
-})
-```
-
-### Recursos
-
-- [Plugin SDK](https://github.com/escalated-dev/escalated-plugin-sdk) — SDK de TypeScript para crear plugins
-- [Plugin Runtime](https://github.com/escalated-dev/escalated-plugin-runtime) — Host de tiempo de ejecución para plugins
-- [Plugin Development Guide](https://github.com/escalated-dev/escalated-docs) — Documentación completa
-
-See the detailed [Plugin Bridge](#plugin-bridge-sdk-plugins) section below for the full architecture, auto-generated routes, dual dispatch, and store documentation.
-
-## Puente de Plugins (Plugins SDK)
-
-Escalated supports a second generation of plugins written in TypeScript using the `@escalated-dev/plugin-sdk`. These plugins run as a Node.js subprocess managed by `@escalated-dev/plugin-runtime` and communicate with Laravel over JSON-RPC 2.0 via stdio.
-
-### Cómo Funciona
-
-```
-Laravel (PHP)                     Plugin Runtime (Node.js)
-┌──────────────────────┐  stdio   ┌──────────────────────┐
-│ PluginBridge         │◄────────►│ @escalated-dev/       │
-│  - spawns subprocess │  JSON-   │   plugin-runtime      │
-│  - dispatches hooks  │  RPC 2.0 │  ┌────────────────┐   │
-│  - handles ctx.*     │          │  │ Slack Plugin    │   │
-│  - mounts routes     │          │  │ Jira Plugin     │   │
-└──────────────────────┘          │  │ ...             │   │
-                                  │  └────────────────┘   │
-                                  └──────────────────────┘
-```
-
-The bridge spawns the runtime **lazily** on the first hook dispatch and keeps the process alive across requests (one long-lived subprocess per PHP-FPM worker). If the process crashes it is automatically restarted with exponential backoff.
-
-### Requisitos
-
-- Node.js 18+
-- `@escalated-dev/plugin-runtime` installed in your project:
-
-```bash
-npm install @escalated-dev/plugin-runtime
-```
-
-Install any SDK plugins the same way:
-
-```bash
-npm install @escalated-dev/plugin-slack @escalated-dev/plugin-jira
-```
-
-### Secuencia de Inicio
-
-1. `EscalatedServiceProvider::boot()` calls `$bridge->boot()`
-2. Bridge spawns `node node_modules/@escalated-dev/plugin-runtime/dist/index.js`
-3. Protocol handshake confirms version compatibility
-4. Bridge fetches the plugin manifest (pages, hooks, endpoints, webhooks)
-5. Routes are registered in Laravel for plugin pages, API endpoints, and webhooks
-6. Runtime is ready to receive hook dispatches
-
-### Rutas Autogeneradas
-
-For each installed SDK plugin the bridge automatically registers:
-
-| Category | URL Pattern | Auth |
-|----------|-------------|------|
-| Admin pages | `{prefix}/admin/plugins/{slug}/{route}` | Admin |
-| Data endpoints | `{prefix}/api/plugins/{slug}/{path}` | Admin |
-| Webhook endpoints | `{prefix}/webhooks/plugins/{slug}/{path}` | None |
-
-### Despacho Dual (Compatibilidad Retroactiva)
-
-The existing `escalated_do_action()` and `escalated_apply_filters()` helper functions dispatch hooks to **both** old PHP plugins and new SDK plugins simultaneously. No changes are required to existing hook call sites.
-
-```php
-// This automatically dispatches to PHP plugins AND SDK plugins:
-escalated_do_action('ticket.created', $ticket->toArray());
-
-// Same for filters:
-$channels = escalated_apply_filters('notification.channels', []);
-```
-
-### Almacén de Plugins
-
-SDK plugins can persist data using `ctx.store`. This is backed by the `escalated_plugin_store` table:
-
-```bash
-php artisan vendor:publish --tag=escalated-migrations
-php artisan migrate
-```
-
-### Configuración
-
-```php
-// config/escalated.php
-'plugins' => [
-    'enabled'         => true,
-    'sdk_enabled'     => true,      // Enable the Node.js bridge
-    'runtime_command' => 'node node_modules/@escalated-dev/plugin-runtime/dist/index.js',
-    'runtime_cwd'     => base_path(), // Working directory for the subprocess
-],
-```
-
-### Escribiendo Plugins SDK
-
-See the [`@escalated-dev/plugin-sdk`](https://github.com/escalated-dev/plugin-sdk) package for the full TypeScript authoring API. A minimal plugin looks like:
-
-```typescript
-import { definePlugin } from '@escalated-dev/plugin-sdk'
-
-export default definePlugin({
-  name: 'my-plugin',
-  version: '1.0.0',
-
-  actions: {
-    'ticket.created': async (event, ctx) => {
-      const config = await ctx.config.all()
-      // ... do something
-    },
-  },
-
-  endpoints: {
-    'GET /settings': { capability: 'manage_settings', handler: async (ctx) => {
-      return await ctx.config.all()
-    }},
-  },
-})
-```
-
-## Documentación
-
-- [Installation](docs/installation.md)
-- [Configuration](docs/configuration.md)
-- [Customization](docs/customization.md)
-- [Events](docs/events.md)
-- [SLA Policies](docs/sla-policies.md)
-- [Escalation Rules](docs/escalation-rules.md)
-- [Hosting Modes](docs/hosting-modes.md)
-
-## Pruebas
-
-```bash
-composer install
-vendor/bin/pest
-```
-
-## También Disponible Para
-
-- **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** — Paquete Laravel Composer (estás aquí)
-- **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** — Motor Ruby on Rails
-- **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** — Aplicación reutilizable de Django
-- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** — Paquete AdonisJS v6
-- **[Escalated for Filament](https://github.com/escalated-dev/escalated-filament)** — Plugin de panel de administración Filament v3
-- **[Shared Frontend](https://github.com/escalated-dev/escalated)** — Componentes de UI Vue 3 + Inertia.js
-
-Misma arquitectura, misma interfaz Vue, mismos tres modos de alojamiento — para cada framework backend importante.
+Escalated también está disponible para [Rails](https://github.com/escalated-dev/escalated-rails), [Django](https://github.com/escalated-dev/escalated-django), [NestJS](https://github.com/escalated-dev/escalated-nestjs), [AdonisJS](https://github.com/escalated-dev/escalated-adonis), [Symfony](https://github.com/escalated-dev/escalated-symfony), [Phoenix](https://github.com/escalated-dev/escalated-phoenix), [Go](https://github.com/escalated-dev/escalated-go), [.NET](https://github.com/escalated-dev/escalated-dotnet), [Spring](https://github.com/escalated-dev/escalated-spring), [WordPress](https://github.com/escalated-dev/escalated-wordpress) y [Filament](https://github.com/escalated-dev/escalated-filament). La interfaz está en [escalated](https://github.com/escalated-dev/escalated).
 
 ## Licencia
 
-MIT
+MIT. Copyright (c) Escalated.dev. Consulta [LICENSE](../../LICENSE).
