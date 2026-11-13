@@ -81,6 +81,80 @@
   </tr>
 </table>
 
+## 功能列表
+
+<table>
+<tr>
+<td width="33%" valign="top">
+
+**工单**
+- 创建、分配、回复、解决、重新打开
+- 可配置的状态流转
+- 将回复拆分为新工单
+- 暂缓工单并自动唤醒
+- 标签、附件、活动时间线
+
+</td>
+<td width="33%" valign="top">
+
+**客服工作区**
+- 带筛选和已保存视图的队列
+- 批量操作和内部备注
+- 预设回复
+- 支持轮流分配的部门
+- 实时更新，可回退到轮询
+
+</td>
+<td width="33%" valign="top">
+
+**SLA 和升级**
+- 按优先级设定响应和解决目标
+- 工作时间
+- 自动检测违约
+- 可升级、重新分配或发送通知的规则
+
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+
+**客户**
+- 自助门户：提交、回复、跟踪
+- 通过私密链接验证的访客工单
+- 可嵌入的小部件、表单或在线聊天
+- 知识库，可开可关
+
+</td>
+<td width="33%" valign="top">
+
+**邮件**
+- 通过 Mailgun、Postmark、SES、IMAP 接收邮件
+- 按事件发送通知和 Webhook
+- 在邮件客户端中正确归入同一会话
+- 带品牌样式的模板
+
+</td>
+<td width="33%" valign="top">
+
+**管理与权限**
+- 部门、SLA 策略、规则、报表
+- 角色、权限、双因素认证、SSO
+- 在你自己的管理面板中使用管理后台
+- 用于创建工单的客服 API
+
+</td>
+</tr>
+</table>
+
+<p align="center"><sub><a href="../features.md">所有功能详解</a></sub></p>
+
+<p align="center">
+  <a href="https://laravel.com"><img src="https://img.shields.io/badge/Laravel_11--13-FF2D20?style=for-the-badge&logo=laravel&logoColor=white" alt="Laravel 11 to 13"></a>
+  <a href="https://www.php.net"><img src="https://img.shields.io/badge/PHP_8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.2+"></a>
+  <a href="https://inertiajs.com"><img src="https://img.shields.io/badge/Inertia-9553E9?style=for-the-badge&logo=inertia&logoColor=white" alt="Inertia"></a>
+  <a href="https://vuejs.org"><img src="https://img.shields.io/badge/Vue_3-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white" alt="Vue 3"></a>
+</p>
+
 ## 快速开始
 
 ```bash

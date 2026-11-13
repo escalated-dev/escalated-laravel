@@ -81,6 +81,80 @@
   </tr>
 </table>
 
+## الميزات
+
+<table>
+<tr>
+<td width="33%" valign="top">
+
+**التذاكر**
+- الإنشاء والإسناد والرد والحل وإعادة الفتح
+- انتقالات حالة قابلة للتهيئة
+- فصل رد إلى تذكرة جديدة
+- تأجيل مع استئناف تلقائي
+- الوسوم والمرفقات وسجل النشاط
+
+</td>
+<td width="33%" valign="top">
+
+**مساحة عمل الوكيل**
+- قائمة انتظار مع عوامل تصفية وطرق عرض محفوظة
+- إجراءات جماعية وملاحظات داخلية
+- ردود جاهزة
+- أقسام مع إسناد بالتناوب
+- تحديثات فورية مع رجوع إلى الاستطلاع الدوري
+
+</td>
+<td width="33%" valign="top">
+
+**اتفاقيات مستوى الخدمة والتصعيد**
+- أهداف الاستجابة والحل لكل أولوية
+- ساعات العمل
+- كشف تلقائي لحالات الخرق
+- قواعد تصعّد أو تعيد الإسناد أو ترسل إشعارات
+
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+
+**العملاء**
+- بوابة خدمة ذاتية: فتح ورد وتتبع
+- تذاكر ضيوف موثقة بروابط خاصة
+- أداة أو نموذج أو دردشة مباشرة قابلة للتضمين
+- قاعدة معرفية يمكن تفعيلها أو إيقافها
+
+</td>
+<td width="33%" valign="top">
+
+**البريد الإلكتروني**
+- استقبال عبر Mailgun أو Postmark أو SES أو IMAP
+- إشعارات وخطافات ويب لكل حدث
+- ترابط صحيح للرسائل في برامج البريد
+- قوالب تحمل علامتك التجارية
+
+</td>
+<td width="33%" valign="top">
+
+**الإدارة والوصول**
+- الأقسام وسياسات SLA والقواعد والتقارير
+- الأدوار والصلاحيات والمصادقة الثنائية و SSO
+- لوحة الإدارة داخل لوحة الإدارة الخاصة بك
+- واجهة API للوكلاء لإنشاء التذاكر
+
+</td>
+</tr>
+</table>
+
+<p align="center"><sub><a href="../features.md">كل الميزات بالتفصيل</a></sub></p>
+
+<p align="center">
+  <a href="https://laravel.com"><img src="https://img.shields.io/badge/Laravel_11--13-FF2D20?style=for-the-badge&logo=laravel&logoColor=white" alt="Laravel 11 to 13"></a>
+  <a href="https://www.php.net"><img src="https://img.shields.io/badge/PHP_8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.2+"></a>
+  <a href="https://inertiajs.com"><img src="https://img.shields.io/badge/Inertia-9553E9?style=for-the-badge&logo=inertia&logoColor=white" alt="Inertia"></a>
+  <a href="https://vuejs.org"><img src="https://img.shields.io/badge/Vue_3-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white" alt="Vue 3"></a>
+</p>
+
 ## البدء السريع
 
 ```bash

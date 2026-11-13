@@ -81,6 +81,80 @@
   </tr>
 </table>
 
+## 기능 목록
+
+<table>
+<tr>
+<td width="33%" valign="top">
+
+**티켓**
+- 생성, 배정, 답장, 해결, 다시 열기
+- 설정 가능한 상태 전환
+- 답장을 새 티켓으로 분리
+- 자동 재개를 지원하는 스누즈
+- 태그, 첨부 파일, 활동 타임라인
+
+</td>
+<td width="33%" valign="top">
+
+**상담원 작업 공간**
+- 필터와 저장된 보기를 갖춘 대기열
+- 일괄 작업과 내부 메모
+- 상용구 답변
+- 라운드 로빈 배정을 지원하는 부서
+- 폴링 대체를 갖춘 실시간 업데이트
+
+</td>
+<td width="33%" valign="top">
+
+**SLA와 에스컬레이션**
+- 우선순위별 응답 및 해결 목표
+- 영업시간
+- 자동 위반 감지
+- 에스컬레이션, 재할당 또는 알림을 수행하는 규칙
+
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+
+**고객**
+- 셀프 서비스 포털: 열기, 답장, 추적
+- 비공개 링크를 사용하는 인증된 게스트 티켓
+- 삽입 가능한 위젯, 양식 또는 라이브 채팅
+- 지식 베이스, 켜기 또는 끄기
+
+</td>
+<td width="33%" valign="top">
+
+**이메일**
+- Mailgun, Postmark, SES, IMAP을 통한 수신
+- 이벤트별 알림과 웹훅
+- 메일 클라이언트에서 올바른 스레드 표시
+- 브랜드에 맞춘 템플릿
+
+</td>
+<td width="33%" valign="top">
+
+**관리와 접근**
+- 부서, SLA 정책, 규칙, 보고서
+- 역할, 권한, 2단계 인증, SSO
+- 여러분의 관리자 패널 안에 들어가는 관리자 화면
+- 티켓 생성용 상담원 API
+
+</td>
+</tr>
+</table>
+
+<p align="center"><sub><a href="../features.md">모든 기능 자세히 보기</a></sub></p>
+
+<p align="center">
+  <a href="https://laravel.com"><img src="https://img.shields.io/badge/Laravel_11--13-FF2D20?style=for-the-badge&logo=laravel&logoColor=white" alt="Laravel 11 to 13"></a>
+  <a href="https://www.php.net"><img src="https://img.shields.io/badge/PHP_8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.2+"></a>
+  <a href="https://inertiajs.com"><img src="https://img.shields.io/badge/Inertia-9553E9?style=for-the-badge&logo=inertia&logoColor=white" alt="Inertia"></a>
+  <a href="https://vuejs.org"><img src="https://img.shields.io/badge/Vue_3-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white" alt="Vue 3"></a>
+</p>
+
 ## 빠른 시작
 
 ```bash

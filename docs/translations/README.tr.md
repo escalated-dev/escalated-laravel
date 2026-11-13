@@ -81,6 +81,80 @@
   </tr>
 </table>
 
+## Özellikler
+
+<table>
+<tr>
+<td width="33%" valign="top">
+
+**Talepler**
+- Oluşturma, atama, yanıtlama, çözme, yeniden açma
+- Yapılandırılabilir durum geçişleri
+- Bir yanıtı yeni bir talebe ayırma
+- Otomatik uyandırmalı erteleme
+- Etiketler, ekler, etkinlik zaman çizelgesi
+
+</td>
+<td width="33%" valign="top">
+
+**Temsilci çalışma alanı**
+- Filtreler ve kayıtlı görünümlerle kuyruk
+- Toplu işlemler ve dahili notlar
+- Hazır yanıtlar
+- Sıralı (round-robin) atamalı departmanlar
+- Polling yedekli gerçek zamanlı güncellemeler
+
+</td>
+<td width="33%" valign="top">
+
+**SLA'lar ve eskalasyon**
+- Önceliğe göre yanıt ve çözüm hedefleri
+- Mesai saatleri
+- Otomatik ihlal tespiti
+- Eskalasyon yapan, yeniden atayan veya bildirim gönderen kurallar
+
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+
+**Müşteriler**
+- Self servis portal: açma, yanıtlama, takip
+- Özel bağlantılarla doğrulanmış misafir talepleri
+- Gömülebilir widget, form veya canlı sohbet
+- Bilgi bankası, açık veya kapalı
+
+</td>
+<td width="33%" valign="top">
+
+**E-posta**
+- Mailgun, Postmark, SES, IMAP üzerinden gelen e-posta
+- Olay bazında bildirimler ve webhook'lar
+- E-posta istemcilerinde doğru yazışma dizileri
+- Markanıza uygun şablonlar
+
+</td>
+<td width="33%" valign="top">
+
+**Yönetim ve erişim**
+- Departmanlar, SLA politikaları, kurallar, raporlar
+- Roller, izinler, iki faktörlü doğrulama, SSO
+- Kendi yönetim panelinizin içinde yönetim ekranı
+- Talep oluşturmak için temsilci API'si
+
+</td>
+</tr>
+</table>
+
+<p align="center"><sub><a href="../features.md">Tüm özellikler ayrıntılı olarak</a></sub></p>
+
+<p align="center">
+  <a href="https://laravel.com"><img src="https://img.shields.io/badge/Laravel_11--13-FF2D20?style=for-the-badge&logo=laravel&logoColor=white" alt="Laravel 11 to 13"></a>
+  <a href="https://www.php.net"><img src="https://img.shields.io/badge/PHP_8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.2+"></a>
+  <a href="https://inertiajs.com"><img src="https://img.shields.io/badge/Inertia-9553E9?style=for-the-badge&logo=inertia&logoColor=white" alt="Inertia"></a>
+  <a href="https://vuejs.org"><img src="https://img.shields.io/badge/Vue_3-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white" alt="Vue 3"></a>
+</p>
+
 ## Hızlı başlangıç
 
 ```bash

@@ -81,6 +81,80 @@
   </tr>
 </table>
 
+## 機能一覧
+
+<table>
+<tr>
+<td width="33%" valign="top">
+
+**チケット**
+- 作成、割り当て、返信、解決、再オープン
+- 設定可能なステータス遷移
+- 返信を新しいチケットに分割
+- 自動再開付きのスヌーズ
+- タグ、添付ファイル、アクティビティタイムライン
+
+</td>
+<td width="33%" valign="top">
+
+**エージェントワークスペース**
+- フィルタと保存済みビュー付きのキュー
+- 一括操作と内部メモ
+- 定型返信
+- ラウンドロビン割り当て対応の部署
+- ポーリングへのフォールバック付きリアルタイム更新
+
+</td>
+<td width="33%" valign="top">
+
+**SLA とエスカレーション**
+- 優先度ごとの応答・解決目標
+- 営業時間
+- 違反の自動検出
+- エスカレーション、再割り当て、通知を行うルール
+
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+
+**顧客**
+- セルフサービスポータル: 作成、返信、追跡
+- 非公開リンク付きの認証済みゲストチケット
+- 埋め込み可能なウィジェット、フォーム、ライブチャット
+- ナレッジベース (オン/オフ切り替え可)
+
+</td>
+<td width="33%" valign="top">
+
+**メール**
+- Mailgun、Postmark、SES、IMAP による受信
+- イベントごとの通知と Webhook
+- メールクライアントでの正しいスレッド表示
+- ブランドに合わせたテンプレート
+
+</td>
+<td width="33%" valign="top">
+
+**管理とアクセス**
+- 部署、SLA ポリシー、ルール、レポート
+- ロール、権限、二要素認証、SSO
+- 自分の管理パネル内に管理画面を表示
+- チケット作成用のエージェント API
+
+</td>
+</tr>
+</table>
+
+<p align="center"><sub><a href="../features.md">すべての機能の詳細</a></sub></p>
+
+<p align="center">
+  <a href="https://laravel.com"><img src="https://img.shields.io/badge/Laravel_11--13-FF2D20?style=for-the-badge&logo=laravel&logoColor=white" alt="Laravel 11 to 13"></a>
+  <a href="https://www.php.net"><img src="https://img.shields.io/badge/PHP_8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.2+"></a>
+  <a href="https://inertiajs.com"><img src="https://img.shields.io/badge/Inertia-9553E9?style=for-the-badge&logo=inertia&logoColor=white" alt="Inertia"></a>
+  <a href="https://vuejs.org"><img src="https://img.shields.io/badge/Vue_3-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white" alt="Vue 3"></a>
+</p>
+
 ## クイックスタート
 
 ```bash

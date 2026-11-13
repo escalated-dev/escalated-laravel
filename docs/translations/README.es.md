@@ -81,6 +81,80 @@
   </tr>
 </table>
 
+## Funciones
+
+<table>
+<tr>
+<td width="33%" valign="top">
+
+**Tickets**
+- Crear, asignar, responder, resolver, reabrir
+- Transiciones de estado configurables
+- Dividir una respuesta en un ticket nuevo
+- Posponer con reactivación automática
+- Etiquetas, adjuntos, cronología de actividad
+
+</td>
+<td width="33%" valign="top">
+
+**Espacio de trabajo del agente**
+- Cola con filtros y vistas guardadas
+- Acciones masivas y notas internas
+- Respuestas predefinidas
+- Departamentos con asignación por turnos
+- Actualizaciones en tiempo real con sondeo como alternativa
+
+</td>
+<td width="33%" valign="top">
+
+**SLA y escalado**
+- Objetivos de respuesta y resolución por prioridad
+- Horario laboral
+- Detección automática de incumplimientos
+- Reglas que escalan, reasignan o notifican
+
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+
+**Clientes**
+- Portal de autoservicio: abrir, responder, seguir
+- Tickets de invitados verificados con enlaces privados
+- Widget, formulario o chat en vivo integrables
+- Base de conocimiento, activada o desactivada
+
+</td>
+<td width="33%" valign="top">
+
+**Correo electrónico**
+- Correo entrante vía Mailgun, Postmark, SES, IMAP
+- Notificaciones y webhooks por evento
+- Hilos correctos en los clientes de correo
+- Plantillas con tu marca
+
+</td>
+<td width="33%" valign="top">
+
+**Administración y acceso**
+- Departamentos, políticas de SLA, reglas, informes
+- Roles, permisos, doble factor, SSO
+- Administración dentro de tu propio panel de administración
+- API de agentes para crear tickets
+
+</td>
+</tr>
+</table>
+
+<p align="center"><sub><a href="../features.md">Todas las funciones en detalle</a></sub></p>
+
+<p align="center">
+  <a href="https://laravel.com"><img src="https://img.shields.io/badge/Laravel_11--13-FF2D20?style=for-the-badge&logo=laravel&logoColor=white" alt="Laravel 11 to 13"></a>
+  <a href="https://www.php.net"><img src="https://img.shields.io/badge/PHP_8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.2+"></a>
+  <a href="https://inertiajs.com"><img src="https://img.shields.io/badge/Inertia-9553E9?style=for-the-badge&logo=inertia&logoColor=white" alt="Inertia"></a>
+  <a href="https://vuejs.org"><img src="https://img.shields.io/badge/Vue_3-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white" alt="Vue 3"></a>
+</p>
+
 ## Inicio rápido
 
 ```bash

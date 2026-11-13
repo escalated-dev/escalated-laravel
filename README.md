@@ -81,6 +81,80 @@
   </tr>
 </table>
 
+## Features
+
+<table>
+<tr>
+<td width="33%" valign="top">
+
+**Tickets**
+- Create, assign, reply, resolve, reopen
+- Configurable status transitions
+- Split a reply into a new ticket
+- Snooze with automatic wake
+- Tags, attachments, activity timeline
+
+</td>
+<td width="33%" valign="top">
+
+**Agent workspace**
+- Queue with filters and saved views
+- Bulk actions and internal notes
+- Canned responses
+- Departments with round-robin assignment
+- Real-time updates with polling fallback
+
+</td>
+<td width="33%" valign="top">
+
+**SLAs and escalation**
+- Response and resolution targets per priority
+- Business hours
+- Automatic breach detection
+- Rules that escalate, reassign or notify
+
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+
+**Customers**
+- Self-service portal: open, reply, track
+- Verified guest tickets with private links
+- Embeddable widget, form or live chat
+- Knowledge base, on or off
+
+</td>
+<td width="33%" valign="top">
+
+**Email**
+- Inbound via Mailgun, Postmark, SES, IMAP
+- Per-event notifications and webhooks
+- Correct threading in mail clients
+- Branded templates
+
+</td>
+<td width="33%" valign="top">
+
+**Admin and access**
+- Departments, SLA policies, rules, reports
+- Roles, permissions, two-factor, SSO
+- Admin inside your own admin panel
+- Agent API for creating tickets
+
+</td>
+</tr>
+</table>
+
+<p align="center"><sub><a href="docs/features.md">Every feature in detail</a></sub></p>
+
+<p align="center">
+  <a href="https://laravel.com"><img src="https://img.shields.io/badge/Laravel_11--13-FF2D20?style=for-the-badge&logo=laravel&logoColor=white" alt="Laravel 11 to 13"></a>
+  <a href="https://www.php.net"><img src="https://img.shields.io/badge/PHP_8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.2+"></a>
+  <a href="https://inertiajs.com"><img src="https://img.shields.io/badge/Inertia-9553E9?style=for-the-badge&logo=inertia&logoColor=white" alt="Inertia"></a>
+  <a href="https://vuejs.org"><img src="https://img.shields.io/badge/Vue_3-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white" alt="Vue 3"></a>
+</p>
+
 ## Quick start
 
 ```bash

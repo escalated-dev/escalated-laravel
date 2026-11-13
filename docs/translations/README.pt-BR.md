@@ -81,6 +81,80 @@
   </tr>
 </table>
 
+## Recursos
+
+<table>
+<tr>
+<td width="33%" valign="top">
+
+**Tickets**
+- Criar, atribuir, responder, resolver, reabrir
+- Transições de status configuráveis
+- Dividir uma resposta em um novo ticket
+- Adiar com reativação automática
+- Tags, anexos, linha do tempo de atividades
+
+</td>
+<td width="33%" valign="top">
+
+**Espaço de trabalho do agente**
+- Fila com filtros e visualizações salvas
+- Ações em massa e notas internas
+- Respostas prontas
+- Departamentos com atribuição round-robin
+- Atualizações em tempo real com fallback para polling
+
+</td>
+<td width="33%" valign="top">
+
+**SLAs e escalonamento**
+- Metas de resposta e resolução por prioridade
+- Horário comercial
+- Detecção automática de violações
+- Regras que escalonam, reatribuem ou notificam
+
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+
+**Clientes**
+- Portal de autoatendimento: abrir, responder, acompanhar
+- Tickets de convidados verificados com links privados
+- Widget, formulário ou chat ao vivo incorporáveis
+- Base de conhecimento, ligada ou desligada
+
+</td>
+<td width="33%" valign="top">
+
+**E-mail**
+- Entrada via Mailgun, Postmark, SES, IMAP
+- Notificações e webhooks por evento
+- Encadeamento correto nos clientes de e-mail
+- Templates com a sua marca
+
+</td>
+<td width="33%" valign="top">
+
+**Administração e acesso**
+- Departamentos, políticas de SLA, regras, relatórios
+- Papéis, permissões, autenticação em dois fatores, SSO
+- Admin dentro do seu próprio painel de administração
+- API de agente para criar tickets
+
+</td>
+</tr>
+</table>
+
+<p align="center"><sub><a href="../features.md">Todos os recursos em detalhe</a></sub></p>
+
+<p align="center">
+  <a href="https://laravel.com"><img src="https://img.shields.io/badge/Laravel_11--13-FF2D20?style=for-the-badge&logo=laravel&logoColor=white" alt="Laravel 11 to 13"></a>
+  <a href="https://www.php.net"><img src="https://img.shields.io/badge/PHP_8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.2+"></a>
+  <a href="https://inertiajs.com"><img src="https://img.shields.io/badge/Inertia-9553E9?style=for-the-badge&logo=inertia&logoColor=white" alt="Inertia"></a>
+  <a href="https://vuejs.org"><img src="https://img.shields.io/badge/Vue_3-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white" alt="Vue 3"></a>
+</p>
+
 ## Início rápido
 
 ```bash

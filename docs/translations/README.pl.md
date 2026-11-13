@@ -81,6 +81,80 @@
   </tr>
 </table>
 
+## Funkcje
+
+<table>
+<tr>
+<td width="33%" valign="top">
+
+**Zgłoszenia**
+- Tworzenie, przypisywanie, odpowiadanie, rozwiązywanie, ponowne otwieranie
+- Konfigurowalne przejścia statusów
+- Wydzielanie odpowiedzi do nowego zgłoszenia
+- Odkładanie z automatycznym wybudzaniem
+- Tagi, załączniki, oś czasu aktywności
+
+</td>
+<td width="33%" valign="top">
+
+**Obszar roboczy agenta**
+- Kolejka z filtrami i zapisanymi widokami
+- Akcje zbiorcze i notatki wewnętrzne
+- Gotowe odpowiedzi
+- Działy z przydziałem round-robin
+- Aktualizacje w czasie rzeczywistym z pollingiem jako rezerwą
+
+</td>
+<td width="33%" valign="top">
+
+**SLA i eskalacja**
+- Cele odpowiedzi i rozwiązania dla każdego priorytetu
+- Godziny pracy
+- Automatyczne wykrywanie naruszeń
+- Reguły, które eskalują, przypisują ponownie lub powiadamiają
+
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+
+**Klienci**
+- Portal samoobsługowy: otwieranie, odpowiadanie, śledzenie
+- Zweryfikowane zgłoszenia gości z prywatnymi linkami
+- Osadzany widżet, formularz lub czat na żywo
+- Baza wiedzy, włączana lub wyłączana
+
+</td>
+<td width="33%" valign="top">
+
+**E-mail**
+- Poczta przychodząca przez Mailgun, Postmark, SES, IMAP
+- Powiadomienia i webhooki dla każdego zdarzenia
+- Poprawne wątki w klientach poczty
+- Szablony z Twoim brandingiem
+
+</td>
+<td width="33%" valign="top">
+
+**Administracja i dostęp**
+- Działy, polityki SLA, reguły, raporty
+- Role, uprawnienia, uwierzytelnianie dwuskładnikowe, SSO
+- Panel administracyjny w Twoim własnym panelu admina
+- API dla agentów do tworzenia zgłoszeń
+
+</td>
+</tr>
+</table>
+
+<p align="center"><sub><a href="../features.md">Wszystkie funkcje w szczegółach</a></sub></p>
+
+<p align="center">
+  <a href="https://laravel.com"><img src="https://img.shields.io/badge/Laravel_11--13-FF2D20?style=for-the-badge&logo=laravel&logoColor=white" alt="Laravel 11 to 13"></a>
+  <a href="https://www.php.net"><img src="https://img.shields.io/badge/PHP_8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.2+"></a>
+  <a href="https://inertiajs.com"><img src="https://img.shields.io/badge/Inertia-9553E9?style=for-the-badge&logo=inertia&logoColor=white" alt="Inertia"></a>
+  <a href="https://vuejs.org"><img src="https://img.shields.io/badge/Vue_3-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white" alt="Vue 3"></a>
+</p>
+
 ## Szybki start
 
 ```bash

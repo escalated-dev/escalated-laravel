@@ -81,6 +81,80 @@
   </tr>
 </table>
 
+## Functies
+
+<table>
+<tr>
+<td width="33%" valign="top">
+
+**Tickets**
+- Aanmaken, toewijzen, beantwoorden, oplossen, heropenen
+- Configureerbare statusovergangen
+- Een antwoord afsplitsen naar een nieuw ticket
+- Snoozen met automatisch wekken
+- Tags, bijlagen, activiteitentijdlijn
+
+</td>
+<td width="33%" valign="top">
+
+**Werkruimte voor agents**
+- Wachtrij met filters en opgeslagen weergaven
+- Bulkacties en interne notities
+- Standaardantwoorden
+- Afdelingen met round-robin-toewijzing
+- Realtime updates met terugval op polling
+
+</td>
+<td width="33%" valign="top">
+
+**SLA's en escalatie**
+- Reactie- en oplosdoelen per prioriteit
+- Kantooruren
+- Automatische detectie van overschrijdingen
+- Regels die escaleren, opnieuw toewijzen of melden
+
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+
+**Klanten**
+- Selfserviceportaal: openen, reageren, volgen
+- Geverifieerde gasttickets met privélinks
+- Insluitbare widget, formulier of livechat
+- Kennisbank, aan of uit
+
+</td>
+<td width="33%" valign="top">
+
+**E-mail**
+- Inkomend via Mailgun, Postmark, SES, IMAP
+- Meldingen en webhooks per gebeurtenis
+- Correcte threads in mailclients
+- Templates in je eigen huisstijl
+
+</td>
+<td width="33%" valign="top">
+
+**Beheer en toegang**
+- Afdelingen, SLA-beleid, regels, rapporten
+- Rollen, rechten, tweestapsverificatie, SSO
+- Beheer binnen je eigen beheerpaneel
+- Agent-API om tickets aan te maken
+
+</td>
+</tr>
+</table>
+
+<p align="center"><sub><a href="../features.md">Alle functies in detail</a></sub></p>
+
+<p align="center">
+  <a href="https://laravel.com"><img src="https://img.shields.io/badge/Laravel_11--13-FF2D20?style=for-the-badge&logo=laravel&logoColor=white" alt="Laravel 11 to 13"></a>
+  <a href="https://www.php.net"><img src="https://img.shields.io/badge/PHP_8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.2+"></a>
+  <a href="https://inertiajs.com"><img src="https://img.shields.io/badge/Inertia-9553E9?style=for-the-badge&logo=inertia&logoColor=white" alt="Inertia"></a>
+  <a href="https://vuejs.org"><img src="https://img.shields.io/badge/Vue_3-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white" alt="Vue 3"></a>
+</p>
+
 ## Snel aan de slag
 
 ```bash
