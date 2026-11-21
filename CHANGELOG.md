@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- **The SDK plugin bridge no longer starts Node on every request (#314).** If `@escalated-dev/plugin-runtime` isn't installed, nothing is spawned and one info line is logged per day, where before every request and artisan command logged "failed to start plugin runtime" at error level. After the first start, plugin routes are registered from cached manifests, and the runtime starts on the first hook that needs it. Restart backoff is now kept in the cache, so it holds across PHP-FPM requests. No host changes needed; `ESCALATED_PLUGINS_SDK_ENABLED=false` is no longer required as a workaround.
+- `docs/plugin-sdk.md` showed an outdated default `runtime_command` path.
+
 ## [1.9.17] - 2026-11-07
 
 ### Upgrading

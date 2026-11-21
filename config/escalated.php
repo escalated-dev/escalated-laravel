@@ -563,7 +563,9 @@ return [
         'enabled' => env('ESCALATED_PLUGINS_ENABLED', true),
         'path' => app_path('Plugins/Escalated'),
 
-        // SDK plugins run in a Node.js subprocess.
+        // SDK plugins run in a Node.js subprocess. Nothing is spawned while
+        // the runtime_command script is missing (npm install
+        // @escalated-dev/plugin-runtime), so this is safe to leave on.
         'sdk_enabled' => env('ESCALATED_PLUGINS_SDK_ENABLED', true),
         'runtime_command' => env('ESCALATED_PLUGINS_RUNTIME_COMMAND', 'node node_modules/@escalated-dev/plugin-runtime/build/bin/escalated-plugins.js'),
         // Working directory for the subprocess. `null` uses base_path().
