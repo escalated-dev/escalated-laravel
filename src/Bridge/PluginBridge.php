@@ -3,6 +3,7 @@
 namespace Escalated\Laravel\Bridge;
 
 use Escalated\Laravel\Tenancy\TenantContext;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
@@ -18,11 +19,16 @@ use RuntimeException;
  *
  * The process is spawned LAZILY on the first hook dispatch, not at boot time.
  * This avoids slowing down requests that never touch plugins (health checks, etc.).
+ * Boot registers plugin routes from the manifests cached by the last successful
+ * start, so the runtime only starts at boot while nothing is cached. When the
+ * default runtime entrypoint is not installed, nothing is spawned at all.
  *
  * Heartbeat & restart
  * ───────────────────
  * A heartbeat ping is sent every 30 s. If no pong is received within 60 s the
  * process is killed and restarted (with exponential backoff up to 5 minutes).
+ * The backoff state lives in the cache, so it holds across PHP-FPM requests,
+ * which each build a new bridge.
  *
  * Queue depth
  * ───────────
@@ -56,12 +62,19 @@ class PluginBridge
 
     private bool $supportsHttpContract = false;
 
-    /** Crash-restart state */
-    private int $restartAttempts = 0;
-
-    private int $lastRestartAt = 0;
-
     private const MAX_BACKOFF_SECS = 300; // 5 minutes
+
+    /** Cache keys: restart backoff, last manifests, missing-runtime notice */
+    private const BACKOFF_CACHE_KEY = 'escalated.plugin_bridge.backoff';
+
+    private const MANIFEST_CACHE_KEY = 'escalated.plugin_bridge.manifests';
+
+    private const MISSING_NOTICE_CACHE_KEY = 'escalated.plugin_bridge.missing_runtime_logged';
+
+    private const MANIFEST_CACHE_TTL = 86400;
+
+    /** Result of `node --version`, checked once per bridge */
+    private ?bool $nodeAvailable = null;
 
     /** Queue depth limit for fire-and-forget action hooks */
     private const MAX_QUEUE_DEPTH = 1000;
@@ -101,12 +114,14 @@ class PluginBridge
     // =========================================================================
 
     /**
-     * Boot the bridge: spawn the runtime, perform the handshake, retrieve the
-     * plugin manifest, and register routes.
+     * Boot the bridge: load the plugin manifests and register their routes.
      *
-     * Called from EscalatedServiceProvider::boot(). Safe to call when Node.js
-     * is not installed — any exception is caught and logged (plugins simply
-     * won't be available).
+     * Called from EscalatedServiceProvider::boot() on every request and
+     * command, so it does not spawn the runtime when the manifests from the
+     * last successful start are cached; the runtime then starts on the first
+     * dispatch. With nothing cached it starts the runtime to fetch them.
+     * Safe to call when Node.js or the runtime package is not installed:
+     * plugins simply won't be available.
      */
     public function boot(): void
     {
@@ -116,16 +131,21 @@ class PluginBridge
         }
 
         if (! $this->isRuntimeAvailable()) {
-            Log::info('Escalated PluginBridge: Node.js runtime not available — SDK plugins disabled');
+            return;
+        }
+
+        $cached = $this->cachedManifests();
+        if ($cached !== null) {
+            $this->manifests = $cached;
+            SdkPluginActivation::recordInstalled(array_keys($this->manifests));
+            $this->registerRoutes();
+            $this->booted = true;
 
             return;
         }
 
         try {
             $this->ensureRunning();
-            $this->fetchManifests();
-            $this->registerRoutes();
-            $this->booted = true;
         } catch (\Throwable $e) {
             Log::warning('Escalated PluginBridge: boot failed — SDK plugins disabled', [
                 'error' => $e->getMessage(),
@@ -401,18 +421,151 @@ class PluginBridge
     // =========================================================================
 
     /**
-     * Check that Node.js and the plugin runtime package are available on PATH.
+     * Check that SDK plugins are enabled and the runtime entrypoint exists.
+     *
+     * Cheap: no process is started. When the runtime command is
+     * `node <script>`, the script must exist (relative to the runtime cwd);
+     * a missing one is logged at info level once a day. Other command shapes
+     * cannot be checked without running them, so they pass.
      */
     private function isRuntimeAvailable(): bool
     {
-        // Allow disabling via config
         if (! config('escalated.plugins.sdk_enabled', true)) {
             return false;
         }
 
-        $nodeCheck = shell_exec('node --version 2>/dev/null');
+        $entrypoint = $this->runtimeEntrypoint();
+        if ($entrypoint === null || is_file($entrypoint)) {
+            return true;
+        }
 
-        return $nodeCheck !== null && str_starts_with(trim($nodeCheck), 'v');
+        if ($this->cache(fn () => Cache::add(self::MISSING_NOTICE_CACHE_KEY, true, self::MANIFEST_CACHE_TTL), true)) {
+            Log::info('Escalated PluginBridge: plugin runtime not installed — SDK plugins disabled', [
+                'entrypoint' => $entrypoint,
+                'hint' => 'Install @escalated-dev/plugin-runtime, or set ESCALATED_PLUGINS_SDK_ENABLED=false.',
+            ]);
+        }
+
+        return false;
+    }
+
+    /**
+     * Check that `node` is on PATH. Run once per bridge, right before a spawn.
+     */
+    private function isNodeAvailable(): bool
+    {
+        if ($this->nodeAvailable === null) {
+            $nodeCheck = @shell_exec('node --version 2>&1');
+            $this->nodeAvailable = is_string($nodeCheck) && str_starts_with(trim($nodeCheck), 'v');
+        }
+
+        return $this->nodeAvailable;
+    }
+
+    private function runtimeCommand(): string
+    {
+        return config('escalated.plugins.runtime_command')
+            ?: 'node node_modules/@escalated-dev/plugin-runtime/build/bin/escalated-plugins.js';
+    }
+
+    /**
+     * The working directory for the subprocess — default to the Laravel
+     * base_path() so Node can resolve node_modules.
+     */
+    private function runtimeCwd(): string
+    {
+        return config('escalated.plugins.runtime_cwd') ?: base_path();
+    }
+
+    /**
+     * The script a `node <script>` runtime command runs, as an absolute path,
+     * or null when the command has another shape (npx, a wrapper script...).
+     */
+    private function runtimeEntrypoint(): ?string
+    {
+        $tokens = preg_split('/\s+/', trim($this->runtimeCommand())) ?: [];
+        $tokens = array_map(fn (string $token) => trim($token, '"\''), $tokens);
+
+        $binary = strtolower(basename(str_replace('\\', '/', $tokens[0] ?? '')));
+        if (! in_array($binary, ['node', 'node.exe'], true)) {
+            return null;
+        }
+
+        foreach (array_slice($tokens, 1) as $token) {
+            if ($token === '' || str_starts_with($token, '-')) {
+                continue;
+            }
+
+            if (! preg_match('/\.[cm]?js$/i', $token)) {
+                return null;
+            }
+
+            if (str_starts_with($token, '/') || preg_match('/^[A-Za-z]:[\\\\\/]/', $token)) {
+                return $token;
+            }
+
+            return rtrim($this->runtimeCwd(), '\\/').DIRECTORY_SEPARATOR.$token;
+        }
+
+        return null;
+    }
+
+    /**
+     * The manifests cached by the last successful start, while they still
+     * belong to the installed runtime and node packages.
+     *
+     * @return array<string, array>|null
+     */
+    private function cachedManifests(): ?array
+    {
+        $cached = $this->cache(fn () => Cache::get(self::MANIFEST_CACHE_KEY));
+
+        if (! is_array($cached)
+            || ($cached['fingerprint'] ?? null) !== $this->installFingerprint()
+            || ! is_array($cached['manifests'] ?? null)) {
+            return null;
+        }
+
+        return $cached['manifests'];
+    }
+
+    /**
+     * Changes when the runtime command, its entrypoint or the installed node
+     * packages change, so installing or removing a plugin refetches manifests.
+     */
+    private function installFingerprint(): string
+    {
+        $cwd = rtrim($this->runtimeCwd(), '\\/');
+        $parts = [$this->runtimeCommand(), $cwd];
+
+        $files = [
+            $this->runtimeEntrypoint(),
+            $cwd.'/package.json',
+            $cwd.'/package-lock.json',
+            $cwd.'/pnpm-lock.yaml',
+            $cwd.'/yarn.lock',
+            $cwd.'/node_modules/.package-lock.json',
+            $cwd.'/node_modules/.modules.yaml',
+        ];
+
+        foreach (array_filter($files) as $file) {
+            $parts[] = $file.'@'.(is_file($file) ? (string) @filemtime($file) : '-');
+        }
+
+        return sha1(implode('|', $parts));
+    }
+
+    /**
+     * Run a cache call. A cache that is down, or not set up yet, must not
+     * break the bridge.
+     */
+    private function cache(callable $call, mixed $fallback = null): mixed
+    {
+        try {
+            return $call();
+        } catch (\Throwable) {
+            return $fallback;
+        }
     }
 
     /**
@@ -420,12 +573,12 @@ class PluginBridge
      */
     private function spawn(): void
     {
-        $command = config('escalated.plugins.runtime_command')
-            ?: 'node node_modules/@escalated-dev/plugin-runtime/build/bin/escalated-plugins.js';
+        if (! $this->isNodeAvailable()) {
+            throw new RuntimeException('Node.js is not on PATH');
+        }
 
-        // Determine the working directory for the subprocess — default to the
-        // Laravel base_path() so Node can resolve node_modules.
-        $cwd = config('escalated.plugins.runtime_cwd') ?: base_path();
+        $command = $this->runtimeCommand();
+        $cwd = $this->runtimeCwd();
 
         $descriptorSpec = [
             0 => ['pipe', 'r'],  // stdin  (we write to it)
@@ -512,6 +665,11 @@ class PluginBridge
             'plugins' => array_keys($this->manifests),
         ]);
 
+        $this->cache(fn () => Cache::put(self::MANIFEST_CACHE_KEY, [
+            'fingerprint' => $this->installFingerprint(),
+            'manifests' => $this->manifests,
+        ], self::MANIFEST_CACHE_TTL));
+
         SdkPluginActivation::recordInstalled(array_keys($this->manifests));
     }
 
@@ -538,16 +696,18 @@ class PluginBridge
             return true;
         }
 
-        // Enforce exponential backoff on repeated restarts
-        if ($this->restartAttempts > 0) {
-            $backoff = min(
-                (int) (2 ** ($this->restartAttempts - 1)) * 5,
-                self::MAX_BACKOFF_SECS
-            );
+        // Enforce exponential backoff on repeated restarts. The state is
+        // cached because each PHP-FPM request builds a new bridge.
+        $state = $this->cache(fn () => Cache::get(self::BACKOFF_CACHE_KEY));
+        $attempts = is_array($state) ? (int) ($state['attempts'] ?? 0) : 0;
+        $lastRestartAt = is_array($state) ? (int) ($state['at'] ?? 0) : 0;
 
-            if (time() - $this->lastRestartAt < $backoff) {
+        if ($attempts > 0) {
+            $backoff = $this->backoffSeconds($attempts);
+
+            if (time() - $lastRestartAt < $backoff) {
                 Log::debug('Escalated PluginBridge: waiting for backoff before restart', [
-                    'backoff_remaining' => $backoff - (time() - $this->lastRestartAt),
+                    'backoff_remaining' => $backoff - (time() - $lastRestartAt),
                 ]);
 
                 return false;
@@ -561,23 +721,36 @@ class PluginBridge
             $this->fetchManifests();
             $this->registerRoutes();
 
-            $this->restartAttempts = 0;
+            if ($attempts > 0) {
+                $this->cache(fn () => Cache::forget(self::BACKOFF_CACHE_KEY));
+            }
             $this->booted = true;
 
             return true;
         } catch (\Throwable $e) {
-            $this->restartAttempts++;
-            $this->lastRestartAt = time();
+            $attempts++;
+            $this->cache(fn () => Cache::put(
+                self::BACKOFF_CACHE_KEY,
+                ['attempts' => $attempts, 'at' => time()],
+                self::MAX_BACKOFF_SECS * 2
+            ));
 
             Log::error('Escalated PluginBridge: failed to start plugin runtime', [
                 'error' => $e->getMessage(),
-                'attempts' => $this->restartAttempts,
+                'attempts' => $attempts,
+                'retry_in_seconds' => $this->backoffSeconds($attempts),
             ]);
 
             $this->teardown();
 
             return false;
         }
+    }
+
+    /** 5 s, 10 s, 20 s... up to MAX_BACKOFF_SECS. */
+    private function backoffSeconds(int $attempts): int
+    {
+        return min((int) (2 ** ($attempts - 1)) * 5, self::MAX_BACKOFF_SECS);
     }
 
     /**

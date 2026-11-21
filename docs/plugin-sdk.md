@@ -28,6 +28,12 @@ npm install @escalated-dev/plugin-jira
 
 SDK plugins run as a Node.js subprocess managed by `@escalated-dev/plugin-runtime`, communicating with Laravel over JSON-RPC 2.0 via stdio. The `escalated_do_action()` and `escalated_apply_filters()` helpers dual-dispatch to both legacy PHP plugins and new SDK plugins simultaneously — no changes to existing hook call sites.
 
+When the subprocess starts:
+
+- **Runtime not installed.** With the default `runtime_command` (`node <script>`), the bridge checks that the script exists before starting anything. If `@escalated-dev/plugin-runtime` isn't installed, nothing is spawned and one info line is logged per day. A custom command of another shape (`npx`, a wrapper script) can't be checked this way, so it is started.
+- **Booting.** The first boot starts the runtime to fetch the plugin manifests, which are cached for routing. Later requests and artisan commands register plugin routes from that cache without starting Node. The runtime starts on the first hook, endpoint or webhook that needs it. Installing or removing an npm package (a lockfile change) refetches the manifests.
+- **Failures.** A runtime that fails to start is retried after 5 s, 10 s, 20 s and so on, up to 5 minutes. This backoff is kept in the cache, so under PHP-FPM a broken runtime is retried once per window, not on every request.
+
 ### Building Your Own Plugin
 
 ```typescript
@@ -137,7 +143,7 @@ php artisan migrate
 'plugins' => [
     'enabled'         => true,
     'sdk_enabled'     => true,      // Enable the Node.js bridge
-    'runtime_command' => 'node node_modules/@escalated-dev/plugin-runtime/dist/index.js',
+    'runtime_command' => 'node node_modules/@escalated-dev/plugin-runtime/build/bin/escalated-plugins.js',
     'runtime_cwd'     => base_path(), // Working directory for the subprocess
 ],
 ```
