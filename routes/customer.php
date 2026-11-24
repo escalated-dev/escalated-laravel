@@ -7,7 +7,15 @@ use Escalated\Laravel\Http\Middleware\RecordCustomerPresence;
 use Escalated\Laravel\Http\Middleware\ResolveTicketByReference;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware([...config('escalated.routes.middleware', ['web', 'auth']), RecordCustomerPresence::class])
+// The portal and its knowledge base accept any signed-in user. A host makes
+// them staff-only by adding a guard through routes.customer_middleware (e.g.
+// 'can:escalated-agent'). It runs after routes.middleware and before presence
+// is recorded, so a refused user is not seen as an online customer.
+Route::middleware([
+    ...config('escalated.routes.middleware', ['web', 'auth']),
+    ...(array) config('escalated.routes.customer_middleware', []),
+    RecordCustomerPresence::class,
+])
     ->prefix(config('escalated.routes.prefix', 'support'))
     ->group(function () {
         Route::get('/', [TicketController::class, 'index'])->name('escalated.customer.tickets.index');

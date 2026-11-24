@@ -117,6 +117,12 @@ return [
         'prefix' => 'support',
         'middleware' => ['web', 'auth'],
         'admin_middleware' => ['web', 'auth'],
+
+        // Extra middleware for the customer portal and customer knowledge
+        // base, added after `middleware`. Both accept any signed-in user by
+        // default. For a staff-only install set e.g. ['can:escalated-agent'],
+        // and turn off guest.routes_enabled and widget.enabled.
+        'customer_middleware' => [],
     ],
 
     /*
