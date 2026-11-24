@@ -488,7 +488,10 @@ class EscalatedServiceProvider extends ServiceProvider
 
         $this->loadTenantRoutesFrom(__DIR__.'/../routes/attachments.php');
 
-        $this->loadRoutesFrom(__DIR__.'/../routes/slack.php');
+        // Slack inbound webhook (signature-authenticated); only while Slack is on.
+        if (config('escalated.slack.enabled', false)) {
+            $this->loadRoutesFrom(__DIR__.'/../routes/slack.php');
+        }
 
         // Single sign-on; every route answers 404 while escalated.access.sso is off.
         $this->loadTenantRoutesFrom(__DIR__.'/../routes/sso.php');
@@ -515,11 +518,14 @@ class EscalatedServiceProvider extends ServiceProvider
             require __DIR__.'/../routes/channels.php';
         }
 
-        // Widget routes (public, rate-limited)
-        $this->loadTenantRoutesFrom(__DIR__.'/../routes/widget.php');
+        // Widget routes (public, rate-limited). The widget_enabled setting
+        // still switches them at runtime while this is on.
+        if (config('escalated.widget.enabled', true)) {
+            $this->loadTenantRoutesFrom(__DIR__.'/../routes/widget.php');
+        }
 
-        // Cloud -> site webhook receiver (signature-authenticated; 503 until
-        // escalated.hosted.signing_secret is set)
+        // Cloud -> site webhook receiver (signature-authenticated). The route
+        // file registers it only once escalated.hosted.signing_secret is set.
         $this->loadTenantRoutesFrom(__DIR__.'/../routes/cloud.php');
     }
 
@@ -547,7 +553,12 @@ class EscalatedServiceProvider extends ServiceProvider
         $this->loadTenantRoutesFrom(__DIR__.'/../routes/agent.php');
         $this->loadTenantRoutesFrom(__DIR__.'/../routes/admin.php');
         $this->loadTenantRoutesFrom(__DIR__.'/../routes/customer.php');
-        $this->loadTenantRoutesFrom(__DIR__.'/../routes/guest.php');
+
+        // Public guest portal. The guest_tickets_enabled setting still
+        // switches it at runtime while this is on.
+        if (config('escalated.guest.routes_enabled', true)) {
+            $this->loadTenantRoutesFrom(__DIR__.'/../routes/guest.php');
+        }
     }
 
     protected function registerApiTokenRoutes(): void

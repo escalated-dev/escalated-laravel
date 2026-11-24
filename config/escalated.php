@@ -361,6 +361,13 @@ return [
     | Public Guest Requests
     |--------------------------------------------------------------------------
     */
+    'guest' => [
+        // false: no guest portal route ({prefix}/guest/...) is registered.
+        // While true, the guest_tickets_enabled setting still switches the
+        // routes at runtime (they answer 404 while it is off).
+        'routes_enabled' => (bool) env('ESCALATED_GUEST_ROUTES', true),
+    ],
+
     'guest_access' => [
         // Verified guest links expire after one day; accepted range is 5 minutes
         // through 7 days. Email codes always expire in 10 minutes after 5 guesses.
@@ -672,6 +679,10 @@ return [
     |
     */
     'widget' => [
+        // false: no widget route ({prefix}/widget/...) is registered. While
+        // true, the widget_enabled setting still switches the widget at
+        // runtime.
+        'enabled' => (bool) env('ESCALATED_WIDGET_ENABLED', true),
         'allowed_origins' => array_values(array_filter(array_map(
             'trim',
             explode(',', (string) env('ESCALATED_WIDGET_ALLOWED_ORIGINS', ''))
@@ -739,8 +750,10 @@ return [
     ],
 
     // Native Slack ingress supports tenant routing independently of plugins.
+    // The inbound route ({prefix}/inbound/slack/{app}) is registered only
+    // while enabled is true.
     'slack' => [
-        'enabled' => false,
+        'enabled' => (bool) env('ESCALATED_SLACK_ENABLED', false),
         'apps' => [],
         'plugin_app' => 'default',
         'requests_per_minute' => 600,
