@@ -7,6 +7,7 @@ use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Models\TicketSubjectLink;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 
 // A host-app model that opts into being a ticket subject. Uses a STRING primary
@@ -148,3 +149,33 @@ it('allows any model programmatically when no allowlist is configured', function
 
     expect($ticket->attachSubject($project))->toBeInstanceOf(TicketSubjectLink::class);
 });
+
+it('sends the ticket subjects to the agent and admin ticket pages, shaped as the API resource shapes them', function (string $route, string $page) {
+    Gate::define('escalated-agent', fn ($user) => $user->is_agent || $user->is_admin);
+    Gate::define('escalated-admin', fn ($user) => $user->is_admin);
+
+    $ticket = Ticket::factory()->create();
+    $project = FakeProject::create(['id' => '7', 'name' => 'Acme Redesign', 'account' => 'Acme']);
+    $ticket->attachSubject($project, 'project');
+
+    $expected = (new TicketResource($ticket->fresh()->load('subjects.subject')))->toArray(request())['subjects']->all();
+
+    $response = $this->actingAs($this->createAdmin())
+        ->withHeaders(['X-Inertia' => 'true', 'X-Inertia-Version' => ''])
+        ->get(route($route, $ticket->reference))
+        ->assertOk();
+
+    expect($response->json('component'))->toBe($page)
+        ->and($response->json('props.ticket.subjects'))->toBe($expected)
+        ->and($response->json('props.ticket.subjects.0'))->toMatchArray([
+            'type' => FakeProject::class,
+            'id' => '7',
+            'role' => 'project',
+            'title' => 'Acme Redesign',
+            'url' => 'https://app.test/projects/7',
+            'missing' => false,
+        ]);
+})->with([
+    'agent' => ['escalated.agent.tickets.show', 'Escalated/Agent/TicketShow'],
+    'admin' => ['escalated.admin.tickets.show', 'Escalated/Admin/Tickets/Show'],
+]);

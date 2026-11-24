@@ -3,12 +3,30 @@
 namespace Escalated\Laravel\Http\Resources;
 
 use Escalated\Laravel\Contracts\TicketSubject;
+use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\TicketSubjectResolver;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Collection;
 
 class TicketSubjectResource extends JsonResource
 {
+    /**
+     * A ticket's loaded subjects, serialised for the request's user. The API
+     * ticket resource and the agent/admin ticket pages both use this, so the
+     * sidebar's Related card gets the same shape everywhere.
+     *
+     * @return Collection<int, array<string, mixed>>
+     */
+    public static function forTicket(Ticket $ticket, Request $request): Collection
+    {
+        return $ticket->subjects->map(function ($link) use ($ticket, $request) {
+            $link->setRelation('ticket', $ticket);
+
+            return (new self($link))->toArray($request);
+        })->values();
+    }
+
     public function toArray(Request $request): array
     {
         $subject = $this->subject;
