@@ -9,6 +9,7 @@ use Escalated\Laravel\Models\SatisfactionRating;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Services\ReportExportService;
 use Escalated\Laravel\Services\ReportingService;
+use Escalated\Laravel\Support\RecurringCommands;
 use Escalated\Laravel\Support\ReportScreens;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -51,6 +52,7 @@ class ReportController extends Controller
                 ->groupBy('priority')
                 ->pluck('count', 'priority'),
             'csat' => $this->getCsatMetrics($since),
+            'scheduler' => RecurringCommands::status(),
         ]);
     }
 
@@ -73,6 +75,7 @@ class ReportController extends Controller
             'sla_compliance' => $this->reporting->getSlaComplianceRate($start, $end),
             'csat_average' => $this->reporting->getCsatAverage($start, $end),
             'agent_performance' => $this->reporting->getAgentPerformance($start, $end),
+            'scheduler' => RecurringCommands::status(),
         ]);
     }
 

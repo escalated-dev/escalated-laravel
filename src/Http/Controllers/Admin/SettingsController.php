@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Http\Controllers\Admin;
 
 use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Models\EscalatedSettings;
+use Escalated\Laravel\Support\RecurringCommands;
 use Escalated\Laravel\Support\SecretMask;
 use Escalated\Laravel\Support\WidgetOrigins;
 use Illuminate\Http\Request;
@@ -23,6 +24,8 @@ class SettingsController extends Controller
             // the controls this host does not store (live chat and widget
             // appearance live elsewhere here) instead of discarding them.
             'supported_settings' => array_keys($this->rules()),
+            // Warns when the recurring commands are not running.
+            'scheduler' => RecurringCommands::status(),
         ]);
     }
 

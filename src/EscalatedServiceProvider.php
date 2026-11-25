@@ -56,6 +56,7 @@ use Escalated\Laravel\Support\AgentStatus;
 use Escalated\Laravel\Support\EmbedConfig;
 use Escalated\Laravel\Support\GuestRateLimits;
 use Escalated\Laravel\Support\HookManager;
+use Escalated\Laravel\Support\RecurringCommands;
 use Escalated\Laravel\Support\StaffAccess;
 use Escalated\Laravel\Support\TwoFactorSession;
 use Escalated\Laravel\Tenancy\TenantBackgroundConnector;
@@ -251,39 +252,12 @@ class EscalatedServiceProvider extends ServiceProvider
                 return;
             }
 
-            $scheduled = fn (string $command) => app(TenantContext::class)->enabled()
-                ? 'escalated:tenant-run '.$command : $command;
+            foreach (RecurringCommands::all() as $entry) {
+                $event = $schedule->command(RecurringCommands::scheduled($entry))->{$entry['frequency']}();
 
-            $schedule->command($scheduled('escalated:check-sla'))->everyMinute();
-            $schedule->command($scheduled('escalated:evaluate-escalations'))->everyFiveMinutes();
-            $schedule->command($scheduled('escalated:run-automations'))->everyFiveMinutes();
-            $schedule->command($scheduled('escalated:process-delayed-actions'))->everyMinute();
-            $schedule->command($scheduled('escalated:wake-snoozed-tickets'))->everyMinute();
-            $schedule->command($scheduled('escalated:close-resolved'))->daily();
-            $schedule->command($scheduled('escalated:purge-activities'))->weekly();
-
-            // SDK plugins' cron schedules. No plugin code runs in tenant mode.
-            if (config('escalated.plugins.enabled', true) && config('escalated.plugins.sdk_enabled', true)
-                && ! app(TenantContext::class)->enabled()) {
-                $schedule->command('escalated:plugins:cron')->everyMinute();
-            }
-
-            if (config('escalated.slack.enabled', false)) {
-                $schedule->command($scheduled('escalated:slack:process'))->everyMinute()->withoutOverlapping();
-            }
-
-            if (config('escalated.chat.enabled', false)) {
-                $schedule->command($scheduled('escalated:close-idle-chats'))->everyMinute();
-                $schedule->command($scheduled('escalated:cleanup-abandoned-chats'))->everyMinute();
-            }
-
-            if (config('escalated.enable_newsletters', false)) {
-                $schedule->command($scheduled('escalated:newsletters:dispatch'))->everyMinute()->withoutOverlapping();
-            }
-
-            if (config('escalated.inbound_email.enabled', false)
-                && config('escalated.inbound_email.adapter') === 'imap') {
-                $schedule->command($scheduled('escalated:poll-imap'))->everyMinute();
+                if ($entry['without_overlapping']) {
+                    $event->withoutOverlapping();
+                }
             }
         });
     }

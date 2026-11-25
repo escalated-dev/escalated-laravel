@@ -535,8 +535,12 @@ return [
     | Scheduling
     |--------------------------------------------------------------------------
     |
-    | With auto_register on, the package adds its recurring commands to the
-    | Laravel scheduler, so only `schedule:run` needs a cron entry:
+    | These commands must run on a schedule or SLA checks, escalation rules,
+    | automations and snooze wake-ups never happen. With auto_register on,
+    | the package adds them to the Laravel scheduler, so only `schedule:run`
+    | needs a cron entry. `escalated:install` turns it on for new installs.
+    | Admin > Settings and Reports warn when escalated:check-sla has not run
+    | for 15 minutes.
     |
     |   escalated:check-sla, process-delayed-actions,
     |   wake-snoozed-tickets                          every minute
@@ -551,7 +555,7 @@ return [
     |
     */
     'scheduling' => [
-        'auto_register' => false,
+        'auto_register' => (bool) env('ESCALATED_SCHEDULE_AUTO_REGISTER', false),
     ],
 
     /*

@@ -3,6 +3,7 @@
 namespace Escalated\Laravel\Console\Commands;
 
 use Escalated\Laravel\Database\Seeders\PermissionSeeder;
+use Escalated\Laravel\Support\RecurringCommands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Process;
 
@@ -38,6 +39,7 @@ class InstallCommand extends Command
         $userModelConfigured = false;
         $migrationsRan = false;
         $permissionsSeeded = false;
+        $scheduleAutoRegistered = (bool) config('escalated.scheduling.auto_register', false);
 
         if ($publishAll) {
             $this->publishEmailViews($force);
@@ -54,6 +56,7 @@ class InstallCommand extends Command
 
             $this->installNpmPackage();
             $userModelConfigured = $this->configureUserModel();
+            $scheduleAutoRegistered = $this->enableScheduleAutoRegister() || $scheduleAutoRegistered;
 
             $enableNewsletters = $this->resolveNewsletterChoice();
             $this->writeEnv('ESCALATED_ENABLE_NEWSLETTERS', $enableNewsletters ? 'true' : 'false');
@@ -69,6 +72,7 @@ class InstallCommand extends Command
             userModelConfigured: $userModelConfigured,
             migrationsRan: $migrationsRan,
             permissionsSeeded: $permissionsSeeded,
+            scheduleAutoRegistered: $scheduleAutoRegistered,
         );
 
         return self::SUCCESS;
@@ -90,6 +94,39 @@ class InstallCommand extends Command
             'Enable newsletter system? (admins-only feature for sending broadcasts to contacts)',
             false,
         );
+    }
+
+    /**
+     * Turn on escalated.scheduling.auto_register for a new install by writing
+     * ESCALATED_SCHEDULE_AUTO_REGISTER=true to .env, so the recurring
+     * commands (SLA checks, escalations, automations, snooze wake-ups) run
+     * as soon as cron runs schedule:run. A value the host already set in
+     * .env is left alone. Returns whether auto-registration is now on.
+     */
+    protected function enableScheduleAutoRegister(): bool
+    {
+        $envPath = base_path('.env');
+        if (! is_file($envPath)) {
+            return false;
+        }
+
+        $contents = (string) file_get_contents($envPath);
+        if (preg_match('/^ESCALATED_SCHEDULE_AUTO_REGISTER=(.*)$/m', $contents, $match)) {
+            return filter_var(trim($match[1], " \t\r\"'"), FILTER_VALIDATE_BOOLEAN);
+        }
+
+        $this->writeEnv('ESCALATED_SCHEDULE_AUTO_REGISTER', 'true');
+
+        // A config/escalated.php published before the setting read the env
+        // keeps its own value; say so rather than claim it is on.
+        $published = config_path('escalated.php');
+        if (is_file($published) && ! str_contains((string) file_get_contents($published), 'ESCALATED_SCHEDULE_AUTO_REGISTER')) {
+            $this->components->warn("Your config/escalated.php sets scheduling.auto_register itself. Set it to env('ESCALATED_SCHEDULE_AUTO_REGISTER', false) or true there so Escalated schedules its recurring commands.");
+
+            return false;
+        }
+
+        return true;
     }
 
     protected function writeEnv(string $key, string $value): void
@@ -445,6 +482,7 @@ class InstallCommand extends Command
         bool $userModelConfigured = false,
         bool $migrationsRan = false,
         bool $permissionsSeeded = false,
+        bool $scheduleAutoRegistered = false,
     ): void {
         $this->components->info(__('escalated::commands.install.success'));
         $this->newLine();
@@ -492,6 +530,24 @@ class InstallCommand extends Command
             $this->newLine();
             $step++;
         }
+
+        $this->line('  '.$step.'. Required: schedule the recurring jobs. Without them SLA checks, escalation rules, automations and snooze wake-ups never run.');
+        $this->newLine();
+        if ($scheduleAutoRegistered) {
+            $this->line('     Escalated adds its commands to the Laravel scheduler (ESCALATED_SCHEDULE_AUTO_REGISTER=true).');
+            $this->line('     Make sure cron runs the scheduler every minute:');
+        } else {
+            $this->line('     Set ESCALATED_SCHEDULE_AUTO_REGISTER=true in .env and make sure cron runs the scheduler every minute,');
+            $this->line('     or add these to your own schedule instead:');
+            $this->newLine();
+            foreach (RecurringCommands::all() as $entry) {
+                $this->line('     php artisan '.RecurringCommands::scheduled($entry).'  ('.$entry['interval'].')');
+            }
+            $this->newLine();
+        }
+        $this->line('     * * * * * cd /path-to-your-app && php artisan schedule:run >> /dev/null 2>&1');
+        $this->newLine();
+        $step++;
 
         $this->line('  '.$step.'. '.__('escalated::commands.install.stepTailwind'));
         $this->newLine();
