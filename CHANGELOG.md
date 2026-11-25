@@ -16,7 +16,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - **The agent and admin ticket pages now include `ticket.subjects`**, serialised as the API ticket resource does, so the sidebar's Related card shows linked host records.
-- **A host user model without `Ticketable` no longer hits a raw TypeError on staff actions.** The staff middleware throws `UserNotTicketableException`, naming the model, the contract and how to add it.
+- **A host user model without `Ticketable` no longer hits a raw TypeError on staff actions.** The staff middleware throws `UserNotTicketableException`, naming the model, the contract and how to add it. This includes the embedded admin with `replace_admin_gate` on, where `EnsureTicketableActor` takes the admin gate's place.
 - **The SDK plugin bridge no longer starts Node on every request (#314).** If `@escalated-dev/plugin-runtime` isn't installed, nothing is spawned and one info line is logged per day, where before every request and artisan command logged "failed to start plugin runtime" at error level. After the first start, plugin routes are registered from cached manifests, and the runtime starts on the first hook that needs it. Restart backoff is now kept in the cache, so it holds across PHP-FPM requests. No host changes needed; `ESCALATED_PLUGINS_SDK_ENABLED=false` is no longer required as a workaround.
 - `docs/plugin-sdk.md` showed an outdated default `runtime_command` path.
 

@@ -4,6 +4,7 @@ namespace Escalated\Laravel\Support;
 
 use Escalated\Laravel\Http\Middleware\ApplyEmbedContext;
 use Escalated\Laravel\Http\Middleware\EnsureIsAdmin;
+use Escalated\Laravel\Http\Middleware\EnsureTicketableActor;
 use Illuminate\Foundation\Http\Events\RequestHandled;
 use Illuminate\Http\Request;
 
@@ -102,7 +103,8 @@ final class EmbedConfig
      * Middleware for an admin route group. Without embedding it is exactly
      * `routes.admin_middleware + $extra + $guards`, as before. Embedded, the
      * host's middleware replaces `routes.admin_middleware`, Escalated's admin
-     * gate is dropped only if the host opted in, and the embed context runs last.
+     * gate is replaced by the Ticketable check only if the host opted in, and the
+     * embed context runs last.
      *
      * @param  list<string>  $guards  Escalated's own guards for the group
      * @param  list<string>  $extra  middleware between the host's and the guards (e.g. tenancy)
@@ -120,7 +122,12 @@ final class EmbedConfig
         $host = is_array($host) ? array_values($host) : $default;
 
         if (self::replacesAdminGate()) {
-            $guards = array_values(array_filter($guards, fn ($guard) => $guard !== EnsureIsAdmin::class));
+            // The host's middleware decides who gets in. The Ticketable check
+            // that came with EnsureIsAdmin stays, in the gate's place.
+            $guards = array_map(
+                fn ($guard) => $guard === EnsureIsAdmin::class ? EnsureTicketableActor::class : $guard,
+                $guards,
+            );
         }
 
         return array_merge($host, $extra, $guards, [ApplyEmbedContext::class]);
