@@ -15,6 +15,8 @@ class EnsureIsAdmin
             abort(403, __('escalated::messages.middleware.not_admin'));
         }
 
+        StaffAccess::ensureCanAct($request, $request->user());
+
         return $next($request);
     }
 }

@@ -1,9 +1,11 @@
 <?php
 
 use Escalated\Laravel\Console\Commands\InstallCommand;
+use Escalated\Laravel\Tests\Fixtures\PlainUser;
 use Escalated\Laravel\Tests\Fixtures\TestUser;
 use Illuminate\Console\OutputStyle;
 use Illuminate\Console\View\Components\Factory as ComponentsFactory;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Process;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\NullOutput;
@@ -542,4 +544,32 @@ it('reads the auto-registration switch from the environment', function () {
     $config = file_get_contents(dirname(__DIR__, 2).'/config/escalated.php');
 
     expect($config)->toContain("'auto_register' => (bool) env('ESCALATED_SCHEDULE_AUTO_REGISTER', false)");
+});
+
+// --- setupProblems ---
+
+it('reports missing staff gates and a user model without Ticketable', function () {
+    config(['escalated.user_model' => PlainUser::class]);
+
+    $problems = callMethod(makeCommand(), 'setupProblems');
+
+    expect($problems)->toHaveCount(3)
+        ->and($problems[0])->toContain('`escalated-agent` gate is not defined')
+        ->and($problems[1])->toContain('`escalated-admin` gate is not defined')
+        ->and($problems[2])->toContain(PlainUser::class.' does not implement Escalated\Laravel\Contracts\Ticketable');
+});
+
+it('reports a user model that is not a class', function () {
+    config(['escalated.user_model' => 'App\Models\Missing']);
+
+    expect(callMethod(makeCommand(), 'setupProblems'))->toContain(
+        'escalated.user_model (App\Models\Missing) is not a class. Set ESCALATED_USER_MODEL to your user model.'
+    );
+});
+
+it('finds nothing wrong once the gates are defined and the user model is Ticketable', function () {
+    Gate::define('escalated-agent', fn () => true);
+    Gate::define('escalated-admin', fn () => true);
+
+    expect(callMethod(makeCommand(), 'setupProblems'))->toBe([]);
 });

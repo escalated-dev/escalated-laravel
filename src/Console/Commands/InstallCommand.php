@@ -2,9 +2,11 @@
 
 namespace Escalated\Laravel\Console\Commands;
 
+use Escalated\Laravel\Contracts\Ticketable;
 use Escalated\Laravel\Database\Seeders\PermissionSeeder;
 use Escalated\Laravel\Support\RecurringCommands;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Process;
 
 class InstallCommand extends Command
@@ -68,6 +70,7 @@ class InstallCommand extends Command
         }
 
         $this->newLine();
+        $this->outputSetupCheck($userModelConfigured);
         $this->outputSetupInstructions(
             userModelConfigured: $userModelConfigured,
             migrationsRan: $migrationsRan,
@@ -476,6 +479,57 @@ class InstallCommand extends Command
         }
 
         return false;
+    }
+
+    /**
+     * What would make staff screens fail on first use: a staff gate that is
+     * not defined, or a user model that does not implement Ticketable.
+     *
+     * @return list<string>
+     */
+    protected function setupProblems(bool $userModelConfigured = false): array
+    {
+        $problems = [];
+
+        foreach (['agent' => 'escalated-agent', 'admin' => 'escalated-admin'] as $seat => $default) {
+            $gate = (string) config("escalated.authorization.{$seat}_gate", $default);
+            if (! Gate::has($gate)) {
+                $problems[] = "The `{$gate}` gate is not defined, so nobody can open the {$seat} screens. "
+                    ."Define it in a service provider's boot(): Gate::define('{$gate}', fn (\$user) => ...);";
+            }
+        }
+
+        // The installer has just added the contract to the model file; the
+        // class loaded in this process may predate that edit.
+        if (! $userModelConfigured) {
+            $model = config('escalated.user_model', 'App\\Models\\User');
+            if (! is_string($model) || ! class_exists($model)) {
+                $problems[] = 'escalated.user_model ('.(is_string($model) ? $model : get_debug_type($model)).') is not a class. '
+                    .'Set ESCALATED_USER_MODEL to your user model.';
+            } elseif (! is_subclass_of($model, Ticketable::class)) {
+                $problems[] = "{$model} does not implement ".Ticketable::class.', so staff actions fail. '
+                    .'Add `implements Ticketable` and `use HasTickets;` to it.';
+            }
+        }
+
+        return $problems;
+    }
+
+    protected function outputSetupCheck(bool $userModelConfigured = false): void
+    {
+        $problems = $this->setupProblems($userModelConfigured);
+
+        if ($problems === []) {
+            $this->components->info('Setup check: the staff gates are defined and the user model implements Ticketable.');
+
+            return;
+        }
+
+        $this->components->warn('Setup check found '.count($problems).' problem(s):');
+        foreach ($problems as $problem) {
+            $this->line('  - '.$problem);
+        }
+        $this->newLine();
     }
 
     protected function outputSetupInstructions(

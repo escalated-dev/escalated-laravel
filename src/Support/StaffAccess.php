@@ -2,9 +2,12 @@
 
 namespace Escalated\Laravel\Support;
 
+use Escalated\Laravel\Contracts\Ticketable;
+use Escalated\Laravel\Exceptions\UserNotTicketableException;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 /**
@@ -31,6 +34,22 @@ final class StaffAccess
     public static function isStaff(mixed $user): bool
     {
         return self::isAgent($user) || self::isAdmin($user);
+    }
+
+    /**
+     * Staff actions (any request that is not a read) hand the signed-in user
+     * to services that need a Ticketable. Fail here, naming the contract,
+     * rather than with a TypeError in whichever service runs first.
+     *
+     * @throws UserNotTicketableException
+     */
+    public static function ensureCanAct(Request $request, mixed $user): void
+    {
+        if ($request->isMethodSafe() || ! is_object($user) || $user instanceof Ticketable) {
+            return;
+        }
+
+        throw UserNotTicketableException::for($user);
     }
 
     /** @param  'agent'|'admin'  $seat */
