@@ -8,6 +8,7 @@ use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Events\TicketCustomActionTriggered;
 use Escalated\Laravel\Http\Resources\TicketCollectionResource;
 use Escalated\Laravel\Http\Resources\TicketResource;
+use Escalated\Laravel\Http\Resources\TicketSubjectResource;
 use Escalated\Laravel\Models\Macro;
 use Escalated\Laravel\Models\Tag;
 use Escalated\Laravel\Models\Ticket;
@@ -65,8 +66,9 @@ class TicketController extends Controller
             'replies' => fn ($q) => $q->with('author', 'attachments')->latest(),
             'attachments', 'tags', 'department', 'requester', 'assignee',
             'slaPolicy', 'activities' => fn ($q) => $q->with('causer')->latest()->take(20),
-            'satisfactionRating', 'pinnedNotes.author', 'contact', 'subjects.subject',
+            'satisfactionRating', 'pinnedNotes.author', 'contact',
         ]);
+        TicketSubjectResource::loadFor($ticket);
 
         return response()->json(['data' => new TicketResource($ticket)]);
     }
@@ -81,7 +83,8 @@ class TicketController extends Controller
             : $this->ticketService->create($request->user(), $validated);
         $relations = ['requester', 'assignee', 'department', 'tags'];
         if (config('escalated.mode', 'self-hosted') === 'self-hosted') {
-            $relations = array_merge($relations, ['contact', 'subjects.subject']);
+            $relations[] = 'contact';
+            TicketSubjectResource::loadFor($ticket);
         }
 
         return response()->json([

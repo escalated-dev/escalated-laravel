@@ -20,8 +20,76 @@ Options: `self-hosted`, `synced`, `cloud`
     'prefix' => 'support',
     'middleware' => ['web', 'auth'],
     'admin_middleware' => ['web', 'auth'],
+    // Added after `middleware` on the customer portal and customer KB.
+    'customer_middleware' => [],
+],
+
+'guest' => [
+    'routes_enabled' => env('ESCALATED_GUEST_ROUTES', true),
+],
+
+'widget' => [
+    'enabled' => env('ESCALATED_WIDGET_ENABLED', true),
+    // ...
+],
+
+'slack' => [
+    'enabled' => env('ESCALATED_SLACK_ENABLED', false),
+    // ...
 ],
 ```
+
+- `guest.routes_enabled`: false registers no guest portal route. While true,
+  the `guest_tickets_enabled` setting still switches the portal at runtime
+  (404 while off).
+- `widget.enabled`: false registers no widget route (`{prefix}/widget/...`,
+  including `embed.js`). While true, the `widget_enabled` setting still
+  switches the widget at runtime.
+- `slack.enabled`: the Slack inbound route is registered only while true.
+- The cloud webhook (`/escalated/cloud/webhook`) is registered only once
+  `hosted.signing_secret` is set.
+
+### Staff-only installs
+
+The customer portal (`{prefix}`, `{prefix}/create`, `{prefix}/{ticket}`, ...)
+and customer knowledge base (`{prefix}/kb`) accept any signed-in user. Where
+only staff use Escalated, a signed-in user who was never given Escalated
+access could otherwise list and raise tickets. To close the portal to
+everyone but staff:
+
+```php
+'routes' => [
+    // ...
+    'customer_middleware' => ['can:escalated-agent'],
+],
+```
+
+```dotenv
+ESCALATED_GUEST_ROUTES=false
+ESCALATED_WIDGET_ENABLED=false
+ESCALATED_MOBILE_API=false
+```
+
+A signed-in user who fails the guard gets 403 on every customer and KB route.
+Any Laravel middleware works here; it runs after `routes.middleware`.
+
+With the REST API on (`ESCALATED_API_ENABLED=true`), also turn off the customer
+mobile API (`escalated.mobile_api.enabled`, `ESCALATED_MOBILE_API`, default
+true). Its routes under `api.mobile_prefix` (register, login, customer
+tickets, knowledge base, guest tickets) do not run `customer_middleware`;
+switched off, none of them are registered. The staff REST API is unaffected.
+
+## Scheduling
+
+```php
+'scheduling' => [
+    'auto_register' => env('ESCALATED_SCHEDULE_AUTO_REGISTER', false),
+],
+```
+
+On: Escalated adds its recurring commands to the Laravel scheduler.
+`escalated:install` turns it on for new installs. See
+[Required: schedule the recurring jobs](operations.md#required-schedule-the-recurring-jobs).
 
 ## Tickets
 

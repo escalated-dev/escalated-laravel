@@ -47,11 +47,7 @@ class TicketResource extends JsonResource
                 'name' => $tag->name,
                 'color' => $tag->color,
             ])),
-            'subjects' => $this->whenLoaded('subjects', fn () => $this->subjects->map(function ($link) use ($request) {
-                $link->setRelation('ticket', $this->resource);
-
-                return (new TicketSubjectResource($link))->toArray($request);
-            })->values()),
+            'subjects' => $this->whenLoaded('subjects', fn () => TicketSubjectResource::forTicket($this->resource, $request)),
             'replies' => $this->whenLoaded('replies', fn () => ReplyResource::collection($this->replies)),
             'activities' => $this->whenLoaded('activities', fn () => $this->activities->map(fn ($a) => [
                 'id' => $a->id,

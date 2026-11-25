@@ -328,7 +328,9 @@ admin menu items are included, sorted by `position` with the core items. Core
   middleware itself restricts the routes to admins (e.g. `can:access-admin`):
   with it on, your middleware is the only check on who reaches the admin.
   Two-factor and route permissions still apply either way, and the agent panel
-  keeps Escalated's gates.
+  keeps Escalated's gates. Staff actions still need a user model that
+  implements `Ticketable`; without it they stop with
+  `UserNotTicketableException`, as on the standalone admin.
 - **Framing is allow-listed.** In iframe mode only the origins you list (plus
   your own) may frame the admin; nothing else, and never `*`.
 - **No open `postMessage`.** The frame talks only to an allow-listed parent

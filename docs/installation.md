@@ -55,6 +55,12 @@ class User extends Authenticatable implements Ticketable
 }
 ```
 
+Without it, staff actions (replying, assigning, changing status) stop with
+`Escalated\Laravel\Exceptions\UserNotTicketableException`, which names the
+model and this contract. `escalated:install` ends with a setup check that
+reports a user model without `Ticketable` and staff gates that are not
+defined.
+
 ## Define Authorization Gates
 
 In `App\Providers\AppServiceProvider::boot()` for Laravel 12+, or `App\Providers\AuthServiceProvider::boot()` for Laravel 11 and earlier:
@@ -70,6 +76,19 @@ Gate::define('escalated-agent', function ($user) {
     return $user->is_agent; // Your agent check
 });
 ```
+
+## Required: schedule the recurring jobs
+
+`escalated:install` sets `ESCALATED_SCHEDULE_AUTO_REGISTER=true` in `.env`
+(unless it is already there), so Escalated adds its recurring commands to the
+Laravel scheduler. Make sure cron runs the scheduler every minute:
+
+```
+* * * * * cd /path-to-your-app && php artisan schedule:run >> /dev/null 2>&1
+```
+
+Without it, SLA checks, escalation rules, automations and snooze wake-ups never
+run. See [the command list](operations.md#required-schedule-the-recurring-jobs).
 
 ## Update Config
 

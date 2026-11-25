@@ -15,6 +15,8 @@ class EnsureIsAgent
             abort(403, __('escalated::messages.middleware.not_agent'));
         }
 
+        StaffAccess::ensureCanAct($request, $request->user());
+
         return $next($request);
     }
 }

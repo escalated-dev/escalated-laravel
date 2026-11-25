@@ -117,6 +117,12 @@ return [
         'prefix' => 'support',
         'middleware' => ['web', 'auth'],
         'admin_middleware' => ['web', 'auth'],
+
+        // Extra middleware for the customer portal and customer knowledge
+        // base, added after `middleware`. Both accept any signed-in user by
+        // default. For a staff-only install set e.g. ['can:escalated-agent'],
+        // and turn off guest.routes_enabled and widget.enabled.
+        'customer_middleware' => [],
     ],
 
     /*
@@ -361,6 +367,13 @@ return [
     | Public Guest Requests
     |--------------------------------------------------------------------------
     */
+    'guest' => [
+        // false: no guest portal route ({prefix}/guest/...) is registered.
+        // While true, the guest_tickets_enabled setting still switches the
+        // routes at runtime (they answer 404 while it is off).
+        'routes_enabled' => (bool) env('ESCALATED_GUEST_ROUTES', true),
+    ],
+
     'guest_access' => [
         // Verified guest links expire after one day; accepted range is 5 minutes
         // through 7 days. Email codes always expire in 10 minutes after 5 guesses.
@@ -522,8 +535,12 @@ return [
     | Scheduling
     |--------------------------------------------------------------------------
     |
-    | With auto_register on, the package adds its recurring commands to the
-    | Laravel scheduler, so only `schedule:run` needs a cron entry:
+    | These commands must run on a schedule or SLA checks, escalation rules,
+    | automations and snooze wake-ups never happen. With auto_register on,
+    | the package adds them to the Laravel scheduler, so only `schedule:run`
+    | needs a cron entry. `escalated:install` turns it on for new installs.
+    | Admin > Settings and Reports warn when escalated:check-sla has not run
+    | for 15 minutes.
     |
     |   escalated:check-sla, process-delayed-actions,
     |   wake-snoozed-tickets                          every minute
@@ -538,7 +555,7 @@ return [
     |
     */
     'scheduling' => [
-        'auto_register' => false,
+        'auto_register' => (bool) env('ESCALATED_SCHEDULE_AUTO_REGISTER', false),
     ],
 
     /*
@@ -622,6 +639,14 @@ return [
         'mobile_prefix' => 'support/api/v1/mobile',
     ],
 
+    // The customer mobile API under api.mobile_prefix (register, login,
+    // customer tickets, knowledge base, guest tickets). Loaded only while
+    // api.enabled is also on. Its routes do not use routes.customer_middleware,
+    // so a staff-only install turns it off.
+    'mobile_api' => [
+        'enabled' => (bool) env('ESCALATED_MOBILE_API', true),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Broadcasting / Real-time
@@ -672,6 +697,10 @@ return [
     |
     */
     'widget' => [
+        // false: no widget route ({prefix}/widget/...) is registered. While
+        // true, the widget_enabled setting still switches the widget at
+        // runtime.
+        'enabled' => (bool) env('ESCALATED_WIDGET_ENABLED', true),
         'allowed_origins' => array_values(array_filter(array_map(
             'trim',
             explode(',', (string) env('ESCALATED_WIDGET_ALLOWED_ORIGINS', ''))
@@ -739,8 +768,10 @@ return [
     ],
 
     // Native Slack ingress supports tenant routing independently of plugins.
+    // The inbound route ({prefix}/inbound/slack/{app}) is registered only
+    // while enabled is true.
     'slack' => [
-        'enabled' => false,
+        'enabled' => (bool) env('ESCALATED_SLACK_ENABLED', false),
         'apps' => [],
         'plugin_app' => 'default',
         'requests_per_minute' => 600,

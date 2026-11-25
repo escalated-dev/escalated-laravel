@@ -13,6 +13,7 @@ use Escalated\Laravel\Http\Requests\ReplyToTicketRequest;
 use Escalated\Laravel\Http\Requests\SnoozeTicketRequest;
 use Escalated\Laravel\Http\Requests\UpdateTagsRequest;
 use Escalated\Laravel\Http\Requests\UpdateTicketRequest;
+use Escalated\Laravel\Http\Resources\TicketSubjectResource;
 use Escalated\Laravel\Models\CannedResponse;
 use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\Macro;
@@ -96,6 +97,9 @@ class TicketController extends Controller
             'satisfactionRating', 'pinnedNotes.author', 'chatSession',
             'linksAsParent.childTicket', 'linksAsChild.parentTicket',
         ]);
+        // The Related card reads ticket.subjects in the API resource's shape.
+        // The links stay models, so host code (ticket actions) can read them.
+        TicketSubjectResource::presentOn($ticket, $request);
 
         $ticket->append(['chat_session_id', 'chat_started_at', 'chat_messages', 'requester_ticket_count', 'related_tickets']);
         $ticket->setAttribute('requester_tickets', $this->requesterTickets($ticket));

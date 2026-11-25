@@ -56,6 +56,7 @@ use Escalated\Laravel\Support\AgentStatus;
 use Escalated\Laravel\Support\EmbedConfig;
 use Escalated\Laravel\Support\GuestRateLimits;
 use Escalated\Laravel\Support\HookManager;
+use Escalated\Laravel\Support\RecurringCommands;
 use Escalated\Laravel\Support\StaffAccess;
 use Escalated\Laravel\Support\TwoFactorSession;
 use Escalated\Laravel\Tenancy\TenantBackgroundConnector;
@@ -251,39 +252,12 @@ class EscalatedServiceProvider extends ServiceProvider
                 return;
             }
 
-            $scheduled = fn (string $command) => app(TenantContext::class)->enabled()
-                ? 'escalated:tenant-run '.$command : $command;
+            foreach (RecurringCommands::all() as $entry) {
+                $event = $schedule->command(RecurringCommands::scheduled($entry))->{$entry['frequency']}();
 
-            $schedule->command($scheduled('escalated:check-sla'))->everyMinute();
-            $schedule->command($scheduled('escalated:evaluate-escalations'))->everyFiveMinutes();
-            $schedule->command($scheduled('escalated:run-automations'))->everyFiveMinutes();
-            $schedule->command($scheduled('escalated:process-delayed-actions'))->everyMinute();
-            $schedule->command($scheduled('escalated:wake-snoozed-tickets'))->everyMinute();
-            $schedule->command($scheduled('escalated:close-resolved'))->daily();
-            $schedule->command($scheduled('escalated:purge-activities'))->weekly();
-
-            // SDK plugins' cron schedules. No plugin code runs in tenant mode.
-            if (config('escalated.plugins.enabled', true) && config('escalated.plugins.sdk_enabled', true)
-                && ! app(TenantContext::class)->enabled()) {
-                $schedule->command('escalated:plugins:cron')->everyMinute();
-            }
-
-            if (config('escalated.slack.enabled', false)) {
-                $schedule->command($scheduled('escalated:slack:process'))->everyMinute()->withoutOverlapping();
-            }
-
-            if (config('escalated.chat.enabled', false)) {
-                $schedule->command($scheduled('escalated:close-idle-chats'))->everyMinute();
-                $schedule->command($scheduled('escalated:cleanup-abandoned-chats'))->everyMinute();
-            }
-
-            if (config('escalated.enable_newsletters', false)) {
-                $schedule->command($scheduled('escalated:newsletters:dispatch'))->everyMinute()->withoutOverlapping();
-            }
-
-            if (config('escalated.inbound_email.enabled', false)
-                && config('escalated.inbound_email.adapter') === 'imap') {
-                $schedule->command($scheduled('escalated:poll-imap'))->everyMinute();
+                if ($entry['without_overlapping']) {
+                    $event->withoutOverlapping();
+                }
             }
         });
     }
@@ -488,7 +462,10 @@ class EscalatedServiceProvider extends ServiceProvider
 
         $this->loadTenantRoutesFrom(__DIR__.'/../routes/attachments.php');
 
-        $this->loadRoutesFrom(__DIR__.'/../routes/slack.php');
+        // Slack inbound webhook (signature-authenticated); only while Slack is on.
+        if (config('escalated.slack.enabled', false)) {
+            $this->loadRoutesFrom(__DIR__.'/../routes/slack.php');
+        }
 
         // Single sign-on; every route answers 404 while escalated.access.sso is off.
         $this->loadTenantRoutesFrom(__DIR__.'/../routes/sso.php');
@@ -496,7 +473,9 @@ class EscalatedServiceProvider extends ServiceProvider
         // REST API routes (token auth, no session)
         if (config('escalated.api.enabled', false)) {
             $this->loadTenantRoutesFrom(__DIR__.'/../routes/api.php');
-            $this->loadTenantRoutesFrom(__DIR__.'/../routes/mobile-api.php');
+            if (config('escalated.mobile_api.enabled', true)) {
+                $this->loadTenantRoutesFrom(__DIR__.'/../routes/mobile-api.php');
+            }
             $this->registerApiTokenRoutes();
         }
 
@@ -515,11 +494,14 @@ class EscalatedServiceProvider extends ServiceProvider
             require __DIR__.'/../routes/channels.php';
         }
 
-        // Widget routes (public, rate-limited)
-        $this->loadTenantRoutesFrom(__DIR__.'/../routes/widget.php');
+        // Widget routes (public, rate-limited). The widget_enabled setting
+        // still switches them at runtime while this is on.
+        if (config('escalated.widget.enabled', true)) {
+            $this->loadTenantRoutesFrom(__DIR__.'/../routes/widget.php');
+        }
 
-        // Cloud -> site webhook receiver (signature-authenticated; 503 until
-        // escalated.hosted.signing_secret is set)
+        // Cloud -> site webhook receiver (signature-authenticated). The route
+        // file registers it only once escalated.hosted.signing_secret is set.
         $this->loadTenantRoutesFrom(__DIR__.'/../routes/cloud.php');
     }
 
@@ -547,7 +529,12 @@ class EscalatedServiceProvider extends ServiceProvider
         $this->loadTenantRoutesFrom(__DIR__.'/../routes/agent.php');
         $this->loadTenantRoutesFrom(__DIR__.'/../routes/admin.php');
         $this->loadTenantRoutesFrom(__DIR__.'/../routes/customer.php');
-        $this->loadTenantRoutesFrom(__DIR__.'/../routes/guest.php');
+
+        // Public guest portal. The guest_tickets_enabled setting still
+        // switches it at runtime while this is on.
+        if (config('escalated.guest.routes_enabled', true)) {
+            $this->loadTenantRoutesFrom(__DIR__.'/../routes/guest.php');
+        }
     }
 
     protected function registerApiTokenRoutes(): void

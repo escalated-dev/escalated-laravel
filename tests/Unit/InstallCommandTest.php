@@ -1,9 +1,11 @@
 <?php
 
 use Escalated\Laravel\Console\Commands\InstallCommand;
+use Escalated\Laravel\Tests\Fixtures\PlainUser;
 use Escalated\Laravel\Tests\Fixtures\TestUser;
 use Illuminate\Console\OutputStyle;
 use Illuminate\Console\View\Components\Factory as ComponentsFactory;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Process;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\NullOutput;
@@ -477,4 +479,97 @@ it('shows manual instructions when npm install exits non-zero', function () {
     }
 
     expect($thrown)->toBeNull();
+});
+
+// --- enableScheduleAutoRegister ---
+
+/**
+ * Run $callback with the application's base path pointed at a scratch
+ * directory holding the given .env, and return the .env afterwards.
+ */
+function withScratchApp(?string $env, Closure $callback, ?string $publishedConfig = null): array
+{
+    $original = app()->basePath();
+    $dir = sys_get_temp_dir().DIRECTORY_SEPARATOR.'escalated-install-'.bin2hex(random_bytes(6));
+    mkdir($dir.DIRECTORY_SEPARATOR.'config', 0777, true);
+    if ($env !== null) {
+        file_put_contents($dir.DIRECTORY_SEPARATOR.'.env', $env);
+    }
+    if ($publishedConfig !== null) {
+        file_put_contents($dir.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'escalated.php', $publishedConfig);
+    }
+
+    app()->setBasePath($dir);
+    try {
+        $result = $callback();
+    } finally {
+        app()->setBasePath($original);
+    }
+
+    $after = is_file($dir.DIRECTORY_SEPARATOR.'.env') ? file_get_contents($dir.DIRECTORY_SEPARATOR.'.env') : null;
+    @unlink($dir.DIRECTORY_SEPARATOR.'.env');
+    @unlink($dir.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'escalated.php');
+    @rmdir($dir.DIRECTORY_SEPARATOR.'config');
+    @rmdir($dir);
+
+    return [$result, $after];
+}
+
+it('turns on schedule auto-registration for a new install', function () {
+    [$on, $env] = withScratchApp("APP_NAME=Host\n", fn () => callMethod(makeCommand(true), 'enableScheduleAutoRegister'));
+
+    expect($on)->toBeTrue()
+        ->and($env)->toBe("APP_NAME=Host\nESCALATED_SCHEDULE_AUTO_REGISTER=true\n");
+});
+
+it('leaves a schedule auto-registration value the host already set alone', function () {
+    [$on, $env] = withScratchApp("ESCALATED_SCHEDULE_AUTO_REGISTER=false\n", fn () => callMethod(makeCommand(true), 'enableScheduleAutoRegister'));
+
+    expect($on)->toBeFalse()
+        ->and($env)->toBe("ESCALATED_SCHEDULE_AUTO_REGISTER=false\n");
+});
+
+it('does not claim auto-registration is on when the published config ignores the env value', function () {
+    [$on, $env] = withScratchApp(
+        "APP_NAME=Host\n",
+        fn () => callMethod(makeCommand(true), 'enableScheduleAutoRegister'),
+        "<?php return ['scheduling' => ['auto_register' => false]];\n",
+    );
+
+    expect($on)->toBeFalse()
+        ->and($env)->toContain('ESCALATED_SCHEDULE_AUTO_REGISTER=true');
+});
+
+it('reads the auto-registration switch from the environment', function () {
+    $config = file_get_contents(dirname(__DIR__, 2).'/config/escalated.php');
+
+    expect($config)->toContain("'auto_register' => (bool) env('ESCALATED_SCHEDULE_AUTO_REGISTER', false)");
+});
+
+// --- setupProblems ---
+
+it('reports missing staff gates and a user model without Ticketable', function () {
+    config(['escalated.user_model' => PlainUser::class]);
+
+    $problems = callMethod(makeCommand(), 'setupProblems');
+
+    expect($problems)->toHaveCount(3)
+        ->and($problems[0])->toContain('`escalated-agent` gate is not defined')
+        ->and($problems[1])->toContain('`escalated-admin` gate is not defined')
+        ->and($problems[2])->toContain(PlainUser::class.' does not implement Escalated\Laravel\Contracts\Ticketable');
+});
+
+it('reports a user model that is not a class', function () {
+    config(['escalated.user_model' => 'App\Models\Missing']);
+
+    expect(callMethod(makeCommand(), 'setupProblems'))->toContain(
+        'escalated.user_model (App\Models\Missing) is not a class. Set ESCALATED_USER_MODEL to your user model.'
+    );
+});
+
+it('finds nothing wrong once the gates are defined and the user model is Ticketable', function () {
+    Gate::define('escalated-agent', fn () => true);
+    Gate::define('escalated-admin', fn () => true);
+
+    expect(callMethod(makeCommand(), 'setupProblems'))->toBe([]);
 });

@@ -8,6 +8,7 @@ use Escalated\Laravel\Tenancy\TenantContext;
 use Escalated\Laravel\Tenancy\TenantTables;
 use Illuminate\Database\DatabaseTransactionsManager;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Route;
 
 trait ExercisesSlackInbox
 {
@@ -28,6 +29,12 @@ trait ExercisesSlackInbox
             'channels' => ['T123' => ['C123' => ['tenant_id' => 'a', 'actor_id' => $this->actor->id]]],
             'users' => ['T123' => ['U123' => ['id' => $this->recipient->id]]],
         ]]]);
+        // The inbound route is registered only when Slack is on at boot;
+        // register it the way the provider would.
+        if (! Route::has('escalated.slack.inbound')) {
+            Route::group([], dirname(__DIR__, 2).'/routes/slack.php');
+            Route::getRoutes()->refreshNameLookups();
+        }
     }
 
     public function cleanSlackInbox(): void

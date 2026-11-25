@@ -92,6 +92,7 @@ when you serve the bundle from a CDN. Pages then need `data-base-url`.
 
 ```php
 'widget' => [
+    'enabled' => true,            // ESCALATED_WIDGET_ENABLED; false registers no widget route
     'allowed_origins' => [...],   // ESCALATED_WIDGET_ALLOWED_ORIGINS, comma separated
     'preflight_max_age' => 600,   // seconds browsers may cache a preflight
     'serve_script' => true,       // mount {prefix}/widget/embed.js

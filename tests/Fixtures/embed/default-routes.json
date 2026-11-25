@@ -4410,16 +4410,6 @@
             "api"
         ]
     },
-    "escalated.slack.inbound": {
-        "uri": "support/inbound/slack/{app}",
-        "methods": [
-            "POST"
-        ],
-        "middleware": [
-            "api",
-            "throttle:600,1"
-        ]
-    },
     "escalated.sso.jwt.callback": {
         "uri": "support/sso/jwt/callback",
         "methods": [

@@ -74,6 +74,10 @@ class AuthenticateApiToken
             }
         }
 
+        if (in_array($ability, ['agent', 'admin'], true)) {
+            StaffAccess::ensureCanAct($request, $user);
+        }
+
         // Throttle last_used_at updates to avoid a DB write on every request
         if (! $apiToken->last_used_at || $apiToken->last_used_at->diffInMinutes(now()) >= 5) {
             $apiToken->update([
