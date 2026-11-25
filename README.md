@@ -166,6 +166,16 @@ php artisan migrate
 
 Then visit `/support`. Needs PHP 8.2+ and Laravel 11.39 or newer. The [getting started guide](docs/getting-started.md) covers user model setup and access gates.
 
+### Required: schedule the recurring jobs
+
+SLA checks, escalation rules, automations and snooze wake-ups only run on a schedule. `escalated:install` sets `ESCALATED_SCHEDULE_AUTO_REGISTER=true`, which adds them to the Laravel scheduler, so the server only needs Laravel's usual cron entry:
+
+```
+* * * * * cd /path-to-your-app && php artisan schedule:run >> /dev/null 2>&1
+```
+
+Admin > Settings and Reports show a warning when `escalated:check-sla` has not run for 15 minutes. The [command list](docs/operations.md#required-schedule-the-recurring-jobs) shows each command and its interval if you schedule them yourself.
+
 ## Learn more
 
 - [All features](docs/features.md) · [Getting started](docs/getting-started.md) · [Installation](docs/installation.md)

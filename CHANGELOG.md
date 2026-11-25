@@ -4,7 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Upgrading
+- **The Slack inbound route is registered only while `escalated.slack.enabled` is on.** Installs using Slack already have it on; others lose an unused unauthenticated route. The flag can now also come from `ESCALATED_SLACK_ENABLED`.
+- **Recurring jobs:** `escalated.scheduling.auto_register` now reads `ESCALATED_SCHEDULE_AUTO_REGISTER` (default false, unchanged). A `config/escalated.php` published earlier keeps its own value. Admins now see a warning on Settings and Reports when `escalated:check-sla` has not run for 15 minutes; if you schedule the commands, nothing to do.
+
+### Added
+- **Staff-only installs:** `escalated.routes.customer_middleware` (default `[]`) adds middleware to the customer portal and customer KB routes, e.g. `['can:escalated-agent']`. See docs/configuration.md#staff-only-installs.
+- `escalated.widget.enabled` (`ESCALATED_WIDGET_ENABLED`) and `escalated.guest.routes_enabled` (`ESCALATED_GUEST_ROUTES`), both default true: false registers no widget or guest portal route. The runtime `widget_enabled` and `guest_tickets_enabled` settings work as before.
+- `escalated:check-sla` records a heartbeat; the `scheduler` prop on Admin Settings, Reports and Reports/Dashboard (`healthy`, `last_run_at`, `message`, `commands`) drives the warning.
+- `escalated:install` turns on schedule auto-registration for new installs, prints the cron entry, and runs a setup check for undefined staff gates and a user model without `Ticketable`.
+
 ### Fixed
+- **The agent and admin ticket pages now include `ticket.subjects`**, serialised as the API ticket resource does, so the sidebar's Related card shows linked host records.
+- **A host user model without `Ticketable` no longer hits a raw TypeError on staff actions.** The staff middleware throws `UserNotTicketableException`, naming the model, the contract and how to add it.
 - **The SDK plugin bridge no longer starts Node on every request (#314).** If `@escalated-dev/plugin-runtime` isn't installed, nothing is spawned and one info line is logged per day, where before every request and artisan command logged "failed to start plugin runtime" at error level. After the first start, plugin routes are registered from cached manifests, and the runtime starts on the first hook that needs it. Restart backoff is now kept in the cache, so it holds across PHP-FPM requests. No host changes needed; `ESCALATED_PLUGINS_SDK_ENABLED=false` is no longer required as a workaround.
 - `docs/plugin-sdk.md` showed an outdated default `runtime_command` path.
 

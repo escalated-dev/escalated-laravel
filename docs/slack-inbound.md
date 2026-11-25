@@ -8,7 +8,9 @@ enable it or trust an inbound tenant header.
 
 ## Configure the host
 
-Run the Slack inbox migration and configure `escalated.slack` in the host:
+Run the Slack inbox migration and configure `escalated.slack` in the host.
+The inbound route is registered only while `enabled` is true (or
+`ESCALATED_SLACK_ENABLED=true`):
 
 ```php
 'slack' => [

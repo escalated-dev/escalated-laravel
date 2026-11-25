@@ -7,6 +7,11 @@ advertising the verification capability.
 
 ## Upgrade and host configuration
 
+Guest routes are registered while `escalated.guest.routes_enabled`
+(`ESCALATED_GUEST_ROUTES`, default true) is on; set it to false to register
+none of them. While it is on, the `guest_tickets_enabled` setting switches them
+at runtime as before.
+
 Deploy the shared frontend's verified guest forms before enabling these backend
 routes, and run the package migrations. Existing `Guest/Create` and `Guest/Show`
 pages are reused. `Guest/Create` receives `verification_url` and `lookup_url`;

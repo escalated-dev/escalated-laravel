@@ -73,18 +73,56 @@ Each layer is merged on top of the previous one with
 layer only needs to define the keys it changes. See
 [`lang/README.md`](../lang/README.md) for details.
 
-## Scheduling
+## Required: schedule the recurring jobs
 
-Add these to your scheduler for SLA and escalation automation:
+SLA checks, escalation rules, automations and snooze wake-ups happen only when
+these commands run on a schedule. Nothing else runs them.
+
+The simple way: set `ESCALATED_SCHEDULE_AUTO_REGISTER=true` (config
+`escalated.scheduling.auto_register`; `escalated:install` writes it for new
+installs). Escalated then adds every command below to the Laravel scheduler,
+and the server needs only Laravel's cron entry:
+
+```
+* * * * * cd /path-to-your-app && php artisan schedule:run >> /dev/null 2>&1
+```
+
+To schedule them yourself instead, leave auto-registration off and add each
+one, e.g. in `routes/console.php`:
 
 ```php
-// app/Console/Kernel.php or routes/console.php
 Schedule::command('escalated:check-sla')->everyMinute();
+Schedule::command('escalated:process-delayed-actions')->everyMinute();
+Schedule::command('escalated:wake-snoozed-tickets')->everyMinute();
 Schedule::command('escalated:evaluate-escalations')->everyFiveMinutes();
+Schedule::command('escalated:run-automations')->everyFiveMinutes();
 Schedule::command('escalated:close-resolved')->daily();
 Schedule::command('escalated:purge-activities')->weekly();
-Schedule::command('escalated:poll-imap')->everyMinute(); // Only if using IMAP adapter
 ```
+
+| Command | Interval | What stops without it |
+|---------|----------|-----------------------|
+| `escalated:check-sla` | every minute | SLA breach and warning checks |
+| `escalated:process-delayed-actions` | every minute | Delayed workflow actions |
+| `escalated:wake-snoozed-tickets` | every minute | Snoozed tickets waking up |
+| `escalated:evaluate-escalations` | every five minutes | Escalation rules |
+| `escalated:run-automations` | every five minutes | Time-based automations |
+| `escalated:close-resolved` | daily | Auto-closing resolved tickets |
+| `escalated:purge-activities` | weekly | Activity log retention |
+
+Optional features add their own while they are on: `escalated:plugins:cron`
+(SDK plugins), `escalated:slack:process` (Slack), `escalated:close-idle-chats`
+and `escalated:cleanup-abandoned-chats` (live chat),
+`escalated:newsletters:dispatch` (newsletters) and `escalated:poll-imap`
+(inbound email on the IMAP adapter), all every minute. With tenancy on, each
+tenant-scoped command runs as `escalated:tenant-run <command>`.
+
+`escalated:check-sla` records a heartbeat in the cache each time it runs (even
+with SLAs off). When it is missing or older than 15 minutes, Admin > Settings,
+Admin > Reports and the reports dashboard show a warning naming the commands to
+schedule (the `scheduler` page prop: `healthy`, `last_run_at`, `message`,
+`commands`). Use a cache store that outlives a deploy, or the warning shows
+until the next run.
 
 ## Public request limits
 
@@ -115,6 +153,7 @@ All config lives in `config/escalated.php`. Key options:
 'routes' => [
     'prefix' => 'support',
     'middleware' => ['web', 'auth'],
+    'customer_middleware' => [],      // extra guards on the customer portal and KB
 ],
 
 'tickets' => [
@@ -193,6 +232,15 @@ Event::listen(TicketCreated::class, function ($event) {
 | `/support/{ticket}/rate` | POST | Submit satisfaction rating |
 
 All routes use the configurable prefix (default: `support`). Inbound webhook routes use the `api` middleware (no auth, no CSRF).
+
+Optional public routes are registered only while their feature is on:
+`{prefix}/guest/...` with `escalated.guest.routes_enabled`
+(`ESCALATED_GUEST_ROUTES`, default on), `{prefix}/widget/...` with
+`escalated.widget.enabled` (`ESCALATED_WIDGET_ENABLED`, default on),
+`{prefix}/inbound/slack/{app}` with `escalated.slack.enabled`
+(`ESCALATED_SLACK_ENABLED`, default off), and `/escalated/cloud/webhook` once
+`escalated.hosted.signing_secret` is set. See
+[staff-only installs](configuration.md#staff-only-installs).
 
 ## Testing
 
