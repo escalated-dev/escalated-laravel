@@ -21,6 +21,27 @@ class TicketSubjectLink extends Model
 
     protected $guarded = ['id'];
 
+    /**
+     * What this link serialises as, when set (the ticket pages set the API
+     * resource's shape). Null keeps the model's usual serialisation.
+     *
+     * @var array<string, mixed>|null
+     */
+    protected ?array $presentation = null;
+
+    /** @param  array<string, mixed>|null  $presentation */
+    public function presentAs(?array $presentation): static
+    {
+        $this->presentation = $presentation;
+
+        return $this;
+    }
+
+    public function toArray(): array
+    {
+        return $this->presentation ?? parent::toArray();
+    }
+
     protected function casts(): array
     {
         return [

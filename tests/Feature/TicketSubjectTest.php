@@ -5,6 +5,7 @@ use Escalated\Laravel\Contracts\TicketSubject;
 use Escalated\Laravel\Http\Resources\TicketResource;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Models\TicketSubjectLink;
+use Escalated\Laravel\Services\TicketActionRegistry;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Gate;
@@ -178,4 +179,63 @@ it('sends the ticket subjects to the agent and admin ticket pages, shaped as the
 })->with([
     'agent' => ['escalated.agent.tickets.show', 'Escalated/Agent/TicketShow'],
     'admin' => ['escalated.admin.tickets.show', 'Escalated/Admin/Tickets/Show'],
+]);
+
+it('keeps the subject links as models for ticket actions while the page gets the API shape', function () {
+    Gate::define('escalated-agent', fn ($user) => $user->is_agent || $user->is_admin);
+    Gate::define('escalated-admin', fn ($user) => $user->is_admin);
+
+    $ticket = Ticket::factory()->create();
+    $ticket->attachSubject(FakeProject::create(['id' => '7', 'name' => 'Acme Redesign', 'account' => 'Acme']), 'project');
+
+    // A host action that reads the related host models, as a CRM sync would.
+    app(TicketActionRegistry::class)->register([
+        'key' => 'open-project',
+        'label' => 'Open project',
+        'visible' => fn (Ticket $t) => $t->subjects->first()->subject->name === 'Acme Redesign',
+    ]);
+
+    $response = $this->actingAs($this->createAgent())
+        ->withHeaders(['X-Inertia' => 'true', 'X-Inertia-Version' => ''])
+        ->get(route('escalated.agent.tickets.show', $ticket->reference))
+        ->assertOk();
+
+    expect($response->json('props.customActions.0.key'))->toBe('open-project')
+        ->and($response->json('props.ticket.subjects.0'))->toMatchArray([
+            'type' => FakeProject::class,
+            'id' => '7',
+            'title' => 'Acme Redesign',
+            'missing' => false,
+        ])
+        ->and($response->json('props.ticket.subjects.0'))->not->toHaveKey('subject');
+});
+
+it('shows a subject whose model class no longer exists as missing instead of failing the page', function (string $route) {
+    Gate::define('escalated-agent', fn ($user) => $user->is_agent || $user->is_admin);
+    Gate::define('escalated-admin', fn ($user) => $user->is_admin);
+
+    $ticket = Ticket::factory()->create();
+    $ticket->attachSubject(FakeProject::create(['id' => '7', 'name' => 'Acme Redesign']), 'project');
+    // A link written before the host renamed or removed the model.
+    TicketSubjectLink::create([
+        'ticket_id' => $ticket->getKey(), 'subject_type' => 'App\Models\RemovedProject',
+        'subject_id' => '9', 'role' => 'project', 'position' => 5,
+    ]);
+
+    $response = $this->actingAs($this->createAdmin())
+        ->withHeaders(['X-Inertia' => 'true', 'X-Inertia-Version' => ''])
+        ->get(route($route, $ticket->reference))
+        ->assertOk();
+
+    expect($response->json('props.ticket.subjects'))->toHaveCount(2)
+        ->and($response->json('props.ticket.subjects.0'))->toMatchArray(['title' => 'Acme Redesign', 'missing' => false])
+        ->and($response->json('props.ticket.subjects.1'))->toMatchArray([
+            'type' => 'App\Models\RemovedProject',
+            'id' => '9',
+            'title' => 'RemovedProject #9',
+            'missing' => true,
+        ]);
+})->with([
+    'agent' => 'escalated.agent.tickets.show',
+    'admin' => 'escalated.admin.tickets.show',
 ]);

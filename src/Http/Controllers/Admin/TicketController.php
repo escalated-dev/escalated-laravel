@@ -65,10 +65,11 @@ class TicketController extends Controller
             'attachments', 'tags', 'department', 'requester', 'assignee',
             'slaPolicy', 'activities' => fn ($q) => $q->with('causer')->latest()->take(20),
             'satisfactionRating', 'pinnedNotes.author', 'chatSession',
-            'linksAsParent.childTicket', 'linksAsChild.parentTicket', 'subjects.subject',
+            'linksAsParent.childTicket', 'linksAsChild.parentTicket',
         ]);
         // The Related card reads ticket.subjects in the API resource's shape.
-        $ticket->setRelation('subjects', TicketSubjectResource::forTicket($ticket, $request));
+        // The links stay models, so host code (ticket actions) can read them.
+        TicketSubjectResource::presentOn($ticket, $request);
 
         $ticket->append(['chat_session_id', 'chat_started_at', 'chat_messages', 'requester_ticket_count', 'related_tickets']);
 
