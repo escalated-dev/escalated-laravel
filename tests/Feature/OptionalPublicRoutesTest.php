@@ -40,6 +40,11 @@ class OptionalPublicRoutesTest extends TestCase
         $app['config']->set('escalated.guest.routes_enabled', false);
     }
 
+    protected function mobileApiOff($app): void
+    {
+        $app['config']->set('escalated.mobile_api.enabled', false);
+    }
+
     protected function cloudSecretSet($app): void
     {
         $app['config']->set('escalated.hosted.signing_secret', 'whsec_site');
@@ -57,6 +62,25 @@ class OptionalPublicRoutesTest extends TestCase
         $this->assertSame([], $this->routeNames('escalated.cloud.'));
 
         $this->postJson('/support/inbound/slack/default')->assertNotFound();
+    }
+
+    public function test_the_mobile_api_is_registered_by_default_with_the_rest_api(): void
+    {
+        $this->assertTrue(config('escalated.api.enabled'));
+        $this->assertTrue(config('escalated.mobile_api.enabled'));
+
+        $this->assertContains('escalated.api.mobile.auth.register', $this->routeNames('escalated.api.mobile.'));
+        $this->assertContains('escalated.api.mobile.kb.index', $this->routeNames('escalated.api.mobile.'));
+    }
+
+    #[DefineEnvironment('mobileApiOff')]
+    public function test_no_mobile_api_route_is_registered_when_the_mobile_api_is_switched_off(): void
+    {
+        $this->assertSame([], $this->routeNames('escalated.api.mobile.'));
+        $this->assertNotEmpty($this->routeNames('escalated.api.tickets.'));
+
+        $this->postJson('/support/api/v1/mobile/auth/register', [])->assertNotFound();
+        $this->getJson('/support/api/v1/mobile/kb/articles')->assertNotFound();
     }
 
     #[DefineEnvironment('slackOn')]

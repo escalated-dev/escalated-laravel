@@ -639,6 +639,14 @@ return [
         'mobile_prefix' => 'support/api/v1/mobile',
     ],
 
+    // The customer mobile API under api.mobile_prefix (register, login,
+    // customer tickets, knowledge base, guest tickets). Loaded only while
+    // api.enabled is also on. Its routes do not use routes.customer_middleware,
+    // so a staff-only install turns it off.
+    'mobile_api' => [
+        'enabled' => (bool) env('ESCALATED_MOBILE_API', true),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Broadcasting / Real-time

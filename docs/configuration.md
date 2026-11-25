@@ -67,10 +67,17 @@ everyone but staff:
 ```dotenv
 ESCALATED_GUEST_ROUTES=false
 ESCALATED_WIDGET_ENABLED=false
+ESCALATED_MOBILE_API=false
 ```
 
 A signed-in user who fails the guard gets 403 on every customer and KB route.
 Any Laravel middleware works here; it runs after `routes.middleware`.
+
+With the REST API on (`ESCALATED_API_ENABLED=true`), also turn off the customer
+mobile API (`escalated.mobile_api.enabled`, `ESCALATED_MOBILE_API`, default
+true). Its routes under `api.mobile_prefix` (register, login, customer
+tickets, knowledge base, guest tickets) do not run `customer_middleware`;
+switched off, none of them are registered. The staff REST API is unaffected.
 
 ## Scheduling
 

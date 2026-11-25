@@ -238,7 +238,9 @@ Optional public routes are registered only while their feature is on:
 (`ESCALATED_GUEST_ROUTES`, default on), `{prefix}/widget/...` with
 `escalated.widget.enabled` (`ESCALATED_WIDGET_ENABLED`, default on),
 `{prefix}/inbound/slack/{app}` with `escalated.slack.enabled`
-(`ESCALATED_SLACK_ENABLED`, default off), and `/escalated/cloud/webhook` once
+(`ESCALATED_SLACK_ENABLED`, default off), the customer mobile API
+(`api.mobile_prefix`) with `escalated.mobile_api.enabled`
+(`ESCALATED_MOBILE_API`, default on, and only while `api.enabled` is on), and `/escalated/cloud/webhook` once
 `escalated.hosted.signing_secret` is set. See
 [staff-only installs](configuration.md#staff-only-installs).
 
