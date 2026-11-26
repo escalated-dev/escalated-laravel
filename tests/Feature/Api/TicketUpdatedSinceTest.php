@@ -1,5 +1,6 @@
 <?php
 
+use Carbon\Carbon;
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
 use Escalated\Laravel\Models\ApiToken;
@@ -38,17 +39,22 @@ function sinceTicket(TestUser $requester, array $attrs = [], ?DateTimeInterface 
     ], $attrs));
 
     if ($updatedAt) {
-        Ticket::withoutTimestamps(fn () => $ticket->forceFill(['updated_at' => $updatedAt])->save());
+        Ticket::withoutTimestamps(fn () => $ticket->forceFill(['updated_at' => Carbon::instance($updatedAt)->setTimezone(config('app.timezone'))])->save());
     }
 
     return $ticket->fresh();
 }
 
-it('filters by updated_since', function () {
+it('filters by updated_since', function (string $timezone) {
+    $previous = date_default_timezone_get();
+    config()->set('app.timezone', $timezone);
+    date_default_timezone_set($timezone);
+    $this->beforeApplicationDestroyed(fn () => date_default_timezone_set($previous));
+
     $agent = sinceAgent();
     $cutoff = now()->subDays(2)->utc();
-    sinceTicket($agent['user'], [], now()->subDays(3));
-    sinceTicket($agent['user'], [], now()->subDay());
+    sinceTicket($agent['user'], [], $cutoff->copy()->subHour());
+    sinceTicket($agent['user'], [], $cutoff->copy()->addHour());
     sinceTicket($agent['user']);
 
     $zulu = $cutoff->format('Y-m-d\TH:i:s\Z');
@@ -62,7 +68,7 @@ it('filters by updated_since', function () {
 
     $this->getJson('/support/api/v1/tickets?updated_since=not-a-date', $agent['headers'])
         ->assertStatus(422)->assertJsonValidationErrors('updated_since');
-});
+})->with(['UTC', 'America/Toronto', 'Asia/Tokyo']);
 
 it('exposes last_customer_reply_at', function () {
     $agent = sinceAgent();

@@ -52,7 +52,7 @@ final class TicketListFilters
         }
 
         if (! empty($filters['updated_since'])) {
-            $query->where('updated_at', '>=', Carbon::parse($filters['updated_since'])->utc());
+            $query->where('updated_at', '>=', Carbon::parse($filters['updated_since'])->setTimezone(config('app.timezone')));
         }
 
         if (! empty($filters['priority'])) {
