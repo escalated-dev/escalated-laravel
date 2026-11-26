@@ -23,6 +23,22 @@ ESCALATED_INBOUND_EMAIL=true
 ESCALATED_INBOUND_ADDRESS=support@yourapp.com
 ```
 
+`ESCALATED_INBOUND_EMAIL` (`escalated.inbound_email.enabled`) is the master
+switch: it registers the webhook routes and, for IMAP, the polling schedule.
+While it is off, the admin Settings page shows a note in place of the inbound
+email controls.
+
+With it on, the **Inbound email** section of Admin > Settings takes over: the
+switch there can turn inbound email off at runtime (the webhooks answer 404),
+and the provider, support address and credentials saved there win over the
+`.env` values. Choosing **IMAP** there schedules `escalated:poll-imap` when
+schedule auto-registration is on (in tenant mode the config adapter decides,
+and the command checks each account's settings).
+
+The support address is used as the recipient of the SNS subscription
+confirmation; incoming mail is matched to tickets by its headers, not by the
+address it was sent to.
+
 ### Adapter Setup
 
 #### Mailgun
@@ -59,9 +75,11 @@ The token is sent in the `X-Postmark-Token` header and verified on each request.
 
 ```env
 ESCALATED_INBOUND_ADAPTER=ses
-ESCALATED_SES_REGION=us-east-1
 ESCALATED_SES_TOPIC_ARN=arn:aws:sns:us-east-1:123456789:your-topic
 ```
+
+No region is needed: the topic ARN already names it, and signatures are
+checked against Amazon's signing certificate.
 
 1. Configure SES to receive emails and publish to an SNS topic
 2. Create an HTTPS subscription on the SNS topic pointing to:
@@ -97,6 +115,11 @@ POST /{prefix}/inbound/{adapter}
 ```
 
 Where `{prefix}` is your configured route prefix (default: `support`) and `{adapter}` is `mailgun`, `postmark`, or `ses`. These routes use the `api` middleware (no CSRF, no auth).
+
+All three webhook URLs are accepted whichever provider is selected; each one
+rejects a request that does not carry its own signature or token, so a
+provider whose credentials are not set receives nothing. The selected provider
+decides IMAP polling and which credentials the Settings page shows.
 
 ### Processing Features
 

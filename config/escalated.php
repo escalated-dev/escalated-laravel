@@ -711,6 +711,13 @@ return [
         'serve_script' => true,
     ],
 
+    /*
+    | Inbound email. `enabled` is the master switch: it registers the
+    | {prefix}/inbound/{adapter} webhook routes and the IMAP poll schedule.
+    | While it is on, the Admin > Settings inbound email switch, provider,
+    | address and credentials override the values below at runtime. See
+    | docs/inbound-email.md.
+    */
     'inbound_email' => [
         'enabled' => env('ESCALATED_INBOUND_EMAIL', false),
         'adapter' => env('ESCALATED_INBOUND_ADAPTER', 'mailgun'),
