@@ -84,7 +84,13 @@ class WidgetChatController extends Controller
             'body' => ['required', 'string', 'max:5000'],
         ]);
 
-        $reply = $this->chatSessionService->sendMessage($session, $validated['body'], null, false);
+        // On a ticket with a requester (guest_policy_mode = guest_user) the
+        // visitor's message is the requester's, so the reply listeners treat
+        // it as the customer's own rather than as someone else's reply.
+        $ticket = $session->ticket;
+        $requester = $ticket->requester_id !== null ? $ticket->requester : null;
+
+        $reply = $this->chatSessionService->sendMessage($session, $validated['body'], $requester, false);
 
         return response()->json(['message' => 'Message sent.', 'reply_id' => $reply->id]);
     }
@@ -147,12 +153,16 @@ class WidgetChatController extends Controller
         $session = $this->guestSession($sessionId);
         $messages = $session->ticket->replies()->where('is_internal_note', false)
             ->with('author')->latest('id')->limit(100)->get()->reverse()->values()
-            ->map(fn ($reply) => [
-                'id' => $reply->id, 'body' => $reply->body,
-                'is_agent' => $reply->author_type !== null,
-                'author' => ['name' => $reply->author?->name ?? $session->ticket->guest_name],
-                'created_at' => $reply->created_at->toIso8601String(),
-            ]);
+            ->map(function ($reply) use ($session) {
+                $isAgent = $session->ticket->isChatAgentReply($reply);
+
+                return [
+                    'id' => $reply->id, 'body' => $reply->body,
+                    'is_agent' => $isAgent,
+                    'author' => ['name' => $isAgent ? $reply->author?->name : ($session->ticket->guest_name ?? $reply->author?->name)],
+                    'created_at' => $reply->created_at->toIso8601String(),
+                ];
+            });
 
         return response()->json([
             'messages' => $messages,

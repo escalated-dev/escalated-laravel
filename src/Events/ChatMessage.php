@@ -38,7 +38,9 @@ class ChatMessage implements ShouldBroadcastNow
         return [
             'reply_id' => $this->reply->id,
             'body' => $this->reply->body,
-            'author' => $this->reply->author?->name ?? 'Customer',
+            // The visitor is named as they gave it, also when their lines are
+            // written as the ticket's requester (guest_policy_mode = guest_user).
+            'author' => ($this->isAgent ? null : $this->session->ticket?->guest_name) ?? $this->reply->author?->name ?? 'Customer',
             'is_agent' => $this->isAgent,
             'created_at' => $this->reply->created_at->toIso8601String(),
         ];

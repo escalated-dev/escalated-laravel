@@ -69,8 +69,25 @@ it('lists exactly the settings it saves, so the page hides the rest', function (
 
                 return $keys->contains('guest_tickets_enabled')
                     && $keys->contains('widget_allowed_origins')
-                    && ! $keys->contains('chat_enabled')
+                    && $keys->contains('chat_enabled')
+                    && ! $keys->contains('chat_routing_strategy')
                     && ! $keys->contains('widget_primary_color')
                     && ! $keys->contains('widget_custom_css');
             }));
+});
+
+it('turns live chat on and off from the Settings page', function () {
+    Gate::define('escalated-agent', fn ($user) => $user->is_agent || $user->is_admin);
+    Gate::define('escalated-admin', fn ($user) => $user->is_admin);
+    $this->actingAs($this->createAdmin());
+
+    $this->get(route('escalated.admin.settings'))
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('settings.chat_enabled', false));
+
+    $this->post(route('escalated.admin.settings.update'), ['chat_enabled' => true])->assertRedirect();
+    expect(EscalatedSettings::getBool('chat_enabled', false))->toBeTrue();
+    $this->getJson('/support/widget/chat/availability')->assertJsonMissing(['message' => 'Chat is disabled.']);
+
+    $this->post(route('escalated.admin.settings.update'), ['chat_enabled' => false])->assertRedirect();
+    expect(EscalatedSettings::getBool('chat_enabled', true))->toBeFalse();
 });

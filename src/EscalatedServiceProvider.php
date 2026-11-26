@@ -52,6 +52,7 @@ use Escalated\Laravel\Services\TicketActionRegistry;
 use Escalated\Laravel\Services\TwoFactorService;
 use Escalated\Laravel\Support\AccessFeatures;
 use Escalated\Laravel\Support\AdminNavigation;
+use Escalated\Laravel\Support\AgentChats;
 use Escalated\Laravel\Support\AgentStatus;
 use Escalated\Laravel\Support\EmbedConfig;
 use Escalated\Laravel\Support\GuestRateLimits;
@@ -659,6 +660,7 @@ class EscalatedServiceProvider extends ServiceProvider
                     $data['knowledge_base_enabled'] = EscalatedSettings::knowledgeBaseEnabled();
                     $data['knowledge_base_public'] = EscalatedSettings::knowledgeBasePublic();
                     $data['knowledge_base_feedback_enabled'] = EscalatedSettings::knowledgeBaseFeedbackEnabled();
+                    $data['chat_enabled'] = EscalatedSettings::getBool('chat_enabled', false);
                 }
             } catch (\Throwable) {
                 // Settings table may not exist yet
@@ -677,6 +679,16 @@ class EscalatedServiceProvider extends ServiceProvider
                     }
                 } catch (\Throwable) {
                     // Agent profiles table may not exist yet
+                }
+            }
+
+            // The agent panel's live chats: the agent's own and the queue.
+            if ($user && $data['is_agent'] && ($data['chat_enabled'] ?? false)) {
+                try {
+                    $data['active_chats'] = AgentChats::active($user);
+                    $data['chat_queue'] = AgentChats::waiting();
+                } catch (\Throwable) {
+                    // The chat sessions table may not exist yet
                 }
             }
 
