@@ -3153,6 +3153,106 @@
             "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
         ]
     },
+    "escalated.agent.chat.accept": {
+        "uri": "support/agent/chat/{session}/accept",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.agent.chat.active": {
+        "uri": "support/agent/chat/active",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.agent.chat.end": {
+        "uri": "support/agent/chat/{session}/end",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.agent.chat.message": {
+        "uri": "support/agent/chat/{session}/message",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.agent.chat.queue": {
+        "uri": "support/agent/chat/queue",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.agent.chat.transfer": {
+        "uri": "support/agent/chat/{session}/transfer",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.agent.chat.typing": {
+        "uri": "support/agent/chat/{session}/typing",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
     "escalated.agent.dashboard": {
         "uri": "support/agent",
         "methods": [

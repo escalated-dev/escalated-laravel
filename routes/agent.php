@@ -1,5 +1,6 @@
 <?php
 
+use Escalated\Laravel\Http\Controllers\Agent\ChatController;
 use Escalated\Laravel\Http\Controllers\Agent\DashboardController;
 use Escalated\Laravel\Http\Controllers\Agent\KnowledgeBaseSearchController;
 use Escalated\Laravel\Http\Controllers\Agent\NotificationController;
@@ -24,6 +25,16 @@ Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web'
         Route::post('/notifications/{notification}/read', [NotificationController::class, 'read'])->name('escalated.agent.notifications.read');
         Route::get('/tickets', [TicketController::class, 'index'])->name('escalated.agent.tickets.index');
         Route::post('/tickets/bulk', BulkActionController::class)->name('escalated.agent.tickets.bulk');
+
+        // Live chat. The same actions as escalated.admin.chat.*, limited to
+        // the chats the agent may run (see Agent\ChatController).
+        Route::get('/chat/active', [ChatController::class, 'index'])->name('escalated.agent.chat.active');
+        Route::get('/chat/queue', [ChatController::class, 'queue'])->name('escalated.agent.chat.queue');
+        Route::post('/chat/{session}/accept', [ChatController::class, 'accept'])->name('escalated.agent.chat.accept');
+        Route::post('/chat/{session}/end', [ChatController::class, 'end'])->name('escalated.agent.chat.end');
+        Route::post('/chat/{session}/transfer', [ChatController::class, 'transfer'])->name('escalated.agent.chat.transfer');
+        Route::post('/chat/{session}/message', [ChatController::class, 'message'])->name('escalated.agent.chat.message');
+        Route::post('/chat/{session}/typing', [ChatController::class, 'typing'])->name('escalated.agent.chat.typing');
 
         Route::middleware(ResolveTicketByReference::class)->group(function () {
             Route::get('/tickets/{ticket}', [TicketController::class, 'show'])->name('escalated.agent.tickets.show');

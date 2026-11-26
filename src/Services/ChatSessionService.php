@@ -18,6 +18,7 @@ use Escalated\Laravel\Models\Contact;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Tenancy\TenantContext;
+use Illuminate\Database\Eloquent\Model;
 
 class ChatSessionService
 {
@@ -79,6 +80,10 @@ class ChatSessionService
                 'is_internal_note' => false,
                 'type' => 'reply',
                 'metadata' => ['chat_opening_message' => true],
+                // A ticket given a requester (guest_policy_mode = guest_user)
+                // records the visitor's lines as the requester's, as message() does.
+                'author_type' => $ticket->requester_id !== null ? $ticket->requester_type : null,
+                'author_id' => $ticket->requester_id,
             ]);
             $opening->deferCreatedEvent = true;
             $opening->save();
@@ -149,7 +154,7 @@ class ChatSessionService
     /**
      * Transfer a chat to another agent or department.
      */
-    public function transferChat(ChatSession $session, ?int $toAgentId = null, ?int $toDepartmentId = null): void
+    public function transferChat(ChatSession $session, int|string|null $toAgentId = null, int|string|null $toDepartmentId = null): void
     {
         $fromAgentId = $session->agent_id;
 
@@ -182,8 +187,12 @@ class ChatSessionService
 
     /**
      * Send a message in a chat session (creates a reply on the ticket).
+     *
+     * $author is the user id of the staff member sending it, or the author
+     * model itself (the ticket's requester, for a visitor's message on a
+     * ticket that has one). Null leaves the reply without an author.
      */
-    public function sendMessage(ChatSession $session, string $body, int|string|null $userId, bool $isAgent): Reply
+    public function sendMessage(ChatSession $session, string $body, int|string|Model|null $author, bool $isAgent): Reply
     {
         $replyData = [
             'ticket_id' => $session->ticket_id,
@@ -192,14 +201,13 @@ class ChatSessionService
             'type' => 'reply',
         ];
 
-        if ($userId) {
-            $userModel = Escalated::userModel();
-            $user = Escalated::findUser($userId);
+        if ($author !== null && $author !== '' && ! $author instanceof Model) {
+            $author = Escalated::findUser($author);
+        }
 
-            if ($user) {
-                $replyData['author_type'] = $user->getMorphClass();
-                $replyData['author_id'] = $user->getKey();
-            }
+        if ($author instanceof Model) {
+            $replyData['author_type'] = $author->getMorphClass();
+            $replyData['author_id'] = $author->getKey();
         }
 
         $reply = Reply::create($replyData);
@@ -210,15 +218,17 @@ class ChatSessionService
     }
 
     /**
-     * Update the typing indicator for a chat session.
+     * Update the typing indicator for a chat session. $userName names the
+     * staff member typing; without it the session's agent is named.
      */
-    public function updateTyping(ChatSession $session, bool $isAgent): void
+    public function updateTyping(ChatSession $session, bool $isAgent, ?string $userName = null): void
     {
         $column = $isAgent ? 'agent_typing_at' : 'customer_typing_at';
         $session->update([$column => now()]);
 
-        $userName = null;
-        if ($isAgent && $session->agent_id) {
+        if (! $isAgent) {
+            $userName = null;
+        } elseif ($userName === null && $session->agent_id) {
             $userName = $session->agent?->name;
         }
 

@@ -6,6 +6,7 @@ use Escalated\Laravel\Enums\ChatSessionStatus;
 use Escalated\Laravel\Enums\ChatStatus;
 use Escalated\Laravel\Models\ChatSession;
 use Escalated\Laravel\Services\ChatSessionService;
+use Escalated\Laravel\Services\TicketService;
 use Escalated\Laravel\Support\AgentStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -117,7 +118,16 @@ class ChatController extends Controller
     {
         $validated = $request->validate([
             'body' => ['required', 'string', 'max:5000'],
+            'is_internal_note' => ['sometimes', 'boolean'],
         ]);
+
+        // The chat composer can write internal notes too. A note goes on the
+        // ticket only and is never sent to the visitor.
+        if ($request->boolean('is_internal_note')) {
+            $note = app(TicketService::class)->addNote($session->ticket, $request->user(), $validated['body']);
+
+            return response()->json(['message' => 'Note added.', 'reply_id' => $note->id]);
+        }
 
         $reply = $this->chatSessionService->sendMessage(
             $session,
@@ -134,7 +144,7 @@ class ChatController extends Controller
      */
     public function typing(ChatSession $session, Request $request): JsonResponse
     {
-        $this->chatSessionService->updateTyping($session, true);
+        $this->chatSessionService->updateTyping($session, true, $request->user()?->name);
 
         return response()->json(['message' => 'Typing updated.']);
     }
