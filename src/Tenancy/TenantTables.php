@@ -74,7 +74,7 @@ class TenantTables
         'workflows',
     ];
 
-    public const NAMES = [...self::INITIAL_NAMES, 'guest_verifications', 'slack_events', 'slack_threads', 'rule_executions', 'ticket_reads', 'customer_presence'];
+    public const NAMES = [...self::INITIAL_NAMES, 'guest_verifications', 'slack_events', 'slack_threads', 'rule_executions', 'ticket_reads', 'customer_presence', 'api_token_codes'];
 
     public static function contains(string $table): bool
     {

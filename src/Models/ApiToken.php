@@ -65,7 +65,7 @@ class ApiToken extends Model
             ->where('expires_at', '<=', now());
     }
 
-    public static function createToken(Model $tokenable, string $name, array $abilities = ['*'], ?\DateTimeInterface $expiresAt = null): array
+    public static function createToken(Model $tokenable, string $name, array $abilities = ['*'], ?\DateTimeInterface $expiresAt = null, ?string $kind = null, ?string $extensionId = null): array
     {
         $plainText = bin2hex(random_bytes(32));
 
@@ -76,6 +76,8 @@ class ApiToken extends Model
             'token' => hash('sha256', $plainText),
             'abilities' => $abilities,
             'expires_at' => $expiresAt,
+            'kind' => $kind,
+            'extension_id' => $extensionId,
         ]);
 
         return ['token' => $token, 'plainTextToken' => $plainText];
