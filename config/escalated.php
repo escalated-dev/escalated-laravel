@@ -634,6 +634,9 @@ return [
         'max_metadata_bytes' => 16384,
         'enabled' => env('ESCALATED_API_ENABLED', false),
         'rate_limit' => env('ESCALATED_API_RATE_LIMIT', 60),
+        // Lifetime of tokens issued by the mobile login, register and refresh
+        // endpoints (null = no expiry). A refreshed token never expires later
+        // than the token it replaces.
         'token_expiry_days' => null,
         'prefix' => 'support/api/v1',
         'mobile_prefix' => 'support/api/v1/mobile',
