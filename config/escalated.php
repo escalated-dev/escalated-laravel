@@ -718,8 +718,8 @@ return [
         'serve_script' => true,
         // true: a visitor signed in to this app, using the widget on the same
         // origin, opens tickets and chats without an emailed code, under
-        // their own account's name and email; their widget tickets are
-        // linked to the account. Embedding sites always need the code.
+        // their own account's name and email; their widget tickets and chats
+        // are linked to the account. Embedding sites always need the code.
         'trust_signed_in_visitors' => (bool) env('ESCALATED_WIDGET_TRUST_SIGNED_IN', false),
     ],
 

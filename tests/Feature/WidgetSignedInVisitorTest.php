@@ -1,9 +1,12 @@
 <?php
 
 use Escalated\Laravel\Events\ChatAssigned;
+use Escalated\Laravel\Events\ChatMessage;
 use Escalated\Laravel\Events\ChatStarted;
+use Escalated\Laravel\Models\ChatSession;
 use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Models\Ticket;
+use Escalated\Laravel\Services\ChatSessionService;
 use Escalated\Laravel\Tests\Fixtures\TestUser;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Support\Facades\Event;
@@ -36,7 +39,7 @@ class WidgetUnverifiedUser extends TestUser implements MustVerifyEmail
  */
 
 beforeEach(function () {
-    Event::fake([ChatStarted::class, ChatAssigned::class]);
+    Event::fake([ChatStarted::class, ChatAssigned::class, ChatMessage::class]);
     EscalatedSettings::set('widget_enabled', '1');
     EscalatedSettings::set('guest_tickets_enabled', '1');
     EscalatedSettings::set('chat_enabled', '1');
@@ -130,18 +133,51 @@ describe('with trust_signed_in_visitors on', function () {
             ->assertJsonValidationErrors(['verification_code']);
     });
 
-    it('starts a chat as the signed-in account without a code', function () {
-        $this->actingAs($this->visitor)
+    it('starts a chat as the signed-in account without a code and links it to them', function () {
+        $sessionId = $this->actingAs($this->visitor)
             ->postJson(route('escalated.widget.chat.start'), [
                 'name' => 'Someone Else', 'email' => 'someone-else@example.com', 'message' => 'Hello',
             ])
             ->assertCreated()
-            ->assertJsonStructure(['session_id', 'ticket_reference']);
+            ->assertJsonStructure(['session_id', 'ticket_reference'])
+            ->json('session_id');
 
         $ticket = Ticket::sole();
         expect($ticket->guest_email)->toBe('vera@example.com')
             ->and($ticket->guest_name)->toBe('Vera Visitor')
-            // Chats are not linked to the account yet.
-            ->and($ticket->requester_id)->toBeNull();
+            ->and($ticket->requester_type)->toBe($this->visitor->getMorphClass())
+            ->and((string) $ticket->requester_id)->toBe((string) $this->visitor->getKey());
+
+        // The visitor's lines are the requester's, an agent's are the agent's.
+        $this->postJson(route('escalated.widget.chat.messages.store', $sessionId), ['body' => 'Still there?'])->assertOk();
+        $agent = $this->createAgent();
+        app(ChatSessionService::class)->sendMessage(ChatSession::sole(), 'Yes, hello', $agent->getKey(), true);
+
+        $lines = collect($this->getJson(route('escalated.widget.chat.messages', $sessionId))->assertOk()->json('messages'))
+            ->mapWithKeys(fn ($line) => [$line['body'] => $line['is_agent']]);
+        expect($lines->all())->toBe(['Hello' => false, 'Still there?' => false, 'Yes, hello' => true])
+            ->and($ticket->replies()->where('body', 'Still there?')->sole()->author_id)->toEqual($this->visitor->getKey());
+    });
+
+    it('shows the signed-in visitor their own replies as theirs in the ticket status', function () {
+        $token = $this->actingAs($this->visitor)
+            ->postJson(route('escalated.widget.tickets.store'), signedInTicket())
+            ->assertCreated()
+            ->json('guest_access_token');
+        $ticket = Ticket::sole();
+        $ticket->replies()->create([
+            'body' => 'Any news?', 'author_type' => $this->visitor->getMorphClass(), 'author_id' => $this->visitor->getKey(),
+            'is_internal_note' => false, 'type' => 'reply',
+        ]);
+        $agent = $this->createAgent();
+        $ticket->replies()->create([
+            'body' => 'Shipped today.', 'author_type' => $agent->getMorphClass(), 'author_id' => $agent->getKey(),
+            'is_internal_note' => false, 'type' => 'reply',
+        ]);
+
+        $replies = collect($this->withToken($token)->getJson(route('escalated.widget.tickets.status', $ticket->reference))
+            ->assertOk()->json('replies'))->mapWithKeys(fn ($reply) => [$reply['body'] => $reply['is_agent']]);
+
+        expect($replies->all())->toMatchArray(['Any news?' => false, 'Shipped today.' => true]);
     });
 });

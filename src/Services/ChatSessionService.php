@@ -39,15 +39,16 @@ class ChatSessionService
 
     /**
      * Start a chat for a signed-in visitor (WidgetVisitor) without an
-     * emailed code. The caller supplies the account's own name and email.
-     * The chat stays a guest chat: it is not linked to the account.
+     * emailed code. The caller supplies the account's own name and email;
+     * with `$requester` the chat's ticket is linked to that account, and the
+     * visitor's lines are written as the requester's.
      */
-    public function startChatWithoutCode(array $data): array
+    public function startChatWithoutCode(array $data, ?Model $requester = null): array
     {
-        return Escalated::db()->transaction(fn () => $this->startVerifiedChat($data));
+        return Escalated::db()->transaction(fn () => $this->startVerifiedChat($data, $requester));
     }
 
-    protected function startVerifiedChat(array $data): array
+    protected function startVerifiedChat(array $data, ?Model $requester = null): array
     {
         $email = GuestEmailVerification::email($data['email']);
         $contact = Contact::findOrCreateByEmail($email, $data['name']);
@@ -67,6 +68,9 @@ class ChatSessionService
         ]);
         $ticket->deferCreatedEvent = true;
         app(GuestTicketService::class)->applyIdentityPolicy($ticket);
+        if ($requester !== null) {
+            $ticket->requester()->associate($requester);
+        }
         $ticket->save();
         $token = app(GuestAccess::class)->issue($ticket, 'chat');
 

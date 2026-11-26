@@ -195,7 +195,10 @@ class WidgetController extends Controller
             ->map(fn ($reply) => [
                 'body' => $reply->body,
                 'author' => $reply->author?->name ?? 'Support',
-                'is_agent' => $reply->author_type !== null,
+                // By identity: on a ticket with a requester (a signed-in
+                // visitor's, or guest_policy_mode = guest_user) the
+                // requester's own replies are not the agent's.
+                'is_agent' => $ticket->isChatAgentReply($reply),
                 'created_at' => $reply->created_at->toIso8601String(),
             ]);
 

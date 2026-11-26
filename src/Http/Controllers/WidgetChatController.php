@@ -64,10 +64,11 @@ class WidgetChatController extends Controller
         ]);
         $validated['metadata'] = WidgetMetadata::fromRequest($request);
 
-        // A signed-in visitor chats under their own account's name and email.
+        // A signed-in visitor chats as their own account: its name and email,
+        // and the chat's ticket is linked to it.
         $result = $visitor === null
             ? $this->chatSessionService->startChat($validated)
-            : $this->chatSessionService->startChatWithoutCode([...$validated, ...WidgetVisitor::identity($visitor)]);
+            : $this->chatSessionService->startChatWithoutCode([...$validated, ...WidgetVisitor::identity($visitor)], $visitor);
 
         if ($ticket = Ticket::query()->withoutGlobalScopes()->where('reference', $result['ticket_reference'] ?? null)->first()) {
             $this->recordPresence($ticket);

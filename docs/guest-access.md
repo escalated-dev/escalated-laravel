@@ -56,9 +56,10 @@ the emailed code:
   and the widget leaves out the code step.
 - A widget ticket or chat is opened under the account's own name (the
   `user_display_column`, else the email) and email, whatever the form sent.
-- A widget ticket is linked to the account as its requester, so it appears in
-  that user's own ticket list. A chat is not linked yet: it stays a guest chat
-  under the account's email.
+- A widget ticket or chat is linked to the account as its requester, so it
+  appears in that user's own ticket list. The visitor's chat lines are written
+  as the requester's, and the widget and the agent's transcript tell them from
+  the agent's by identity.
 
 Only a same-origin request with a session user of `escalated.user_model`
 qualifies. Requests from sites listed in `allowed_origins` always run as a
