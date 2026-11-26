@@ -608,11 +608,11 @@ class InstallCommand extends Command
         $this->line('     // Tailwind CSS v3 and earlier: tailwind.config.js');
         $this->line('     content: [');
         $this->line('         // ...existing paths,');
-        $this->line('         \'./node_modules/@escalated-dev/escalated/src/**/*.vue\',');
+        $this->line('         \'./node_modules/@escalated-dev/escalated/src/**/*.{vue,js}\',');
         $this->line('     ]');
         $this->newLine();
-        $this->line('     // Tailwind CSS v4+: resources/css/app.css');
-        $this->line('     @source \'../../node_modules/@escalated-dev/escalated/src/**/*.vue\';');
+        $this->line('     // Tailwind CSS v4+: resources/css/app.css (v4 does not scan node_modules by itself)');
+        $this->line('     @source \'../../node_modules/@escalated-dev/escalated/src\';');
         $this->newLine();
         $step++;
 

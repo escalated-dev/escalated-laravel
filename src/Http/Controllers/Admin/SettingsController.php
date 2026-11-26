@@ -12,19 +12,38 @@ use Illuminate\Routing\Controller;
 
 class SettingsController extends Controller
 {
+    /** The inbound email settings, which need escalated.inbound_email.enabled. */
+    protected const INBOUND_KEYS = [
+        'inbound_email_enabled', 'inbound_email_adapter', 'inbound_email_address',
+        'mailgun_signing_key', 'postmark_inbound_token', 'ses_topic_arn',
+        'imap_host', 'imap_port', 'imap_encryption', 'imap_username', 'imap_password', 'imap_mailbox',
+    ];
+
     public function __construct(
         protected EscalatedUiRenderer $renderer,
     ) {}
 
     public function index(): mixed
     {
+        $supported = array_keys($this->rules());
+        $inboundNotice = null;
+
+        // ESCALATED_INBOUND_EMAIL registers the webhook routes and the IMAP
+        // schedule; without it the inbound settings could not take effect,
+        // so the page shows a note instead of controls that do nothing.
+        if (! config('escalated.inbound_email.enabled', false)) {
+            $supported = array_values(array_diff($supported, self::INBOUND_KEYS));
+            $inboundNotice = __('Inbound email is switched off in the application config. Set ESCALATED_INBOUND_EMAIL=true (escalated.inbound_email.enabled) to receive email, then choose the provider here.');
+        }
+
         return $this->renderer->render('Escalated/Admin/Settings', [
             'settings' => $this->getSettings(),
             // Exactly the keys update() saves. The shared Settings page hides
             // the controls this host does not store (the other live chat
             // options and widget appearance live elsewhere here) instead of
             // discarding them.
-            'supported_settings' => array_keys($this->rules()),
+            'supported_settings' => $supported,
+            'inbound_email_notice' => $inboundNotice,
             // Warns when the recurring commands are not running.
             'scheduler' => RecurringCommands::status(),
         ]);
@@ -51,7 +70,6 @@ class SettingsController extends Controller
             'inbound_email_address' => ['sometimes', 'nullable', 'email', 'max:255'],
             'mailgun_signing_key' => ['sometimes', 'nullable', 'string', 'max:255'],
             'postmark_inbound_token' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'ses_region' => ['sometimes', 'nullable', 'string', 'max:50'],
             'ses_topic_arn' => ['sometimes', 'nullable', 'string', 'max:255'],
             'imap_host' => ['sometimes', 'nullable', 'string', 'max:255'],
             'imap_port' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:65535'],
@@ -112,7 +130,6 @@ class SettingsController extends Controller
             'inbound_email_address' => EscalatedSettings::get('inbound_email_address', config('escalated.inbound_email.address', '')),
             'mailgun_signing_key' => $this->maskSecret(EscalatedSettings::get('mailgun_signing_key', config('escalated.inbound_email.mailgun.signing_key', ''))),
             'postmark_inbound_token' => $this->maskSecret(EscalatedSettings::get('postmark_inbound_token', config('escalated.inbound_email.postmark.token', ''))),
-            'ses_region' => EscalatedSettings::get('ses_region', config('escalated.inbound_email.ses.region', 'us-east-1')),
             'ses_topic_arn' => EscalatedSettings::get('ses_topic_arn', config('escalated.inbound_email.ses.topic_arn', '')),
             'imap_host' => EscalatedSettings::get('imap_host', config('escalated.inbound_email.imap.host', '')),
             'imap_port' => EscalatedSettings::getInt('imap_port', (int) config('escalated.inbound_email.imap.port', 993)),

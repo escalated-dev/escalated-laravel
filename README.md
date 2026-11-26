@@ -102,7 +102,7 @@
 - Bulk actions and internal notes
 - Canned responses
 - Departments with round-robin assignment
-- Real-time updates with polling fallback
+- Real-time updates over Laravel Echo (opt-in; see [real-time updates](docs/agent-panel.md#real-time-updates))
 
 </td>
 <td width="33%" valign="top">

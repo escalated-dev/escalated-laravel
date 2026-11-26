@@ -70,6 +70,26 @@ describe('extractMentions', function () {
         expect($ids)->toBeEmpty();
     });
 
+    it('does not read the domain of an email address as a mention', function () {
+        TestUser::create([
+            'name' => 'example.com',
+            'email' => 'domain@example.org',
+            'password' => bcrypt('password'),
+        ]);
+
+        expect($this->mentionService->extractMentions('Please write to jo@example.com today'))->toBe([]);
+    });
+
+    it('ends a simple mention before a full stop', function () {
+        $user = TestUser::create([
+            'name' => 'john',
+            'email' => 'john@example.com',
+            'password' => bcrypt('password'),
+        ]);
+
+        expect($this->mentionService->extractMentions('Over to you @john.'))->toBe([$user->id]);
+    });
+
     it('matches by email for simple mentions', function () {
         $user = TestUser::create([
             'name' => 'Jane Doe',

@@ -35,7 +35,7 @@ class SesAdapter implements InboundAdapter
             return new InboundMessage(
                 fromEmail: 'sns-confirmation@amazonaws.com',
                 fromName: 'AWS SNS',
-                toEmail: config('escalated.inbound_email.address', ''),
+                toEmail: (string) EscalatedSettings::get('inbound_email_address', config('escalated.inbound_email.address', '')),
                 subject: '[SNS Subscription Confirmation]',
                 bodyText: 'SNS subscription confirmed.',
                 bodyHtml: null,

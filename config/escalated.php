@@ -652,10 +652,17 @@ return [
     | Broadcasting / Real-time
     |--------------------------------------------------------------------------
     |
-    | Enable WebSocket broadcasting for core ticket events. Requires a
-    | broadcasting driver (Pusher, Ably, Reverb, Soketi, etc.) configured
-    | in the host application. When disabled (default), the frontend falls
-    | back to polling automatically.
+    | Broadcast ticket, chat and agent-notification events over WebSockets,
+    | and register the channel authorisation for them. Off (the default),
+    | nothing is broadcast. Needs a broadcasting driver (Reverb, Pusher,
+    | Ably, Soketi, ...) in the host app, and Laravel Echo in the browser,
+    | on window.Echo or passed to EscalatedPlugin as `echo`.
+    |
+    | Live chat needs this on: without it agents only see new chats,
+    | messages and typing after reloading. The agent ticket list reloads
+    | itself every 30 seconds without Echo (frontend 0.12.12+); the widget
+    | polls for chat messages either way. See
+    | docs/agent-panel.md#real-time-updates.
     |
     */
     'broadcasting' => [
@@ -709,8 +716,20 @@ return [
         'preflight_max_age' => 600,
         // Serve the standalone widget bundle at {prefix}/widget/embed.js.
         'serve_script' => true,
+        // true: a visitor signed in to this app, using the widget on the same
+        // origin, opens tickets and chats without an emailed code, under
+        // their own account's name and email; their widget tickets and chats
+        // are linked to the account. Embedding sites always need the code.
+        'trust_signed_in_visitors' => (bool) env('ESCALATED_WIDGET_TRUST_SIGNED_IN', false),
     ],
 
+    /*
+    | Inbound email. `enabled` is the master switch: it registers the
+    | {prefix}/inbound/{adapter} webhook routes and the IMAP poll schedule.
+    | While it is on, the Admin > Settings inbound email switch, provider,
+    | address and credentials override the values below at runtime. See
+    | docs/inbound-email.md.
+    */
     'inbound_email' => [
         'enabled' => env('ESCALATED_INBOUND_EMAIL', false),
         'adapter' => env('ESCALATED_INBOUND_ADAPTER', 'mailgun'),

@@ -10,6 +10,7 @@ use Escalated\Laravel\Services\CustomerPresenceTracker;
 use Escalated\Laravel\Services\GuestAccess;
 use Escalated\Laravel\Services\GuestTicketService;
 use Escalated\Laravel\Support\WidgetMetadata;
+use Escalated\Laravel\Support\WidgetVisitor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -42,7 +43,9 @@ class WidgetController extends Controller
             'departments' => $departments,
             'kb_enabled' => $this->knowledgeBaseAvailable($request),
             'guest_tickets_enabled' => EscalatedSettings::guestTicketsEnabled(),
-            'guest_verification_required' => true,
+            // False for a signed-in visitor when trust_signed_in_visitors
+            // is on: the widget then skips the emailed code.
+            'guest_verification_required' => WidgetVisitor::trusted($request) === null,
             // Tickets and chats keep host parameters sent as `metadata`.
             'accepts_metadata' => true,
         ]);
@@ -133,19 +136,26 @@ class WidgetController extends Controller
             return response()->json(['message' => 'Guest tickets are disabled.'], 404);
         }
 
+        $visitor = WidgetVisitor::trusted($request);
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255'],
+            ...($visitor === null ? [
+                'name' => ['required', 'string', 'max:255'],
+                'email' => ['required', 'email', 'max:255'],
+                'verification_id' => ['required', 'uuid'],
+                'verification_code' => ['required', 'string', 'max:16'],
+            ] : []),
             'subject' => ['required', 'string', 'max:255'],
-            'verification_id' => ['required', 'uuid'],
-            'verification_code' => ['required', 'string', 'max:16'],
             'description' => ['required', 'string', 'max:5000'],
             'department_id' => ['nullable', 'integer', 'exists:'.Department::class.',id'],
             ...WidgetMetadata::rules(),
         ]);
         $validated['metadata'] = WidgetMetadata::fromRequest($request);
 
-        $result = app(GuestTicketService::class)->create($validated, 'widget');
+        // A signed-in visitor raises the ticket as their own account, whatever
+        // name and email the form sent.
+        $result = $visitor === null
+            ? app(GuestTicketService::class)->create($validated, 'widget')
+            : app(GuestTicketService::class)->create([...$validated, ...WidgetVisitor::identity($visitor)], 'widget', [], $visitor);
         $ticket = $result['ticket'];
 
         return response()->json([
@@ -185,7 +195,10 @@ class WidgetController extends Controller
             ->map(fn ($reply) => [
                 'body' => $reply->body,
                 'author' => $reply->author?->name ?? 'Support',
-                'is_agent' => $reply->author_type !== null,
+                // By identity: on a ticket with a requester (a signed-in
+                // visitor's, or guest_policy_mode = guest_user) the
+                // requester's own replies are not the agent's.
+                'is_agent' => $ticket->isChatAgentReply($reply),
                 'created_at' => $reply->created_at->toIso8601String(),
             ]);
 

@@ -8,6 +8,7 @@ use Illuminate\Console\View\Components\Factory as ComponentsFactory;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Process;
 use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Component\Process\Process as SymfonyProcess;
@@ -572,4 +573,22 @@ it('finds nothing wrong once the gates are defined and the user model is Ticketa
     Gate::define('escalated-admin', fn () => true);
 
     expect(callMethod(makeCommand(), 'setupProblems'))->toBe([]);
+});
+
+// --- outputSetupInstructions ---
+
+it('prints the Tailwind setup for v3 and for v4', function () {
+    $command = new InstallCommand;
+    $command->setLaravel(app());
+    $buffer = new BufferedOutput;
+    $output = new OutputStyle(new ArrayInput([]), $buffer);
+    $command->setOutput($output);
+    (new ReflectionProperty($command, 'components'))
+        ->setValue($command, app()->make(ComponentsFactory::class, ['output' => $output]));
+
+    callMethod($command, 'outputSetupInstructions');
+
+    expect($buffer->fetch())
+        ->toContain("'./node_modules/@escalated-dev/escalated/src/**/*.{vue,js}',")
+        ->toContain("@source '../../node_modules/@escalated-dev/escalated/src';");
 });

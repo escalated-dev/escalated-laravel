@@ -2,6 +2,7 @@
 
 namespace Escalated\Laravel\Support;
 
+use Escalated\Laravel\Models\EscalatedSettings;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -60,8 +61,7 @@ final class RecurringCommands
             $commands[] = ['escalated:newsletters:dispatch', 'everyMinute', true];
         }
 
-        if (config('escalated.inbound_email.enabled', false)
-            && config('escalated.inbound_email.adapter') === 'imap') {
+        if (self::pollsImap($tenancy)) {
             $commands[] = ['escalated:poll-imap', 'everyMinute'];
         }
 
@@ -79,6 +79,33 @@ final class RecurringCommands
             'without_overlapping' => $entry[2] ?? false,
             'tenant_scoped' => $entry[3] ?? true,
         ], $commands);
+    }
+
+    /**
+     * Whether to poll IMAP. The config switch (ESCALATED_INBOUND_EMAIL)
+     * enables inbound email; the admin Settings page can then switch it off
+     * and choose the adapter, so those settings decide, falling back to
+     * config. Tenant settings are per account, so in tenant mode the config
+     * adapter decides and escalated:poll-imap checks each account's settings.
+     */
+    private static function pollsImap(bool $tenancy): bool
+    {
+        if (! config('escalated.inbound_email.enabled', false)) {
+            return false;
+        }
+
+        $adapter = config('escalated.inbound_email.adapter');
+        if ($tenancy) {
+            return $adapter === 'imap';
+        }
+
+        try {
+            return EscalatedSettings::getBool('inbound_email_enabled', true)
+                && EscalatedSettings::get('inbound_email_adapter', $adapter) === 'imap';
+        } catch (\Throwable) {
+            // No settings table yet (fresh install, migrations pending).
+            return $adapter === 'imap';
+        }
     }
 
     /**

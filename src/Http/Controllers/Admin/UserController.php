@@ -6,6 +6,7 @@ use Escalated\Laravel\Contracts\EscalatedUiRenderer;
 use Escalated\Laravel\Escalated;
 use Escalated\Laravel\Models\Role;
 use Escalated\Laravel\Support\AccessFeatures;
+use Escalated\Laravel\Support\StaffAccess;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
@@ -14,10 +15,12 @@ use Illuminate\Routing\Controller;
 
 /**
  * Surface enough of the host User table for an admin to grant or revoke
- * agent / admin access from the panel. The default install pins this to
- * the `is_admin` and `is_agent` columns the install command tells hosts
- * to add — hosts using a different role implementation (Spatie, custom
- * pivot, etc.) should override this controller in their own routes.
+ * agent / admin access from the panel. The switches write the `is_admin`
+ * and `is_agent` columns the install command tells hosts to add. On a host
+ * without those columns (Spatie, a custom pivot, ...) the page still lists
+ * users, shows each one's access as the staff gates decide it, and leaves
+ * the switches read-only: change access in the host app, or override this
+ * controller in your own routes.
  */
 class UserController extends Controller
 {
@@ -28,29 +31,33 @@ class UserController extends Controller
     public function index(Request $request): mixed
     {
         $query = Escalated::userQuery();
+        $roleColumns = $this->roleColumns($query->getModel());
 
         if ($search = trim((string) $request->query('search', ''))) {
-            $term = '%'.$search.'%';
-            $query->where(function ($q) use ($term) {
-                $q->where('email', 'like', $term);
-                if ($this->columnExists($q->getModel(), 'name')) {
-                    $q->orWhere('name', 'like', $term);
-                }
-            });
+            $query->where(fn ($q) => Escalated::applyUserSearch($q, $search));
+        }
+
+        foreach (['is_admin', 'is_agent'] as $column) {
+            if (in_array($column, $roleColumns, true)) {
+                $query->orderByDesc($column);
+            }
         }
 
         $users = $query
-            ->orderByDesc('is_admin')
-            ->orderByDesc('is_agent')
-            ->orderBy('id')
+            ->orderBy($query->getModel()->getKeyName())
             ->paginate(20)
             ->withQueryString()
             ->through(fn ($user) => [
                 'id' => $user->getKey(),
-                'name' => $user->name ?? null,
+                'name' => $this->displayName($user),
                 'email' => $user->email,
-                'is_admin' => (bool) ($user->is_admin ?? false),
-                'is_agent' => (bool) ($user->is_agent ?? false),
+                // Read from the column when there is one, else from the gates.
+                'is_admin' => in_array('is_admin', $roleColumns, true)
+                    ? (bool) $user->is_admin
+                    : StaffAccess::isAdmin($user),
+                'is_agent' => in_array('is_agent', $roleColumns, true)
+                    ? (bool) $user->is_agent
+                    : StaffAccess::isAgent($user),
             ]);
 
         $props = [
@@ -58,6 +65,12 @@ class UserController extends Controller
             'filters' => ['search' => $search ?: ''],
             'currentUserId' => $request->user()?->getKey(),
         ];
+
+        // Without both columns the switches have nothing to write.
+        if (count($roleColumns) < 2) {
+            $props['roleToggles'] = false;
+            $props['notice'] = __('Agent and admin access comes from your application here, so it is shown but cannot be changed on this page.');
+        }
 
         // Escalated roles, only while roles & permissions is enforced: each
         // user's role slugs, and the roles an admin can give them.
@@ -120,6 +133,10 @@ class UserController extends Controller
         /** @var Model $target */
         $target = Escalated::userQuery()->findOrFail($user);
 
+        if (count($this->roleColumns($target)) < 2) {
+            return back()->with('error', __('Agent and admin access comes from your application here, so it cannot be changed on this page.'));
+        }
+
         // Don't let an admin demote themselves and lock themselves out of
         // the admin panel they're trying to use.
         if ($validated['role'] === 'admin'
@@ -149,6 +166,30 @@ class UserController extends Controller
         $target->forceFill($updates)->save();
 
         return back()->with('success', __('User updated.'));
+    }
+
+    /** The display name, or null when the user only has an email. */
+    protected function displayName(Model $user): ?string
+    {
+        $name = Escalated::userDisplayName($user);
+
+        return $name === $user->getAttribute('email') ? null : $name;
+    }
+
+    /**
+     * Which of `is_admin` / `is_agent` the host's users table has.
+     *
+     * @return list<string>
+     */
+    protected function roleColumns(Model $model): array
+    {
+        try {
+            $columns = $model->getConnection()->getSchemaBuilder()->getColumnListing($model->getTable());
+        } catch (\Throwable) {
+            return ['is_admin', 'is_agent'];
+        }
+
+        return array_values(array_intersect(['is_admin', 'is_agent'], $columns));
     }
 
     protected function columnExists(Model $model, string $column): bool

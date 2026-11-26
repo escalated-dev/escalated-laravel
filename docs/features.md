@@ -26,6 +26,6 @@
 - **Embeddable support widget** — Lightweight `<script>` widget served via `/support/widget/*` routes with KB search, ticket form, and status check
 - **Email threading** — Outbound emails include proper `In-Reply-To` and `References` headers for correct threading in mail clients
 - **Branded email templates** — Configurable logo, primary color, and footer text for all outbound emails
-- **Real-time broadcasting** — Opt-in broadcasting via Pusher, Reverb, or Soketi with automatic polling fallback
+- **Real-time broadcasting** — Opt-in broadcasting via Pusher, Reverb, or Soketi; without it the agent ticket list refreshes on a timer and live chat needs a reload (see [real-time updates](agent-panel.md#real-time-updates))
 - **Knowledge base toggle** — Enable or disable the public knowledge base from admin settings
 - **CI: Laravel Pint** — Automated code style enforcement on every pull request
