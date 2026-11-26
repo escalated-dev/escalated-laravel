@@ -6,24 +6,27 @@ Escalated ships a Vue component library and default pages via the [`@escalated-d
 
 ### 1. Tailwind Content
 
+The pages and components are Vue source styled with Tailwind, so your build has to scan them. Without that, the built CSS misses their classes (for example the admin sidebar stays hidden and buttons lose their backgrounds), often only in production builds.
+
 For Tailwind CSS v3 and earlier, add the Escalated package to your Tailwind `content` config so its classes aren't purged:
 
 ```js
 // tailwind.config.js
 content: [
     // ... your existing paths
-    './node_modules/@escalated-dev/escalated/src/**/*.vue',
+    './node_modules/@escalated-dev/escalated/src/**/*.{vue,js}',
 ],
 ```
 
-For Tailwind CSS v4+, add Escalated as a source in your app CSS file instead:
+Tailwind CSS v4 has no `content` array, and its automatic source detection skips `node_modules`. Add Escalated as a source in your app CSS file instead:
 
 ```css
 /* resources/css/app.css */
-@source '../../node_modules/@escalated-dev/escalated/src/**/*.vue';
+@import 'tailwindcss';
+@source '../../node_modules/@escalated-dev/escalated/src';
 ```
 
-Adjust the relative path if your CSS file lives somewhere else.
+The path is relative to the CSS file; adjust it if yours lives somewhere else. Both snippets include the `.js` files as well as the `.vue` files: some badge colours are defined there.
 
 ### 2. Page Resolver
 
