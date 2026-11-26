@@ -60,3 +60,74 @@ it('refreshes and revokes the previous mobile token', function () {
     ])->assertOk()
         ->assertJsonPath('data.email', 'refresh@example.com');
 });
+
+function refreshMobileToken($test, string $plainText): ApiToken
+{
+    $refresh = $test->postJson('/support/api/v1/mobile/auth/refresh', [], [
+        'Authorization' => 'Bearer '.$plainText,
+    ])->assertOk()->json();
+
+    return ApiToken::findByPlainText($refresh['token']);
+}
+
+function mobileRefreshUser(): TestUser
+{
+    return TestUser::create([
+        'name' => 'Refresh User',
+        'email' => 'refresh-'.uniqid().'@example.com',
+        'password' => bcrypt('password123'),
+    ]);
+}
+
+it('keeps the original expiry when refreshing a token with no configured expiry', function () {
+    config(['escalated.api.token_expiry_days' => null]);
+    $expiresAt = now()->addDays(10)->startOfSecond();
+    $result = ApiToken::createToken(mobileRefreshUser(), 'Staff token', ['*'], $expiresAt);
+
+    $new = refreshMobileToken($this, $result['plainTextToken']);
+
+    expect($new->expires_at)->not->toBeNull()
+        ->and($new->expires_at->timestamp)->toBe($expiresAt->timestamp);
+});
+
+it('never moves the expiry later than the original token', function () {
+    config(['escalated.api.token_expiry_days' => 30]);
+    $expiresAt = now()->addDays(5)->startOfSecond();
+    $result = ApiToken::createToken(mobileRefreshUser(), 'Mobile Login', ['customer'], $expiresAt);
+
+    $new = refreshMobileToken($this, $result['plainTextToken']);
+
+    expect($new->expires_at->timestamp)->toBe($expiresAt->timestamp);
+});
+
+it('uses the configured expiry when it ends before the original token', function () {
+    config(['escalated.api.token_expiry_days' => 30]);
+    $result = ApiToken::createToken(mobileRefreshUser(), 'Mobile Login', ['customer'], now()->addDays(60));
+
+    $new = refreshMobileToken($this, $result['plainTextToken']);
+
+    expect(abs($new->expires_at->timestamp - now()->addDays(30)->timestamp))->toBeLessThan(5);
+});
+
+it('keeps a token without expiry unbounded only when no expiry is configured', function () {
+    config(['escalated.api.token_expiry_days' => null]);
+    $result = ApiToken::createToken(mobileRefreshUser(), 'Mobile Login', ['customer']);
+    expect(refreshMobileToken($this, $result['plainTextToken'])->expires_at)->toBeNull();
+
+    config(['escalated.api.token_expiry_days' => 30]);
+    $result = ApiToken::createToken(mobileRefreshUser(), 'Mobile Login', ['customer']);
+    $new = refreshMobileToken($this, $result['plainTextToken']);
+    expect(abs($new->expires_at->timestamp - now()->addDays(30)->timestamp))->toBeLessThan(5);
+});
+
+it('keeps the abilities and name of the refreshed token', function () {
+    config(['escalated.api.token_expiry_days' => null]);
+    $user = mobileRefreshUser();
+    $result = ApiToken::createToken($user, 'Staff token', ['*'], now()->addDays(10));
+
+    $new = refreshMobileToken($this, $result['plainTextToken']);
+
+    expect($new->abilities)->toBe(['*'])
+        ->and($new->name)->toBe('Staff token')
+        ->and($new->tokenable_id)->toBe($user->getKey());
+});

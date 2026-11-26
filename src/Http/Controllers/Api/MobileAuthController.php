@@ -71,10 +71,20 @@ class MobileAuthController extends Controller
         $apiToken = $request->attributes->get('api_token');
         $user = $request->user();
 
+        // The replacement keeps the original abilities and name, and never
+        // outlives the original token: its expiry is the earlier of the
+        // original expiry and the configured mobile token lifetime.
         $abilities = $apiToken->abilities ?? ['customer'];
+        $expiresAt = $this->configuredExpiry();
+
+        if ($apiToken->expires_at && (! $expiresAt || $apiToken->expires_at->lt($expiresAt))) {
+            $expiresAt = $apiToken->expires_at;
+        }
+
+        $name = $apiToken->name ?: 'Mobile Refresh';
         $apiToken->delete();
 
-        return $this->tokenResponse($user, 'Mobile Refresh', 200, $abilities);
+        return $this->tokenResponse($user, $name, 200, $abilities, $expiresAt);
     }
 
     public function validateToken(Request $request): JsonResponse
@@ -108,11 +118,17 @@ class MobileAuthController extends Controller
         ]);
     }
 
-    protected function tokenResponse(mixed $user, string $tokenName, int $status = 200, array $abilities = ['customer']): JsonResponse
+    protected function configuredExpiry(): ?\DateTimeInterface
+    {
+        $expiryDays = config('escalated.api.token_expiry_days');
+
+        return is_numeric($expiryDays) ? now()->addDays((int) $expiryDays) : null;
+    }
+
+    protected function tokenResponse(mixed $user, string $tokenName, int $status = 200, array $abilities = ['customer'], ?\DateTimeInterface $expiresAt = null): JsonResponse
     {
         abort_unless(app(TenantContext::class)->canAccess($user), 403);
-        $expiryDays = config('escalated.api.token_expiry_days');
-        $expiresAt = is_numeric($expiryDays) ? now()->addDays((int) $expiryDays) : null;
+        $expiresAt ??= $this->configuredExpiry();
         $token = ApiToken::createToken($user, $tokenName, $abilities, $expiresAt);
 
         return response()->json([

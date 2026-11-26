@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Security
+- **Mobile token refresh:** `POST {mobile_prefix}/auth/refresh` now issues a replacement that keeps the original token's name and abilities and never expires later than the original. Its expiry is the earlier of the original expiry and `escalated.api.token_expiry_days`; a token without an expiry gets the configured lifetime, or none when that is unset. Before, a refreshed token took a fresh `token_expiry_days` expiry (none by default), so refreshing could outlast the expiry an admin set. Customer sessions refreshed by the mobile app now end when the original login's expiry is reached, and the app signs in again.
+
 ## [1.9.19] - 2026-11-26
 
 ### Upgrading
