@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.9.19] - 2026-11-26
+
 ### Upgrading
 - **Inbound email settings:** with `ESCALATED_INBOUND_EMAIL` on, choosing IMAP (or another provider) on the Settings page now decides whether `escalated:poll-imap` is scheduled, and switching inbound email off there stops it. With `ESCALATED_INBOUND_EMAIL` off the Settings page shows a note instead of the inbound controls, which had no effect. The unused SES region field is gone.
 - **`ctx.agents.all` returns staff only** (agents and admins by the staff gates or `agent_scope`), as `{id, name, email}`. It used to return every user.
