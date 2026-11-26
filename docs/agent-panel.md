@@ -29,6 +29,60 @@ Agents (not customers) get two shared props in `escalated`:
 With roles & permissions on, the route needs no permission: it is personal.
 No event is emitted; the event vocabulary has none for it.
 
+## Live chat
+
+Agents run their own chats through agent routes. They take the same bodies as
+the admin `escalated.admin.chat.*` routes, which are unchanged and still
+admin-only.
+
+| Route | Name | Who | Body | Answer |
+|---|---|---|---|---|
+| `GET /{prefix}/agent/chat/active` | `escalated.agent.chat.active` | any agent | | `{ "sessions": [chat] }`, the agent's own active chats |
+| `GET /{prefix}/agent/chat/queue` | `escalated.agent.chat.queue` | any agent | | `{ "sessions": [chat] }`, waiting chats, oldest first |
+| `POST /{prefix}/agent/chat/{session}/accept` | `escalated.agent.chat.accept` | any agent who can see the ticket | | `{ "message", "session" }`; 422 when the chat is not waiting |
+| `POST /{prefix}/agent/chat/{session}/end` | `escalated.agent.chat.end` | the chat's agent, admins | | `{ "message" }`; closes the ticket |
+| `POST /{prefix}/agent/chat/{session}/transfer` | `escalated.agent.chat.transfer` | the chat's agent, admins | `{ "agent_id" }` or `{ "department_id" }` | `{ "message", "session" }`; 422 when the agent is not staff or cannot see the ticket |
+| `POST /{prefix}/agent/chat/{session}/message` | `escalated.agent.chat.message` | the chat's agent, admins | `{ "body", "is_internal_note"? }` | `{ "message", "reply_id" }` |
+| `POST /{prefix}/agent/chat/{session}/typing` | `escalated.agent.chat.typing` | the chat's agent, admins | | `{ "message" }` |
+
+`{session}` is the numeric chat session id (`ticket.chat_session_id`), not the
+visitor's widget token. Another agent gets a 403, a chat on a ticket the agent
+cannot see a 404, and message or typing on an ended chat a 422.
+
+- A message is written as the signed-in agent and broadcast as `chat.message`.
+  With `is_internal_note: true` it is an internal note on the ticket instead and
+  is not sent to the visitor (the admin message route does the same).
+- Typing broadcasts `chat.typing` with the name of the agent typing in
+  `user_name` (the admin route now does too).
+- With roles & permissions on, `active` and `queue` need `ticket.view`, the
+  rest `reply.create`.
+
+While live chat is on (`chat_enabled`), agents get these shared props in
+`escalated`; while it is off only `chat_enabled: false` is sent:
+
+- `chat_enabled`: whether live chat is on (sent to everyone);
+- `active_chats`: the agent's own active chats, newest first, at most 25;
+- `chat_queue`: waiting chats the agent can see, oldest first, at most 25.
+
+A `chat` is `{ id, status, agent_id, ticket_id, ticket_reference, subject,
+customer_name, customer_email, department: { id, name } | null, first_message,
+last_message, last_message_at, started_at, created_at }`. `id` is the chat
+session id.
+
+The agent ticket list takes `live_chat=1` (`escalated.agent.tickets.index`),
+which lists the chats in progress.
+
+### Who wrote a chat line
+
+A chat line is the agent's when it has an author who is not the ticket's
+requester (`Ticket::isChatAgentReply()`). This is decided by identity, so it
+works when staff and customers are the same user model. On a ticket that has a
+requester, such as a widget chat under `guest_policy_mode = guest_user`, the
+visitor's messages (the opening one included) are written as the requester's.
+The reply listeners then treat them as the customer's own: they do not count as
+the first response and do not notify the requester. The widget and the
+`chat.message` event name the visitor with the name they gave.
+
 ## Knowledge-base search
 
 `GET /{prefix}/agent/kb/search?q=...` (`escalated.agent.kb.search`) feeds the

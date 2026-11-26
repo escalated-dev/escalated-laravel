@@ -56,7 +56,7 @@ class TicketController extends Controller
         $filters = $inbox->normaliseFilters($request->only([
             'status', 'priority', 'ticket_type', 'assigned', 'assigned_to', 'unassigned', 'department_id',
             'account_type', 'account_id', 'search', 'sla_breached', 'sla_at_risk', 'resolved_today', 'open',
-            'updated_within_hours', 'tag_ids', 'sort_by', 'sort_dir', 'per_page', 'following', 'view',
+            'updated_within_hours', 'tag_ids', 'sort_by', 'sort_dir', 'per_page', 'following', 'view', 'live_chat',
         ]), $agent);
 
         $queue = $inbox->queueFor($filters, $agent);

@@ -104,9 +104,10 @@ final class RoutePermissions
             'escalated.admin.chat.routing-rules.*' => ['settings.manage'],
             'escalated.admin.chat.settings' => ['settings.view'],
             'escalated.admin.chat.settings.update' => ['settings.manage'],
-            'escalated.admin.chat.active' => ['ticket.view'],
-            'escalated.admin.chat.queue' => ['ticket.view'],
+            'escalated.*.chat.active' => ['ticket.view'],
+            'escalated.*.chat.queue' => ['ticket.view'],
             'escalated.admin.chat.*' => ['reply.create'],
+            'escalated.agent.chat.*' => ['reply.create'],
 
             // ---- Reports -----------------------------------------------------
             'escalated.admin.reports.export' => ['report.export'],

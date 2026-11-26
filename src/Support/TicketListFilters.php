@@ -3,6 +3,7 @@
 namespace Escalated\Laravel\Support;
 
 use Escalated\Laravel\Contracts\Ticketable;
+use Escalated\Laravel\Enums\TicketChannel;
 use Escalated\Laravel\Enums\TicketStatus;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -25,6 +26,7 @@ final class TicketListFilters
             'sla_at_risk' => ['nullable', 'boolean'],
             'resolved_today' => ['nullable', 'boolean'],
             'updated_within_hours' => ['nullable', 'integer', 'min:1', 'max:8760'],
+            'live_chat' => ['nullable', 'boolean'],
         ];
     }
 
@@ -41,6 +43,11 @@ final class TicketListFilters
 
         if (self::flag($filters, 'open')) {
             $query->open();
+        }
+
+        // Chats in progress (the agent panel's Live chats link).
+        if (self::flag($filters, 'live_chat')) {
+            $query->where('status', TicketStatus::Live->value)->where('channel', TicketChannel::Chat->value);
         }
 
         if (! empty($filters['priority'])) {

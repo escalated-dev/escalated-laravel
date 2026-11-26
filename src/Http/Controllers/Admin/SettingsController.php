@@ -39,8 +39,9 @@ class SettingsController extends Controller
         return $this->renderer->render('Escalated/Admin/Settings', [
             'settings' => $this->getSettings(),
             // Exactly the keys update() saves. The shared Settings page hides
-            // the controls this host does not store (live chat and widget
-            // appearance live elsewhere here) instead of discarding them.
+            // the controls this host does not store (the other live chat
+            // options and widget appearance live elsewhere here) instead of
+            // discarding them.
             'supported_settings' => $supported,
             'inbound_email_notice' => $inboundNotice,
             // Warns when the recurring commands are not running.
@@ -80,6 +81,7 @@ class SettingsController extends Controller
             'knowledge_base_public' => ['sometimes', 'boolean'],
             'knowledge_base_feedback_enabled' => ['sometimes', 'boolean'],
             'widget_enabled' => ['sometimes', 'boolean'],
+            'chat_enabled' => ['sometimes', 'required', 'boolean'],
             'two_factor_required' => ['sometimes', 'boolean'],
             'widget_color' => ['sometimes', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'widget_position' => ['sometimes', 'string', 'in:bottom-right,bottom-left'],
@@ -139,6 +141,7 @@ class SettingsController extends Controller
             'knowledge_base_public' => EscalatedSettings::getBool('knowledge_base_public', true),
             'knowledge_base_feedback_enabled' => EscalatedSettings::getBool('knowledge_base_feedback_enabled', true),
             'widget_enabled' => EscalatedSettings::getBool('widget_enabled', false),
+            'chat_enabled' => EscalatedSettings::getBool('chat_enabled', false),
             'two_factor_required' => EscalatedSettings::getBool('two_factor_required', (bool) config('escalated.two_factor.required', false)),
             'widget_color' => EscalatedSettings::get('widget_color', '#4F46E5'),
             'widget_position' => EscalatedSettings::get('widget_position', 'bottom-right'),

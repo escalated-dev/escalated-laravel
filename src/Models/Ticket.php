@@ -605,16 +605,36 @@ class Ticket extends Model
 
         return $replies
             ->reject(fn ($r) => $r->is_internal_note)
-            ->map(fn ($r) => [
-                'id' => $r->id,
-                'body' => $r->body,
-                'is_internal_note' => false,
-                'is_agent' => $r->author_type !== null && $r->author_type !== $this->requester_type,
-                'author' => $r->author ? ['id' => $r->author->getKey(), 'name' => $r->author->name] : null,
-                'created_at' => $r->created_at?->toIso8601String(),
-            ])
+            ->map(function ($r) {
+                $isAgent = $this->isChatAgentReply($r);
+
+                return [
+                    'id' => $r->id,
+                    'body' => $r->body,
+                    'is_internal_note' => false,
+                    'is_agent' => $isAgent,
+                    'author' => $r->author ? [
+                        'id' => $r->author->getKey(),
+                        // A guest's lines written as the ticket's requester
+                        // (guest_policy_mode = guest_user) carry the guest's name.
+                        'name' => ! $isAgent && $this->guest_name ? $this->guest_name : $r->author->name,
+                    ] : null,
+                    'created_at' => $r->created_at?->toIso8601String(),
+                ];
+            })
             ->values()
             ->toArray();
+    }
+
+    /**
+     * Whether a chat line came from staff: it has an author who is not the
+     * ticket's requester. Decided by identity, not by account type, as staff
+     * and customers are often the same user model.
+     */
+    public function isChatAgentReply(Reply $reply): bool
+    {
+        return $reply->author_type !== null
+            && ! $this->isRequesterIdentity($reply->author_type, $reply->author_id);
     }
 
     public function getRequesterTicketCountAttribute(): int

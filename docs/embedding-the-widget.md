@@ -66,7 +66,9 @@ Requests from any other origin, and same-origin requests, are handled exactly
 as before, including the CSRF check. Guest email verification, rate limits and
 the `widget_enabled`, `guest_tickets_enabled` and `chat_enabled` switches apply
 to embedded requests unchanged. While a switch is off, its routes answer 404
-(chat availability still answers `{"available": false}`).
+(chat availability still answers `{"available": false}`). Live chat is off on
+a new install; admins turn it on under **Settings > Live Chat > Enable Live
+Chat** (`chat_enabled`).
 
 ### Host parameters
 
