@@ -3733,6 +3733,17 @@
             "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
         ]
     },
+    "escalated.api.meta": {
+        "uri": "support/api/v1/meta",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "throttle:60,1"
+        ]
+    },
     "escalated.api.mobile.auth.login": {
         "uri": "support/api/v1/mobile/auth/login",
         "methods": [

@@ -77,6 +77,7 @@ class TicketResource extends JsonResource
                     ->all()
                 : [],
             'resolved_at' => $this->resolved_at?->toIso8601String(),
+            'last_customer_reply_at' => $this->last_customer_activity_at?->toIso8601String(),
             'closed_at' => $this->closed_at?->toIso8601String(),
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),

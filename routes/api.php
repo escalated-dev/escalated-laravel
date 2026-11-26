@@ -2,6 +2,7 @@
 
 use Escalated\Laravel\Http\Controllers\Api\AuthController;
 use Escalated\Laravel\Http\Controllers\Api\DashboardController;
+use Escalated\Laravel\Http\Controllers\Api\MetaController;
 use Escalated\Laravel\Http\Controllers\Api\ReportController;
 use Escalated\Laravel\Http\Controllers\Api\ResourceController;
 use Escalated\Laravel\Http\Controllers\Api\TicketController;
@@ -11,6 +12,14 @@ use Escalated\Laravel\Http\Middleware\AuthenticateApiToken;
 use Escalated\Laravel\Http\Middleware\EnforceRoutePermissions;
 use Escalated\Laravel\Http\Middleware\ResolveTicketByReference;
 use Illuminate\Support\Facades\Route;
+
+// Public discovery endpoint: no token required, an optional Bearer token only
+// adds backend_version to the answer.
+Route::middleware('throttle:60,1')
+    ->prefix(config('escalated.api.prefix', 'support/api/v1'))
+    ->group(function () {
+        Route::get('/meta', MetaController::class)->name('escalated.api.meta');
+    });
 
 // Agent-level routes (require 'agent' ability)
 Route::middleware([AuthenticateApiToken::class.':agent', ApiRateLimit::class, EnforceRoutePermissions::class])

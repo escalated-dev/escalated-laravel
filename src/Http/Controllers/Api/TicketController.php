@@ -38,9 +38,10 @@ class TicketController extends Controller
         Gate::forUser($request->user())->authorize('viewAny', Ticket::class);
         $request->validate([
             'per_page' => 'sometimes|integer|min:1|max:100',
+            'updated_since' => ['nullable', 'date'],
         ]);
 
-        $filters = $request->only(['status', 'priority', 'ticket_type', 'assigned_to', 'unassigned', 'department_id', 'account_type', 'account_id', 'search', 'sla_breached', 'tag_ids', 'sort_by', 'sort_dir', 'per_page', 'following']);
+        $filters = $request->only(['updated_since', 'status', 'priority', 'ticket_type', 'assigned_to', 'unassigned', 'department_id', 'account_type', 'account_id', 'search', 'sla_breached', 'tag_ids', 'sort_by', 'sort_dir', 'per_page', 'following']);
         $filters['per_page'] = min((int) ($filters['per_page'] ?? 15), 100);
 
         $tickets = $this->ticketService->list(

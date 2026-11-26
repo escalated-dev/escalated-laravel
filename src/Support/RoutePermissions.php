@@ -51,6 +51,7 @@ final class RoutePermissions
             'escalated.agent.dashboard' => ['ticket.view'],
             'escalated.api.dashboard' => ['ticket.view'],
             'escalated.api.auth.validate' => [],
+            'escalated.api.meta' => [],
             'escalated.api.realtime' => ['ticket.view'],
             'escalated.admin.agents.search' => ['ticket.view'],
             'escalated.api.agents' => ['ticket.view'],
