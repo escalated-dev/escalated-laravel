@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.9.18] - 2026-11-25
+
 ### Upgrading
 - **The Slack inbound route is registered only while `escalated.slack.enabled` is on.** Installs using Slack already have it on; others lose an unused unauthenticated route. The flag can now also come from `ESCALATED_SLACK_ENABLED`.
 - **Recurring jobs:** `escalated.scheduling.auto_register` now reads `ESCALATED_SCHEDULE_AUTO_REGISTER` (default false, unchanged). A `config/escalated.php` published earlier keeps its own value. Admins now see a warning on Settings and Reports when `escalated:check-sla` has not run for 15 minutes; if you schedule the commands, nothing to do.
