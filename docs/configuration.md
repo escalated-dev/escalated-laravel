@@ -165,8 +165,28 @@ Define which status transitions are allowed:
 'authorization' => [
     'admin_gate' => 'escalated-admin',
     'agent_gate' => 'escalated-agent',
+    'agent_scope' => null,
 ],
 ```
+
+Staff access always comes from these gates. Where Escalated lists staff (the
+skill form, @mention suggestions, the agent pickers, a plugin's `ctx.agents.all`)
+it uses `agent_scope` when you set one, otherwise it checks the gates against the
+first 500 users (for @mention suggestions, the first 50 that match the search).
+Set `agent_scope` if you have more users than that. Without a scope, the skill
+form still lists users by their `is_agent` / `is_admin` columns when the table
+has them.
+
+### Host user schema
+
+Escalated only assumes your users table has its key and `email`:
+
+- `user_display_column` (default `name`) is the column shown as a user's name.
+  When the table has no such column (split `first_name` / `last_name`, say),
+  searches, mentions, the audit log and the skill form use `email` instead.
+- The admin **Users** page switches write `is_admin` and `is_agent`. Without
+  those columns the page still lists users and shows each one's access as your
+  gates decide it, but the switches are read-only: change access in your app.
 
 ## Cloud/Synced Mode
 

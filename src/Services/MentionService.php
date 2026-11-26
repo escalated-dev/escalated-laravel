@@ -7,6 +7,7 @@ use Escalated\Laravel\Models\Mention;
 use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Notifications\MentionNotification;
 use Escalated\Laravel\Support\StaffAccess;
+use Escalated\Laravel\Support\StaffDirectory;
 use Illuminate\Support\Collection;
 
 class MentionService
@@ -29,31 +30,34 @@ class MentionService
         // Match @{Full Name} (braces format)
         preg_match_all('/@\{([^}]+)\}/', $body, $bracedMatches);
 
-        // Match @username (single word, no braces)
-        preg_match_all('/@([a-zA-Z0-9_.-]+)(?![^{]*\})/', $body, $simpleMatches);
+        // Match @username (single word, no braces). An @ that follows a word
+        // character is part of an email address (jo@example.com), not a
+        // mention, and a trailing full stop ends the sentence, not the name.
+        preg_match_all('/(?<![A-Za-z0-9_.+-])@([a-zA-Z0-9_.-]+)(?![^{]*\})/', $body, $simpleMatches);
+        $simple = array_map(fn ($name) => rtrim($name, '.-'), $simpleMatches[1] ?? []);
 
-        $names = array_merge($bracedMatches[1] ?? [], $simpleMatches[1] ?? []);
+        $names = array_filter(array_merge($bracedMatches[1] ?? [], $simple), fn ($name) => trim($name) !== '');
 
         if (empty($names)) {
             return [];
         }
 
-        $userModel = Escalated::userModel();
-        $displayColumn = Escalated::userDisplayColumn();
+        // The display column falls back to email on hosts without it
+        // (no `name` column), as the requester search does.
+        $displayColumn = Escalated::userSearchableDisplayColumn();
+        $keyName = Escalated::newUserModel()->getKeyName();
 
-        $names = array_unique(array_map('trim', $names));
+        $names = array_values(array_unique(array_map('trim', $names)));
 
         $users = Escalated::userQuery()
             ->where(function ($query) use ($names, $displayColumn) {
-                foreach ($names as $name) {
-                    $query->orWhere($displayColumn, $name);
-                }
-                // Also try matching email for simple @username format
-                foreach ($names as $name) {
-                    $query->orWhere('email', $name);
+                $query->whereIn($displayColumn, $names);
+                if ($displayColumn !== 'email') {
+                    // Also try matching email for simple @username format
+                    $query->orWhereIn('email', $names);
                 }
             })
-            ->pluck('id')
+            ->pluck($keyName)
             ->all();
 
         return array_values(array_unique($users));
@@ -112,36 +116,18 @@ class MentionService
     }
 
     /**
-     * Search agents by name or email for autocomplete.
+     * Search agents by name or email for autocomplete. Only users the staff
+     * gates (or `escalated.authorization.agent_scope`) treat as agents or
+     * admins are suggested.
      */
     public function getAgentSuggestions(string $query): Collection
     {
-        $userModel = Escalated::userModel();
-        $displayColumn = Escalated::userDisplayColumn();
+        $search = Escalated::userQuery()
+            ->where(fn ($q) => Escalated::applyUserSearch($q, $query));
 
-        return Escalated::userQuery()
-            ->where(function ($q) use ($query, $displayColumn) {
-                $q->where($displayColumn, 'like', "%{$query}%")
-                    ->orWhere('email', 'like', "%{$query}%");
-            })
-            ->limit(10)
-            ->get()
-            ->filter(function ($user) {
-                if (method_exists($user, 'escalated_agent') && $user->escalated_agent()) {
-                    return true;
-                }
-                if (method_exists($user, 'escalated_admin') && $user->escalated_admin()) {
-                    return true;
-                }
-
-                // Fallback: check common boolean attributes
-                return ! empty($user->is_agent) || ! empty($user->is_admin);
-            })
-            ->map(fn ($user) => [
-                'id' => $user->getKey(),
-                'name' => $user->name,
-                'email' => $user->email,
-            ])
+        return StaffDirectory::staff($search, 50)
+            ->take(10)
+            ->map(fn ($user) => StaffDirectory::row($user))
             ->values();
     }
 }

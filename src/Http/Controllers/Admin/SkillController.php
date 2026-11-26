@@ -8,6 +8,7 @@ use Escalated\Laravel\Models\Department;
 use Escalated\Laravel\Models\Skill;
 use Escalated\Laravel\Models\Tag;
 use Escalated\Laravel\Support\StaffAccess;
+use Escalated\Laravel\Support\StaffDirectory;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -139,16 +140,14 @@ class SkillController extends Controller
 
     /**
      * Closure rule asserting the user_id refers to a user who qualifies as an
-     * agent (`is_agent` or `is_admin` truthy on the host's User model). Skips
-     * the check when neither column exists, matching formPayload()'s fallback.
+     * agent: `is_agent` or `is_admin` truthy on the host's User model, or the
+     * staff gates when neither column exists or `agent_scope` is set (as
+     * formPayload() lists).
      */
     protected function agentRoleRule(string $userModel, string $userKey, array $roleColumns): \Closure
     {
         return function ($attribute, $value, $fail) use ($userKey, $roleColumns): void {
             $tenancy = app(TenantContext::class)->enabled();
-            if ($roleColumns === [] && ! $tenancy) {
-                return;
-            }
 
             $user = Escalated::userQuery()->where($userKey, $value)->first();
             if ($user === null) {
@@ -158,6 +157,16 @@ class SkillController extends Controller
             // Host role columns are global; merchants need a tenant-local seat.
             if ($tenancy) {
                 if (! StaffAccess::isAgent($user)) {
+                    $fail('The selected '.$attribute.' is not an agent.');
+                }
+
+                return;
+            }
+
+            // No role columns, or an agent_scope: the host decides staff
+            // through its gates.
+            if ($roleColumns === [] || $this->hasAgentScope()) {
+                if (! StaffAccess::isStaff($user)) {
                     $fail('The selected '.$attribute.' is not an agent.');
                 }
 
@@ -185,6 +194,13 @@ class SkillController extends Controller
         return array_values(array_intersect(['is_agent', 'is_admin'], $columns));
     }
 
+    protected function hasAgentScope(): bool
+    {
+        $scope = config('escalated.authorization.agent_scope');
+
+        return $scope && is_callable($scope);
+    }
+
     protected function syncAgents(Skill $skill, array $agents): void
     {
         $payload = collect($agents)
@@ -201,33 +217,36 @@ class SkillController extends Controller
         $userModel = Escalated::userModel();
         $userInstance = new $userModel;
         $userTable = $userInstance->getTable();
-        $userKey = $userInstance->getKeyName();
 
-        $agentQuery = Escalated::userQuery()->orderBy('name');
-        $columns = Escalated::userSchema()->getColumnListing($userTable);
-        if (in_array('is_agent', $columns, true) || in_array('is_admin', $columns, true)) {
-            $agentQuery->where(function ($query) use ($columns) {
-                if (in_array('is_agent', $columns, true)) {
-                    $query->orWhere('is_agent', true);
-                }
-                if (in_array('is_admin', $columns, true)) {
-                    $query->orWhere('is_admin', true);
-                }
-            });
+        // The display column falls back to email on hosts without `name`.
+        $agentQuery = Escalated::userQuery()->orderBy(Escalated::userSearchableDisplayColumn());
+        $roleColumns = $this->userRoleColumns($userTable);
+
+        $onlyFlagged = function () use ($agentQuery, $roleColumns) {
+            if ($roleColumns !== []) {
+                $agentQuery->where(function ($query) use ($roleColumns) {
+                    foreach ($roleColumns as $column) {
+                        $query->orWhere($column, true);
+                    }
+                });
+            }
+
+            return $agentQuery;
+        };
+
+        if (app(TenantContext::class)->enabled()) {
+            // Tenant seats are decided per host model, so load whole rows there.
+            $agents = $onlyFlagged()->get()->filter(fn ($agent) => StaffAccess::isAgent($agent));
+        } elseif ($roleColumns !== [] && ! $this->hasAgentScope()) {
+            $agents = $onlyFlagged()->get();
+        } else {
+            // agent_scope, or no role columns to read: ask the staff gates.
+            $agents = StaffDirectory::staff($agentQuery);
         }
-
-        // Tenant seats are decided per host model, so load whole rows there.
-        $agents = app(TenantContext::class)->enabled()
-            ? $agentQuery->get()->filter(fn ($agent) => StaffAccess::isAgent($agent))
-            : $agentQuery->get([$userKey, 'name', 'email']);
 
         return [
             'availableAgents' => $agents
-                ->map(fn ($agent) => [
-                    'id' => $agent->getKey(),
-                    'name' => $agent->name,
-                    'email' => $agent->email,
-                ])
+                ->map(fn ($agent) => StaffDirectory::row($agent))
                 ->values(),
             'availableTags' => Tag::query()->orderBy('name')->get(['id', 'name', 'color']),
             'availableDepartments' => Department::query()->orderBy('name')->get(['id', 'name']),

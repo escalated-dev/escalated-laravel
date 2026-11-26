@@ -299,6 +299,32 @@ class Escalated
     }
 
     /**
+     * A user's name for display: the configured display column (an attribute
+     * or accessor such as `name`), otherwise their email. Hosts whose users
+     * table has no `name` column still get a readable label.
+     */
+    public static function userDisplayName(mixed $user, ?string $fallback = null): ?string
+    {
+        if (! $user instanceof Model) {
+            return $fallback;
+        }
+
+        foreach (array_unique([static::userDisplayColumn(), 'email']) as $attribute) {
+            try {
+                $value = $user->getAttribute($attribute);
+            } catch (\Throwable) {
+                // Strict models refuse attributes that were not selected.
+                $value = null;
+            }
+            if (is_scalar($value) && trim((string) $value) !== '') {
+                return (string) $value;
+            }
+        }
+
+        return $fallback;
+    }
+
+    /**
      * Apply a requester search term to a user-model query.
      *
      * Searches the configured display column (typically `name`) and

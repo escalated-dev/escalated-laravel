@@ -19,6 +19,7 @@ use Escalated\Laravel\Services\SlackInbox;
 use Escalated\Laravel\Services\TicketService;
 use Escalated\Laravel\Support\PluginActionGuard;
 use Escalated\Laravel\Support\PluginEvents;
+use Escalated\Laravel\Support\StaffDirectory;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -973,12 +974,13 @@ class ContextHandler
 
     private function agentsAll(): array
     {
-        $model = Escalated::userModel();
-
-        // Return users that have agent or admin gate access — we rely on the
-        // application's user model structure. The simplest approach is to
-        // return all users; the host application can filter via gates if needed.
-        return Escalated::userQuery()->select('id', 'name', 'email')->get()->toArray();
+        // Agents and admins by the host's staff gates (or agent_scope), as
+        // {id, name, email}. Assumes no `name` column: the display column
+        // falls back to email.
+        return StaffDirectory::staff()
+            ->map(fn ($user) => StaffDirectory::row($user))
+            ->values()
+            ->all();
     }
 
     private function agentsFind(array $params): ?array

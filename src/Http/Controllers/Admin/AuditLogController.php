@@ -39,12 +39,18 @@ class AuditLogController extends Controller
             $query->where('created_at', '<=', $request->input('date_to').' 23:59:59');
         }
 
-        $userModel = Escalated::userModel();
+        // The display column falls back to email on hosts without `name`.
+        $displayColumn = Escalated::userSearchableDisplayColumn();
+        $users = Escalated::userQuery()
+            ->orderBy($displayColumn)
+            ->get()
+            ->map(fn ($user) => ['id' => $user->getKey(), 'name' => Escalated::userDisplayName($user)])
+            ->values();
 
         return $this->renderer->render('Escalated/Admin/AuditLog/Index', [
             'logs' => $query->paginate(50)->withQueryString(),
             'filters' => $request->only(['user_id', 'action', 'auditable_type', 'date_from', 'date_to']),
-            'users' => Escalated::userQuery()->select('id', 'name')->orderBy('name')->get(),
+            'users' => $users,
             'actions' => ['created', 'updated', 'deleted'],
             'resourceTypes' => AuditLog::select('auditable_type')->distinct()->pluck('auditable_type'),
         ]);
