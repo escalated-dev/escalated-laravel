@@ -652,10 +652,17 @@ return [
     | Broadcasting / Real-time
     |--------------------------------------------------------------------------
     |
-    | Enable WebSocket broadcasting for core ticket events. Requires a
-    | broadcasting driver (Pusher, Ably, Reverb, Soketi, etc.) configured
-    | in the host application. When disabled (default), the frontend falls
-    | back to polling automatically.
+    | Broadcast ticket, chat and agent-notification events over WebSockets,
+    | and register the channel authorisation for them. Off (the default),
+    | nothing is broadcast. Needs a broadcasting driver (Reverb, Pusher,
+    | Ably, Soketi, ...) in the host app, and Laravel Echo in the browser,
+    | on window.Echo or passed to EscalatedPlugin as `echo`.
+    |
+    | Live chat needs this on: without it agents only see new chats,
+    | messages and typing after reloading. The agent ticket list reloads
+    | itself every 30 seconds without Echo (frontend 0.12.12+); the widget
+    | polls for chat messages either way. See
+    | docs/agent-panel.md#real-time-updates.
     |
     */
     'broadcasting' => [

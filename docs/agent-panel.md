@@ -147,3 +147,32 @@ with the item as the payload.
 
 The routes need no permission under roles & permissions: they are personal.
 Muting notification types per agent is not built yet.
+
+## Real-time updates
+
+The agent screens update live through Laravel Echo. Three things are needed:
+
+1. `ESCALATED_BROADCASTING_ENABLED=true` (`escalated.broadcasting.enabled`).
+   While it is off no event is broadcast and the `escalated.*` channels have
+   no authorisation, so subscriptions fail.
+2. A broadcasting driver in your app (Reverb, Pusher, Ably, Soketi, ...).
+3. Echo in the browser. The frontend looks for `window.Echo`. If your app keeps
+   its Echo instance in a module instead, pass it to the plugin (frontend
+   0.12.12 and later):
+
+   ```js
+   import echo from './echo';
+
+   app.use(EscalatedPlugin, { echo });
+   ```
+
+Without Echo:
+
+- the agent ticket list reloads itself every 30 seconds (frontend 0.12.12 and
+  later; `app.use(EscalatedPlugin, { pollInterval: 0 })` turns that off, or
+  pass another number of milliseconds);
+- an open ticket, live chat (new chats, messages, typing) and the
+  notification bell update only when the page is reloaded. Live chat needs
+  broadcasting.
+
+The support widget does not use Echo: it polls for chat messages on its own.
