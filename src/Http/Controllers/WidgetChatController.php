@@ -12,6 +12,7 @@ use Escalated\Laravel\Services\ChatSessionService;
 use Escalated\Laravel\Services\CustomerPresenceTracker;
 use Escalated\Laravel\Services\GuestAccess;
 use Escalated\Laravel\Support\WidgetMetadata;
+use Escalated\Laravel\Support\WidgetVisitor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -48,11 +49,14 @@ class WidgetChatController extends Controller
             return response()->json(['message' => 'Chat is disabled.'], 404);
         }
 
+        $visitor = WidgetVisitor::trusted($request);
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255'],
-            'verification_id' => ['required', 'uuid'],
-            'verification_code' => ['required', 'string', 'max:16'],
+            ...($visitor === null ? [
+                'name' => ['required', 'string', 'max:255'],
+                'email' => ['required', 'email', 'max:255'],
+                'verification_id' => ['required', 'uuid'],
+                'verification_code' => ['required', 'string', 'max:16'],
+            ] : []),
             'subject' => ['nullable', 'string', 'max:255'],
             'message' => ['nullable', 'string', 'max:5000'],
             'department_id' => ['nullable', 'integer', 'exists:'.Department::class.',id'],
@@ -60,7 +64,10 @@ class WidgetChatController extends Controller
         ]);
         $validated['metadata'] = WidgetMetadata::fromRequest($request);
 
-        $result = $this->chatSessionService->startChat($validated);
+        // A signed-in visitor chats under their own account's name and email.
+        $result = $visitor === null
+            ? $this->chatSessionService->startChat($validated)
+            : $this->chatSessionService->startChatWithoutCode([...$validated, ...WidgetVisitor::identity($visitor)]);
 
         if ($ticket = Ticket::query()->withoutGlobalScopes()->where('reference', $result['ticket_reference'] ?? null)->first()) {
             $this->recordPresence($ticket);

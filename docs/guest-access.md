@@ -45,6 +45,30 @@ Expired verification records are removed by the existing scheduled
 command configuration when tenancy is enabled; public requests must resolve the
 merchant through the host's `TenantResolver`, never a posted tenant ID.
 
+## Signed-in visitors on the widget
+
+When the widget runs inside your own app, the visitor is usually signed in
+already. Set `ESCALATED_WIDGET_TRUST_SIGNED_IN=true`
+(`escalated.widget.trust_signed_in_visitors`, default false) to let them skip
+the emailed code:
+
+- `/config` answers `guest_verification_required: false` for such a visitor,
+  and the widget leaves out the code step.
+- A widget ticket or chat is opened under the account's own name (the
+  `user_display_column`, else the email) and email, whatever the form sent.
+- A widget ticket is linked to the account as its requester, so it appears in
+  that user's own ticket list. A chat is not linked yet: it stays a guest chat
+  under the account's email.
+
+Only a same-origin request with a session user of `escalated.user_model`
+qualifies. Requests from sites listed in `allowed_origins` always run as a
+guest and still need the code, as does a visitor whose user model implements
+`MustVerifyEmail` and has not verified their address, and (in tenant mode) a
+user the tenant resolver does not give access to the current account. Fill in
+the form for them with the widget's `prefill` option or `identify()` (see the
+frontend package's embedding guide); the server ignores those values for a
+trusted visitor anyway.
+
 ## Email proof
 
 Each surface exposes POST `verification` and POST `lookup` under its prefix:

@@ -22,7 +22,6 @@ use Escalated\Laravel\Support\PluginEvents;
 use Escalated\Laravel\Support\StaffDirectory;
 use Escalated\Laravel\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Log;

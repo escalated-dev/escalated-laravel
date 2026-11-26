@@ -36,6 +36,16 @@ class ChatSessionService
         );
     }
 
+    /**
+     * Start a chat for a signed-in visitor (WidgetVisitor) without an
+     * emailed code. The caller supplies the account's own name and email.
+     * The chat stays a guest chat: it is not linked to the account.
+     */
+    public function startChatWithoutCode(array $data): array
+    {
+        return Escalated::db()->transaction(fn () => $this->startVerifiedChat($data));
+    }
+
     protected function startVerifiedChat(array $data): array
     {
         $email = GuestEmailVerification::email($data['email']);
