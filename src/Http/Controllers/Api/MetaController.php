@@ -24,8 +24,10 @@ class MetaController extends Controller
             $body['backend_version'] = $this->backendVersion();
         }
 
-        $body['features'] = $this->features();
-        $body['connect_url'] = Route::has('escalated.agent.extension.connect')
+        $hasConnectPage = Route::has('escalated.agent.extension.connect');
+
+        $body['features'] = $this->features($hasConnectPage);
+        $body['connect_url'] = $hasConnectPage
             ? route('escalated.agent.extension.connect')
             : null;
         $body['web_url_template'] = $this->webUrlTemplate();
@@ -36,8 +38,14 @@ class MetaController extends Controller
         ]);
     }
 
-    /** @return list<string> */
-    protected function features(): array
+    /**
+     * auth.exchange is offered only with the connect page that issues the
+     * codes it trades (a headless install has none), so connect_url is null
+     * exactly when it is missing.
+     *
+     * @return list<string>
+     */
+    protected function features(bool $hasConnectPage): array
     {
         $features = [
             'tickets.create',
@@ -46,9 +54,13 @@ class MetaController extends Controller
             'tickets.last_customer_reply_at',
             'canned_responses',
             'macros',
-            'auth.exchange',
-            'auth.revoke',
         ];
+
+        if ($hasConnectPage) {
+            $features[] = 'auth.exchange';
+        }
+
+        $features[] = 'auth.revoke';
 
         if (config('escalated.broadcasting.enabled', false)) {
             $features[] = 'realtime';
