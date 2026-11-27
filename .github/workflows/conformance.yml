@@ -54,18 +54,13 @@ jobs:
           cut -d= -f1 seed.clean
           rm seed.env seed.clean
 
-      - name: Diagnose the API before the suite
-        run: |
-          curl -si http://localhost:8080/support/api/v1/meta | head -20 || true
-          docker compose exec -T app php artisan route:list --path=api/v1 | head -40 || true
-
       # Pinned to the plan 1 commit on the feat/staff-api-contract branch
       # (escalated-developer-context PR #33). Move this pin to the merge
       # commit once that PR lands.
       - name: Fetch the conformance suite
         run: |
           git clone https://github.com/escalated-dev/escalated-developer-context.git "$RUNNER_TEMP/ctx"
-          git -C "$RUNNER_TEMP/ctx" checkout 5cbb2d2
+          git -C "$RUNNER_TEMP/ctx" checkout 05afc5e50a06fa741bb95b28279f93be3138c1ac
 
       - name: Install the suite
         working-directory: ${{ runner.temp }}/ctx/conformance
