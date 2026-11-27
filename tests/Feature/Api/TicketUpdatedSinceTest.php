@@ -86,3 +86,29 @@ it('exposes last_customer_reply_at', function () {
     $this->getJson('/support/api/v1/tickets/'.$without->reference, $agent['headers'])
         ->assertOk()->assertJsonPath('data.last_customer_reply_at', null);
 });
+
+it('matches updated_since after a customer reply on an open ticket', function (string $status) {
+    $agent = sinceAgent();
+    $customer = TestUser::create([
+        'name' => 'Since Customer',
+        'email' => 'since-customer-'.uniqid().'@example.com',
+        'password' => bcrypt('password'),
+    ]);
+    $ticket = sinceTicket($customer, ['status' => $status], now()->subDays(2));
+    $cutoff = now()->subDay()->utc()->format('Y-m-d\TH:i:s\Z');
+
+    $this->getJson('/support/api/v1/tickets?updated_since='.urlencode($cutoff), $agent['headers'])
+        ->assertOk()->assertJsonPath('meta.total', 0);
+
+    $reply = $ticket->addReply($customer, 'Any news?');
+
+    $fresh = $ticket->fresh();
+    expect($fresh->updated_at->equalTo($fresh->last_customer_activity_at))->toBeTrue()
+        ->and($fresh->last_customer_activity_at->equalTo($reply->created_at))->toBeTrue();
+
+    $this->getJson('/support/api/v1/tickets?updated_since='.urlencode($cutoff), $agent['headers'])
+        ->assertOk()
+        ->assertJsonPath('meta.total', 1)
+        ->assertJsonPath('data.0.reference', $ticket->reference)
+        ->assertJsonPath('data.0.last_customer_reply_at', $reply->created_at->toIso8601String());
+})->with(['open', 'in_progress']);
