@@ -101,3 +101,62 @@ it('stores kind and extension id on tokens', function () {
         ->and($token->fresh()->extension_id)->toBe(CODE_EXTENSION)
         ->and($plain->fresh()->kind)->toBeNull();
 });
+
+it('clamps client_name to 64 characters', function () {
+    ApiTokenCode::issue($this->createAgent(), CODE_CHALLENGE, CODE_REDIRECT, str_repeat('é', 70), CODE_EXTENSION);
+
+    expect(ApiTokenCode::sole()->client_name)->toBe(str_repeat('é', 64));
+});
+
+it('mints the token inside the claim and records it on the code', function () {
+    $user = $this->createAgent();
+    $code = issueCode($user);
+    $seen = null;
+
+    $row = ApiTokenCode::consume($code, CODE_VERIFIER, CODE_REDIRECT, function (ApiTokenCode $code) use ($user, &$seen) {
+        $seen = $code;
+
+        return ApiToken::createToken($user, 'Browser extension (Chrome)', ['agent'], null, 'browser_extension', $code->extension_id)['token'];
+    });
+
+    $token = ApiToken::sole();
+
+    expect($seen)->toBeInstanceOf(ApiTokenCode::class)
+        ->and($row->api_token_id)->toBe($token->id)
+        ->and(ApiTokenCode::sole()->api_token_id)->toBe($token->id)
+        ->and($token->extension_id)->toBe(CODE_EXTENSION);
+});
+
+it('burns the code and returns null when the callback mints nothing', function () {
+    $code = issueCode($this->createAgent());
+
+    expect(ApiTokenCode::consume($code, CODE_VERIFIER, CODE_REDIRECT, fn () => null))->toBeNull()
+        ->and(ApiTokenCode::sole()->used_at)->not->toBeNull()
+        ->and(ApiTokenCode::sole()->api_token_id)->toBeNull()
+        ->and(ApiTokenCode::consume($code, CODE_VERIFIER, CODE_REDIRECT))->toBeNull();
+});
+
+it('does not call the callback when the verifier is wrong', function () {
+    $code = issueCode($this->createAgent());
+    $called = false;
+
+    ApiTokenCode::consume($code, str_repeat('a', 43), CODE_REDIRECT, function () use (&$called) {
+        $called = true;
+
+        return null;
+    });
+
+    expect($called)->toBeFalse();
+});
+
+it('revokes the token a callback minted when the code is replayed', function () {
+    $user = $this->createAgent();
+    $code = issueCode($user);
+    $mint = fn (ApiTokenCode $row) => ApiToken::createToken($user, 'Browser extension (Chrome)', ['agent'], null, 'browser_extension', $row->extension_id)['token'];
+
+    ApiTokenCode::consume($code, CODE_VERIFIER, CODE_REDIRECT, $mint);
+    expect(ApiToken::count())->toBe(1);
+
+    expect(ApiTokenCode::consume($code, CODE_VERIFIER, CODE_REDIRECT, $mint))->toBeNull()
+        ->and(ApiToken::count())->toBe(0);
+});

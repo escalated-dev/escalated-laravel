@@ -54,7 +54,7 @@ class ApiTokenCode extends Model
             'tokenable_id' => $user->getKey(),
             'code_challenge' => $codeChallenge,
             'redirect_uri' => $redirectUri,
-            'client_name' => $clientName,
+            'client_name' => mb_substr($clientName, 0, 64),
             'extension_id' => $extensionId,
             'expires_at' => now()->addSeconds($ttlSeconds),
         ]);
@@ -67,10 +67,17 @@ class ApiTokenCode extends Model
      * marks it used; the row comes back only when the verifier and the exact
      * redirect_uri also match. A replayed (already used) code revokes the
      * token it issued.
+     *
+     * $onSuccess, when given, runs inside the same transaction as the claim
+     * with the matched row and returns the token it minted (or null to mint
+     * nothing, which leaves the code burned and returns null). The token id is
+     * written to the code before commit, so a replay can always revoke it.
+     *
+     * @param  (callable(self): ?ApiToken)|null  $onSuccess
      */
-    public static function consume(string $code, string $verifier, string $redirectUri): ?self
+    public static function consume(string $code, string $verifier, string $redirectUri, ?callable $onSuccess = null): ?self
     {
-        return Escalated::db()->transaction(function () use ($code, $verifier, $redirectUri) {
+        return Escalated::db()->transaction(function () use ($code, $verifier, $redirectUri, $onSuccess) {
             $row = static::where('code', hash('sha256', $code))->first();
 
             if (! $row || $row->expires_at->isPast()) {
@@ -80,8 +87,12 @@ class ApiTokenCode extends Model
             $claimed = static::where('id', $row->id)->whereNull('used_at')->update(['used_at' => now()]);
 
             if ($claimed !== 1) {
-                if ($row->api_token_id) {
-                    ApiToken::where('id', $row->api_token_id)->delete();
+                // Re-read with a locking read: the first read may predate the
+                // winning exchange's commit and miss the token it minted.
+                $tokenId = static::where('id', $row->id)->lockForUpdate()->value('api_token_id');
+
+                if ($tokenId) {
+                    ApiToken::where('id', $tokenId)->delete();
                 }
 
                 return null;
@@ -93,7 +104,21 @@ class ApiTokenCode extends Model
                 return null;
             }
 
-            return $row->refresh();
+            $row->refresh();
+
+            if ($onSuccess === null) {
+                return $row;
+            }
+
+            $token = $onSuccess($row);
+
+            if (! $token instanceof ApiToken) {
+                return null;
+            }
+
+            $row->update(['api_token_id' => $token->getKey()]);
+
+            return $row;
         });
     }
 }
