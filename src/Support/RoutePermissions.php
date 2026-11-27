@@ -46,11 +46,16 @@ final class RoutePermissions
             'escalated.admin.two-factor.*' => [],
             'escalated.agent.status' => [],
             'escalated.agent.notifications.*' => [],
+            'escalated.agent.extension.*' => [],
+            'escalated.agent.extensions.*' => [],
 
             // ---- Tickets (admin and agent panels, staff API) --------------
             'escalated.agent.dashboard' => ['ticket.view'],
             'escalated.api.dashboard' => ['ticket.view'],
             'escalated.api.auth.validate' => [],
+            'escalated.api.auth.exchange' => [],
+            'escalated.api.auth.revoke' => [],
+            'escalated.api.meta' => [],
             'escalated.api.realtime' => ['ticket.view'],
             'escalated.admin.agents.search' => ['ticket.view'],
             'escalated.api.agents' => ['ticket.view'],

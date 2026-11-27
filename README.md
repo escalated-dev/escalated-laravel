@@ -182,7 +182,7 @@ Admin > Settings and Reports show a warning when `escalated:check-sla` has not r
 - [Frontend integration and theming](docs/frontend-integration.md) · [Customization](docs/customization.md)
 - [Configuration, hosting modes, events and routes](docs/operations.md) · [Configuration reference](docs/configuration.md)
 - [SLA policies](docs/sla-policies.md) · [Escalation rules](docs/escalation-rules.md) · [Ticket access and routing](docs/ticket-access-and-routing.md)
-- [Inbound email](docs/inbound-email.md) · [Embedding the widget](docs/embedding-the-widget.md) · [Guest access](docs/guest-access.md)
+- [Inbound email](docs/inbound-email.md) · [Embedding the widget](docs/embedding-the-widget.md) · [Guest access](docs/guest-access.md) · [Browser extension](docs/browser-extension.md)
 - [Plugins](docs/plugin-sdk.md) · [Newsletters](docs/newsletters.md) · [Tenancy](docs/tenancy.md)
 
 Escalated is also available for [Rails](https://github.com/escalated-dev/escalated-rails), [Django](https://github.com/escalated-dev/escalated-django), [NestJS](https://github.com/escalated-dev/escalated-nestjs), [AdonisJS](https://github.com/escalated-dev/escalated-adonis), [Symfony](https://github.com/escalated-dev/escalated-symfony), [Phoenix](https://github.com/escalated-dev/escalated-phoenix), [Go](https://github.com/escalated-dev/escalated-go), [.NET](https://github.com/escalated-dev/escalated-dotnet), [Spring](https://github.com/escalated-dev/escalated-spring), [WordPress](https://github.com/escalated-dev/escalated-wordpress) and [Filament](https://github.com/escalated-dev/escalated-filament). The UI lives in [escalated](https://github.com/escalated-dev/escalated).

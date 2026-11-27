@@ -12,7 +12,7 @@ class TicketCollectionResource extends JsonResource
         return [
             'id' => $this->id,
             'reference' => $this->reference,
-            'ticket_type' => $this->ticket_type,
+            'ticket_type' => $this->ticket_type ?? 'question',
             'account' => $this->when(config('escalated.accounts.enabled', false), fn () => $this->account_type !== null ? [
                 'type' => $this->account_type, 'id' => (string) $this->account_id,
             ] : null),
@@ -35,6 +35,7 @@ class TicketCollectionResource extends JsonResource
             ] : null,
             'sla_breached' => $this->sla_first_response_breached || $this->sla_resolution_breached,
             'last_reply_at' => $this->last_reply_at,
+            'last_customer_reply_at' => $this->last_customer_activity_at?->toIso8601String(),
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),
         ];

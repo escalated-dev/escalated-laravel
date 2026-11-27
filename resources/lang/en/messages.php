@@ -97,6 +97,7 @@ return [
         '429' => 'Too many requests. Wait a moment and try again.',
         '500' => 'Something went wrong on our end.',
         '503' => 'The service is temporarily unavailable. Try again shortly.',
+        'extension_connect' => 'This connection request is not valid. Start again from the browser extension.',
     ],
 
     'middleware' => [

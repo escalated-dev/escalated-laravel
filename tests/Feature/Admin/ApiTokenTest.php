@@ -111,3 +111,22 @@ it('creates token with no expiration', function () {
 
     expect(ApiToken::first()->expires_at)->toBeNull();
 });
+
+it('shows each token\'s kind and extension id on the admin list', function () {
+    $admin = adminUser();
+    $agent = agentUser();
+    ApiToken::createToken($agent, 'Desktop App', ['agent']);
+    ApiToken::createToken($agent, 'Browser extension (Escalated for Chrome)', ['agent'], null, 'browser_extension', str_repeat('a', 32));
+
+    $response = $this->actingAs($admin)
+        ->get('/support/admin/api-tokens')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component('Escalated/Admin/ApiTokens/Index', false)->has('tokens', 2));
+
+    $tokens = collect($response->viewData('page')['props']['tokens'])->keyBy('name');
+
+    expect($tokens['Desktop App']['kind'])->toBeNull()
+        ->and($tokens['Desktop App']['extension_id'])->toBeNull()
+        ->and($tokens['Browser extension (Escalated for Chrome)']['kind'])->toBe('browser_extension')
+        ->and($tokens['Browser extension (Escalated for Chrome)']['extension_id'])->toBe(str_repeat('a', 32));
+});

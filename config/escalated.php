@@ -638,6 +638,17 @@ return [
         // endpoints (null = no expiry). A refreshed token never expires later
         // than the token it replaces.
         'token_expiry_days' => null,
+        // Lifetime of tokens issued to the browser extension by
+        // POST {prefix}/auth/exchange (null = no expiry).
+        'extension_token_expiry_days' => null,
+        // Extra redirect_uri patterns the browser extension connect page
+        // accepts besides https://<32 letters a-p>.chromiumapp.org/, as PCRE
+        // strings with delimiters, e.g. '#\Ahttps://(?<id>[a-z0-9]{32})\.example\.org/\z#'.
+        // The whole match must equal the whole redirect_uri, so ^ and $ alone
+        // are not relied on. A named group `id` gives the extension ID;
+        // otherwise it is the first label of the host. See
+        // docs/browser-extension.md.
+        'extension_redirect_patterns' => [],
         'prefix' => 'support/api/v1',
         'mobile_prefix' => 'support/api/v1/mobile',
     ],

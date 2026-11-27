@@ -39,7 +39,7 @@ class DemoSeeder extends Seeder
         $this->seedExtraStatuses();
         $tags = $this->seedTags();
         $this->seedCustomFields();
-        $this->seedMacros($users['admin']);
+        $this->seedMacros($users['admin'], $tags);
         $this->seedCannedResponses($users['admin']);
         $this->seedKnowledgeBase($users['admin']);
         $this->seedEscalationRules($departments);
@@ -220,13 +220,13 @@ class DemoSeeder extends Seeder
         ]);
     }
 
-    protected function seedMacros(User $admin): void
+    protected function seedMacros(User $admin, array $tags): void
     {
         $macros = [
-            ['Close as duplicate',    [['type' => 'status', 'value' => 'solved'], ['type' => 'reply', 'body' => 'Closing as duplicate of another ticket.']]],
-            ['Escalate to manager',   [['type' => 'priority', 'value' => 'urgent'], ['type' => 'note', 'body' => 'Escalating per customer request.']]],
-            ['Approve refund',        [['type' => 'tag_add', 'value' => 'refund'], ['type' => 'reply', 'body' => 'Your refund has been approved and will reach you within 5 business days.']]],
-            ['Ask for more info',     [['type' => 'status', 'value' => 'pending'], ['type' => 'reply', 'body' => 'Could you share the order number and a screenshot of the issue?']]],
+            ['Close as duplicate',    [['type' => 'status', 'value' => 'resolved'], ['type' => 'reply', 'value' => 'Closing as duplicate of another ticket.']]],
+            ['Escalate to manager',   [['type' => 'priority', 'value' => 'urgent'], ['type' => 'note', 'value' => 'Escalating per customer request.']]],
+            ['Approve refund',        [['type' => 'tags', 'value' => [$tags['refund']->id]], ['type' => 'reply', 'value' => 'Your refund has been approved and will reach you within 5 business days.']]],
+            ['Ask for more info',     [['type' => 'status', 'value' => 'waiting_on_customer'], ['type' => 'reply', 'value' => 'Could you share the order number and a screenshot of the issue?']]],
         ];
         foreach ($macros as [$name, $actions]) {
             Macro::create([
@@ -287,7 +287,7 @@ class DemoSeeder extends Seeder
             ],
             'actions' => [
                 ['type' => 'priority', 'value' => 'critical'],
-                ['type' => 'note', 'body' => 'Auto-escalated by rule: urgent ticket unanswered >1h.'],
+                ['type' => 'note', 'value' => 'Auto-escalated by rule: urgent ticket unanswered >1h.'],
             ],
             'is_active' => true,
         ]);

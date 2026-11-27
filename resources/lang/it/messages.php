@@ -97,6 +97,7 @@ return [
         '429' => 'Troppe richieste. Attendi un momento e riprova.',
         '500' => 'Si è verificato un errore da parte nostra.',
         '503' => 'Il servizio non è temporaneamente disponibile. Riprova a breve.',
+        'extension_connect' => "Questa richiesta di connessione non è valida. Ricomincia dall'estensione del browser.",
     ],
 
     'middleware' => [

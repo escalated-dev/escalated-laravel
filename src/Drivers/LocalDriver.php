@@ -138,6 +138,12 @@ class LocalDriver implements CreatesAgentTickets, TicketDriver
 
         $query->orderBy($sortBy, $sortDir);
 
+        // Tickets created in the same second share a sort value; the id keeps
+        // pages from repeating or dropping rows.
+        if ($sortBy !== 'id') {
+            $query->orderBy('id', $sortDir);
+        }
+
         return $query->paginate($filters['per_page'] ?? 15);
     }
 

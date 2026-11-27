@@ -14,7 +14,7 @@ class TicketResource extends JsonResource
         return [
             'id' => $this->id,
             'reference' => $this->reference,
-            'ticket_type' => $this->ticket_type,
+            'ticket_type' => $this->ticket_type ?? 'question',
             'account' => $this->when(config('escalated.accounts.enabled', false), fn () => $this->account_type !== null ? [
                 'type' => $this->account_type, 'id' => (string) $this->account_id,
             ] : null),
@@ -63,8 +63,11 @@ class TicketResource extends JsonResource
                 'resolution_due_at' => $this->resolution_due_at?->toIso8601String(),
                 'resolution_breached' => $this->sla_resolution_breached,
             ],
-            'is_following' => $this->when(isset($this->is_following), $this->is_following ?? false),
-            'followers_count' => $this->when(isset($this->followers_count), $this->followers_count ?? 0),
+            'sla_breached' => (bool) ($this->sla_first_response_breached || $this->sla_resolution_breached),
+            'is_following' => $this->is_following
+                ?? ($request->user() ? $this->resource->isFollowedBy($request->user()->getKey()) : false),
+            'followers_count' => $this->followers_count
+                ?? $this->resource->followers()->newPivotStatement()->where('ticket_id', $this->resource->getKey())->count(),
             'custom_actions' => $request->user()
                 ? collect(app(TicketActionRegistry::class)->forTicket($this->resource, $request->user()))
                     ->map(fn (array $action) => array_merge($action, [
@@ -77,6 +80,8 @@ class TicketResource extends JsonResource
                     ->all()
                 : [],
             'resolved_at' => $this->resolved_at?->toIso8601String(),
+            'last_reply_at' => $this->last_reply_at,
+            'last_customer_reply_at' => $this->last_customer_activity_at?->toIso8601String(),
             'closed_at' => $this->closed_at?->toIso8601String(),
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),

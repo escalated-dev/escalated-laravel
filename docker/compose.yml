@@ -26,6 +26,7 @@ services:
       QUEUE_CONNECTION: sync
       CACHE_STORE: file
       SESSION_DRIVER: file
+      ESCALATED_API_ENABLED: ${ESCALATED_API_ENABLED:-false}
     depends_on:
       db:
         condition: service_healthy

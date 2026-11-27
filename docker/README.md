@@ -67,3 +67,7 @@ This is deliberately a dev/demo environment, not production infrastructure:
 If you need a production setup, this is not it — use Laravel Octane, FrankenPHP,
 or your org's standard PHP deployment toolchain and wire Escalated in through
 the normal install flow.
+
+## Staff API conformance (CI)
+
+`.github/workflows/conformance.yml` boots this stack with `ESCALATED_API_ENABLED=true`, runs `php artisan escalated:conformance-seed` inside the app container (host app only; it refuses to run unless `APP_ENV` is `demo` or `testing`, or `--force` is given), and runs the contract's black-box suite against `http://localhost:8080/support/api/v1`. The command prints the agent, admin and revocable tokens and the connect fixture as `KEY=value` lines, which the workflow masks and exports. Do not run it against a real install.

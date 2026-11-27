@@ -106,8 +106,12 @@ class TicketReads
             return;
         }
 
+        $at = $reply->created_at ?? Carbon::now();
+
+        // updated_at moves with it, so a client polling updated_since sees
+        // the customer reply (contract v1, last_customer_reply_at).
         Ticket::query()->withoutGlobalScopes()->whereKey($reply->ticket_id)->toBase()
-            ->update(['last_customer_activity_at' => $reply->created_at ?? Carbon::now()]);
+            ->update(['last_customer_activity_at' => $at, (new Ticket)->getUpdatedAtColumn() => $at]);
     }
 
     /**

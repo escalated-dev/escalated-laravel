@@ -3268,6 +3268,81 @@
             "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
         ]
     },
+    "escalated.agent.extension.approve": {
+        "uri": "support/agent/connect-extension/approve",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\DenyFraming"
+        ]
+    },
+    "escalated.agent.extension.connect": {
+        "uri": "support/agent/connect-extension",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\DenyFraming"
+        ]
+    },
+    "escalated.agent.extension.deny": {
+        "uri": "support/agent/connect-extension/deny",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions",
+            "Escalated\\Laravel\\Http\\Middleware\\DenyFraming"
+        ]
+    },
+    "escalated.agent.extensions.destroy": {
+        "uri": "support/agent/browser-extensions/{token}",
+        "methods": [
+            "DELETE"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.agent.extensions.index": {
+        "uri": "support/agent/browser-extensions",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "web",
+            "auth",
+            "Escalated\\Laravel\\Http\\Middleware\\EnsureIsAgent",
+            "Escalated\\Laravel\\Http\\Middleware\\RequireTwoFactor",
+            "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
     "escalated.agent.kb.search": {
         "uri": "support/agent/kb/search",
         "methods": [
@@ -3669,6 +3744,27 @@
             "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
         ]
     },
+    "escalated.api.auth.exchange": {
+        "uri": "support/api/v1/auth/exchange",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "throttle:10,1,escalated-auth-exchange:"
+        ]
+    },
+    "escalated.api.auth.revoke": {
+        "uri": "support/api/v1/auth/revoke",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit"
+        ]
+    },
     "escalated.api.auth.validate": {
         "uri": "support/api/v1/auth/validate",
         "methods": [
@@ -3731,6 +3827,17 @@
             "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken:agent",
             "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit",
             "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
+        ]
+    },
+    "escalated.api.meta": {
+        "uri": "support/api/v1/meta",
+        "methods": [
+            "GET",
+            "HEAD"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "throttle:60,1"
         ]
     },
     "escalated.api.mobile.auth.login": {

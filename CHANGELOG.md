@@ -4,6 +4,38 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+The staff REST API now follows contract v1, and a browser extension can sign agents in. The API stays off by default (`escalated.api.enabled`); nothing here changes an install that leaves it off.
+
+### Added
+- **`GET {api_prefix}/meta`.** Public discovery endpoint (no token, 60 a minute): `api_version`, `backend`, the `features` this install serves, `connect_url` and `web_url_template` as absolute URLs on the API's origin, plus `backend_version` when a valid token is sent. An invalid or expired token gets the public answer, never a 401. Responses carry `Vary: Authorization` and `Cache-Control: no-store`. `auth.exchange` is listed, and `connect_url` set, only while the connect page exists; `realtime` only while broadcasting is on.
+- **`POST {api_prefix}/auth/exchange`.** Trades a one-time code from the connect page and its PKCE verifier (S256 only) for an agent token. No token needed; 10 a minute per IP. Codes live 60 seconds, are single use and stored hashed; presenting a used code revokes the token it issued. Every code failure is the same `400 {message: "Invalid or expired code."}`. Extension tokens get the `agent` ability, the name `Browser extension (<client_name>)`, kind `browser_extension` and the extension ID.
+- **`POST {api_prefix}/auth/revoke`.** Any valid token can delete itself (204).
+- **`updated_since` on `GET {api_prefix}/tickets`.** An ISO 8601 timestamp; returns tickets updated at or after it (compared in the app timezone).
+- **`open` filter on `GET {api_prefix}/tickets`.** `open=1` returns tickets in any open-family status, which is every status except resolved and closed. It combines with the other filters, `open=0` is the same as leaving it out, and `tickets.open_filter` is listed in `GET /meta`.
+- **`last_customer_reply_at` on tickets** in the list and on ticket show: when the customer last wrote, or null.
+- **Browser extension connect page (staff API contract v1).** While the REST API is on, agents approve the browser extension at `GET /{prefix}/agent/connect-extension` (`escalated.agent.extension.connect`, advertised as `connect_url` in `GET /meta`). Approve issues a 60 second one-time code and sends the browser back to the extension's `redirect_uri`; Deny sends it back with `error=access_denied`. The page checks `redirect_uri` as a whole string and shows an error, never a redirect, when it is invalid or too long to store (over 255 characters, or an install pattern's extension ID over 32); a `state` over 512 characters is `invalid_request`. It never approves without a click, and carries `Content-Security-Policy: frame-ancestors 'none'` and `X-Frame-Options: DENY`. See docs/browser-extension.md.
+- **Browser extensions page.** Agents list and revoke their own extension tokens at `GET /{prefix}/agent/browser-extensions` (`escalated.agent.extensions.index`, `escalated.agent.extensions.destroy`). Its URL is shared to agents as `escalated.browser_extensions_url` so the agent rail links to it. The admin API tokens page now sends each token's `kind` and `extension_id`, so an admin sees which tokens belong to an extension and can revoke them.
+- **Config keys.** `escalated.api.extension_redirect_patterns` (default `[]`) accepts other browsers' redirect URIs; each pattern must match the whole `redirect_uri`. `escalated.api.extension_token_expiry_days` (default null) sets the extension token lifetime.
+- **Conformance CI.** A `staff-api-conformance` workflow starts the demo stack with the API on, seeds a fixture (`escalated:conformance-seed`) and runs the shared staff API contract suite against it.
+
+### Changed
+These affect staff API clients only.
+- Macros return `actions`; `steps` is still sent for clients written against 1.9.20.
+- An unknown report export type answers 404 instead of failing.
+- A status change the install's transition table refuses answers 422 with `errors.status`; setting the status a ticket already has is a 200 no-op. An error raised after a valid change (by a listener, webhook or workflow) is no longer reported as a refused transition.
+- Ticket lists break `created_at` ties by id in the sort direction, so pages do not repeat or drop tickets. The web and mobile lists do the same.
+- A ticket with no type is emitted as `ticket_type: "question"`.
+- `is_following`, `followers_count` and `sla_breached` are always present on ticket show.
+- Report summary counts (`by_status`, `by_priority`) are integers on every database.
+- A customer reply now moves the ticket's `updated_at` along with its last customer activity, so `updated_since` finds tickets with new customer replies.
+- `ApiToken::createToken()` writes `kind` and `extension_id` only when they are set, so admin and mobile tokens keep working on an install that has not yet run the new migrations.
+
+### Upgrading
+- Publish and run the two new migrations (they add `kind` and `extension_id` to `escalated_api_tokens` and create `escalated_api_token_codes`):
+  `php artisan vendor:publish --tag=escalated-migrations` then `php artisan migrate`.
+- The connect and browser extensions pages need `@escalated-dev/escalated` 0.12.13.
+- The API stays off by default. Set `ESCALATED_API_ENABLED=true` to serve it and the extension pages.
+
 ## [1.9.20] - 2026-11-26
 ### Security
 - **Mobile token refresh:** `POST {mobile_prefix}/auth/refresh` now issues a replacement that keeps the original token's name and abilities and never expires later than the original. Its expiry is the earlier of the original expiry and `escalated.api.token_expiry_days`; a token without an expiry gets the configured lifetime, or none when that is unset. Before, a refreshed token took a fresh `token_expiry_days` expiry (none by default), so refreshing could outlast the expiry an admin set. Customer sessions refreshed by the mobile app now end when the original login's expiry is reached, and the app signs in again.

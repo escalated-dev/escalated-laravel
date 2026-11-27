@@ -65,18 +65,31 @@ class ApiToken extends Model
             ->where('expires_at', '<=', now());
     }
 
-    public static function createToken(Model $tokenable, string $name, array $abilities = ['*'], ?\DateTimeInterface $expiresAt = null): array
+    public static function createToken(Model $tokenable, string $name, array $abilities = ['*'], ?\DateTimeInterface $expiresAt = null, ?string $kind = null, ?string $extensionId = null): array
     {
         $plainText = bin2hex(random_bytes(32));
 
-        $token = static::create([
+        $attributes = [
             'tokenable_type' => $tokenable->getMorphClass(),
             'tokenable_id' => $tokenable->getKey(),
             'name' => $name,
             'token' => hash('sha256', $plainText),
             'abilities' => $abilities,
             'expires_at' => $expiresAt,
-        ]);
+        ];
+
+        // Only written when set, so an install that updated the package but
+        // has not yet run the kind / extension_id migration can still mint
+        // admin and mobile tokens.
+        if ($kind !== null) {
+            $attributes['kind'] = $kind;
+        }
+
+        if ($extensionId !== null) {
+            $attributes['extension_id'] = $extensionId;
+        }
+
+        $token = static::create($attributes);
 
         return ['token' => $token, 'plainTextToken' => $plainText];
     }

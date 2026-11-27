@@ -23,6 +23,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class TicketController extends Controller
 {
@@ -38,9 +39,11 @@ class TicketController extends Controller
         Gate::forUser($request->user())->authorize('viewAny', Ticket::class);
         $request->validate([
             'per_page' => 'sometimes|integer|min:1|max:100',
+            'updated_since' => ['nullable', 'date'],
+            'open' => ['nullable', 'boolean'],
         ]);
 
-        $filters = $request->only(['status', 'priority', 'ticket_type', 'assigned_to', 'unassigned', 'department_id', 'account_type', 'account_id', 'search', 'sla_breached', 'tag_ids', 'sort_by', 'sort_dir', 'per_page', 'following']);
+        $filters = $request->only(['updated_since', 'status', 'priority', 'ticket_type', 'assigned_to', 'unassigned', 'department_id', 'account_type', 'account_id', 'search', 'sla_breached', 'tag_ids', 'sort_by', 'sort_dir', 'per_page', 'following', 'open']);
         $filters['per_page'] = min((int) ($filters['per_page'] ?? 15), 100);
 
         $tickets = $this->ticketService->list(
@@ -130,7 +133,21 @@ class TicketController extends Controller
             'status' => 'required|string|in:'.implode(',', $validStatuses),
         ]);
 
-        $this->ticketService->changeStatus($ticket, TicketStatus::from($validated['status']), $request->user());
+        $target = TicketStatus::from($validated['status']);
+
+        // Setting the status a ticket already has is a no-op, not a transition.
+        if ($ticket->status !== $target) {
+            // Checked up front against the install's transition table, so an
+            // exception from a listener, webhook or workflow fired after a
+            // valid change is never reported as a refused transition.
+            if (! $ticket->status->canTransitionTo($target)) {
+                $message = "Cannot change status from {$ticket->status->value} to {$target->value}.";
+
+                throw ValidationException::withMessages(['status' => [$message]]);
+            }
+
+            $this->ticketService->changeStatus($ticket, $target, $request->user());
+        }
 
         return response()->json(['message' => 'Status updated.', 'status' => $validated['status']]);
     }

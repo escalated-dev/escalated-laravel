@@ -97,6 +97,7 @@ return [
         '429' => 'Zu viele Anfragen. Warten Sie einen Moment und versuchen Sie es erneut.',
         '500' => 'Bei uns ist etwas schiefgelaufen.',
         '503' => 'Der Dienst ist vorübergehend nicht verfügbar. Versuchen Sie es in Kürze erneut.',
+        'extension_connect' => 'Diese Verbindungsanfrage ist ungültig. Starten Sie den Vorgang in der Browsererweiterung erneut.',
     ],
 
     'middleware' => [

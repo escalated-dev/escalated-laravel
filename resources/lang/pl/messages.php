@@ -97,6 +97,7 @@ return [
         '429' => 'Zbyt wiele żądań. Poczekaj chwilę i spróbuj ponownie.',
         '500' => 'Coś poszło nie tak po naszej stronie.',
         '503' => 'Usługa jest tymczasowo niedostępna. Spróbuj ponownie za chwilę.',
+        'extension_connect' => 'To żądanie połączenia jest nieprawidłowe. Zacznij od nowa w rozszerzeniu przeglądarki.',
     ],
 
     'middleware' => [

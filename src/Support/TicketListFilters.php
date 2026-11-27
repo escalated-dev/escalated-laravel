@@ -6,6 +6,7 @@ use Escalated\Laravel\Contracts\Ticketable;
 use Escalated\Laravel\Enums\TicketChannel;
 use Escalated\Laravel\Enums\TicketStatus;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 
 /**
  * The ticket list's filters, applied to a ticket query.
@@ -48,6 +49,10 @@ final class TicketListFilters
         // Chats in progress (the agent panel's Live chats link).
         if (self::flag($filters, 'live_chat')) {
             $query->where('status', TicketStatus::Live->value)->where('channel', TicketChannel::Chat->value);
+        }
+
+        if (! empty($filters['updated_since'])) {
+            $query->where('updated_at', '>=', Carbon::parse($filters['updated_since'])->setTimezone(config('app.timezone')));
         }
 
         if (! empty($filters['priority'])) {
