@@ -54,13 +54,13 @@ jobs:
           cut -d= -f1 seed.clean
           rm seed.env seed.clean
 
-      # Pinned to the plan 1 commit on the feat/staff-api-contract branch
-      # (escalated-developer-context PR #33). Move this pin to the merge
-      # commit once that PR lands.
+      # Pinned to the staff API contract v1 merge commit on
+      # escalated-developer-context main (PR #33). Move it when the contract
+      # changes.
       - name: Fetch the conformance suite
         run: |
           git clone https://github.com/escalated-dev/escalated-developer-context.git "$RUNNER_TEMP/ctx"
-          git -C "$RUNNER_TEMP/ctx" checkout 05afc5e50a06fa741bb95b28279f93be3138c1ac
+          git -C "$RUNNER_TEMP/ctx" checkout 9d585154acf7f009c81209209bfd96221639ddd0
 
       - name: Install the suite
         working-directory: ${{ runner.temp }}/ctx/conformance
