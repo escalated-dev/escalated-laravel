@@ -54,6 +54,11 @@ jobs:
           cut -d= -f1 seed.clean
           rm seed.env seed.clean
 
+      - name: Diagnose the API before the suite
+        run: |
+          curl -si http://localhost:8080/support/api/v1/meta | head -20 || true
+          docker compose exec -T app php artisan route:list --path=api/v1 | head -40 || true
+
       # Pinned to the plan 1 commit on the feat/staff-api-contract branch
       # (escalated-developer-context PR #33). Move this pin to the merge
       # commit once that PR lands.
