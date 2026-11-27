@@ -1,0 +1,101 @@
+name: staff-api-conformance
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  conformance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      APP_PORT: "8080"
+      ESCALATED_API_ENABLED: "true"
+      COMPOSE_FILE: docker/compose.yml
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build and start the demo stack
+        run: docker compose up -d --build
+
+      - name: Wait for the app to be healthy
+        run: |
+          for i in $(seq 1 120); do
+            if curl -fsS http://localhost:8080/up >/dev/null 2>&1; then
+              echo "app is up after ~$((i * 5))s"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "app did not become healthy" >&2
+          docker compose logs app | tail -100
+          exit 1
+
+      - name: Seed the conformance fixture
+        run: |
+          docker compose exec -T app php artisan escalated:conformance-seed > seed.env
+          # Only KEY=value lines; mask every secret before it can reach a log.
+          grep -E '^[A-Z_0-9]+=' seed.env > seed.clean
+          while IFS='=' read -r key value; do
+            echo "::add-mask::$value"
+          done < seed.clean
+          while IFS='=' read -r key value; do
+            echo "$key=$value" >> "$GITHUB_ENV"
+          done < seed.clean
+          cut -d= -f1 seed.clean
+          rm seed.env seed.clean
+
+      # Pinned to the plan 1 commit on the feat/staff-api-contract branch
+      # (escalated-developer-context PR #33). Move this pin to the merge
+      # commit once that PR lands.
+      - name: Fetch the conformance suite
+        run: |
+          git clone https://github.com/escalated-dev/escalated-developer-context.git "$RUNNER_TEMP/ctx"
+          git -C "$RUNNER_TEMP/ctx" checkout 5cbb2d2
+
+      - name: Install the suite
+        working-directory: ${{ runner.temp }}/ctx/conformance
+        run: npm ci
+
+      - name: Run the suite
+        working-directory: ${{ runner.temp }}/ctx/conformance
+        env:
+          ESCALATED_CONFORMANCE_URL: http://localhost:8080/support/api/v1
+          ESCALATED_CONFORMANCE_TOKEN: ${{ env.AGENT_TOKEN }}
+          ESCALATED_CONFORMANCE_ADMIN_TOKEN: ${{ env.ADMIN_TOKEN }}
+          ESCALATED_CONFORMANCE_REVOCABLE_TOKEN: ${{ env.REVOCABLE_TOKEN }}
+          ESCALATED_CONFORMANCE_CONNECT_CODE: ${{ env.CONNECT_CODE }}
+          ESCALATED_CONFORMANCE_CONNECT_CODE_2: ${{ env.CONNECT_CODE_2 }}
+          ESCALATED_CONFORMANCE_CONNECT_VERIFIER: ${{ env.CONNECT_VERIFIER }}
+          ESCALATED_CONFORMANCE_CONNECT_REDIRECT_URI: ${{ env.CONNECT_REDIRECT_URI }}
+          # open has no path to live in config/escalated.php transitions.
+          ESCALATED_CONFORMANCE_FORBIDDEN_TRANSITION: open:live
+        run: npm test
+
+      - name: Collect the application log
+        if: failure()
+        run: |
+          mkdir -p "$RUNNER_TEMP/logs"
+          docker compose cp app:/host/storage/logs/laravel.log "$RUNNER_TEMP/logs/laravel.log" || true
+          docker compose logs app > "$RUNNER_TEMP/logs/app-container.log" || true
+
+      - name: Upload the application log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: laravel-log
+          path: ${{ runner.temp }}/logs
+          if-no-files-found: ignore
+
+      - name: Stop the stack
+        if: always()
+        run: docker compose down -v
