@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.9.21] - 2026-11-27
+
 The staff REST API now follows contract v1, and a browser extension can sign agents in. The API stays off by default (`escalated.api.enabled`); nothing here changes an install that leaves it off.
 
 ### Added
