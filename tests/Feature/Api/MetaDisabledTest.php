@@ -19,4 +19,12 @@ class MetaDisabledTest extends TestCase
     {
         $this->getJson('/support/api/v1/meta')->assertNotFound();
     }
+
+    public function test_exchange_and_revoke_are_404_when_the_api_is_disabled(): void
+    {
+        $this->postJson('/support/api/v1/auth/exchange', [
+            'code' => 'x', 'code_verifier' => 'y', 'redirect_uri' => 'z',
+        ])->assertNotFound();
+        $this->postJson('/support/api/v1/auth/revoke')->assertNotFound();
+    }
 }

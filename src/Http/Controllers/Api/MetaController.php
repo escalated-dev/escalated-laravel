@@ -46,6 +46,8 @@ class MetaController extends Controller
             'tickets.last_customer_reply_at',
             'canned_responses',
             'macros',
+            'auth.exchange',
+            'auth.revoke',
         ];
 
         if (config('escalated.broadcasting.enabled', false)) {

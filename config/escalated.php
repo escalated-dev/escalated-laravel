@@ -638,6 +638,9 @@ return [
         // endpoints (null = no expiry). A refreshed token never expires later
         // than the token it replaces.
         'token_expiry_days' => null,
+        // Lifetime of tokens issued to the browser extension by
+        // POST {prefix}/auth/exchange (null = no expiry).
+        'extension_token_expiry_days' => null,
         'prefix' => 'support/api/v1',
         'mobile_prefix' => 'support/api/v1/mobile',
     ],

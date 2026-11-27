@@ -3669,6 +3669,27 @@
             "Escalated\\Laravel\\Http\\Middleware\\EnforceRoutePermissions"
         ]
     },
+    "escalated.api.auth.exchange": {
+        "uri": "support/api/v1/auth/exchange",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "throttle:10,1,escalated-auth-exchange:"
+        ]
+    },
+    "escalated.api.auth.revoke": {
+        "uri": "support/api/v1/auth/revoke",
+        "methods": [
+            "POST"
+        ],
+        "middleware": [
+            "Escalated\\Laravel\\Http\\Middleware\\ResolveTenant",
+            "Escalated\\Laravel\\Http\\Middleware\\AuthenticateApiToken",
+            "Escalated\\Laravel\\Http\\Middleware\\ApiRateLimit"
+        ]
+    },
     "escalated.api.auth.validate": {
         "uri": "support/api/v1/auth/validate",
         "methods": [

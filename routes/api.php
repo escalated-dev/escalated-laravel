@@ -2,6 +2,7 @@
 
 use Escalated\Laravel\Http\Controllers\Api\AuthController;
 use Escalated\Laravel\Http\Controllers\Api\DashboardController;
+use Escalated\Laravel\Http\Controllers\Api\ExtensionAuthController;
 use Escalated\Laravel\Http\Controllers\Api\MetaController;
 use Escalated\Laravel\Http\Controllers\Api\ReportController;
 use Escalated\Laravel\Http\Controllers\Api\ResourceController;
@@ -19,6 +20,21 @@ Route::middleware('throttle:60,1')
     ->prefix(config('escalated.api.prefix', 'support/api/v1'))
     ->group(function () {
         Route::get('/meta', MetaController::class)->name('escalated.api.meta');
+    });
+
+// Browser extension sign-in: one-time code + PKCE verifier for an agent token.
+// No token; 10 a minute per IP, counted apart from other throttled routes.
+Route::middleware('throttle:10,1,escalated-auth-exchange:')
+    ->prefix(config('escalated.api.prefix', 'support/api/v1'))
+    ->group(function () {
+        Route::post('/auth/exchange', [ExtensionAuthController::class, 'exchange'])->name('escalated.api.auth.exchange');
+    });
+
+// Any valid token may revoke itself, whatever its abilities.
+Route::middleware([AuthenticateApiToken::class, ApiRateLimit::class])
+    ->prefix(config('escalated.api.prefix', 'support/api/v1'))
+    ->group(function () {
+        Route::post('/auth/revoke', [AuthController::class, 'revoke'])->name('escalated.api.auth.revoke');
     });
 
 // Agent-level routes (require 'agent' ability)

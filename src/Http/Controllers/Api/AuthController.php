@@ -6,6 +6,7 @@ use Escalated\Laravel\Support\StaffAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Symfony\Component\HttpFoundation\Response;
 
 class AuthController extends Controller
 {
@@ -26,5 +27,13 @@ class AuthController extends Controller
             'token_name' => $apiToken->name,
             'expires_at' => $apiToken->expires_at?->toIso8601String(),
         ]);
+    }
+
+    /** Delete the token that made the call, whatever its abilities. */
+    public function revoke(Request $request): Response
+    {
+        $request->attributes->get('api_token')->delete();
+
+        return response()->noContent();
     }
 }
