@@ -52,6 +52,7 @@ class MetaController extends Controller
             'tickets.macro',
             'tickets.updated_since',
             'tickets.last_customer_reply_at',
+            'tickets.open_filter',
             'canned_responses',
             'macros',
         ];

@@ -44,7 +44,7 @@ it('serves meta', function () {
     expect($response->json('api_version'))->toBe('1.0')
         ->and($response->json('backend'))->toBe('laravel')
         ->and($response->json('backend_version'))->toBe($expected)
-        ->and($response->json('features'))->toContain('tickets.updated_since', 'tickets.create', 'tickets.macro', 'tickets.last_customer_reply_at', 'canned_responses', 'macros', 'auth.exchange', 'auth.revoke')
+        ->and($response->json('features'))->toContain('tickets.updated_since', 'tickets.create', 'tickets.macro', 'tickets.last_customer_reply_at', 'tickets.open_filter', 'canned_responses', 'macros', 'auth.exchange', 'auth.revoke')
         ->and($response->json('features'))->not->toContain('realtime');
 });
 
