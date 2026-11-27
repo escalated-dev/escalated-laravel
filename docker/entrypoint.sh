@@ -11,9 +11,7 @@ fi
 # opt-in set through compose has to be written to .env to take effect.
 if [ -n "${ESCALATED_API_ENABLED:-}" ] && [ -f .env ]; then
     sed -i '/^ESCALATED_API_ENABLED=/d' .env
-    printf '
-ESCALATED_API_ENABLED=%s
-' "${ESCALATED_API_ENABLED}" >> .env
+    printf '\nESCALATED_API_ENABLED=%s\n' "${ESCALATED_API_ENABLED}" >> .env
 fi
 
 echo "[demo] waiting for postgres..."
