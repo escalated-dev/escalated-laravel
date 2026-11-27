@@ -97,6 +97,7 @@ return [
         '429' => 'Trop de requêtes. Patientez un instant et réessayez.',
         '500' => 'Une erreur s\'est produite de notre côté.',
         '503' => 'Le service est temporairement indisponible. Réessayez sous peu.',
+        'extension_connect' => "Cette demande de connexion n'est pas valide. Recommencez depuis l'extension du navigateur.",
     ],
 
     'middleware' => [

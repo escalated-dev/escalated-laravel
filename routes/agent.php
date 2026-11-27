@@ -1,5 +1,6 @@
 <?php
 
+use Escalated\Laravel\Http\Controllers\Agent\BrowserExtensionController;
 use Escalated\Laravel\Http\Controllers\Agent\ChatController;
 use Escalated\Laravel\Http\Controllers\Agent\DashboardController;
 use Escalated\Laravel\Http\Controllers\Agent\KnowledgeBaseSearchController;
@@ -8,6 +9,7 @@ use Escalated\Laravel\Http\Controllers\Agent\StatusController;
 use Escalated\Laravel\Http\Controllers\Agent\TicketController;
 use Escalated\Laravel\Http\Controllers\BulkActionController;
 use Escalated\Laravel\Http\Controllers\PresenceController;
+use Escalated\Laravel\Http\Middleware\DenyFraming;
 use Escalated\Laravel\Http\Middleware\EnforceRoutePermissions;
 use Escalated\Laravel\Http\Middleware\EnsureIsAgent;
 use Escalated\Laravel\Http\Middleware\RequireTwoFactor;
@@ -35,6 +37,22 @@ Route::middleware(array_merge(config('escalated.routes.admin_middleware', ['web'
         Route::post('/chat/{session}/transfer', [ChatController::class, 'transfer'])->name('escalated.agent.chat.transfer');
         Route::post('/chat/{session}/message', [ChatController::class, 'message'])->name('escalated.agent.chat.message');
         Route::post('/chat/{session}/typing', [ChatController::class, 'typing'])->name('escalated.agent.chat.typing');
+
+        // Browser extension sign-in (staff API contract v1), only while the
+        // API that trades its codes for tokens is on. DenyFraming also
+        // decorates the answers given before route middleware runs (the
+        // sign-in redirect), see DenyFraming::decorateEarlyResponse.
+        if (config('escalated.api.enabled', false)) {
+            Route::middleware(DenyFraming::class)->group(function () {
+                Route::get('/connect-extension', [BrowserExtensionController::class, 'show'])->name('escalated.agent.extension.connect');
+                Route::post('/connect-extension/approve', [BrowserExtensionController::class, 'approve'])->name('escalated.agent.extension.approve');
+                Route::post('/connect-extension/deny', [BrowserExtensionController::class, 'deny'])->name('escalated.agent.extension.deny');
+            });
+            Route::get('/browser-extensions', [BrowserExtensionController::class, 'index'])->name('escalated.agent.extensions.index');
+            Route::delete('/browser-extensions/{token}', [BrowserExtensionController::class, 'destroy'])
+                ->whereNumber('token')
+                ->name('escalated.agent.extensions.destroy');
+        }
 
         Route::middleware(ResolveTicketByReference::class)->group(function () {
             Route::get('/tickets/{ticket}', [TicketController::class, 'show'])->name('escalated.agent.tickets.show');

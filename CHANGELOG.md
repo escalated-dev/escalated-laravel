@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- **Browser extension connect page (staff API contract v1).** While the REST API is on, agents approve the browser extension at `GET /{prefix}/agent/connect-extension` (`escalated.agent.extension.connect`, advertised as `connect_url` in `GET /meta`). Approve issues a 60 second one-time code and sends the browser back to the extension's `redirect_uri`; Deny sends it back with `error=access_denied`. The page checks `redirect_uri` as a whole string and shows an error, never a redirect, when it is invalid, never approves without a click, and carries `Content-Security-Policy: frame-ancestors 'none'` and `X-Frame-Options: DENY`. See docs/browser-extension.md.
+- Agents list and revoke their own extension tokens at `GET /{prefix}/agent/browser-extensions` (`escalated.agent.extensions.index`, `escalated.agent.extensions.destroy`).
+- `escalated.api.extension_redirect_patterns` (default `[]`) accepts other browsers' redirect URIs; each pattern must match the whole `redirect_uri`. `escalated.api.extension_token_expiry_days` (default null) sets the extension token lifetime.
+
 ## [1.9.20] - 2026-11-26
 ### Security
 - **Mobile token refresh:** `POST {mobile_prefix}/auth/refresh` now issues a replacement that keeps the original token's name and abilities and never expires later than the original. Its expiry is the earlier of the original expiry and `escalated.api.token_expiry_days`; a token without an expiry gets the configured lifetime, or none when that is unset. Before, a refreshed token took a fresh `token_expiry_days` expiry (none by default), so refreshing could outlast the expiry an admin set. Customer sessions refreshed by the mobile app now end when the original login's expiry is reached, and the app signs in again.

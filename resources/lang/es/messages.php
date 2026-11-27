@@ -97,6 +97,7 @@ return [
         '429' => 'Demasiadas solicitudes. Espere un momento e inténtelo de nuevo.',
         '500' => 'Algo salió mal por nuestra parte.',
         '503' => 'El servicio no está disponible temporalmente. Inténtelo de nuevo en breve.',
+        'extension_connect' => 'Esta solicitud de conexión no es válida. Vuelva a empezar desde la extensión del navegador.',
     ],
 
     'middleware' => [

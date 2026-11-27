@@ -97,6 +97,7 @@ return [
         '429' => 'Çok fazla istek. Biraz bekleyip tekrar deneyin.',
         '500' => 'Bizim tarafımızda bir sorun oluştu.',
         '503' => 'Hizmet geçici olarak kullanılamıyor. Kısa süre sonra tekrar deneyin.',
+        'extension_connect' => 'Bu bağlantı isteği geçerli değil. Tarayıcı uzantısından yeniden başlayın.',
     ],
 
     'middleware' => [

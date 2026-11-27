@@ -36,6 +36,7 @@ use Escalated\Laravel\Enums\ChatStatus;
 use Escalated\Laravel\Http\Controllers\Admin\ApiTokenController;
 use Escalated\Laravel\Http\InertiaErrorPage;
 use Escalated\Laravel\Http\Middleware\CheckPermission;
+use Escalated\Laravel\Http\Middleware\DenyFraming;
 use Escalated\Laravel\Http\Middleware\EnforceRoutePermissions;
 use Escalated\Laravel\Http\Middleware\EnsureIsAdmin;
 use Escalated\Laravel\Http\Middleware\RequireTwoFactor;
@@ -753,6 +754,9 @@ class EscalatedServiceProvider extends ServiceProvider
             }
         });
         Event::listen(RequestHandled::class, [WidgetCors::class, 'decorateEarlyResponse']);
+        if (config('escalated.api.enabled', false)) {
+            Event::listen(RequestHandled::class, [DenyFraming::class, 'decorateEarlyResponse']);
+        }
         // Only while the admin is embedded (ADR 2026-11-05): iframe framing headers.
         if (EmbedConfig::enabled()) {
             Event::listen(RequestHandled::class, [EmbedConfig::class, 'decorateResponse']);

@@ -97,6 +97,7 @@ return [
         '429' => 'Te veel verzoeken. Wacht even en probeer het opnieuw.',
         '500' => 'Er is aan onze kant iets misgegaan.',
         '503' => 'De dienst is tijdelijk niet beschikbaar. Probeer het straks opnieuw.',
+        'extension_connect' => 'Dit verbindingsverzoek is ongeldig. Begin opnieuw vanuit de browserextensie.',
     ],
 
     'middleware' => [

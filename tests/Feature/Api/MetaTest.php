@@ -30,7 +30,8 @@ it('serves public meta', function () {
     expect($response->json())->not->toHaveKey('backend_version')
         ->and($response->json('api_version'))->toBe('1.0')
         ->and($response->json('backend'))->toBe('laravel')
-        ->and($response->json('connect_url'))->toBeNull()
+        ->and($response->json('connect_url'))->toStartWith('http')
+        ->and($response->json('connect_url'))->toEndWith('/support/agent/connect-extension')
         ->and($response->json('web_url_template'))->toStartWith('http')
         ->and($response->json('web_url_template'))->toEndWith('/support/agent/tickets/{reference}');
 });
