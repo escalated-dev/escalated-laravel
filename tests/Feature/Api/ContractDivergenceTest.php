@@ -2,6 +2,7 @@
 
 use Escalated\Laravel\Enums\TicketPriority;
 use Escalated\Laravel\Enums\TicketStatus;
+use Escalated\Laravel\Events\TicketStatusChanged;
 use Escalated\Laravel\Http\Resources\TicketCollectionResource;
 use Escalated\Laravel\Http\Resources\TicketResource;
 use Escalated\Laravel\Models\ApiToken;
@@ -10,6 +11,7 @@ use Escalated\Laravel\Models\Reply;
 use Escalated\Laravel\Models\Ticket;
 use Escalated\Laravel\Tests\Fixtures\TestUser;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 
 beforeEach(function () {
@@ -192,6 +194,23 @@ it('still performs an allowed status transition', function () {
     $this->withHeaders($api['headers'])
         ->patchJson(route('escalated.api.tickets.status', $ticket->reference), ['status' => 'resolved'])
         ->assertOk();
+
+    expect($ticket->fresh()->status)->toBe(TicketStatus::Resolved);
+});
+
+it('does not turn an InvalidArgumentException from a status listener into a 422', function () {
+    $api = divAgent();
+    $ticket = divTicket($api['user']);
+
+    Event::listen(TicketStatusChanged::class, function () {
+        throw new InvalidArgumentException('Listener failure after a valid change.');
+    });
+
+    $this->withoutExceptionHandling();
+
+    expect(fn () => $this->withHeaders($api['headers'])
+        ->patchJson(route('escalated.api.tickets.status', $ticket->reference), ['status' => 'resolved']))
+        ->toThrow(InvalidArgumentException::class, 'Listener failure after a valid change.');
 
     expect($ticket->fresh()->status)->toBe(TicketStatus::Resolved);
 });

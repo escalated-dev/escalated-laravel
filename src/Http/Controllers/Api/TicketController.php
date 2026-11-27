@@ -136,14 +136,16 @@ class TicketController extends Controller
 
         // Setting the status a ticket already has is a no-op, not a transition.
         if ($ticket->status !== $target) {
-            try {
-                $this->ticketService->changeStatus($ticket, $target, $request->user());
-            } catch (\InvalidArgumentException) {
-                // The install's transition table refused the change.
+            // Checked up front against the install's transition table, so an
+            // exception from a listener, webhook or workflow fired after a
+            // valid change is never reported as a refused transition.
+            if (! $ticket->status->canTransitionTo($target)) {
                 $message = "Cannot change status from {$ticket->status->value} to {$target->value}.";
 
                 throw ValidationException::withMessages(['status' => [$message]]);
             }
+
+            $this->ticketService->changeStatus($ticket, $target, $request->user());
         }
 
         return response()->json(['message' => 'Status updated.', 'status' => $validated['status']]);
