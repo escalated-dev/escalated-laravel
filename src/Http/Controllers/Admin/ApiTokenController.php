@@ -22,6 +22,10 @@ class ApiTokenController extends Controller
         $tokens = ApiToken::with('tokenable')->latest()->get()->map(fn ($token) => [
             'id' => $token->id,
             'name' => $token->name,
+            // 'browser_extension' for a token minted by the extension sign-in,
+            // null for one created here or by mobile sign-in.
+            'kind' => $token->kind,
+            'extension_id' => $token->extension_id,
             'user_name' => $token->tokenable?->name,
             'user_email' => $token->tokenable?->email,
             'abilities' => $token->abilities,

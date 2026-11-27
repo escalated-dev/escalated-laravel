@@ -480,6 +480,98 @@ it('takes the extension id from the host when an install pattern names no id', f
         ->assertInertia(fn (AssertableInertia $page) => $page->where('extension_id', 'ext'));
 });
 
+it('refuses an install pattern extension id longer than 32 characters', function (string $url) {
+    config()->set('escalated.api.extension_redirect_patterns', [
+        '#\Ahttps://(?<id>[a-z0-9]+)\.extensions\.example\.test/\z#',
+    ]);
+    $redirect = 'https://'.str_repeat('a', 33).'.extensions.example.test/';
+
+    $request = $this->actingAs($this->createAgent())
+        ->withHeaders(['X-Inertia' => 'true', 'X-Inertia-Version' => '']);
+    $response = $url === BX_CONNECT_URL
+        ? $request->get(bxConnectUrl(bxParams(['redirect_uri' => $redirect])))
+        : $request->post($url, bxParams(['redirect_uri' => $redirect]));
+
+    $response->assertStatus(422);
+    expect($response->headers->has('Location'))->toBeFalse()
+        ->and($response->json('component'))->toBe('Escalated/Error')
+        ->and(ApiTokenCode::count())->toBe(0);
+    bxAssertFramingDenied($response);
+})->with([BX_CONNECT_URL, BX_APPROVE_URL, BX_DENY_URL]);
+
+it('accepts an install pattern extension id of exactly 32 characters', function () {
+    config()->set('escalated.api.extension_redirect_patterns', [
+        '#\Ahttps://(?<id>[a-z0-9]+)\.extensions\.example\.test/\z#',
+    ]);
+    $redirect = 'https://'.str_repeat('a', 32).'.extensions.example.test/';
+
+    $this->actingAs($this->createAgent())
+        ->post(BX_APPROVE_URL, bxParams(['redirect_uri' => $redirect]))
+        ->assertRedirect();
+
+    expect(ApiTokenCode::sole()->extension_id)->toBe(str_repeat('a', 32));
+});
+
+it('refuses an install pattern redirect_uri longer than 255 characters', function (string $url) {
+    config()->set('escalated.api.extension_redirect_patterns', [
+        '#\Ahttps://(?<id>ext)\.example\.test/[a-z]*\z#',
+    ]);
+    $redirect = 'https://ext.example.test/';
+    $redirect .= str_repeat('a', 256 - strlen($redirect));
+
+    $request = $this->actingAs($this->createAgent())
+        ->withHeaders(['X-Inertia' => 'true', 'X-Inertia-Version' => '']);
+    $response = $url === BX_CONNECT_URL
+        ? $request->get(bxConnectUrl(bxParams(['redirect_uri' => $redirect])))
+        : $request->post($url, bxParams(['redirect_uri' => $redirect]));
+
+    $response->assertStatus(422);
+    expect($response->headers->has('Location'))->toBeFalse()
+        ->and($response->json('component'))->toBe('Escalated/Error')
+        ->and(ApiTokenCode::count())->toBe(0);
+    bxAssertFramingDenied($response);
+})->with([BX_CONNECT_URL, BX_APPROVE_URL, BX_DENY_URL]);
+
+it('accepts an install pattern redirect_uri of exactly 255 characters', function () {
+    config()->set('escalated.api.extension_redirect_patterns', [
+        '#\Ahttps://(?<id>ext)\.example\.test/[a-z]*\z#',
+    ]);
+    $redirect = 'https://ext.example.test/';
+    $redirect .= str_repeat('a', 255 - strlen($redirect));
+
+    $this->actingAs($this->createAgent())
+        ->post(BX_APPROVE_URL, bxParams(['redirect_uri' => $redirect]))
+        ->assertRedirect();
+
+    expect(ApiTokenCode::sole()->redirect_uri)->toBe($redirect);
+});
+
+// ---- State length ----------------------------------------------------------------
+
+it('treats a state longer than 512 characters as invalid_request', function (string $url) {
+    $request = $this->actingAs($this->createAgent());
+    $params = bxParams(['state' => str_repeat('s', 513)]);
+    $response = $url === BX_CONNECT_URL ? $request->get(bxConnectUrl($params)) : $request->post($url, $params);
+
+    $response->assertRedirect();
+    [$base, $query] = bxSplitLocation($response);
+    expect($base)->toBe(BX_REDIRECT)
+        ->and($query)->toBe(['error' => 'invalid_request'])
+        ->and(ApiTokenCode::count())->toBe(0);
+    bxAssertFramingDenied($response);
+})->with([BX_CONNECT_URL, BX_APPROVE_URL, BX_DENY_URL]);
+
+it('accepts a state of exactly 512 characters', function () {
+    $state = str_repeat('s', 512);
+
+    $response = $this->actingAs($this->createAgent())->post(BX_APPROVE_URL, bxParams(['state' => $state]));
+
+    [$base, $query] = bxSplitLocation($response);
+    expect($base)->toBe(BX_REDIRECT)
+        ->and(array_keys($query))->toBe(['code', 'state'])
+        ->and($query['state'])->toBe($state);
+});
+
 // ---- The agent's browser extensions list ---------------------------------------------
 
 it('lists only the signed-in agent\'s browser extension tokens', function () {
@@ -530,6 +622,17 @@ it('does not revoke another user\'s token or a token that is not an extension\'s
 
     expect(ApiToken::find($theirs->id))->not->toBeNull()
         ->and(ApiToken::find($adminMade->id))->not->toBeNull();
+});
+
+it('shares the browser extensions page URL with agents only', function () {
+    $shared = fn ($user, string $url) => $this->actingAs($user)
+        ->withHeaders(['X-Inertia' => 'true', 'X-Inertia-Version' => ''])
+        ->get($url)->assertOk()->json('props.escalated');
+
+    expect($shared($this->createAgent(), '/support/agent/tickets')['browser_extensions_url'])
+        ->toBe(url('/support/agent/browser-extensions'))
+        ->and($shared($this->createTestUser(['email' => 'customer@example.com']), route('escalated.customer.tickets.index')))
+        ->not->toHaveKey('browser_extensions_url');
 });
 
 it('refuses the browser extensions list to a user without agent access', function () {

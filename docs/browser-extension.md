@@ -27,17 +27,22 @@ permission. A user who is not signed in is sent to the host's `login` route
 and comes back to the connect page with its query intact (Laravel's
 `url.intended`). A signed-in user without agent access gets a 403.
 
-`GET /meta` advertises the connect page as `connect_url`.
+`GET /meta` advertises the connect page as `connect_url` and lists
+`auth.exchange` in `features`. Without the page (a headless install with
+`escalated.ui.enabled` off), `connect_url` is `null` and `auth.exchange` is not
+listed.
 
 ## How the connect page checks a request
 
 - `redirect_uri` is checked first, on the string exactly as sent. A Chrome
   extension's is `https://<32 letters a to p>.chromiumapp.org/`. When it is
-  missing or matches no allowed pattern, the page shows an error (422) and
-  redirects nowhere.
-- With a valid `redirect_uri`, a missing `state`, a `code_challenge` that is not
-  43 base64url characters, or a `code_challenge_method` other than `S256`
-  sends the browser back with `error=invalid_request`. No code is issued.
+  missing, longer than 255 characters, or matches no allowed pattern, the
+  page shows an error (422) and redirects nowhere. So does an install pattern
+  whose extension ID is longer than 32 characters.
+- With a valid `redirect_uri`, a missing `state` or one longer than 512
+  characters, a `code_challenge` that is not 43 base64url characters, or a
+  `code_challenge_method` other than `S256` sends the browser back with
+  `error=invalid_request`. No code is issued.
 - Approve and Deny run the same checks again on what they are posted.
 - `client_name` is display text only. It is cut to 64 characters.
 - Opening the page changes nothing. Every code needs a click on Approve, even
@@ -90,6 +95,8 @@ pattern with delimiters, for example:
 Each agent sees and revokes their own extension tokens at
 `/support/agent/browser-extensions`, with each token's name, extension ID,
 creation time, last use and expiry. Another user's token is a 404 there.
-Extension tokens also appear on the admin API tokens page, where an admin can
+The agent rail links to that page (the backend shares its URL with agents as
+`escalated.browser_extensions_url`). Extension tokens also appear on the admin
+API tokens page, marked with their kind and extension ID, where an admin can
 revoke them. An extension can revoke its own token with
 `POST {api prefix}/auth/revoke`.

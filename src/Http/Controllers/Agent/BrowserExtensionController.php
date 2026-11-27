@@ -20,8 +20,10 @@ use Symfony\Component\HttpFoundation\Response;
  * requirements").
  *
  * The page checks redirect_uri before anything else and, when it is missing
- * or invalid, shows an error page and never redirects. With a valid
- * redirect_uri, any other bad parameter goes back to it as invalid_request.
+ * or invalid (including one too long to store, or an install pattern's
+ * extension ID over 32 characters), shows an error page and never redirects.
+ * With a valid redirect_uri, any other bad parameter (a state over 512
+ * characters among them) goes back to it as invalid_request.
  * Approve and Deny run the same checks on what they are posted: the GET is
  * never trusted to have done it. GET has no side effects, and nothing is ever
  * approved without a click, even for an extension approved before.
@@ -34,6 +36,14 @@ class BrowserExtensionController extends Controller
     public const CODE_TTL = 60;
 
     public const CLIENT_NAME_MAX = 64;
+
+    /** Column sizes the code and token rows store. */
+    public const REDIRECT_URI_MAX = 255;
+
+    public const EXTENSION_ID_MAX = 32;
+
+    /** A longer state is refused as invalid_request. */
+    public const STATE_MAX = 512;
 
     /** The Chrome extension redirect, as a whole string. */
     protected const CHROME_REDIRECT = '/\Ahttps:\/\/([a-p]{32})\.chromiumapp\.org\/\z/';
@@ -168,7 +178,9 @@ class BrowserExtensionController extends Controller
      */
     protected function redirectTarget(mixed $uri): ?array
     {
-        if (! is_string($uri) || $uri === '') {
+        // Longer than the redirect_uri column: refused here rather than
+        // failing on insert at approve.
+        if (! is_string($uri) || $uri === '' || strlen($uri) > self::REDIRECT_URI_MAX) {
             return null;
         }
 
@@ -196,7 +208,7 @@ class BrowserExtensionController extends Controller
                 ? $match['id']
                 : explode('.', $host)[0];
 
-            if ($host === '' || $extensionId === '') {
+            if ($host === '' || $extensionId === '' || strlen($extensionId) > self::EXTENSION_ID_MAX) {
                 continue;
             }
 
@@ -262,9 +274,12 @@ class BrowserExtensionController extends Controller
     {
         $state = $params['state'] ?? null;
 
-        // A state that is not UTF-8 cannot be shown back to the page, so it
-        // counts as missing.
-        return is_string($state) && $state !== '' && mb_check_encoding($state, 'UTF-8') ? $state : null;
+        // A state that is not UTF-8 cannot be shown back to the page, and one
+        // over STATE_MAX is refused, so either counts as missing.
+        return is_string($state) && $state !== '' && mb_check_encoding($state, 'UTF-8')
+            && mb_strlen($state, 'UTF-8') <= self::STATE_MAX
+            ? $state
+            : null;
     }
 
     /** @param  array<string, mixed>  $params */

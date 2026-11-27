@@ -712,6 +712,13 @@ class EscalatedServiceProvider extends ServiceProvider
                 }
             }
 
+            // The agent's browser extensions page, linked from the agent
+            // rail. Only shared while the page exists (the staff API is on),
+            // so the shared frontend never links to a missing page.
+            if ($user && $data['is_agent'] && Route::has('escalated.agent.extensions.index')) {
+                $data['browser_extensions_url'] = route('escalated.agent.extensions.index');
+            }
+
             // Share plugin UI extensions if plugins are enabled
             if (config('escalated.plugins.enabled', true)) {
                 try {
