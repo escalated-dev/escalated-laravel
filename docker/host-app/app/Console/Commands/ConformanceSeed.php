@@ -93,7 +93,7 @@ class ConformanceSeed extends Command
             'name' => 'Conformance macro',
             'actions' => [
                 ['type' => 'priority', 'value' => 'high'],
-                ['type' => 'note', 'body' => 'Applied by the conformance macro.'],
+                ['type' => 'note', 'value' => 'Applied by the conformance macro.'],
             ],
             'created_by' => $admin->id, 'is_shared' => true,
         ]);
