@@ -23,6 +23,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class TicketController extends Controller
 {
@@ -131,7 +132,19 @@ class TicketController extends Controller
             'status' => 'required|string|in:'.implode(',', $validStatuses),
         ]);
 
-        $this->ticketService->changeStatus($ticket, TicketStatus::from($validated['status']), $request->user());
+        $target = TicketStatus::from($validated['status']);
+
+        // Setting the status a ticket already has is a no-op, not a transition.
+        if ($ticket->status !== $target) {
+            try {
+                $this->ticketService->changeStatus($ticket, $target, $request->user());
+            } catch (\InvalidArgumentException) {
+                // The install's transition table refused the change.
+                $message = "Cannot change status from {$ticket->status->value} to {$target->value}.";
+
+                throw ValidationException::withMessages(['status' => [$message]]);
+            }
+        }
 
         return response()->json(['message' => 'Status updated.', 'status' => $validated['status']]);
     }

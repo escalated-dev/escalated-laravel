@@ -12,6 +12,8 @@ class MacroResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'actions' => $this->actions ?? [],
+            // Kept for clients written against 1.9.20, where this was always null.
             'steps' => $this->steps,
             'order' => $this->order,
         ];

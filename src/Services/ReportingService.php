@@ -39,7 +39,7 @@ class ReportingService
         return Ticket::select('status', DB::raw('count(*) as count'))
             ->groupBy('status')
             ->get()
-            ->map(fn ($row) => ['label' => $row->status, 'value' => $row->count])
+            ->map(fn ($row) => ['label' => $row->status, 'value' => (int) $row->count])
             ->toArray();
     }
 
@@ -51,7 +51,7 @@ class ReportingService
         return Ticket::select('priority', DB::raw('count(*) as count'))
             ->groupBy('priority')
             ->get()
-            ->map(fn ($row) => ['label' => $row->priority, 'value' => $row->count])
+            ->map(fn ($row) => ['label' => $row->priority, 'value' => (int) $row->count])
             ->toArray();
     }
 

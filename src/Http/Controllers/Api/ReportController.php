@@ -42,6 +42,8 @@ class ReportController extends Controller
      */
     public function export(Request $request, string $type): mixed
     {
+        abort_unless(in_array($type, ReportExportService::supportedTypes(), true), 404, 'Report not found.');
+
         $format = $request->input('format', 'json');
         $filters = [
             'period' => $request->integer('period', 30),
